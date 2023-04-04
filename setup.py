@@ -3,7 +3,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 folder = os.path.dirname(__file__)
-version_path = os.path.join(folder, "src", "byzerllm", "version.py.py")
+version_path = os.path.join(folder, "src", "byzerllm", "version.py")
 
 __version__ = None
 with open(version_path) as f:
