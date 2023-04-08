@@ -38,9 +38,8 @@ from transformers import (
     Seq2SeqTrainingArguments,
     set_seed,
 )
-from trainer_seq2seq import Seq2SeqTrainer
-
-from arguments import ModelArguments, DataTrainingArguments
+from byzerllm.chatglm6b.trainer_seq2seq import Seq2SeqTrainer
+from byzerllm.chatglm6b.arguments import ModelArguments, DataTrainingArguments
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -51,8 +50,8 @@ logging.basicConfig(
 
 
 def finetune_or_infer(model_args: ModelArguments,
-                      training_args: DataTrainingArguments,
-                      data_args: Seq2SeqTrainingArguments) -> Any:
+                      data_args: DataTrainingArguments,
+                      training_args: Seq2SeqTrainingArguments) -> Any:
     if training_args.should_log:
         # The default of training_args.log_level is passive, so we set log level at info here to have that default.
         transformers.utils.logging.set_verbosity_info()
