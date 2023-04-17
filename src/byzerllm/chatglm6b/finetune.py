@@ -23,11 +23,11 @@ import sys
 import json
 
 import numpy as np
-from datasets import load_dataset
+from datasets import load_dataset,Dataset
 import jieba
 from rouge_chinese import Rouge
 from nltk.translate.bleu_score import sentence_bleu
-from typing import Any
+from typing import Any,Tuple,List,Dict
 
 import transformers
 from transformers import (
@@ -41,6 +41,12 @@ from transformers import (
 from byzerllm.chatglm6b.trainer_seq2seq import Seq2SeqTrainer
 from byzerllm.chatglm6b.arguments import ModelArguments, DataTrainingArguments
 
+from pyjava.api.mlsql import RayContext,PythonContext
+from pyjava.storage import streaming_tar
+
+from typing import Dict,Generator
+from dataclasses import dataclass
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -48,6 +54,114 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stdout)],
 )
 
+@dataclass
+class BlockRow:
+    start: int
+    offset: int
+    value: bytes
+
+def restore_model(conf: Dict[str, str],target_dir:str):
+    model_servers = RayContext.parse_servers(conf["modelServers"])
+    model_binary = RayContext.collect_from(model_servers)
+    streaming_tar.save_rows_as_file(model_binary,target_dir)
+
+def load_model(target_dir:str)-> Generator[BlockRow,None,None]:
+    model_binary = streaming_tar.build_rows_from_file(target_dir)
+    return model_binary
+
+def init_model(model_args: ModelArguments,data_args: DataTrainingArguments,training_args: Seq2SeqTrainingArguments) -> Tuple[Seq2SeqTrainer,AutoTokenizer]:
+    config = AutoConfig.from_pretrained(model_args.model_name_or_path, trust_remote_code=True)
+    config.pre_seq_len = model_args.pre_seq_len
+    config.prefix_projection = model_args.prefix_projection
+    tokenizer = AutoTokenizer.from_pretrained(model_args.model_name_or_path, trust_remote_code=True)
+    model = AutoModel.from_pretrained(model_args.model_name_or_path, config=config, trust_remote_code=True)
+    if model_args.quantization_bit is not None:
+        print(f"Quantized to {model_args.quantization_bit} bit")
+        model = model.quantize(model_args.quantization_bit)
+    model = model.half()
+    model.transformer.prefix_encoder.float()
+
+    label_pad_token_id = -100 if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
+    data_collator = DataCollatorForSeq2Seq(
+        tokenizer,
+        model=model,
+        label_pad_token_id=label_pad_token_id,
+        pad_to_multiple_of=None,
+        padding=False
+    )
+    trainer = Seq2SeqTrainer(
+        model=model,
+        args=training_args,
+        train_dataset=None,
+        eval_dataset=None,
+        tokenizer=tokenizer,
+        data_collator=data_collator,
+        compute_metrics=None,
+    )
+    return (trainer,tokenizer)
+
+
+
+def predict(predict_data:List[Dict[str,Any]],data_args: DataTrainingArguments,training_args: Seq2SeqTrainingArguments,trainer:Seq2SeqTrainer,tokenizer: AutoTokenizer)->List[Dict[str,str]]:
+        
+        predict_dataset = Dataset.from_list(predict_data)
+        # Get the column names for input/target.
+        prompt_column = data_args.prompt_column
+        response_column = data_args.response_column
+        def preprocess_function_eval(examples):
+            prefix = data_args.source_prefix if data_args.source_prefix is not None else ""
+            
+            # Temporarily set max_target_length for training.
+            max_target_length = data_args.max_target_length
+            inputs, targets = [], []
+            for i in range(len(examples[prompt_column])):
+                if examples[prompt_column][i] and examples[response_column][i]:
+                    inputs.append(examples[prompt_column][i])
+                    targets.append(examples[response_column][i])
+
+            inputs = [prefix + inp for inp in inputs]
+            model_inputs = tokenizer(inputs, max_length=data_args.max_source_length, truncation=True, padding=True)
+            labels = tokenizer(text_target=targets, max_length=max_target_length, truncation=True)
+
+            if data_args.ignore_pad_token_for_loss:
+                labels["input_ids"] = [
+                    [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in labels["input_ids"]
+                ]
+            model_inputs["labels"] = labels["input_ids"]
+
+            return model_inputs
+               
+        column_names=[prompt_column,response_column]
+        
+        if data_args.max_predict_samples is not None:
+            max_predict_samples = min(len(predict_dataset), data_args.max_predict_samples)
+            predict_dataset = predict_dataset.select(range(max_predict_samples))
+        with training_args.main_process_first(desc="prediction dataset map pre-processing"):
+            predict_dataset = predict_dataset.map(
+                preprocess_function_eval,
+                batched=True,
+                num_proc=data_args.preprocessing_num_workers,
+                remove_columns=column_names,
+                load_from_cache_file=not data_args.overwrite_cache,
+                desc="Running tokenizer on prediction dataset",
+            )
+        predict_results = trainer.predict(predict_dataset, metric_key_prefix="predict", max_length=512, do_sample=True,
+                                          top_p=0.7, temperature=0.95)
+        predictions = tokenizer.batch_decode(
+                    predict_results.predictions, skip_special_tokens=True, clean_up_tokenization_spaces=True
+                )
+        predictions = [pred.strip() for pred in predictions]
+        labels = tokenizer.batch_decode(
+            predict_results.label_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True
+        )
+        labels = [label.strip() for label in labels]
+        results = []
+        for p, l in zip(predictions, labels):            
+            results.append({"labels": l, "predict": p}) 
+        return results    
+                                             
+                
+    
 
 def finetune_or_infer(model_args: ModelArguments,
                       data_args: DataTrainingArguments,
