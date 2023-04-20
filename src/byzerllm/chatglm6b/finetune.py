@@ -161,21 +161,17 @@ def predict(predict_data:List[Dict[str,Any]],data_args: DataTrainingArguments,tr
         return results    
                                              
                 
+class CustomCallback:
+    def __init__(self, logger):
+        self.logger = logger
     
+    def on_step_end(self, args, state, control, **kwargs):
+        self.logger.info(f"Step {state.global_step}: Loss = {state.loss:.3f}, Learning Rate = {state.lr:.5e}")
+   
 
 def finetune_or_infer(model_args: ModelArguments,
                       data_args: DataTrainingArguments,
                       training_args: Seq2SeqTrainingArguments) -> Any:
-    if training_args.should_log:
-        # The default of training_args.log_level is passive, so we set log level at info here to have that default.
-        transformers.utils.logging.set_verbosity_info()
-
-    log_level = training_args.get_process_log_level()
-    logger.setLevel(log_level)
-    # datasets.utils.logging.set_verbosity(log_level)
-    transformers.utils.logging.set_verbosity(log_level)
-    transformers.utils.logging.enable_default_handler()
-    transformers.utils.logging.enable_explicit_format()
 
     # Log on each process the small summary:
     logger.warning(
@@ -214,11 +210,14 @@ def finetune_or_infer(model_args: ModelArguments,
     model = AutoModel.from_pretrained(model_args.model_name_or_path, config=config, trust_remote_code=True)
 
     if model_args.quantization_bit is not None:
-        print(f"Quantized to {model_args.quantization_bit} bit")
+        print(f"tt Quantized to {model_args.quantization_bit} bit")
         model = model.quantize(model_args.quantization_bit)
+    print(f"model.half()")    
     model = model.half()
-    model.transformer.prefix_encoder.float()
 
+    print(f"model.transformer.prefix_encoder.float()")
+    model.transformer.prefix_encoder.float()
+    
     prefix = data_args.source_prefix if data_args.source_prefix is not None else ""
 
     # Preprocessing the datasets.
@@ -411,7 +410,10 @@ def finetune_or_infer(model_args: ModelArguments,
         data_args.num_beams if data_args.num_beams is not None else training_args.generation_num_beams
     )
     # Initialize our Trainer
+    logger.info("====Initialize our Trainer...====")        
+    print("====Initialize our Trainer...====")
     trainer = Seq2SeqTrainer(
+        # callbacks=[CustomCallback(logger)],
         model=model,
         args=training_args,
         train_dataset=train_dataset if training_args.do_train else None,
@@ -430,6 +432,8 @@ def finetune_or_infer(model_args: ModelArguments,
         #     checkpoint = last_checkpoint
         model.gradient_checkpointing_enable()
         model.enable_input_require_grads()
+        logger.info("begin to train...")
+        print("====begin to train...====")
         train_result = trainer.train(resume_from_checkpoint=checkpoint)
         # trainer.save_model()  # Saves the tokenizer too for easy upload
 
