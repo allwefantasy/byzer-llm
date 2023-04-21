@@ -12,7 +12,7 @@
     "job_id" : null
   }, {
     "id" : "123",
-    "content" : "-- 安装 Byzer LLM 插件\n\n!plugin app remove \"byzer-llm-3.3\";\n!plugin app add - \"byzer-llm-3.3\";",
+    "content" : "-- 安装 Byzer 相关插件\n\n-- 可视化插件\n!plugin app add - \"byzer-yaml-visualization-3.3\";\n\n-- shell命令插件\n!plugin app add - \"mlsql-shell-3.3\";\n\n-- excel插件\n!plugin app add \"tech.mlsql.plugins.ds.MLSQLExcelApp\" \"mlsql-excel-3.3\";\n\n-- Byzer-LLM 插件\n!plugin app add - \"byzer-llm-3.3\";",
     "job_id" : "3deda745-292f-4a83-ab39-bcbd4d5ba726"
   }, {
     "id" : "125",
