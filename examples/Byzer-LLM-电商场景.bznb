@@ -20,8 +20,8 @@
     "job_id" : null
   }, {
     "id" : "124",
-    "content" : "load model.`/home/winubuntu/projects/glm-model/chatglm-6b-model` \nwhere bufferNum=\"1000\"\nand bufferTimeout=\"3m\"\nas chatglm_6b_model;\n\nsave overwrite chatglm_6b_model as delta.`ai_model.chatglm_6b_model`;",
-    "job_id" : null
+    "content" : "load model.`file:///home/winubuntu/projects/glm-model/chatglm-6b-model` \nwhere bufferNum=\"1000\"\nand bufferTimeout=\"3m\"\nas chatglm_6b_model;\n\nsave overwrite chatglm_6b_model as delta.`ai_model.chatglm_6b_model`;",
+    "job_id" : "9babfc48-e407-4bbe-a59d-73351a26d23a"
   }, {
     "id" : "143",
     "content" : "-- 配置一些环境参数\n!python conf \"rayAddress=127.0.0.1:10001\";\n!python conf \"pythonExec=/home/winubuntu/miniconda3/envs/byzerllm-desktop/bin/python\";\n!python conf \"dataMode=model\";\n!python conf \"runIn=driver\";\n!python conf \"schema=st(field(value,string))\";\n\n!python conf \"num_gpus=1\";\n!python conf \"maxConcurrency=1\";\n!python conf \"standalone=true\";",
