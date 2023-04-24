@@ -32,8 +32,7 @@ setup(
     packages=find_packages("src"),
     package_data={},
     install_requires=install_requires,
-    classifiers=[
-        "Intended Audience :: Science/Research/Engineering",
+    classifiers=[        
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
