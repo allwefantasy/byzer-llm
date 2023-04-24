@@ -41,9 +41,11 @@ DEFAULT_PARAS = {
                 }
 
 def restore_model(conf: Dict[str, str],target_dir:str):
-    model_servers = RayContext.parse_servers(conf["modelServers"])
+    print("restore model...")
+    model_servers = RayContext.parse_servers(conf["modelServers"])    
     model_binary = RayContext.collect_from(model_servers)
     streaming_tar.save_rows_as_file(model_binary,target_dir)
+    print(f"Restore model done.")
 
 
 class Inference:
