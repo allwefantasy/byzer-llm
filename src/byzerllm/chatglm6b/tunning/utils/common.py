@@ -141,8 +141,9 @@ def load_pretrained(
 
     if model_args.checkpoint_dir is not None: # load fine-tuned model from checkpoint
         for checkpoint_dir in model_args.checkpoint_dir:
-            if not os.path.isfile(os.path.join(checkpoint_dir, FINETUNING_ARGS_NAME)):
-                raise ValueError("The fine-tuning arguments are not found in the provided dictionary.")
+            meta_file = os.path.join(checkpoint_dir, FINETUNING_ARGS_NAME)
+            if not os.path.isfile(meta_file):
+                raise ValueError(f"The fine-tuning arguments are not found in the provided dictionary({meta_file}). ")
         logger.info("Load fine-tuned model from checkpoint(s): {}".format(",".join(model_args.checkpoint_dir)))
         finetuning_args = torch.load(os.path.join(model_args.checkpoint_dir[0], FINETUNING_ARGS_NAME))
 
@@ -267,30 +268,13 @@ def prepare_data(
 
         logger.info("Loading dataset {}...".format(dataset_info))
 
-        if dataset_info.load_from == "hf_hub":
-            raw_datasets = load_dataset(dataset_info.dataset_name, cache_dir=model_args.cache_dir)
-        elif dataset_info.load_from == "script":
-            raw_datasets = load_dataset(
-                os.path.join(data_args.dataset_dir, dataset_info.dataset_name),
-                cache_dir=model_args.cache_dir
-            )
-        elif dataset_info.load_from == "file":
-            data_file = os.path.join(data_args.dataset_dir, dataset_info.file_name) # support json, jsonl and csv
-            extension = dataset_info.file_name.split(".")[-1]
-
-            if dataset_info.file_sha1 is not None:
-                checksum(data_file, dataset_info.file_sha1)
-            else:
-                logger.warning("Checksum failed: missing SHA-1 hash value in dataset_info.")
-
-            raw_datasets = load_dataset(
-                extension,
-                data_files=data_file,
-                cache_dir=model_args.cache_dir,
-                use_auth_token=True if model_args.use_auth_token else None
-            )
-        else:
-            raise NotImplementedError
+        data_file = os.path.join(data_args.dataset_dir, dataset_info.file_name) # support json, jsonl and csv            
+        extension = dataset_info.file_name.split(".")[-1]
+        print(f"load file===: {data_file} {extension}")
+        raw_datasets = load_dataset("json", 
+        data_files=data_file, 
+        data_dir=data_args.dataset_dir,
+        cache_dir=model_args.cache_dir)
 
         dataset = raw_datasets[data_args.split]
 

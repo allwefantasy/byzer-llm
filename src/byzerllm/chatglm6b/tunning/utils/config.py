@@ -120,33 +120,16 @@ class DataTrainingArguments:
         metadata={"help": "A prefix to add before every source text (useful for T5 models)."}
     )
 
-    def __post_init__(self): # support mixing multiple datasets
-        dataset_names = [ds.strip() for ds in self.dataset.split(",")]
-        dataset_info = json.load(open(os.path.join(self.dataset_dir, "dataset_info.json"), "r"))
-
+    def __post_init__(self): # support mixing multiple datasets        
         self.dataset_list = []
-        for name in dataset_names:
-            if name not in dataset_info:
-                raise ValueError("Undefined dataset {} in dataset_info.json.".format(name))
 
-            if "hf_hub_url" in dataset_info[name]:
-                dataset_attr = DatasetAttr("hf_hub", dataset_name=dataset_info[name]["hf_hub_url"])
-            elif "script_url" in dataset_info[name]:
-                dataset_attr = DatasetAttr("script", dataset_name=dataset_info[name]["script_url"])
-            else:
-                dataset_attr = DatasetAttr(
+        dataset_attr = DatasetAttr(
                     "file",
-                    file_name=dataset_info[name]["file_name"],
-                    file_sha1=dataset_info[name]["file_sha1"] if "file_sha1" in dataset_info[name] else None
+                    file_name="data.jsonl",
+                    file_sha1= None
                 )
-
-            if "columns" in dataset_info[name]:
-                dataset_attr.prompt_column = dataset_info[name]["columns"]["prompt"]
-                dataset_attr.query_column = dataset_info[name]["columns"]["query"]
-                dataset_attr.response_column = dataset_info[name]["columns"]["response"]
-                dataset_attr.history_column = dataset_info[name]["columns"]["history"]
-
-            self.dataset_list.append(dataset_attr)
+        self.dataset_list.append(dataset_attr)        
+        
 
 
 @dataclass
