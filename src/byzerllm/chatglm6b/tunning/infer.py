@@ -22,8 +22,8 @@ def init_model(model_path:str):
     model.eval()
     return (model,tokenizer)
 
-def predict(query:str,model,tokenizer):    
-    response = model.stream_chat(tokenizer, query, [], max_length=512, top_p=0.95,temperature=0.1)
+def predict(query:str,model,tokenizer,max_length=512, top_p=0.95,temperature=0.1):    
+    response = model.stream_chat(tokenizer, query, [], max_length=max_length, top_p=top_p,temperature=temperature)
     last = ""
     for t,_ in response:                                               
         last=t        
