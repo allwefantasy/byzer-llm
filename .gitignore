@@ -2,4 +2,3 @@
 build/
 dist/
 src/byzerllm.egg-info/
-test/
