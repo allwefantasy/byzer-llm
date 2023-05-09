@@ -58,15 +58,13 @@ def voice_to_text(rate,t:np.ndarray)->List[str]:
 
 def talk(t:str,state:UserState) -> str:
     prompt = '''
-    你是威廉学院的一名外教，名字叫 William。 你的任务是指导我英文，包括
-    为我提供学习计划，解决困扰。
-    
-    下面内容不要直接对我说，但是你需要自己记住，当我咨询你翻译的时候，你需要先用中文回答说好的。然后再说翻译的内容。
-    当你翻译完成后，你需要重新说中文。
-    
+    你是威廉学院(college William)的一名外教，名字叫 William。 你的任务是指导我英文，包括
+    为我提供学习计划，解决困扰。      
     ''';
-    state.add_prompt(t)    
-    s = chat(prompt + state.get_prompt(),chatbot_m,chatbot_t)
+    state.add_prompt(t)  
+    s = prompt + state.get_prompt()
+    print("with prompt:",s)  
+    s = chat(s,chatbot_m,chatbot_t)
     return s
 
 def is_chinese(t:str) -> bool:
@@ -104,17 +102,33 @@ def not_toolong(t:str) -> List[str]:
     else:
         return [t]   
 
-def text_to_voice(t:str) -> np.ndarray:    
+def execute_parallel(fn,a,num_workers=3):
+    import concurrent.futures
+
+    def process_chunk(chunk):
+        return [fn(*m) for m in chunk]
+
+    def split_list(lst, n):
+        k, m = divmod(len(lst), n)
+        return [lst[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n)]    
+
+    # Split the list into three chunks
+    chunks = split_list(a,num_workers)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:    
+        results = list(executor.map(lambda x: process_chunk(x), chunks))
+    return results 
+
+def text_to_voice(t1:str) -> np.ndarray:      
     from langdetect import detect as detect_language     
+    t = t1.replace("\n","")
     segments = []
     for s in raw_sentence(t):
         ss = not_toolong(s)
         for sss in ss:
             if len(sss.strip()) > 0:
-                segments.append(sss)
-    print("sentences to:",segments)
-    temps = []
-
+                segments.append(sss)    
+    temps = []    
     for s in segments: 
       lang = ""       
       try:
@@ -125,9 +139,12 @@ def text_to_voice(t:str) -> np.ndarray:
       speaker = ZH_SPEAKER
       if lang == "en":
           speaker = EN_SPEAKER
+      
+      print(f"{speaker} will speek: {s}")
+      temps.append((s, speaker))
 
-      temps.append(text_to_voice_m.generate(s, speaker))
-    return np.concatenate(temps)    
+    result = execute_parallel(text_to_voice_m.generate,temps,6) #[text_to_voice_m.generate(*temp) for temp in temps]    
+    return np.concatenate([np.concatenate(r) for r in result if len(r) > 0])    
 
 def html_audio_autoplay(bytes: bytes) -> object:
     """Creates html object for autoplaying audio at gradio app.
@@ -172,7 +189,7 @@ def convert_to_16_bit_wav(data):
 
 def main_note(audio,state: UserState):
     if audio is None:
-        return None,"",state.output_state,state
+        return "",state.output_state,state
 
     rate, y = audio        
     print("voice to text:")
@@ -180,12 +197,12 @@ def main_note(audio,state: UserState):
     t = " ".join(voice_to_text(rate,y))
 
     if len(t.strip()) == 0:
-        return None,"",state.output_state,state
-
-    print("text:",t)
+        return "",state.output_state,state
+    
     print("talk to chatglm6b:")
     s = talk(t,state)    
     print("chatglm6b:",s)
+    state.add_prompt(s)
     print("text to voice")
     
     message = f"你: {t}\n\n外教: {s}\n"
@@ -199,13 +216,13 @@ def main_note(audio,state: UserState):
     html = html_audio_autoplay(wav_file.getvalue())
 
     state.add_output(message)
-    return (SAMPLE_RATE,m),html,state.output_state,state
+    return html,state.output_state,state
 
 state = gr.State(UserState())
 demo = gr.Interface(
     fn=main_note,
     inputs = [gr.Audio(source="microphone"),state],
-    outputs= [gr.Audio(),"html",gr.TextArea(lines=30, placeholder="message"),state],
+    outputs= ["html",gr.TextArea(lines=30, placeholder="message"),state],
     examples=[
         [os.path.join(os.path.abspath(''),"audio/recording1.wav")],
         [os.path.join(os.path.abspath(''),"audio/cantina.wav")],
