@@ -29,8 +29,10 @@ setup(
     long_description=readme_contents,
     long_description_content_type="text/markdown",
     package_dir={"": "src"},
-    packages=find_packages("src"),
-    package_data={},
+    packages=find_packages("src"),    
+    package_data={
+        "byzerllm":['bark/assets/**/*']
+    },
     install_requires=install_requires,
     classifiers=[        
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
