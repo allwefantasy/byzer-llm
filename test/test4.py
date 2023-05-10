@@ -6,6 +6,7 @@ from scipy.fftpack import fft
 from typing import List
 
 from base64 import b64encode
+from typing import List,Any,Tuple
 
 import gradio as gr
 from byzerllm.bark.bark_voice import Inference, build_void_infer, ZH_SPEAKER, EN_SPEAKER
@@ -27,21 +28,21 @@ device="cuda",device_index=1, compute_type="float16")
 chatbot_m,chatbot_t = init_chatbot_model("/my8t/byzerllm/jobs/checkpoint-17000/pretrained_model")
 
 class UserState:
-    def __init__(self,history=[],output_state:str="") -> None:
+    def __init__(self,history:List[Tuple[str,str]]=[],output_state:str="") -> None:
         self.history = history
         self.output_state = output_state
 
-    def add_prompt(self,prompt):
-        self.history.append(prompt) 
-
+    def add_chat(self,query,response):
+        self.history.append((query,response)) 
         if len(self.history) > 10:
-            self.history = self.history[len(self.history)-10:]
-
-    def get_prompt(self):
-        return " ".join(self.history)
+            self.history = self.history[len(self.history)-10:]    
 
     def add_output(self,message):        
         self.output_state = f"{self.output_state}\n\n{message}" 
+
+    def clear(self):
+        self.history = []
+        self.output_state = ""    
 
 def voice_to_text(rate,t:np.ndarray)->List[str]:
 
@@ -60,11 +61,11 @@ def talk(t:str,state:UserState) -> str:
     prompt = '''
     你是威廉学院(college William)的一名外教，名字叫 William。 你的任务是指导我英文，包括
     为我提供学习计划，解决困扰。      
-    ''';
-    state.add_prompt(t)  
-    s = prompt + state.get_prompt()
+    ''';    
+    s = prompt + t
     print("with prompt:",s)  
-    s = chat(s,chatbot_m,chatbot_t)
+    s = chat(s,chatbot_m,chatbot_t,history = state.history)
+    state.add_chat(t,s)
     return s
 
 def is_chinese(t:str) -> bool:
@@ -187,7 +188,7 @@ def convert_to_16_bit_wav(data):
         )
     return data
 
-def main_note(audio,state: UserState):
+def main_note(audio,text,state: UserState):
     if audio is None:
         return "",state.output_state,state
 
@@ -196,15 +197,17 @@ def main_note(audio,state: UserState):
 
     t = " ".join(voice_to_text(rate,y))
 
-    if len(t.strip()) == 0:
+    if len(t.strip()) == 0 :        
+        return "",state.output_state,state
+
+    if  t.strip()=="重新开始":
+        state.clear()
         return "",state.output_state,state
     
     print("talk to chatglm6b:")
-    s = talk(t,state)    
-    print("chatglm6b:",s)
-    state.add_prompt(s)
-    print("text to voice")
-    
+    s = talk(t + " " + text,state)    
+    print("chatglm6b:",s)    
+    print("text to voice")    
     message = f"你: {t}\n\n外教: {s}\n"
     
     m = text_to_voice(s)
@@ -221,13 +224,12 @@ def main_note(audio,state: UserState):
 state = gr.State(UserState())
 demo = gr.Interface(
     fn=main_note,
-    inputs = [gr.Audio(source="microphone"),state],
+    inputs = [gr.Audio(source="microphone"),gr.TextArea(lines=30, placeholder="message"),state],
     outputs= ["html",gr.TextArea(lines=30, placeholder="message"),state],
     examples=[
         [os.path.join(os.path.abspath(''),"audio/recording1.wav")],
         [os.path.join(os.path.abspath(''),"audio/cantina.wav")],
-    ],
-    live=True,
+    ],    
     interpretation=None,
     allow_flagging="never",
 )

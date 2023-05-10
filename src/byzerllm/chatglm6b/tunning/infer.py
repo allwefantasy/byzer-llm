@@ -5,7 +5,7 @@ from .utils.config import (
     FinetuningArguments
 )
 from transformers import HfArgumentParser
-from typing import List,Any
+from typing import List,Any,Tuple
 import os
 
 def init_model(model_path:str):
@@ -22,8 +22,8 @@ def init_model(model_path:str):
     model.eval()
     return (model,tokenizer)
 
-def predict(query:str,model,tokenizer,max_length=512, top_p=0.95,temperature=0.1):    
-    response = model.stream_chat(tokenizer, query, [], max_length=max_length, top_p=top_p,temperature=temperature)
+def predict(query:str,model,tokenizer,max_length=512, top_p=0.95,temperature=0.1,history:List[Tuple[str,str]]=[]):    
+    response = model.stream_chat(tokenizer, query, history, max_length=max_length, top_p=top_p,temperature=temperature)
     last = ""
     for t,_ in response:                                               
         last=t        
