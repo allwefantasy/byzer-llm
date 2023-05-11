@@ -1,8 +1,6 @@
-from math import log2, pow
 import os
 
 import numpy as np
-from scipy.fftpack import fft
 from typing import List
 
 from base64 import b64encode
@@ -10,20 +8,22 @@ from typing import List,Any,Tuple
 
 import gradio as gr
 from byzerllm.bark.bark_voice import Inference, build_void_infer, ZH_SPEAKER, EN_SPEAKER
+from byzerllm.whisper.whisper_inference import Inference as WhisperInference
 from byzerllm.bark.generation import SAMPLE_RATE
 from scipy.io.wavfile import write as write_wav
-from faster_whisper import WhisperModel
 from byzerllm.chatglm6b.tunning.infer import init_model as init_chatbot_model,predict as chat
 from byzerllm.bark.generation import SAMPLE_RATE
 
 
+voice_to_text = WhisperInference("/home/winubuntu/projects/whisper-models/faster-whisper-large-v2")
 
 text_to_voice_m = build_void_infer(
     model_dir="/home/winubuntu/projects/bark-model",
     tokenizer_dir="/home/winubuntu/projects/bert-base-multilingual-cased")
 
-voice_to_text_m = WhisperModel("/home/winubuntu/projects/whisper-models/faster-whisper-large-v2", 
-device="cuda",device_index=1, compute_type="float16")
+
+# WhisperModel("/home/winubuntu/projects/whisper-models/faster-whisper-large-v2", 
+# device="cuda",device_index=1, compute_type="float16")
 
 chatbot_m,chatbot_t = init_chatbot_model("/my8t/byzerllm/jobs/checkpoint-17000/pretrained_model")
 
@@ -43,18 +43,6 @@ class UserState:
     def clear(self):
         self.history = []
         self.output_state = ""    
-
-def voice_to_text(rate,t:np.ndarray)->List[str]:
-
-    from scipy.io.wavfile import write as write_wav
-    import io
-    byte_file = io.BytesIO()
-    write_wav(byte_file, rate, t)
-
-    segments, info = voice_to_text_m.transcribe(byte_file, beam_size=5,
-      initial_prompt="以下是普通话的句子"
-    )
-    return [segment.text for segment in segments]
     
 
 def talk(t:str,state:UserState) -> str:
@@ -67,85 +55,7 @@ def talk(t:str,state:UserState) -> str:
     s = chat(s,chatbot_m,chatbot_t,history = state.history)
     state.add_chat(t,s)
     return s
-
-def is_chinese(t:str) -> bool:
-    _is_chinese = True
-    l = t.split(" ")
-    element_num_15 = len([s for s in l if len(s.strip()) < 15])
-    if element_num_15/len(l) > 0.9:
-        _is_chinese = False
-    return _is_chinese    
-
-def raw_sentence(t:str) -> List[str]:
-    import re       
-    pattern = r'[。；：?！.:;?!]'  # regular expression pattern to match the punctuation marks
-    # split the string based on the punctuation marks
-    segments = [s for s in re.split(pattern, t) if len(s.strip()) > 0]
-    return segments
-
-def not_toolong(t:str) -> List[str]: 
-    # split the string by white space 
-    # check the length of every segment which is greater than 20, get the count
-    # use the count to divide the length of the list
-    l = t.split(" ")        
-    _is_chinese = is_chinese(t)
-    
-    if(_is_chinese and len(t) > 30):
-        import re           
-        pattern = r'[。；：，?！,.:;?!]'         
-        segments = [s for s in re.split(pattern, t) if len(s.strip()) > 0]
-        return segments
-    elif(not _is_chinese and len(l) > 30):
-        import re           
-        pattern = r'[。；：，?！,.:;?!]'         
-        segments = [s for s in re.split(pattern, t) if len(s.strip()) > 0]
-        return segments    
-    else:
-        return [t]   
-
-def execute_parallel(fn,a,num_workers=3):
-    import concurrent.futures
-
-    def process_chunk(chunk):
-        return [fn(*m) for m in chunk]
-
-    def split_list(lst, n):
-        k, m = divmod(len(lst), n)
-        return [lst[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n)]    
-
-    # Split the list into three chunks
-    chunks = split_list(a,num_workers)
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:    
-        results = list(executor.map(lambda x: process_chunk(x), chunks))
-    return results 
-
-def text_to_voice(t1:str) -> np.ndarray:      
-    from langdetect import detect as detect_language     
-    t = t1.replace("\n","")
-    segments = []
-    for s in raw_sentence(t):
-        ss = not_toolong(s)
-        for sss in ss:
-            if len(sss.strip()) > 0:
-                segments.append(sss)    
-    temps = []    
-    for s in segments: 
-      lang = ""       
-      try:
-        lang = detect_language(s)
-      except Exception:
-        pass
-
-      speaker = ZH_SPEAKER
-      if lang == "en":
-          speaker = EN_SPEAKER
-      
-      print(f"{speaker} will speek: {s}")
-      temps.append((s, speaker))
-
-    result = execute_parallel(text_to_voice_m.generate,temps,6) #[text_to_voice_m.generate(*temp) for temp in temps]    
-    return np.concatenate([np.concatenate(r) for r in result if len(r) > 0])    
+  
 
 def html_audio_autoplay(bytes: bytes) -> object:
     """Creates html object for autoplaying audio at gradio app.
@@ -210,7 +120,8 @@ def main_note(audio,text,state: UserState):
     print("text to voice")    
     message = f"你: {t}\n\n外教: {s}\n"
     
-    m = text_to_voice(s)
+    m = text_to_voice_m.text_to_voice(s)
+    
     from scipy.io.wavfile import write as write_wav
     import io
     wav_file = io.BytesIO()        
