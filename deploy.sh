@@ -1,5 +1,5 @@
 project=byzerllm
-version=0.0.3
+version=0.0.4
 rm -rf ./dist/*
 pip uninstall -y ${project}
 python setup.py sdist bdist_wheel
