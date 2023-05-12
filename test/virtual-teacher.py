@@ -144,7 +144,7 @@ def main_note(audio,text,state: UserState):
     rate, y = audio        
     print("voice to text:")
 
-    t = " ".join(voice_to_text(rate,y))
+    t = voice_to_text(rate,y)
 
     if len(t.strip()) == 0 :        
         return "",state.output_state,state

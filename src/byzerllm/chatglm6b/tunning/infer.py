@@ -32,3 +32,4 @@ def predict(query:str,model,tokenizer,max_length=512, top_p=0.95,temperature=0.1
 def extract_history(input)-> List[Tuple[str,str]]:
     history = input.get("history",[])
     return [(item["query"],item["response"]) for item in history]
+    
