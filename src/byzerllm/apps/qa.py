@@ -124,11 +124,13 @@ class VectorDB:
         for i in items:
             if i.is_file():
                with open(i.as_posix(),"r",encoding="utf-8") as f:
-                 doc = json.loads(f.readline())
-                 docs.append(Document(page_content=doc["page_content"],metadata={ "source":doc["source"]}))
+                 for line in f:
+                    doc = json.loads(line)
+                    docs.append(Document(page_content=doc["page_content"],metadata={ "source":doc["source"]}))
         
         text_splitter = CharacterTextSplitter(chunk_size=600, chunk_overlap=30)
-        split_docs = text_splitter.split_documents(docs)                
+        split_docs = text_splitter.split_documents(docs) 
+        print(f"Build vector db in {self.db_dir}. total docs: {len(docs)} total split docs: {len(split_docs)}")               
         db = FAISS.from_documents(split_docs, self.embeddings)
         db.save_local(self.db_dir) 
 
