@@ -147,6 +147,9 @@ class ByzerLLMQA:
     def query(self,prompt:str,q:str):        
         docs = self.db.query("",q)
         newq = "".join([doc.page_content for doc in docs])
+        if prompt == "show query":
+            print(newq)
+            prompt = ""
         v = self.client.chat(prompt + newq + q,[])
         return v
 
