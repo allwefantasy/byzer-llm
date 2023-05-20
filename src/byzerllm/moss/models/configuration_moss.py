@@ -75,7 +75,7 @@ class MossConfig(PretrainedConfig):
     def __init__(
         self,
         vocab_size=107008,
-        n_positions=2048,
+        n_positions=8096,
         n_ctx=2048,
         n_embd=4096,
         n_layer=28,

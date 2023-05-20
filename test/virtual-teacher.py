@@ -42,7 +42,7 @@ def voice_to_text(rate:int, t:np.ndarray)->str:
 def text_to_voice(s:str)->np.ndarray:    
     
     json_data = json.dumps([
-        {"instruction":s}
+        {"instruction":s[0:20]}
     ])
     response = request('''
      select text_to_voice(array(feature)) as value

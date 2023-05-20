@@ -52,6 +52,7 @@ class Inference:
     def __init__(
         self,
         model: Optional[MossForCausalLM] = None,
+        tokenizer: Optional[MossTokenizer] = None,
         model_dir: Optional[str] = None,
         parallelism: bool = True,
         device_map: Optional[Union[str, List[int]]] = None,
@@ -75,8 +76,11 @@ class Inference:
                 if parallelism
                 else MossForCausalLM.from_pretrained(self.model_dir).to("cuda")
             )
-
-        self.tokenizer = MossTokenizer.from_pretrained(self.model_dir)
+  
+        if tokenizer:
+            self.tokenizer = tokenizer
+        else:
+            self.tokenizer = MossTokenizer.from_pretrained(self.model_dir)
 
         self.prefix = PREFIX
         self.default_paras = DEFAULT_PARAS
@@ -339,12 +343,12 @@ class Inference:
         inputs = {
             "input_ids": input_ids,
             "attention_mask": attention_mask,
-            "past_key_values": past_key_values,
+            "past_key_values": past_key_values            
         }
         with torch.no_grad():
             outputs: BaseModelOutputWithPast = self.model(**inputs)
 
-        return outputs.logits, outputs.past_key_values
+        return outputs.logits, outputs.past_key_values    
 
     def __call__(self, input):
         return self.forward(input)
