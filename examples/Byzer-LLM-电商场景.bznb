@@ -12,7 +12,7 @@
     "job_id" : null
   }, {
     "id" : "123",
-    "content" : "-- 安装 Byzer 相关插件\n\n-- 可视化插件\n!plugin app add - \"byzer-yaml-visualization-3.3\";\n\n-- shell命令插件\n!plugin app add - \"mlsql-shell-3.3\";\n\n-- excel插件\n!plugin app add \"tech.mlsql.plugins.ds.MLSQLExcelApp\" \"mlsql-excel-3.3\";\n\n-- Byzer-LLM 插件\n!plugin app add - \"byzer-llm-3.3\";",
+    "content" : "-- 安装 Byzer 相关插件\n\n-- 可视化插件\n-- !plugin app add - \"byzer-yaml-visualization-3.3\";\n\n-- shell命令插件\n!plugin app add - \"mlsql-shell-3.3\";\n\n-- excel插件\n!plugin app add \"tech.mlsql.plugins.ds.MLSQLExcelApp\" \"mlsql-excel-3.3\";\n\n-- Byzer-LLM 插件\n!plugin app add - \"byzer-llm-3.3\";",
     "job_id" : "3deda745-292f-4a83-ab39-bcbd4d5ba726"
   }, {
     "id" : "125",
@@ -25,30 +25,30 @@
   }, {
     "id" : "143",
     "content" : "-- 配置一些环境参数\n!python conf \"rayAddress=127.0.0.1:10001\";\n!python conf \"pythonExec=/home/winubuntu/miniconda3/envs/byzerllm-desktop/bin/python\";\n!python conf \"dataMode=model\";\n!python conf \"runIn=driver\";\n!python conf \"schema=st(field(value,string))\";\n\n!python conf \"num_gpus=1\";\n!python conf \"maxConcurrency=1\";\n!python conf \"standalone=true\";",
-    "job_id" : "ef1d0730-9e90-4104-b3ec-155290685ebb"
+    "job_id" : "3b44a334-fc75-4db1-a081-abf9205a43f3"
   }, {
     "id" : "127",
-    "content" : "--%markdown## 部署原始预训练大模型\n\n我们部署下模型，然后看看原始模型的效果。\n\n| Parameter | Description |\n|--|--|\n|`action=\"infer\"`| The action to perform - here running inference|\n|`pretrainedModelType=\"chatglm\"`| The model type - here ChatGLM. moss by default|\n|`localPathPrefix=\"/my8t/byzerllm/jobs\"`  | The local path you can specified to store the model in case /tmp is too small|\n|`modelWaitServerReadyTimeout=\"300\"`| The timeout in seconds when waiting for the model server|\n|`quantizationBit=\"true\"`|Whether to use quantization. This option is only works for ChatGLM. The Moss will auto detect according the model files|\n|`udfName=\"origin_model_predict\"`|The name of the user-defined predict function|\n|`modelTable=\"d_chatglm_6b_model\"`|The name of the model table|\n\n\n",
+    "content" : "--%markdown## 部署原始预训练大模型\n\n我们部署下模型，然后看看原始模型的效果。\n\n| Parameter | Description |\n|--|--|\n|`action=\"infer\"`| The action to perform - here running inference|\n|`pretrainedModelType=\"chatglm\"`| The model type - here ChatGLM. moss by default|\n|`localPathPrefix=\"/my8t/byzerllm/jobs\"`  | The local path you can specified to store the model in case /tmp is too small|\n|`modelWaitServerReadyTimeout=\"300\"`| The timeout in seconds when waiting for the model server|\n|`quantizationBit=\"true\"`|Whether to use quantization. This option is only works for ChatGLM. The Moss will auto detect according the model files|\n|`udfName=\"origin_model_predict\"`|The name of the user-defined predict function|\n|`modelTable=\"d_chatglm_6b_model\"`|The name of the model table|\n\n如果是单机部署，为了快速加载模型，也可以配置如下参数：\n\n```\nlocalModelDir=\"/home/winubuntu/projects/glm-model/chatglm-6b-model\"\n```\n\n指定 Ray 节点的本地地址，同时修改 modelTable=\"command\"\n",
     "job_id" : null
   }, {
     "id" : "126",
-    "content" : "-- 从数据湖加载模型\nload delta.`ai_model.chatglm_6b_model` as d_chatglm_6b_model;\n\n-- 模型转化为预测函数，方便我们看原始模型的效果\nrun command as LLM.`` where \naction=\"infer\"\n-- chatglm/moss\nand pretrainedModelType=\"chatglm\"\n-- local path where we can storage the model in case the disk(tmp) is too small\nand localPathPrefix=\"/my8t/byzerllm/jobs\"\nand modelWaitServerReadyTimeout=\"300\"\nand quantizationBit=\"true\"\nand udfName=\"origin_model_predict\"\nand modelTable=\"d_chatglm_6b_model\";",
-    "job_id" : "01d44ea3-26bd-4d29-96d2-311c4a485944"
+    "content" : "-- 从数据湖加载模型\nload delta.`ai_model.chatglm_6b_model` as d_chatglm_6b_model;\n\n-- 模型转化为预测函数，方便我们看原始模型的效果\nrun command as LLM.`` where \naction=\"infer\"\n-- chatglm/moss\nand pretrainedModelType=\"chatglm\"\n-- local path where we can storage the model in case the disk(tmp) is too small\nand localPathPrefix=\"/my8t/byzerllm/jobs\"\nand modelWaitServerReadyTimeout=\"300\"\nand quantizationBit=\"false\"\nand quantizationBitNum=\"4\"\nand udfName=\"origin_model_predict\"\nand modelTable=\"d_chatglm_6b_model\";",
+    "job_id" : "de7c30db-3e97-4042-8cde-1ccebfc5c157"
   }, {
     "id" : "129",
     "content" : "--%markdown## 在批处理中验证效果\n\nByzer 会把模型部署成 SQL 函数。考虑到Byzer 支持批处理，流式计算，这意味着你可以快速的利用模型\n大规模处理一些数据或者在诸如风控中迅速使用大模型的能力。\n\n这里，我们用 SQL 随意写了一个问题，让大模型来回答。",
     "job_id" : null
   }, {
     "id" : "128",
-    "content" : "-- 查看原始模型效果\nselect '{\n        \"instruction\":\"类型#裤*版型#宽松*风格#性感*图案#线条*裤型#阔腿裤\",\n        \"output\":\"NAN\"\n    }' as value as testData;\n\nselect origin_model_predict(array(value)) as r from testData as result; \n\nselect from_json(r[0],'array<struct<labels:string,predict:string>>')[0] as nr  from result as finalResult;\n\nselect nr.labels,nr.predict from finalResult as output;\n",
-    "job_id" : "e8596811-b1ed-4c4b-a129-99b7cddeec98"
+    "content" : "-- 查看原始模型效果\nselect to_json(map(\n         \"instruction\",\"类型#裤*版型#宽松*风格#性感*图案#线条*裤型#阔腿裤\",\n        \"output\",\"NAN\")) as value as testData;\n\nselect origin_model_predict(array(value)) as r from testData as result; \n\nselect from_json(r[0],'array<struct<labels:string,predict:string>>')[0] as nr  from result as finalResult;\n\nselect nr.predict from finalResult as output;\n",
+    "job_id" : "5d14b42e-0595-489b-ae0c-c43624af7ae6"
   }, {
     "id" : "132",
     "content" : "--%markdown## 对接业务库\n\nByzer 因为是面向 Data + AI 的 Infra, 所以 Byzer 无侵入式的对接市面主流数据源。\n这包括：\n\n1. 各种关系型数据库， MySQL, Oracle, DB2 等等。\n2. 各种对象存储的各种数据格式。诸如 阿里云，华为云，亚马逊，微软云上比如 Json, Csv, Parquet, Excel等各种格式。\n\n此外能够使用标准 SQL 对这些数据源的数据进行高效率混算。 ",
     "job_id" : null
   }, {
     "id" : "131",
-    "content" : "-- 我们从已有的一个业务库加载数据，并且修改字段名称\n\nload jdbc.`business.tunningData` \nwhere url=\"jdbc:mysql://127.0.0.1:3306/business?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false&useSSL=false\"\nand driver=\"com.mysql.jdbc.Driver\"\nand user=\"root\"\nand password=\"${PASSWORD}\"\nas tunningData;\n\nselect content as instruction,\"\" as input,summary as output from tunningData as \nformatTunningData;",
+    "content" : "-- 我们从已有的一个业务库加载数据，并且修改字段名称\n\nload jdbc.`business.tunningData` \nwhere url=\"jdbc:mysql://127.0.0.1:3306/business?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false&useSSL=false\"\nand driver=\"com.mysql.jdbc.Driver\"\nand user=\"root\"\nand password=\"${PASSWORD}\"\nas tunningData;\n\nselect content as instruction,\"\" as input,summary as output \nfrom tunningData as formatTunningData;",
     "job_id" : "e270261d-1d2b-42b2-b405-70d43d8a2539"
   }, {
     "id" : "144",
@@ -57,18 +57,18 @@
   }, {
     "id" : "146",
     "content" : "load excel.`/tmp/upload/tunningData.xlsx` \nwhere header=\"true\" \nas tunningData;\n\nselect content as instruction,\"\" as input,summary as output \nfrom tunningData \nas formatTunningData;",
-    "job_id" : "9e93598f-bd79-47b8-9d99-1460f0205d67"
+    "job_id" : "4094c9bd-046c-48e6-aae8-c8f767facf59"
   }, {
     "id" : "147",
-    "content" : "--%markdown## 给大模型注入业务数据\n\n通过对前面数据的额处理，接着我们就可以直接把这些数据\n注入到大模型里面了。\n\n注入完成后会产生一个新的大模型，我们同样可以保存到数据湖按库表方式来管理。\n\n| Parameter | Description | \n|--|--|\n|`modelWaitServerReadyTimeout=\"300\"`| The timeout in seconds when waiting for the model server| \n|`dataWaitServerReadyTimeout=\"300\"`| The timeout in seconds when waiting for the data server|\n|`localPathPrefix=\"/my8t/byzerllm/tmp\"`| The local path to store temporary data e.g the original model, tunned model,tranining data|\n|`model=\"d_chatglm_6b_model\"`| The name of the model|\n|`inputTable=\"formatTunningData\"`| The name of the trianning data table|\n|`devices=\"0\"`| The GPU devices to use|\n|`maxSteps=\"3000\"`|The maximum number of steps|\n|`saveSteps=\"1000\"`|The number of steps per save checkpoint|\n|`outputTable=\"tunnignModel3000\"`|The name of the output table|\n",
+    "content" : "--%markdown## 给大模型注入业务数据\n\n通过对前面数据的额处理，接着我们就可以直接把这些数据\n注入到大模型里面了。\n\n注入完成后会产生一个新的大模型，我们同样可以保存到数据湖按库表方式来管理。\n\n| Parameter | Description | \n|--|--|\n|`modelWaitServerReadyTimeout=\"300\"`| The timeout in seconds when waiting for the model server| \n|`dataWaitServerReadyTimeout=\"300\"`| The timeout in seconds when waiting for the data server|\n|`localPathPrefix=\"/my8t/byzerllm/tmp\"`| The local path to store temporary data e.g the original model, tunned model,tranining data|\n|`finetuneType=\"lora\"`| finetune way: lora/p_tuning/freeze|\n|`model=\"d_chatglm_6b_model\"`| The name of the model|\n|`inputTable=\"formatTunningData\"`| The name of the trianning data table|\n|`devices=\"0\"`| The GPU devices to use|\n|`maxSteps=\"3000\"`|The maximum number of steps|\n|`saveSteps=\"1000\"`|The number of steps per save checkpoint|\n|`outputTable=\"tunnignModel3000\"`|The name of the output table|\n\n\n如果是单机部署，为了快速加载模型，也可以配置如下参数：\n\n```\nlocalModelDir=\"/home/winubuntu/projects/glm-model/chatglm-6b-model\"\n```\n\n指定 Ray 节点的本地地址，同时修改 modelTable=\"command\"\n",
     "job_id" : null
   }, {
     "id" : "133",
-    "content" : "-- 测试模型微调\n!python conf \"schema=file\";\n!python conf \"runIn=executor\";\n\nrun command as LLM.`` where \nmodelWaitServerReadyTimeout=\"300\"\nand dataWaitServerReadyTimeout=\"300\"\nand pretrainedModelType=\"chatglm\"\nand localPathPrefix=\"/my8t/byzerllm/tmp\"\nand model=\"d_chatglm_6b_model\"\nand inputTable=\"formatTunningData\"\nand devices=\"0\"\nand maxSteps=\"3000\"\nand saveSteps=\"1000\"\nand outputTable=\"tunnignModel3000\";\n\n-- 保存模型到数据湖\n-- tunnignModel\nsave overwrite tunnignModel3000 as delta.`ai_model.tunnignModel3000`;",
-    "job_id" : null
+    "content" : "load delta.`ai_model.chatglm_6b_model` as d_chatglm_6b_model;\n\n-- 测试模型微调\n!python conf \"schema=file\";\n!python conf \"runIn=executor\";\n\nrun command as LLM.`` where \n\nmodelWaitServerReadyTimeout=\"300\"\nand dataWaitServerReadyTimeout=\"300\"\nand localPathPrefix=\"/my8t/byzerllm/jobs\"\n\nand pretrainedModelType=\"chatglm\"\nand finetuneType=\"lora\"\n\nand model=\"d_chatglm_6b_model\"\nand inputTable=\"formatTunningData\"\n\nand devices=\"0\"\nand maxSteps=\"300\"\nand saveSteps=\"100\"\nand outputTable=\"tunnignModel300\";\n\n-- 保存模型到数据湖\n-- tunnignModel\nsave overwrite tunnignModel300 as delta.`ai_model.tunnignModel300`;",
+    "job_id" : "d66352ae-3a57-41ba-893d-349953d0ea51"
   }, {
     "id" : "137",
-    "content" : "--%markdown## 部署注入新知识的大模型\n\n我们现在可以把诸如了我们新数据的大模型部署成 SQL 函数方便在多场景中使用。\n使用方式和我们上面部署原始的模型是一致的。",
+    "content" : "--%markdown## 部署注入新知识的大模型\n\n我们现在可以把诸如了我们新数据的大模型部署成 SQL 函数方便在多场景中使用。\n使用方式和我们上面部署原始的模型是一致的。\n",
     "job_id" : null
   }, {
     "id" : "138",
@@ -96,7 +96,7 @@
     "job_id" : null
   }, {
     "id" : "142",
-    "content" : "\n-- 通过curl来验证我们也成功的将模型部署成了一个API服务\nset q = '''\"{\\\"instruction\\\":\\\"类型#裤*版型#宽松*风格#性感*图案#线条*裤型#阔腿裤,，性感风格,阔腿裤版型,宽松,线条,图案\\\",\\\"output\\\":\\\"NAN\\\"}\"''';\n\n!sh curl -XPOST 'http://127.0.0.1:9003/model/predict' -d 'sessionPerUser=true&owner=william&dataType=string&sql=select finetune_model_predict(array(feature)) as a &data=[${q}]';",
+    "content" : "\n-- 通过curl来验证我们也成功的将模型部署成了一个API服务\nset q = '''\"{\\\"instruction\\\":\\\"类型#裤*版型#宽松*风格#性感*图案#线条*裤型#阔腿裤\\\",\\\"output\\\":\\\"NAN\\\"}\"''';\n\n!sh curl -XPOST 'http://127.0.0.1:9003/model/predict' -d \n'sessionPerRequest=true&sessionPerUser=true&owner=william&dataType=string&sql=select finetune_model_predict(array(feature)) as a &data=[${q}]';",
     "job_id" : "b0e489f8-898d-46ad-8c96-d40b4f74641b"
   } ],
   "is_demo" : null
