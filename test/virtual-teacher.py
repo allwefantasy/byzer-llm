@@ -23,6 +23,8 @@ def request(sql:str,json_data:str)->str:
         'data': json_data
     }
     response = requests.post(url, data=data)
+    if response.status_code != 200:
+        raise Exception(response.text)
     return response.text
 
 
@@ -42,7 +44,7 @@ def voice_to_text(rate:int, t:np.ndarray)->str:
 def text_to_voice(s:str)->np.ndarray:    
     
     json_data = json.dumps([
-        {"instruction":s[0:20]}
+        {"instruction":s}
     ])
     response = request('''
      select text_to_voice(array(feature)) as value
@@ -159,17 +161,17 @@ def main_note(audio,text,state: UserState):
     print("text to voice")    
     message = f"你: {t}\n\n外教: {s}\n"
     
-    # m = text_to_voice(s)
+    m = text_to_voice(s)
     
-    # from scipy.io.wavfile import write as write_wav
-    # import io
-    # wav_file = io.BytesIO()        
-    # write_wav(wav_file, SAMPLE_RATE, convert_to_16_bit_wav(m))
-    # wav_file.seek(0)
-    # html = html_audio_autoplay(wav_file.getvalue())
+    from scipy.io.wavfile import write as write_wav
+    import io
+    wav_file = io.BytesIO()        
+    write_wav(wav_file, SAMPLE_RATE, convert_to_16_bit_wav(m))
+    wav_file.seek(0)
+    html = html_audio_autoplay(wav_file.getvalue())
 
     state.add_output(message)
-    return "",state.output_state,state
+    return html,state.output_state,state
 
 state = gr.State(UserState())
 demo = gr.Interface(
@@ -177,8 +179,6 @@ demo = gr.Interface(
     inputs = [gr.Audio(source="microphone"),gr.TextArea(lines=30, placeholder="message"),state],
     outputs= ["html",gr.TextArea(lines=30, placeholder="message"),state],
     examples=[
-        [os.path.join(os.path.abspath(''),"audio/recording1.wav")],
-        [os.path.join(os.path.abspath(''),"audio/cantina.wav")],
     ],    
     interpretation=None,
     allow_flagging="never",
