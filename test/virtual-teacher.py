@@ -17,6 +17,7 @@ def request(sql:str,json_data:str)->str:
     url = 'http://127.0.0.1:9003/model/predict'
     data = {
         'sessionPerUser': 'true',
+        'sessionPerRequest': 'true',
         'owner': 'william',
         'dataType': 'string',
         'sql': sql,

@@ -1,6 +1,6 @@
 from pyjava.api.mlsql import RayContext,PythonContext
 from pyjava.storage import streaming_tar
-from typing import Dict,Generator
+from typing import Dict,Generator,List
 from dataclasses import dataclass
 
 @dataclass

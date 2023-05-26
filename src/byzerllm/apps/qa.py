@@ -12,12 +12,25 @@ from pathlib import Path
 import ray
 import os
 from typing import Dict
-
+import uuid
+from ray.util.client.common import ClientActorHandle, ClientObjectRef
+from pyjava.storage  import streaming_tar
+import time
 
 @dataclass
 class ClientParams:
     owner:str="admin"
-    llm_func: str = "chat"    
+    llm_func: str = "chat"  
+
+@dataclass
+class BuilderParams:
+    chunk_size:int=600
+    chunk_overlap: int = 30
+    local_path_prefix: str = "/tmp/byzer-llm-qa-model"
+
+@dataclass
+class QueryParams:    
+    local_path_prefix: str = "/tmp/byzer-llm-qa-model"    
 
 
 class ByzerLLMClient:
@@ -116,8 +129,9 @@ class VectorDB:
             if _p.startswith("."):
                 return False
         return True
+
     
-    def save(self,path):        
+    def save(self,path,params:BuilderParams):        
         p = Path(path)
         docs = []
         items = list(p.rglob("**/*.json"))
@@ -128,29 +142,78 @@ class VectorDB:
                     doc = json.loads(line)
                     docs.append(Document(page_content=doc["page_content"],metadata={ "source":doc["source"]}))
         
-        text_splitter = CharacterTextSplitter(chunk_size=600, chunk_overlap=30)
+        text_splitter = CharacterTextSplitter(chunk_size=params.chunk_size, chunk_overlap=params.chunk_overlap)
         split_docs = text_splitter.split_documents(docs) 
         print(f"Build vector db in {self.db_dir}. total docs: {len(docs)} total split docs: {len(split_docs)}")               
         db = FAISS.from_documents(split_docs, self.embeddings)
         db.save_local(self.db_dir) 
 
-    def query(self,prompt:str,s:str)->List[Document]:
+    def build_from(self,path,params:BuilderParams):
+        return self.save(path,params) 
+
+
+    def merge_from(self,target_path:str):
+        if self.db is None:
+            self.db = FAISS.from_documents([], self.embeddings)            
+
+        self.db.merge_from(FAISS.load_local(target_path,self.embeddings))                
+
+    def query(self,prompt:str,s:str,k=4)->List[Document]:
         if not self.db:
            self.db = FAISS.load_local(self.db_dir,self.embeddings)        
-        result = self.db.similarity_search(prompt + s)
+        result = self.db.similarity_search_with_score(prompt + s,k=k)
         return result
 
+
+@ray.remote
+class ByzerLLMQAQueryWorker:
+    def __init__(self,refs:List[ClientObjectRef],client:ByzerLLMClient,query_param:QueryParams) -> None:        
+        self.client = client        
+        db_path = os.path.join(query_param.local_path_prefix,str(uuid.uuid4()))
+        streaming_tar.save_rows_as_file((ray.get(ref) for ref in refs),db_path)
+        self.db = VectorDB(db_path,self.client)
+                
+    def query(self,prompt:str,q:str,k=4):                                
+        return self.db.query(prompt,q,k)        
+
+
+
 class ByzerLLMQA:
-    def __init__(self,db_dir:str,client:ByzerLLMClient) -> None:
+    def __init__(self,db_dir:str,client:ByzerLLMClient,query_params:QueryParams) -> None:
         self.db_dir = db_dir
         self.client = client
-        self.db = VectorDB(self.db_dir,self.client)
+        self.query_params = query_params
+        self.db_dirs = [os.path.join(self.db_dir,item) for item in os.listdir(self.db_dir)]
+        self.dbs = []
+        for dd in self.db_dirs:
+            refs = [ray.put(item) for item in streaming_tar.build_rows_from_file(dd)]
+            self.dbs.append(ByzerLLMQAQueryWorker.remote(refs,self.client,self.query_params))                    
 
-    def query(self,prompt:str,q:str):        
-        docs = self.db.query("",q)
-        newq = "".join([doc.page_content for doc in docs])
+    def query(self,prompt:str,q:str,k=4): 
+         
+        docs_with_score = [] 
+
+        time1 = time.time()
+        submit_q = [db.query.remote("",q) for db in self.dbs]        
+        for q_func in submit_q:            
+            t = ray.get(q_func)
+            docs_with_score = docs_with_score + t
+                
+        print(f"VectorDB query time taken:{time.time()-time1}s. total chunks: {len(docs_with_score)}")   
+
+        docs = sorted(docs_with_score, key=lambda doc: doc[1],reverse=True)
+        newq = "".join([doc[0].page_content for doc in docs[0:k]])        
+
         if prompt == "show query":
-            print(newq)
+            print(":all docs ====== \n")
+            for doc in docs_with_score:
+                print(f"score:{doc[1]} => ${doc[0].page_content}") 
+
+            print(":merge docs ====== \n")    
+
+            for doc in docs:
+                print(f"score:{doc[1]} => ${doc[0].page_content}") 
+
             prompt = ""
         v = self.client.chat(prompt + newq + q,[])
         return v
@@ -159,31 +222,69 @@ class ByzerLLMQA:
         q = input["instruction"]
         prompt = input.get("prompt","")
         return self.query(prompt,q)
-    
 
 @ray.remote
-class RayByzerLLMQA:
-    def __init__(self,db_dir:str,client:ByzerLLMClient) -> None:
-        self.db_dir = db_dir
-        self.client = client        
+class RayByzerLLMQAWorker: 
+    def __init__(self,data_ref,client:ByzerLLMClient) -> None:
+        self.data_ref = data_ref        
+        self.client = client         
     
-    def save(self,data_refs):
+    def build(self,params:BuilderParams):
         from pyjava.api.mlsql import RayContext
         from pyjava.storage import streaming_tar
         import uuid
-        import shutil
-        data_path = "/tmp/model/{}".format(str(uuid.uuid4()))
+        import shutil        
+
+        data_path = os.path.join(params.local_path_prefix,str(uuid.uuid4()))
         
         if not os.path.exists(data_path):
             os.makedirs(data_path, exist_ok=True)
             
         with open(os.path.join(data_path,"data.json"),"w",encoding="utf-8") as f:
-            for item in RayContext.collect_from(data_refs):
+            for item in RayContext.collect_from([self.data_ref]):
                 f.write(json.dumps(item,ensure_ascii=False)+"\n")
+        
+        
+        db_dir = os.path.join(params.local_path_prefix,str(uuid.uuid4()))
+        db = VectorDB(db_dir,self.client)
+        db.build_from(data_path,params)
+        
+        refs = []
+        for item in  streaming_tar.build_rows_from_file(db_dir):
+            item_ref = ray.put(item)
+            refs.append(item_ref)
 
-        db = VectorDB(self.db_dir,self.client)
-        db.save(data_path)
-        return list(streaming_tar.build_rows_from_file(self.db_dir))
+        shutil.rmtree(data_path,ignore_errors=True)
+        shutil.rmtree(db_dir)
+        return refs
+
+# QA Vector Store Builder
+class RayByzerLLMQA:
+    def __init__(self,db_dir:str,client:ByzerLLMClient) -> None:
+        self.db_dir = db_dir
+        self.client = client        
+    
+    def save(self,data_refs,params=BuilderParams()):        
+        from pyjava.storage import streaming_tar                                      
+        data = []
+        workers = []
+
+        ## build vector db file in parallel
+        print(f"Start {len(data_refs)} workers to build vector db")
+        for data_ref in data_refs:            
+            worker = RayByzerLLMQAWorker.remote(data_ref,self.client)
+            workers.append(worker)
+            build_func = worker.build.remote(params)
+            data.append(build_func)
+
+        ## gather all db file and merge into one
+        print(f"gather all db file and merge into one {self.db_dir}")
+        for index, build_func in enumerate(data):
+            sub_data = ray.get(build_func)
+            temp_dir = os.path.join(self.db_dir,f"vecdb_{index}")
+            streaming_tar.save_rows_as_file((ray.get(ref) for ref in sub_data),temp_dir)                     
+                                                                               
+        return streaming_tar.build_rows_from_file(self.db_dir)
 
 
 
