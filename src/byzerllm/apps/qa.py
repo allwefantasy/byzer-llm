@@ -204,7 +204,8 @@ class ByzerLLMQA:
         docs = sorted(docs_with_score, key=lambda doc: doc[1],reverse=True)
         newq = "".join([doc[0].page_content for doc in docs[0:k]])        
 
-        if prompt == "show query":
+        show_query  = prompt == "show query"
+        if show_query:
             print(":all docs ====== \n")
             for doc in docs_with_score:
                 print(f"score:{doc[1]} => ${doc[0].page_content}") 
@@ -216,12 +217,17 @@ class ByzerLLMQA:
 
             prompt = ""
         v = self.client.chat(prompt + newq + q,[])
-        return v
+
+        if show_query:
+          return f'[prompt:]{prompt} \n [newq:]{newq} \n [q:]{q} \n  [v:]{v}'
+        else:
+          return v
 
     def predict(self,input:Dict[str,Any]):        
         q = input["instruction"]
         prompt = input.get("prompt","")
-        return self.query(prompt,q)
+        k = int(input.get("k","4"))
+        return self.query(prompt,q,k)
 
 @ray.remote
 class RayByzerLLMQAWorker: 

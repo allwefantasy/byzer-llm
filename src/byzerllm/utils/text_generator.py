@@ -3,9 +3,12 @@ from .emb import ByzerLLMEmbeddings
 
 class ByzerLLMGenerator:
     def __init__(self,model,tokenizer) -> None:
-        self.model = model
-        self.tokenizer = tokenizer        
-        self.embedding = ByzerLLMEmbeddings(model,tokenizer)
+        self.model = model        
+        self.embedding = None
+        self.tokenizer = None
+        if tokenizer:
+            self.tokenizer = tokenizer
+            self.embedding = ByzerLLMEmbeddings(model,tokenizer)
     
     def extract_history(self,input)-> List[Tuple[str,str]]:
         history = input.get("history",[])
@@ -14,6 +17,8 @@ class ByzerLLMGenerator:
     def predict(self,query:Dict[str,Any]):
         ins = query["instruction"]
         if query.get("embedding",False):
+            if not self.embedding:
+                raise Exception("This model do not support emedding service")
             return self.embedding.embed_query(ins)
         
         his = self.extract_history(query)        
