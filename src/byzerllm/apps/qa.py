@@ -16,14 +16,17 @@ import uuid
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 from pyjava.storage  import streaming_tar
 import time
+import shutil
 
 @dataclass
 class ClientParams:
     owner:str="admin"
-    llm_func: str = "chat"  
+    llm_embedding_func: str = "chat" 
+    llm_chat_func: str = "chat"  
 
 @dataclass
 class BuilderParams:
+    batch_size:int = 100
     chunk_size:int=600
     chunk_overlap: int = 30
     local_path_prefix: str = "/tmp/byzer-llm-qa-model"
@@ -58,7 +61,7 @@ class ByzerLLMClient:
             {"instruction":s,"embedding":True}
         ])
         response = self.request(f'''
-        select {self.client_params.llm_func}(array(feature)) as value
+        select {self.client_params.llm_embedding_func}(array(feature)) as value
         ''',json_data)    
         t = json.loads(response)
         t2 = json.loads(t[0]["value"][0])
@@ -70,7 +73,7 @@ class ByzerLLMClient:
             {"instruction":s,"history":newhis,"output":"NAN"}
         ])
         response = self.request(f'''
-        select {self.client_params.llm_func}(array(feature)) as value
+        select {self.client_params.llm_chat_func}(array(feature)) as value
         ''',json_data)    
         t = json.loads(response)
         t2 = json.loads(t[0]["value"][0])
@@ -135,18 +138,48 @@ class VectorDB:
         p = Path(path)
         docs = []
         items = list(p.rglob("**/*.json"))
+
+        max_doc_size = params.batch_size
+
+        paths = []
+        counter = 0
         for i in items:
             if i.is_file():
                with open(i.as_posix(),"r",encoding="utf-8") as f:
                  for line in f:
-                    doc = json.loads(line)
+                    doc = json.loads(line)                    
                     docs.append(Document(page_content=doc["page_content"],metadata={ "source":doc["source"]}))
+                    if len(docs) > max_doc_size:
+                        text_splitter = CharacterTextSplitter(chunk_size=params.chunk_size, chunk_overlap=params.chunk_overlap)
+                        split_docs = text_splitter.split_documents(docs) 
+                        print(f"Build vector db in {self.db_dir}. total docs: {len(docs)} total split docs: {len(split_docs)}")
+                        db = FAISS.from_documents(split_docs, self.embeddings)
+                        counter += 1
+                        temp_path = os.path.join(self.db_dir,str(counter))
+                        paths += temp_path
+                        db.save_local(temp_path)
+                        docs.clear()
+
+        if len(docs) > 0:
+            text_splitter = CharacterTextSplitter(chunk_size=params.chunk_size, chunk_overlap=params.chunk_overlap)
+            split_docs = text_splitter.split_documents(docs) 
+            print(f"Build vector db in {self.db_dir}. total docs: {len(docs)} total split docs: {len(split_docs)}")
+            db = FAISS.from_documents(split_docs, self.embeddings)
+            counter += 1
+            temp_path = os.path.join(self.db_dir,str(counter))
+            paths += temp_path
+            db.save_local(temp_path)
+            docs.clear()
+
+        t_db = FAISS.load_local(paths[0],self.embeddings)
+        for item in paths[1:]:
+            t_db.merge_from(FAISS.load_local(item,self.embeddings))
+        t_db.save_local(self.db_dir)
         
-        text_splitter = CharacterTextSplitter(chunk_size=params.chunk_size, chunk_overlap=params.chunk_overlap)
-        split_docs = text_splitter.split_documents(docs) 
-        print(f"Build vector db in {self.db_dir}. total docs: {len(docs)} total split docs: {len(split_docs)}")               
-        db = FAISS.from_documents(split_docs, self.embeddings)
-        db.save_local(self.db_dir) 
+        print(F"clean temp file...")
+        for p in paths:
+            shutil.rmtree(p)
+
 
     def build_from(self,path,params:BuilderParams):
         return self.save(path,params) 
@@ -202,7 +235,7 @@ class ByzerLLMQA:
         print(f"VectorDB query time taken:{time.time()-time1}s. total chunks: {len(docs_with_score)}")   
 
         docs = sorted(docs_with_score, key=lambda doc: doc[1],reverse=True)
-        newq = "".join([doc[0].page_content for doc in docs[0:k]])        
+        newq = "\n".join([doc[0].page_content for doc in docs[0:k]])        
 
         show_query  = prompt == "show query"
         if show_query:
@@ -266,12 +299,15 @@ class RayByzerLLMQAWorker:
 
 # QA Vector Store Builder
 class RayByzerLLMQA:
-    def __init__(self,db_dir:str,client:ByzerLLMClient) -> None:
-        self.db_dir = db_dir
+    def __init__(self,client:ByzerLLMClient) -> None:
+        self.db_dir = ""
         self.client = client        
     
     def save(self,data_refs,params=BuilderParams()):        
-        from pyjava.storage import streaming_tar                                      
+        from pyjava.storage import streaming_tar     
+
+        self.db_dir = os.path.join(params.local_path_prefix,"qa",str(uuid.uuid4()))
+
         data = []
         workers = []
 
@@ -289,8 +325,9 @@ class RayByzerLLMQA:
             sub_data = ray.get(build_func)
             temp_dir = os.path.join(self.db_dir,f"vecdb_{index}")
             streaming_tar.save_rows_as_file((ray.get(ref) for ref in sub_data),temp_dir)                     
-                                                                               
+        
         return streaming_tar.build_rows_from_file(self.db_dir)
+        
 
 
 

@@ -21,3 +21,9 @@ def restore_model(conf: Dict[str, str],target_dir:str):
 def load_model(target_dir:str)-> Generator[BlockRow,None,None]:
     model_binary = streaming_tar.build_rows_from_file(target_dir)
     return model_binary
+
+def consume_model(conf: Dict[str, str]):
+    model_servers = RayContext.parse_servers(conf["modelServers"])
+    for item in RayContext.collect_from(model_servers):
+        pass        
+    
