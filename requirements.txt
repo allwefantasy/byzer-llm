@@ -298,3 +298,4 @@ zstandard==0.21.0
 pyjava @ git+https://github.com/byzer-org/byzer-python/tree/master/python
 byzerllm @ git+https://github.com/allwefantasy/byzer-llm
 protobuf==3.20.0
+wudao==1.3.0
