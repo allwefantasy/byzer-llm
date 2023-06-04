@@ -39,10 +39,10 @@ class ByzerLLMClient:
         t2 = json.loads(t[0]["value"][0])
         return t2[0]["predict"]
 
-    def chat(self,s:str,history:List[Tuple[str,str]])->str:
+    def chat(self,s:str,history:List[Tuple[str,str]],extra_query={})->str:
         newhis = [{"query":item[0],"response":item[1]} for item in history]
         json_data = json.dumps([
-            {"instruction":s,"history":newhis,"output":"NAN"}
+            {"instruction":s,"history":newhis,**extra_query}
         ],ensure_ascii=False)
         response = self.request(f'''
         select {self.client_params.llm_chat_func}(array(feature)) as value

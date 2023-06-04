@@ -56,7 +56,7 @@ class ByzerLLMQA:
         docs = sorted(docs_with_score, key=lambda doc: doc[1],reverse=True)                       
 
         if prompt == "show_only_context":
-            return json.dumps(docs,ensure_ascii=False,indent=4)
+            return json.dumps([{"score":float(doc[1]),"content":doc[0].page_content} for doc in docs[0:k]],ensure_ascii=False,indent=4)
 
         newq = "\n".join([doc[0].page_content for doc in docs[0:k]]) 
         show_full_query  = prompt == "show_full_query" 
