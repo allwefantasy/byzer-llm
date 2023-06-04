@@ -1,6 +1,7 @@
 import json
 from langchain.vectorstores import FAISS
 from langchain.docstore.document import Document
+from langchain import PromptTemplate
 from dataclasses import dataclass
 from pathlib import Path
 import ray
@@ -41,7 +42,7 @@ class ByzerLLMQA:
             refs = [ray.put(item) for item in streaming_tar.build_rows_from_file(dd)]
             self.dbs.append(ByzerLLMQAQueryWorker.remote(refs,self.client,self.query_params))                    
 
-    def query(self,prompt:str,q:str,k=4): 
+    def query(self,prompt:str,q:str,k=4,hint=""): 
          
         docs_with_score = [] 
 
@@ -50,29 +51,45 @@ class ByzerLLMQA:
         for q_func in submit_q:            
             t = ray.get(q_func)
             docs_with_score = docs_with_score + t
-                
-        print(f"VectorDB query time taken:{time.time()-time1}s. total chunks: {len(docs_with_score)}")   
+
+        query_vector_db_time = time.time() - time1        
+        print(f"VectorDB query time taken:{query_vector_db_time}s. total chunks: {len(docs_with_score)}")   
 
         docs = sorted(docs_with_score, key=lambda doc: doc[1],reverse=True)                       
 
-        if prompt == "show_only_context":
+        if hint == "show_only_context":            
             return json.dumps([{"score":float(doc[1]),"content":doc[0].page_content} for doc in docs[0:k]],ensure_ascii=False,indent=4)
 
         newq = "\n".join([doc[0].page_content for doc in docs[0:k]]) 
-        show_full_query  = prompt == "show_full_query" 
-                    
-        v = self.client.chat(prompt + newq + q,[])
+        show_full_query  = hint == "show_full_query"         
+
+        if not prompt:
+            prompt = "{context} \n {query}"
+
+        prompt_template = PromptTemplate.from_template(prompt)
+ 
+        final_query = prompt_template.format(context=newq, query=q)
+
+        time2 = time.time()
+        v = self.client.chat(final_query,[])
+        chat_time = time.time() - time2
 
         if show_full_query:
-          return f'[prompt:]{prompt} \n [newq:]{newq} \n [q:]{q} \n  [v:]{v}'          
+          return json.dumps({
+             "query": final_query,
+             "response": v,
+             "vectordb_time": f"{query_vector_db_time}s",
+             "chat_time": f"{chat_time}s"
+          },ensure_ascii=False,indent=4)
         else:
           return v
 
     def predict(self,input:Dict[str,Any]):        
         q = input["instruction"]
         prompt = input.get("prompt","")
+        hint = input.get("hint","")
         k = int(input.get("k","4"))
-        return self.query(prompt,q,k)
+        return self.query(prompt,q,k,hint)
 
 @ray.remote
 class RayByzerLLMQAWorker: 
