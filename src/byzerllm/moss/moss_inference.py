@@ -354,37 +354,30 @@ class Inference:
         return self.forward(input)
     
 
-if __name__ == "__main__":
-    import os
-    try:
-        import sys
-        import logging
-        import transformers
-        import datasets
-        logging.basicConfig(
-        format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
-        datefmt="%m/%d/%Y %H:%M:%S",
-        handlers=[logging.StreamHandler(sys.stdout)],)            
-        transformers.utils.logging.set_verbosity_info()            
-        datasets.utils.logging.set_verbosity_info()
-        transformers.utils.logging.enable_default_handler()
-        transformers.utils.logging.enable_explicit_format() 
-    except ImportError:
-        pass 
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-    
-    # Create an Inference instance with the specified model directory.
-    # infer = Inference(model_dir="/home/winubuntu/projects/moss-model/moss-moon-003-sft-plugin-int4",parallelism=False, device_map="auto")
+def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
+        max_length:int=4096, 
+        top_p:float=0.95,
+        temperature:float=0.1):
+    infer = Inference(self,tokenizer)
+    reponses = infer.forward(f'<|Human|>: {ins}<eoh>',{ 
+                "temperature":temperature,
+                "top_k":0,
+                "top_p":top_p, 
+                "length_penalty":1, 
+                "max_time":60, 
+                "repetition_penalty":1.02, 
+                "max_iterations":512, 
+                "regulation_start":512,
+                "prefix_length":len(PREFIX),
+                "max_length":max_length
+                })
+    return [(res,"") for res in reponses]
 
-    # If you need to load a quantized model, please instead load the model and then pass it into Inference.__init__.
-    model = MossForCausalLM.from_pretrained("/home/winubuntu/projects/moss-model/moss-moon-003-sft-plugin-int4").half().cuda()
-    infer = Inference(model, device_map="auto")
 
-    # Define a test case string.
-    test_case = "<|Human|>: Hello MOSS<eoh>\n<|MOSS|>:"
+def init_model(model_dir):
+    model = MossForCausalLM.from_pretrained(model_dir).half().cuda()
+    tokenizer = MossTokenizer.from_pretrained(model_dir)
+    import types
+    model.stream_chat = types.MethodType(stream_chat, model)
+    return (model,tokenizer)
 
-    # Generate a response using the Inference instance.
-    res = infer(test_case)
-
-    # Print the generated response.
-    print(res)

@@ -1,9 +1,3 @@
-from langchain.embeddings.base import Embeddings
-from langchain.text_splitter import CharacterTextSplitter
-from typing import Any, List, Mapping, Optional,Tuple
-from langchain.callbacks.manager import CallbackManagerForLLMRun
-from langchain.llms.base import LLM
-import requests
 import json
 from langchain.vectorstores import FAISS
 from langchain.docstore.document import Document
@@ -11,191 +5,16 @@ from dataclasses import dataclass
 from pathlib import Path
 import ray
 import os
-from typing import Dict
+from typing import Dict,List,Any
 import uuid
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 from pyjava.storage  import streaming_tar
 import time
 import shutil
 
-@dataclass
-class ClientParams:
-    owner:str="admin"
-    llm_embedding_func: str = "chat" 
-    llm_chat_func: str = "chat"  
-
-@dataclass
-class BuilderParams:
-    batch_size:int = 100
-    chunk_size:int=600
-    chunk_overlap: int = 30
-    local_path_prefix: str = "/tmp/byzer-llm-qa-model"
-
-@dataclass
-class QueryParams:    
-    local_path_prefix: str = "/tmp/byzer-llm-qa-model"    
-
-
-class ByzerLLMClient:
-    
-    def __init__(self,url:str='http://127.0.0.1:9003/model/predict',params:ClientParams=ClientParams()) -> None:
-        self.url = url
-        self.client_params = params        
-
-    def request(self, sql:str,json_data:str)->str:         
-        data = {
-            'sessionPerUser': 'true',
-            'sessionPerRequest': 'true',
-            'owner': self.client_params.owner,
-            'dataType': 'string',
-            'sql': sql,
-            'data': json_data
-        }
-        response = requests.post(self.url, data=data)
-        if response.status_code != 200:
-            raise Exception(f"{self.url} status:{response.status_code} content: {response.text}")
-        return response.text
-
-    def emb(self,s:str)-> List[float]:
-        json_data = json.dumps([
-            {"instruction":s,"embedding":True}
-        ])
-        response = self.request(f'''
-        select {self.client_params.llm_embedding_func}(array(feature)) as value
-        ''',json_data)    
-        t = json.loads(response)
-        t2 = json.loads(t[0]["value"][0])
-        return t2[0]["predict"]
-
-    def chat(self,s:str,history:List[Tuple[str,str]])->str:
-        newhis = [{"query":item[0],"response":item[1]} for item in history]
-        json_data = json.dumps([
-            {"instruction":s,"history":newhis,"output":"NAN"}
-        ])
-        response = self.request(f'''
-        select {self.client_params.llm_chat_func}(array(feature)) as value
-        ''',json_data)    
-        t = json.loads(response)
-        t2 = json.loads(t[0]["value"][0])
-        return t2[0]["predict"]
-
-
-class LocalEmbeddings(Embeddings):
-    def __init__(self,client:ByzerLLMClient):
-        self.client = client
-                
-        
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:        
-        embeddings = [self.client.emb(text) for text in texts]
-        return embeddings
-
-    def embed_query(self, text: str) -> List[float]:    
-        embedding = self.client.emb(text)
-        return embedding
-
-
-class Chatglm6bLLM(LLM):
-    
-    def __init__(self,client:ByzerLLMClient):
-        self.client = client
-        
-    @property
-    def _llm_type(self) -> str:
-        return "chatglm6b"
-    
-    def _call(
-        self,
-        prompt: str,
-        stop: Optional[List[str]] = None,
-        run_manager: Optional[CallbackManagerForLLMRun] = None,
-    ) -> str:
-        if stop is not None:
-            raise ValueError("stop kwargs are not permitted.")
-        return self.client.chat(prompt,[])
-    
-    @property
-    def _identifying_params(self) -> Mapping[str, Any]:
-        """Get the identifying parameters."""
-        return {"n": self.n}
-
-
-class VectorDB:
-    def __init__(self,db_dir:str,client:ByzerLLMClient) -> None:
-        self.db_dir = db_dir 
-        self.db = None  
-        self.client = client 
-        self.embeddings = LocalEmbeddings(self.client)     
-    
-    def _is_visible(self,p: Path) -> bool:
-        parts = p.parts
-        for _p in parts:
-            if _p.startswith("."):
-                return False
-        return True
-
-    
-    def save(self,path,params:BuilderParams):        
-        p = Path(path)
-        docs = []
-        items = list(p.rglob("**/*.json"))
-
-        max_doc_size = params.batch_size
-
-        paths = []
-        counter = 0
-        for i in items:
-            if i.is_file():
-               with open(i.as_posix(),"r",encoding="utf-8") as f:
-                 for line in f:
-                    doc = json.loads(line)                    
-                    docs.append(Document(page_content=doc["page_content"],metadata={ "source":doc["source"]}))
-                    if len(docs) > max_doc_size:
-                        text_splitter = CharacterTextSplitter(chunk_size=params.chunk_size, chunk_overlap=params.chunk_overlap)
-                        split_docs = text_splitter.split_documents(docs) 
-                        print(f"Build vector db in {self.db_dir}. total docs: {len(docs)} total split docs: {len(split_docs)}")
-                        db = FAISS.from_documents(split_docs, self.embeddings)
-                        counter += 1
-                        temp_path = os.path.join(self.db_dir,str(counter))
-                        paths += temp_path
-                        db.save_local(temp_path)
-                        docs.clear()
-
-        if len(docs) > 0:
-            text_splitter = CharacterTextSplitter(chunk_size=params.chunk_size, chunk_overlap=params.chunk_overlap)
-            split_docs = text_splitter.split_documents(docs) 
-            print(f"Build vector db in {self.db_dir}. total docs: {len(docs)} total split docs: {len(split_docs)}")
-            db = FAISS.from_documents(split_docs, self.embeddings)
-            counter += 1
-            temp_path = os.path.join(self.db_dir,str(counter))
-            paths += temp_path
-            db.save_local(temp_path)
-            docs.clear()
-
-        t_db = FAISS.load_local(paths[0],self.embeddings)
-        for item in paths[1:]:
-            t_db.merge_from(FAISS.load_local(item,self.embeddings))
-        t_db.save_local(self.db_dir)
-        
-        print(F"clean temp file...")
-        for p in paths:
-            shutil.rmtree(p)
-
-
-    def build_from(self,path,params:BuilderParams):
-        return self.save(path,params) 
-
-
-    def merge_from(self,target_path:str):
-        if self.db is None:
-            self.db = FAISS.from_documents([], self.embeddings)            
-
-        self.db.merge_from(FAISS.load_local(target_path,self.embeddings))                
-
-    def query(self,prompt:str,s:str,k=4)->List[Document]:
-        if not self.db:
-           self.db = FAISS.load_local(self.db_dir,self.embeddings)        
-        result = self.db.similarity_search_with_score(prompt + s,k=k)
-        return result
+from . import BuilderParams,QueryParams
+from .vector_db import VectorDB
+from .client import ByzerLLMClient
 
 
 @ray.remote
@@ -227,32 +46,25 @@ class ByzerLLMQA:
         docs_with_score = [] 
 
         time1 = time.time()
-        submit_q = [db.query.remote("",q) for db in self.dbs]        
+        submit_q = [db.query.remote("",q,k) for db in self.dbs]        
         for q_func in submit_q:            
             t = ray.get(q_func)
             docs_with_score = docs_with_score + t
                 
         print(f"VectorDB query time taken:{time.time()-time1}s. total chunks: {len(docs_with_score)}")   
 
-        docs = sorted(docs_with_score, key=lambda doc: doc[1],reverse=True)
-        newq = "\n".join([doc[0].page_content for doc in docs[0:k]])        
+        docs = sorted(docs_with_score, key=lambda doc: doc[1],reverse=True)                       
 
-        show_query  = prompt == "show query"
-        if show_query:
-            print(":all docs ====== \n")
-            for doc in docs_with_score:
-                print(f"score:{doc[1]} => ${doc[0].page_content}") 
+        if prompt == "show_only_context":
+            return json.dumps(docs,ensure_ascii=False,indent=4)
 
-            print(":merge docs ====== \n")    
-
-            for doc in docs:
-                print(f"score:{doc[1]} => ${doc[0].page_content}") 
-
-            prompt = ""
+        newq = "\n".join([doc[0].page_content for doc in docs[0:k]]) 
+        show_full_query  = prompt == "show_full_query" 
+                    
         v = self.client.chat(prompt + newq + q,[])
 
-        if show_query:
-          return f'[prompt:]{prompt} \n [newq:]{newq} \n [q:]{q} \n  [v:]{v}'
+        if show_full_query:
+          return f'[prompt:]{prompt} \n [newq:]{newq} \n [q:]{q} \n  [v:]{v}'          
         else:
           return v
 
