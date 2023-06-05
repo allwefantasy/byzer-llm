@@ -1,13 +1,26 @@
-from byzerllm.apps.client import ByzerLLMClient
-from byzerllm.apps import ClientParams
-import json
+from transformers import AutoTokenizer, AutoModelForCausalLM
+import transformers
+import torch
 
-client = ByzerLLMClient(params=ClientParams(llm_chat_func="movice_qa",owner="william"))
+model_dir =  "/home/winubuntu/projects/falcon-40b-instruct"
 
-q = "我想看一部三国的片子"
-
-s = client.chat(f"请阅读上面的影视剧集信息，然后根据我的问题帮我找到合适的影视剧名称。 现在我的问题是： {q}，请只输出片名。",
-                history=[],
-                extra_query={"k":10,"prompt":"show_only_context"})
-
-print(json.loads(s))
+model = AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True).half().cuda()
+tokenizer = AutoTokenizer.from_pretrained(model_dir)
+pipeline = transformers.pipeline(
+    "text-generation",
+    model=model,
+    tokenizer=tokenizer,
+    torch_dtype=torch.bfloat16,
+    trust_remote_code=True,
+    device_map="auto",
+)
+sequences = pipeline(
+   "请问如何才能吃得更加营养",
+    max_length=200,
+    do_sample=True,
+    top_k=10,
+    num_return_sequences=1,
+    eos_token_id=tokenizer.eos_token_id,
+)
+for seq in sequences:
+    print(f"Result: {seq['generated_text']}")
