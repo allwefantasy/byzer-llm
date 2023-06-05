@@ -55,7 +55,7 @@ class ByzerLLMQA:
         query_vector_db_time = time.time() - time1        
         print(f"VectorDB query time taken:{query_vector_db_time}s. total chunks: {len(docs_with_score)}")   
 
-        docs = sorted(docs_with_score, key=lambda doc: doc[1],reverse=True)                       
+        docs = sorted(docs_with_score, key=lambda doc: doc[1],reverse=False)                       
 
         if hint == "show_only_context":            
             return json.dumps([{"score":float(doc[1]),"content":doc[0].page_content} for doc in docs[0:k]],ensure_ascii=False,indent=4)

@@ -45,7 +45,7 @@ def voice_to_text(rate:int, t:np.ndarray)->str:
 def text_to_voice(s:str)->np.ndarray:    
     
     json_data = json.dumps([
-        {"instruction":s}
+        {"instruction":s }
     ])
     response = request('''
      select text_to_voice(array(feature)) as value
@@ -57,10 +57,14 @@ def text_to_voice(s:str)->np.ndarray:
 
 ## s,history = state.history
 def chat(s:str,history:List[Tuple[str,str]])->str:
-    newhis = [{"query":item[0],"response":item[1]} for item in history]
+    # newhis = [{"query":item[0],"response":item[1]} for item in history]
     json_data = json.dumps([
-        {"instruction":f" 请阅读上面的信息，然后根据我的问题回答我。 现在，我的问题是： {s}，请只输出片名。",
-        "history":newhis,"prompt":"show query","k":"10"}
+        {
+         "instruction":s,
+         "k":"5",
+         "prompt":"下面是可选的影视剧列表：\n {context} \n {query}。请只输出片名。",
+         "hint":"show_full_query"
+        }
     ])
     response = request('''
      select movice_qa(array(feature)) as value
@@ -68,7 +72,11 @@ def chat(s:str,history:List[Tuple[str,str]])->str:
     print(response)
     t = json.loads(response)    
     t2 = json.loads(t[0]["value"][0])
-    return t2[0]["predict"]
+    t3 = json.loads(t2[0]["predict"])
+    query = t3["query"]
+    response = t3 ["response"]
+    res = response.split("<|Results|>")[1]
+    return f"{res}\n 结果基于如下片库查找：{query}" 
 
 
 class UserState:
