@@ -359,7 +359,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         top_p:float=0.95,
         temperature:float=0.1):
     infer = Inference(self,tokenizer)
-    reponses = infer.forward(f'<|Human|>: {ins}<eoh>',{ 
+    reponses = infer.forward(f'<|Human|>: {ins} <eoh>',{ 
                 "temperature":temperature,
                 "top_k":0,
                 "top_p":top_p, 
