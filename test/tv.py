@@ -75,8 +75,8 @@ def chat(s:str,history:List[Tuple[str,str]])->str:
     t3 = json.loads(t2[0]["predict"])
     query = t3["query"]
     response = t3 ["response"]
-    res = response.split("<|Results|>")[1]
-    return f"{res}\n 结果基于如下片库查找：{query}" 
+    res = response.split("<|Results|>:")[1]
+    return f"{res}\n\n 上面的结果基于如下片库查找：{query}" 
 
 
 class UserState:

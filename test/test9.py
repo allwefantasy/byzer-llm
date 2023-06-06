@@ -2,9 +2,9 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import transformers
 import torch
 
-model_dir =  "/home/winubuntu/projects/falcon-40b-instruct"
+model_dir =  "/home/winubuntu/projects/falcon-7b-instruct"
 
-model = AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True).half().cuda()
+model = AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True)
 tokenizer = AutoTokenizer.from_pretrained(model_dir)
 pipeline = transformers.pipeline(
     "text-generation",
@@ -22,5 +22,11 @@ sequences = pipeline(
     num_return_sequences=1,
     eos_token_id=tokenizer.eos_token_id,
 )
+print("begin")
 for seq in sequences:
     print(f"Result: {seq['generated_text']}")
+
+print("end")
+import time
+while True:
+    time.sleep(3)
