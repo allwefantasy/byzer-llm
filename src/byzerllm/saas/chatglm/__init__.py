@@ -1,16 +1,19 @@
-from wudao.api_request import executeEngineV2, getToken, queryTaskResult
-import datetime
+from wudao.api_request import executeSSE, getToken, queryTaskResult
+from random import randint
 import time
 import uuid
 
 from typing import Union, List, Tuple, Optional, Dict
 
+def randomTaskCode():
+    return "%019d" % randint(0, 10**19)
+
 class ChatGLMAPI:
     def __init__(self,api_key:str, public_key:str) -> None:
         self.api_key = api_key
         self.public_key = public_key
-        self.ability_type = "completions"
-        self.engine_type = "completions_130B"
+        self.ability_type = "chatGLM"
+        self.engine_type = "chatGLM"
         self.temp_token = None
 
     def get_token_or_refresh(self):
@@ -24,34 +27,28 @@ class ChatGLMAPI:
     
     def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
-        top_p:float=0.95,
-        temperature:float=0.1):  
+        top_p:float=0.7,
+        temperature:float=0.9):  
         data = {
-                    "topP": top_p,
-                    "temperature": temperature,
-                    "lengthPenalty": 1,
-                    "numBeams": 1,
-                    "minGenLength": 50,
-                    "requestTaskNo": str(uuid.uuid4()),
-                    "samplingStrategy": "BeamSearchStrategy",
-                    "maxTokens": max_length,
-                    "prompt": ins
+                    "top_p": top_p,
+                    "temperature": temperature,                    
+                    "risk": 0.15,                    
+                    "requestTaskNo": randomTaskCode(),                                        
+                    "prompt": ins,
+                    "history": []                    
                 }    
         token = self.temp_token if self.temp_token  else self.get_token_or_refresh()
-        resp = executeEngineV2(self.ability_type, self.engine_type, token, data)
-        
-        if resp["code"] != 200:
-           token = self.get_token_or_refresh()
-           resp = executeEngineV2(self.ability_type, self.engine_type, token, data)
+        resp = executeSSE(self.ability_type, self.engine_type, token, data)                
 
-        while resp["code"] == 200 and resp['data']['taskStatus'] == 'PROCESSING':
-            print(resp)
-            taskOrderNo = resp['data']['taskOrderNo']
-            time.sleep(1)
-            resp = queryTaskResult(token, taskOrderNo)
-        print(resp)
-        v = [resp['data']['outputText'][0]]
-        return [(res,"") for res in v]
+        output_text = ""
+        for event in resp.events():
+            if event.data:
+                output_text = event.data
+            elif event.event == "error":
+                token = self.get_token_or_refresh()
+                break
+                
+        return [(output_text,"")]
 
 
 
