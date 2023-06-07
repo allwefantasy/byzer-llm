@@ -42,7 +42,7 @@ class ByzerLLMQA:
             refs = [ray.put(item) for item in streaming_tar.build_rows_from_file(dd)]
             self.dbs.append(ByzerLLMQAQueryWorker.remote(refs,self.client,self.query_params))                    
 
-    def query(self,prompt:str,q:str,k=4,hint=""): 
+    def query(self,prompt:str,q:str,k=4,hint="",input:Dict[str,Any]): 
          
         docs_with_score = [] 
 
@@ -71,7 +71,11 @@ class ByzerLLMQA:
         final_query = prompt_template.format(context=newq, query=q)
 
         time2 = time.time()
-        v = self.client.chat(final_query,[])
+        
+        top_p=float(input.get("top_p",0.7))
+        temperature=float(input.get("temperature",0.9))
+
+        v = self.client.chat(final_query,[],extra_query={"top_p":top_p,"temperature":temperature})
         chat_time = time.time() - time2
 
         if show_full_query:
@@ -89,7 +93,7 @@ class ByzerLLMQA:
         prompt = input.get("prompt","")
         hint = input.get("hint","")
         k = int(input.get("k","4"))
-        return self.query(prompt,q,k,hint)
+        return self.query(prompt,q,k,hint,input)
 
 @ray.remote
 class RayByzerLLMQAWorker: 
