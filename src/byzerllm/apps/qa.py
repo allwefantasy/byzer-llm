@@ -42,7 +42,7 @@ class ByzerLLMQA:
             refs = [ray.put(item) for item in streaming_tar.build_rows_from_file(dd)]
             self.dbs.append(ByzerLLMQAQueryWorker.remote(refs,self.client,self.query_params))                    
 
-    def query(self,prompt:str,q:str,k=4,hint="",input:Dict[str,Any]): 
+    def query(self,prompt:str,q:str,k=4,hint="",input:Dict[str,Any]={}): 
          
         docs_with_score = [] 
 
