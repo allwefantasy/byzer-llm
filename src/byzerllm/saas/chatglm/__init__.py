@@ -36,7 +36,7 @@ class ChatGLMAPI:
                     "requestTaskNo": randomTaskCode(),                                        
                     "prompt": ins,
                     "history": []                    
-                }    
+                }          
         token = self.temp_token if self.temp_token  else self.get_token_or_refresh()
         resp = executeSSE(self.ability_type, self.engine_type, token, data)                
 

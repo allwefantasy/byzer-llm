@@ -26,8 +26,8 @@ class ByzerLLMGenerator:
         response = self.model.stream_chat(self.tokenizer, 
         ins, his, 
         max_length=int(query.get("max_length",1024)), 
-        top_p=float(query.get("top_p",0.95)),
-        temperature=float(query.get("temperature",0.1)))
+        top_p=float(query.get("top_p",0.7)),
+        temperature=float(query.get("temperature",0.9)))
         
         last = ""
         for t,_ in response:                                               
