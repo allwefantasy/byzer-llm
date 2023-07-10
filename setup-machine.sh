@@ -18,7 +18,8 @@ BYZER_NOTEBOOK_VERSION="1.2.5"
 # check USER_PASSWORD is set or not
 if [[ -z "${USER_PASSWORD}" ]]; then
     echo "We will try to create a user byzerllm  in this Machine. You should specify the USER_PASSWORD of byzerllm first"
-    exit 1
+    echo "The new password of byzerllm is: "
+    read USER_PASSWORD    
 fi
 
 USER_PASSWORD=${USER_PASSWORD:-""}
