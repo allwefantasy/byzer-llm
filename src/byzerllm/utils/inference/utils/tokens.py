@@ -17,6 +17,7 @@ from ..utils.logits_process import (
     HeterogeneousTypicalLogitsWarper,
     HeterogeneousProcessorWrapper,
 )
+from ..models.types import StoppingCriteriaParameters,NextTokenChooserParameters
 
 
 class NextTokenChooser:
@@ -114,6 +115,22 @@ class StoppingCriteria:
                 return True, "FINISH_REASON_STOP_SEQUENCE"
 
         return False, None
+    
+    @classmethod
+    def from_client(
+        cls,
+        pb: StoppingCriteriaParameters,
+        tokenizer: PreTrainedTokenizerBase,
+    ) -> "StoppingCriteria":
+        stop_sequence_criterias = [
+            StopSequenceCriteria(sequence) for sequence in pb.stop_sequences
+        ]
+        return StoppingCriteria(
+            tokenizer.eos_token_id,
+            stop_sequence_criterias,
+            pb.max_new_tokens,
+            pb.ignore_eos_token,
+        )
    
 
 
@@ -224,6 +241,26 @@ class HeterogeneousNextTokenChooser:
             self.choice = Greedy()
 
         return self
+    
+    @classmethod
+    def from_client(
+        cls,
+        pb: List[NextTokenChooserParameters],
+        dtype: torch.dtype,
+        device: torch.device,
+    ) -> "HeterogeneousNextTokenChooser":
+        return HeterogeneousNextTokenChooser(
+            watermark=[pb_.watermark for pb_ in pb],
+            temperature=[pb_.temperature for pb_ in pb],
+            repetition_penalty=[pb_.repetition_penalty for pb_ in pb],
+            top_k=[pb_.top_k for pb_ in pb],
+            top_p=[pb_.top_p for pb_ in pb],
+            typical_p=[pb_.typical_p for pb_ in pb],
+            do_sample=[pb_.do_sample for pb_ in pb],
+            seeds=[pb_.seed for pb_ in pb],
+            device=device,
+            dtype=dtype,
+        )
     
 
 class Sampling:

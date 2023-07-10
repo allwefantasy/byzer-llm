@@ -29,6 +29,12 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
 
 
 def init_model(model_dir,infer_params:Dict[str,str]={}): 
+    infer_mode = infer_params.get("infer_mode","simple")
+
+    if infer_mode == "tgi":
+        import byzerllm.utils.inference as TGI
+        return TGI.init_model(model_dir,infer_params)
+
     pretrained_model_dir = os.path.join(model_dir,"pretrained_model")
     adaptor_model_dir = model_dir
     is_adaptor_model = os.path.exists(pretrained_model_dir)

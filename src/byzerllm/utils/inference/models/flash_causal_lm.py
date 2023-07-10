@@ -16,6 +16,9 @@ from .types import (
     PrefillTokens,
     Generation,
     GeneratedText,
+    ClientRequest,
+    BatchRequest,
+    CachedBatchRequest
 )
 
 from ..utils import StoppingCriteria, HeterogeneousNextTokenChooser
@@ -110,6 +113,8 @@ class CacheManager:
 
 @dataclass
 class FlashCausalLMBatch(Batch):    
+    batch_id: int
+    requests: List[ClientRequest]
     # request id -> idx in list mapping
     requests_idx_mapping: Dict[int, int]
 
@@ -167,14 +172,15 @@ class FlashCausalLMBatch(Batch):
     max_blocks: int
 
     @classmethod
-    def to_input(cls,inputs:str,max_length:int,tokenizer: PreTrainedTokenizerBase,
+    def from_client(cls,  pb: BatchRequest,
+        tokenizer: PreTrainedTokenizerBase,
         dtype: torch.dtype,
-        device: torch.device)-> "FlashCausalLMBatch":
+        device: torch.device,) -> "FlashCausalLMBatch":
         batch_inputs = []
         max_truncation = 0
-        
-        batch_inputs.append(inputs)
-        max_truncation = max(max_truncation, max_length)            
+        for r in pb.requests:
+            batch_inputs.append(r.inputs)
+            max_truncation = max(max_truncation, r.truncate)
 
         batch_tokenized_inputs = tokenizer(
             batch_inputs, truncation=True, max_length=max_truncation
@@ -212,11 +218,13 @@ class FlashCausalLMBatch(Batch):
         max_blocks = 0
 
         # Parse batch
-        for i, tokenized_input in enumerate(batch_tokenized_inputs):
+        for i, (r, tokenized_input) in enumerate(
+            zip(pb.requests, batch_tokenized_inputs)
+        ):
             # request id -> idx in list mapping
-            requests_idx_mapping[i] = i
+            requests_idx_mapping[r.id] = i
 
-            tokenized_input = tokenized_input[-max_truncation :]
+            tokenized_input = tokenized_input[-r.truncate :]
 
             input_length = len(tokenized_input)
             input_lengths.append(input_length)
@@ -233,9 +241,11 @@ class FlashCausalLMBatch(Batch):
             # Add cumulative lengths of all previous inputs
             cu_seqlen_prefill.append(cumulative_length + input_length)
 
-            # next_token_chooser_parameters.append(r.parameters)
+            next_token_chooser_parameters.append(r.parameters)
 
-            stopping_criteria = StoppingCriteria(tokenizer.eos_token_id,[])
+            stopping_criteria = StoppingCriteria.from_client(
+                r.stopping_parameters, tokenizer
+            )
             max_new_tokens = stopping_criteria.max_new_tokens
             stopping_criterias.append(stopping_criteria)
 
@@ -254,10 +264,8 @@ class FlashCausalLMBatch(Batch):
             )
             slot_indices.append(request_slot_indices)
 
-            prefill_logprobs = True
-
-            all_prefill_logprobs = all_prefill_logprobs and prefill_logprobs
-            no_prefill_logprobs = no_prefill_logprobs and not prefill_logprobs
+            all_prefill_logprobs = all_prefill_logprobs and r.prefill_logprobs
+            no_prefill_logprobs = no_prefill_logprobs and not r.prefill_logprobs
 
             if r.prefill_logprobs:
                 prefill_head_indices.append(request_position_ids + cumulative_length)
@@ -283,14 +291,9 @@ class FlashCausalLMBatch(Batch):
             max_blocks = max(max_blocks, needed_blocks)
             max_length = max(max_length, input_length + max_new_tokens)
 
-        # next_token_chooser_parameters, dtype, device
-        next_token_chooser = HeterogeneousNextTokenChooser(dtype,device,
-                                                           watermark=[],temperature=[],
-                                                           repetition_penalty=[],
-                                                           top_k=[],top_p=[],
-                                                           typical_p=[],
-                                                           do_sample=[],
-                                                           seeds=[])                                                           
+        next_token_chooser = HeterogeneousNextTokenChooser.from_client(
+            next_token_chooser_parameters, dtype, device
+        )
         start_slots = torch.tensor(start_slots, dtype=torch.int64)
 
         # Padded all_input_ids_tensor
@@ -305,9 +308,14 @@ class FlashCausalLMBatch(Batch):
             all_input_ids_tensor, dtype=torch.int64, device=device
         )
 
-        input_ids = all_input_ids[0]
-        position_ids = position_ids[0]
-        slot_indices = slot_indices[0]            
+        if len(pb.requests) > 1:
+            input_ids = np.concatenate(all_input_ids, dtype=np.int64)
+            position_ids = torch.cat(position_ids)
+            slot_indices = torch.cat(slot_indices)
+        else:
+            input_ids = all_input_ids[0]
+            position_ids = position_ids[0]
+            slot_indices = slot_indices[0]
 
         cu_seqlen_prefill = torch.tensor(
             cu_seqlen_prefill, device=device, dtype=torch.int32
@@ -334,7 +342,9 @@ class FlashCausalLMBatch(Batch):
                 prefill_next_token_indices, dtype=torch.int64, device=device
             )
 
-        return cls(            
+        return cls(
+            batch_id=pb.id,
+            requests=pb.requests,
             requests_idx_mapping=requests_idx_mapping,
             input_ids=input_ids,
             position_ids=position_ids,
@@ -359,6 +369,155 @@ class FlashCausalLMBatch(Batch):
             stopping_criterias=stopping_criterias,
             blocks=blocks,
             max_blocks=max_blocks,
+        )
+
+    
+    def filter(self, request_ids: List[int]) -> "FlashCausalLMBatch":
+        if len(request_ids) == 0:
+            raise ValueError("Batch must have at least one request")
+        # We assume that if len(requests) == len(self) then the requests are the same
+        if len(request_ids) == len(self):
+            return self
+
+        device = self.input_ids.device
+
+        # New values after filtering
+        requests_idx_mapping = {}
+
+        # Used to index into tensors
+        indices = []
+
+        # slots to keep after filtering
+        slot_filtering_indices = torch.zeros(
+            self.slots.shape[0], dtype=torch.bool, device=device
+        )
+
+        # Create on CPU to only move to GPU once instead of at every copy
+        slot_indices = torch.empty(len(request_ids), dtype=torch.int64)
+        max_seqlen = 0
+
+        requests = []
+        start_slots = []
+        block_tables = []
+        all_input_ids = []
+
+        input_lengths = []
+        prefix_offsets = []
+        read_offsets = []
+
+        stopping_criterias = []
+
+        blocks = 0
+        max_blocks = 0
+        # Cumulative length
+        cumulative_max_length = 0
+
+        for i, request_id in enumerate(request_ids):
+            idx = self.requests_idx_mapping[request_id]
+            indices.append(idx)
+            requests_idx_mapping[request_id] = i
+
+            requests.append(self.requests[idx])
+
+            # Get length
+            request_input_length = self.input_lengths[idx]
+            max_seqlen = max(max_seqlen, request_input_length)
+
+            all_input_ids.append(self.all_input_ids[idx])
+
+            input_lengths.append(request_input_length)
+            prefix_offsets.append(self.prefix_offsets[idx])
+            read_offsets.append(self.read_offsets[idx])
+
+            stopping_criteria = self.stopping_criterias[idx]
+            stopping_criterias.append(stopping_criteria)
+
+            remaining_tokens = (
+                stopping_criteria.max_new_tokens - stopping_criteria.current_tokens
+            )
+
+            request_block_table = self.block_tables[idx]
+            blocks += len(request_block_table)
+            block_tables.append(request_block_table)
+            start_slots.append(cumulative_max_length)
+
+            # Copy to tensor (CPU)
+            slot_indices[i] = cumulative_max_length + request_input_length - 1
+
+            # Set slice
+            slot_filtering_indices[
+                self.start_slots[idx] : self.start_slots[idx]
+                + request_input_length
+                + remaining_tokens
+                - 1
+            ] = True
+
+            cumulative_max_length += request_input_length + remaining_tokens - 1
+
+            max_blocks = max(max_blocks, len(request_block_table))
+
+        global CACHE_MANAGER
+        block_indices_to_free = []
+        # Iterate on all requests
+        for i, r in enumerate(self.requests):
+            # Filter requests that are not part of the new batch
+            if r.id not in requests_idx_mapping.keys():
+                block_indices_to_free.extend(self.block_tables[i])
+        # Free blocks
+        CACHE_MANAGER.free(block_indices_to_free)
+        # Needed to avoid dropping blocks when the batches will go out of scope
+        self.block_tables = None
+
+        # Index into tensors
+        input_ids = self.input_ids[indices]
+        position_ids = self.position_ids[indices]
+        all_input_ids_tensor = self.all_input_ids_tensor[indices]
+        block_tables_tensor = self.block_tables_tensor[indices]
+        input_lengths_tensor = self.input_lengths_tensor[indices]
+        slots = self.slots[slot_filtering_indices]
+        next_token_chooser = self.next_token_chooser.filter(indices)
+
+        start_slots = torch.tensor(start_slots, dtype=torch.int64)
+
+        # Move to GPU now that we have the whole tensor
+        slot_indices = slot_indices.to(device)
+
+        return FlashCausalLMBatch(
+            batch_id=self.batch_id,
+            requests=requests,
+            requests_idx_mapping=requests_idx_mapping,
+            input_ids=input_ids,
+            position_ids=position_ids,
+            cu_seqlen_prefill=None,
+            start_slots=start_slots,
+            slot_indices=slot_indices,
+            needed_blocks_slots=None,
+            block_tables=block_tables,
+            block_tables_tensor=block_tables_tensor,
+            slots=slots,
+            max_seqlen=max_seqlen,
+            prefill_head_indices=None,
+            prefill_next_token_indices=None,
+            prefill_cu_outlens=None,
+            input_lengths=input_lengths,
+            input_lengths_tensor=input_lengths_tensor,
+            prefix_offsets=prefix_offsets,
+            read_offsets=read_offsets,
+            all_input_ids=all_input_ids,
+            all_input_ids_tensor=all_input_ids_tensor,
+            next_token_chooser=next_token_chooser,
+            stopping_criterias=stopping_criterias,
+            blocks=blocks,
+            max_blocks=max_blocks,
+        )
+
+    
+    def to_client(self) -> CachedBatchRequest:
+        return CachedBatchRequest(
+            id=self.batch_id,
+            request_ids=[r.id for r in self.requests],
+            size=len(self),
+            max_tokens=self.blocks * BLOCK_SIZE,
         )
 
 
@@ -610,7 +769,7 @@ class FlashCausalLMBatch(Batch):
 
         start_slots = torch.concat(start_slots)
 
-        next_token_chooser = HeterogeneousNextTokenChooser.from_pb(
+        next_token_chooser = HeterogeneousNextTokenChooser.from_client(
             next_token_chooser_parameters,
             dtype=batches[0].next_token_chooser.dtype,
             device=batches[0].next_token_chooser.device,
