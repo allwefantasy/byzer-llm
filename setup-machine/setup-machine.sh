@@ -109,6 +109,9 @@ if [[ $DRIVER_INSTALLED == false ]];then
 fi
 
 echo "Now install the NVIDIA toolkit with conda"
+
+# for now pytorch use cuda 11.7.0 by default.
+# We should update this version when pytorch update the default version
 conda install -y cuda==11.7.0 -c nvidia
 
 
@@ -176,28 +179,35 @@ EOF
         if [ "$OS" = "ubuntu" ]; then
             sudo apt install -y docker.io
         elif [ "$OS" = "centos" ]; then
-            sudo yum install -y docker.io
+            sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+            sudo dnf install -y docker-ce docker-ce-cli containerd.io
         fi
     fi
 
     echo "Start MySQL"
     docker run --name metadb -e MYSQL_ROOT_PASSWORD=mlsql -p 3306:3306 -d mysql:5.7
 
+    echo "Setup Ray"
+
     cat <<EOF >> ~/softwares/ray.start.master.sh
 ray stop && ray start --head --dashboard-host 127.0.0.1  '--resources={"master": 1, "passwordless_ssh_node": 1000}'
-EOF    
+EOF 
+    chmod u+x ~/softwares/ray.start.master.sh
+
+    echo "Start Ray"
+    ~/softwares/ray.start.master.sh
+
+    # echo "Start Byzer-lang"
+    # python setup-machine.py --start-byzer-lang
 
     cat <<EOF
 1. The byzer-lang is installed at $HOME/softwares/byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}
    1.1 Use `./conf/byzer.properties.override` to config byzer-lang
    1.2 Use `./bin/byzer.sh start` to start byzer-lang
 
-2. Byzer Notebook deepends on MySQL 5.7, you can use the following command to install MySQL 5.7
-   docker run --name metadb -e MYSQL_ROOT_PASSWORD=mlsql -p 3306:3306 -d mysql:5.7
-
-3. The byzer-notebook is installed at $HOME/softwares/byzer-notebook
-   3.1 Use `./conf/notebook.properties` to config byzer-lang
-   3.2 Use `./bin/notebook.sh start` to start byzer-lang
+2. The byzer-notebook is installed at $HOME/softwares/byzer-notebook
+   3.1 Use `./conf/notebook.properties` to config byzer-notebook
+   3.2 Use `./bin/notebook.sh start` to start byzer-notebook
 
 4. ray start script is installed at $HOME/softwares/ray.start.master.sh
    4.1 You can use `bash ray.start.master.sh` to start ray cluster
