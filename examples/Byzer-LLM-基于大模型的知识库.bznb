@@ -1,0 +1,35 @@
+{
+  "id" : "40",
+  "name" : "问答知识库构建",
+  "user" : "william",
+  "cell_list" : [ {
+    "id" : "218",
+    "content" : "set PASSWORD=\"mlsql\" where scope=\"session\";\n\n!python conf \"rayAddress=127.0.0.1:10001\";\n!python conf \"pythonExec=/home/winubuntu/miniconda3/envs/byzerllm-desktop/bin/python\";\n!python conf \"dataMode=model\";\n!python conf \"runIn=driver\";\n!python conf \"schema=st(field(value,string))\";\n\n!python conf \"num_gpus=0\";\n!python conf \"maxConcurrency=1\";\n!python conf \"standalone=true\";\n!python conf \"owner=william\";",
+    "job_id" : "bde9a210-b220-4f40-8f6b-ae6f663ee5ee"
+  }, {
+    "id" : "209",
+    "content" : "load jdbc.`business.byzerDoc` \nwhere url=\"jdbc:mysql://127.0.0.1:3306/business?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&tinyInt1isBit=false&useSSL=false\"\nand driver=\"com.mysql.jdbc.Driver\"\nand user=\"root\"\nand password=\"${PASSWORD}\"\nas byzerDoc;\n\nselect file as source, value as page_content from byzerDoc as newData;\n\n-- load text.`file:///home/winubuntu/projects/byzer-doc/byzer-lang/zh-cn/**/*.md` where\n-- wholetext=\"true\"\n-- as tt;\n\n-- select count(*) from tt as outputp;\n",
+    "job_id" : "a0c1d719-a3eb-4b91-a71e-c623074a9654"
+  }, {
+    "id" : "216",
+    "content" : "-- 使用 chatglm 提供 embbeding 构建向量库 \n-- 以及使用自然语言交互功能实现知识库的问答能力\n\n!python conf \"schema=file\";\n\n\nrun command as LLM.`` where \naction=\"infer\"\nand pretrainedModelType=\"chatglm\"\nand localPathPrefix=\"/my8t/byzerllm/jobs\"\nand localModelDir=\"/my8t/byzerllm/jobs/checkpoint-17000/pretrained_model\"\nand modelWaitServerReadyTimeout=\"300\"\nand udfName=\"chat\"\nand modelTable=\"command\";",
+    "job_id" : "ef255bcc-92a3-4fae-ad7e-b7f0d899ea17"
+  }, {
+    "id" : "215",
+    "content" : "!python conf \"owner=william\";\n!python conf \"schema=file\";\n\n-- 使用业务数据构建向量数据库\nrun command as LLMQABuilder.`` where inputTable=\"newData\" \nand outputTable=\"qaIndex\";\n\n-- 保存到数据湖\nsave overwrite qaIndex as delta.`ai_model.qa`;",
+    "job_id" : "9a6fdde2-03b2-49f4-af9c-9f209c64776e"
+  }, {
+    "id" : "213",
+    "content" : "-- 现在，我们可以把向量查询和大模型结合起来，\n-- 提供一个新的函数 qa\n!python conf \"owner=william\";\n\n-- 加载向量数据\nload delta.`ai_model.qa` as qa_model;\n\n--- 部署\nrun command as LLM.`` where \naction=\"infer\"\nand pretrainedModelType=\"qa\"\nand localPathPrefix=\"/my8t/byzerllm/jobs\"\nand modelWaitServerReadyTimeout=\"300\"\n-- and localModelDir=\"/my8t/byzerllm/tmp/faiss_index\"\nand udfName=\"qa\"\nand modelTable=\"qa_model\";",
+    "job_id" : "ad059f10-1e9e-470d-b8dd-bc7d23e9d728"
+  }, {
+    "id" : "219",
+    "content" : "select qa(array(to_json(map(\n\n\"instruction\",\"Byzer-lang 是什么\"\n\n)))) as response as output;",
+    "job_id" : "9701a52d-da4d-4316-abb8-8994d42f055b"
+  }, {
+    "id" : "220",
+    "content" : "select chat(array(to_json(map(\n\n\"instruction\",\"Byzer-lang 是什么 \"\n\n)))) as response as output;",
+    "job_id" : "b107b21b-99a6-408c-9fb9-e354f0bdb0d8"
+  } ],
+  "is_demo" : null
+}
