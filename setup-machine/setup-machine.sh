@@ -6,7 +6,7 @@ set -o pipefail # # Exit with a non-zero status if any command in a pipeline fai
 echo ""
 echo ""
 
-
+echo "Welcome to Byzer-LLM setup script"
 
 ROLE=${ROLE:-"master"}
 OS="ubuntu"
@@ -137,17 +137,34 @@ pip install -r byzer-llm/demo-requirements.txt
 
 echo "Setup TGI support in Byzer-LLM"
 
-git clone https://gitee.com/mirrors/text-generation-inference
-cd  text-generation-inference/server/custom_kernels
-pip install .
+if pip show custom-kernels >/dev/null 2>&1; then
+    echo "Package custom-kernels is already installed"
+else
+    echo "Package custom-kernels is not installed"
+    echo "Try to install custom-kernels"
+    git clone https://gitee.com/mirrors/text-generation-inference
+    cd  text-generation-inference/server/custom_kernels
+    pip install .
+fi 
+
 
 cd byzer-llm
 
-echo "Install tgi flash attention dependency, it may take a while"
-make install-flash-attention
+if pip show flash-attn >/dev/null 2>&1; then
+    echo "Package flash-attn is already installed"
+else
+    echo "Package flash-attn is not installed"
+    echo "Install tgi flash attention dependency, it may take a while"
+    make install-flash-attention
+fi 
 
-echo "Install TGI vllm dependency it may take a while "
-make install-vllm
+if pip show vllm >/dev/null 2>&1; then
+    echo "Package vllm is already installed"
+else
+    echo "Package vllm is not installed"
+    echo "Install TGI vllm dependency it may take a while "
+    make install-vllm
+fi 
 
 
 cd $HOME/softwares
@@ -157,15 +174,16 @@ if [[ $ROLE == "master" ]];then
 
     wget "https://download.byzer.org/byzer/byzer-lang/${BYZER_VERSION}/byzer-lang-all-in-one-linux-amd64-3.3.0-2.3.8.tar.gz" -O byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz
     tar -zxvf byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz
-
+    BYZER_LANG_HOME=$HOME/softwares/byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}
 
     wget "https://download.byzer.org/byzer/byzer-notebook/${BYZER_NOTEBOOK_VERSION}/byzer-notebook-${BYZER_NOTEBOOK_VERSION}.tar.gz" -O byzer-notebook-${BYZER_NOTEBOOK_VERSION}.tar.gz
     tar -zxvf byzer-notebook-${BYZER_NOTEBOOK_VERSION}.tar.gz
+    BYZER_NOTEBOOK_HOME=$HOME/softwares/byzer-notebook
 
     echo "Setup JDK"
 
     cat <<EOF >> ~/.bashrc
-export JAVA_HOME=$HOME/softwares/byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}"/jdk8
+export JAVA_HOME=${BYZER_LANG_HOME}/jdk8
 export PATH=${JAVA_HOME}/bin:$PATH
 EOF
 
@@ -201,19 +219,19 @@ EOF
     # python setup-machine.py --start-byzer-lang
 
     cat <<EOF
-1. The byzer-lang is installed at $HOME/softwares/byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}
+1. The byzer-lang is installed at ${BYZER_LANG_HOME}
    1.1 Use `./conf/byzer.properties.override` to config byzer-lang
    1.2 Use `./bin/byzer.sh start` to start byzer-lang
 
-2. The byzer-notebook is installed at $HOME/softwares/byzer-notebook
+2. The byzer-notebook is installed at ${BYZER_NOTEBOOK_HOME}
    3.1 Use `./conf/notebook.properties` to config byzer-notebook
    3.2 Use `./bin/notebook.sh start` to start byzer-notebook
 
-4. ray start script is installed at $HOME/softwares/ray.start.master.sh
+3. ray start script is installed at $HOME/softwares/ray.start.master.sh
    4.1 You can use `bash ray.start.master.sh` to start ray cluster
    4.2 You can use `bash ray.start.worker.sh` to start ray worker
 
-5. Please according to the https://docs.byzer.org/#/byzer-lang/zh-cn/byzer-llm/deploy to setup the byzer-lang and byzer-notebook
+4. Please according to the https://docs.byzer.org/#/byzer-lang/zh-cn/byzer-llm/deploy to setup the byzer-lang and byzer-notebook
 EOF
 
 else
