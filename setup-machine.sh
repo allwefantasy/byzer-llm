@@ -124,7 +124,7 @@ echo "Create some basic folders: models projects byzerllm_stroage softwares data
 mkdir models projects byzerllm_stroage softwares data
 
 echo "Create some basic conda environments"
-conda create -y --name byzerllm-dev python=3.10
+conda create -y --name byzerllm-dev python=3.10.11
 conda activate byzerllm-dev
 
 echo "Install some basic python packages"
@@ -152,7 +152,10 @@ export PATH=${JAVA_HOME}/bin:$PATH
 EOF
 
     source activate ~/.bashrc
-    
+
+    cat <<EOF >> ~/softwares/ray.start.master.sh
+ray stop && ray start --head --dashboard-host 127.0.0.1  '--resources={"master": 1, "passwordless_ssh_node": 1000}'
+EOF    
 
     cat <<EOF
 1. The byzer-lang is installed at $HOME/softwares/byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}
@@ -166,6 +169,27 @@ EOF
    3.1 Use `./conf/notebook.properties` to config byzer-lang
    3.2 Use `./bin/notebook.sh start` to start byzer-lang
 
-4. Please according to the https://docs.byzer.org/#/byzer-lang/zh-cn/byzer-llm/deploy to setup the byzer-lang and byzer-notebook
+4. ray start script is installed at $HOME/softwares/ray.start.master.sh
+   4.1 You can use `bash ray.start.master.sh` to start ray cluster
+   4.2 You can use `bash ray.start.worker.sh` to start ray worker
+
+5. Please according to the https://docs.byzer.org/#/byzer-lang/zh-cn/byzer-llm/deploy to setup the byzer-lang and byzer-notebook
 EOF
+
+else
+
+    cat <<EOF >> ~/softwares/ray.start.worker.sh
+echo "The master ip is: "
+read masterIP
+echo "The name of this worker is: "
+read workerName
+ray stop && ray start --address="${masterIP}:6379"  "--resources={\"${workerName}\": 1}"
+EOF  
+
+    cat <<EOF
+ray start script is installed at $HOME/softwares/ray.start.master.sh
+    You can use `bash ray.start.master.sh` to start ray cluster
+    You can use `bash ray.start.worker.sh` to start ray worker
+EOF    
+
 fi
