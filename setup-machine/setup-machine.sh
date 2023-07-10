@@ -6,15 +6,21 @@ set -o pipefail # # Exit with a non-zero status if any command in a pipeline fai
 echo ""
 echo ""
 
-cat <<EOF
-This script will help you install Byzer-LLM enviroment on your machine (CentOS or Ubuntu)
-Make sure the script is executed by root user.
-EOF
+
 
 ROLE=${ROLE:-"master"}
 OS="ubuntu"
 BYZER_VERSION="2.3.8"
 BYZER_NOTEBOOK_VERSION="1.2.5"
+
+cat <<EOF
+This script will help you install Byzer-LLM enviroment on your machine (CentOS or Ubuntu)
+
+1. Make sure the script is executed by root user.
+2. Byzer-lang Version: ${BYZER_VERSION}
+3. Byzer-notebook Version: ${BYZER_NOTEBOOK_VERSION}
+EOF
+
 # check USER_PASSWORD is set or not
 if [[ -z "${USER_PASSWORD}" ]]; then
     echo "We will try to create a user byzerllm  in this Machine. You should specify the USER_PASSWORD of byzerllm first"
@@ -58,6 +64,9 @@ groupadd ai
 useradd -m byzerllm -g ai
 echo "byzerllm:${USER_PASSWORD}" | sudo chpasswd
 
+echo "Setup sudo permission for byzerllm"
+echo "byzerllm ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    
 echo "swith to user byzerllm"
 su - byzerllm
 
@@ -91,25 +100,16 @@ fi
 if [[ $DRIVER_INSTALLED == false ]];then
     echo "Now install the NVIDIA driver"
     if [ "$OS" = "ubuntu" ]; then
-        apt install -y  nvidia-driver-535
+        sudo apt install -y  nvidia-driver-535
     elif [ "$OS" = "centos" ]; then
-        dnf config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo
-        dnf install -y cuda 
+        sudo dnf config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo
+        # here we install cuda also, but it will not be used since will use the cuda installed by conda
+        sudo dnf install -y cuda 
     fi
 fi
 
-if command -v nvcc &> /dev/null; then
-    echo "NVIDIA toolkit is installed"
-else
-    echo "NVIDIA toolkit is not installed"
-    TOOLKIT_INSTALLED=false
-fi
-
-
-if [ "$TOOLKIT_INSTALLED" = false ]; then
-    echo "Now install the NVIDIA toolkit with conda"
-    conda install -y cuda -c nvidia  
-fi
+echo "Now install the NVIDIA toolkit with conda"
+conda install -y cuda==11.7.0 -c nvidia
 
 
 if command -v nvcc &> /dev/null; then
@@ -120,17 +120,31 @@ else
 fi
 
 
+echo "Create conda environments: byzerllm-dev"
+conda create -y --name byzerllm-dev python=3.10.11
+conda activate byzerllm-dev
+
 echo "Create some basic folders: models projects byzerllm_stroage softwares data"
 
 mkdir models projects byzerllm_stroage softwares data
 
-echo "Create some basic conda environments"
-conda create -y --name byzerllm-dev python=3.10.11
-conda activate byzerllm-dev
-
 echo "Install some basic python packages"
 git clone https://gitee.com/allwefantasy/byzer-llm
 pip install -r byzer-llm/demo-requirements.txt
+
+echo "Setup TGI support in Byzer-LLM"
+
+git clone https://gitee.com/mirrors/text-generation-inference
+cd  text-generation-inference/server/custom_kernels
+pip install .
+
+cd byzer-llm
+
+echo "Install tgi flash attention dependency, it may take a while"
+make install-flash-attention
+
+echo "Install TGI vllm dependency it may take a while "
+make install-vllm
 
 
 cd $HOME/softwares
@@ -153,6 +167,21 @@ export PATH=${JAVA_HOME}/bin:$PATH
 EOF
 
     source activate ~/.bashrc
+
+    echo "Setup MySQL"
+    if command -v docker &> /dev/null; then
+        echo "docker is installed"    
+    else
+        echo "docker is not installed, now install docker"    
+        if [ "$OS" = "ubuntu" ]; then
+            sudo apt install -y docker.io
+        elif [ "$OS" = "centos" ]; then
+            sudo yum install -y docker.io
+        fi
+    fi
+
+    echo "Start MySQL"
+    docker run --name metadb -e MYSQL_ROOT_PASSWORD=mlsql -p 3306:3306 -d mysql:5.7
 
     cat <<EOF >> ~/softwares/ray.start.master.sh
 ray stop && ray start --head --dashboard-host 127.0.0.1  '--resources={"master": 1, "passwordless_ssh_node": 1000}'
