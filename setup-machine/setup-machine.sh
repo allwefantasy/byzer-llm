@@ -339,16 +339,16 @@ echo "Start Byzer notebook"
 
     cat <<EOF
 1. The byzer-lang is installed at ${BYZER_LANG_HOME}
-   1.1 Use `./conf/byzer.properties.override` to config byzer-lang
-   1.2 Use `./bin/byzer.sh start` to start byzer-lang
+   1.1 Use ./conf/byzer.properties.override to config byzer-lang
+   1.2 Use ./bin/byzer.sh start to start byzer-lang
 
 2. The byzer-notebook is installed at ${BYZER_NOTEBOOK_HOME}
-   3.1 Use `./conf/notebook.properties` to config byzer-notebook
-   3.2 Use `./bin/notebook.sh start` to start byzer-notebook
+   3.1 Use ./conf/notebook.properties to config byzer-notebook
+   3.2 Use ./bin/notebook.sh start to start byzer-notebook
 
 3. ray start script is installed at $HOME/softwares/ray.start.master.sh
-   4.1 You can use `bash ray.start.master.sh` to start ray cluster
-   4.2 You can use `bash ray.start.worker.sh` to start ray worker
+   4.1 You can use bash ray.start.master.sh to start ray cluster
+   4.2 You can use bash ray.start.worker.sh to start ray worker
 
 4. Please according to the https://docs.byzer.org/#/byzer-lang/zh-cn/byzer-llm/deploy to setup the byzer-lang and byzer-notebook
 EOF
