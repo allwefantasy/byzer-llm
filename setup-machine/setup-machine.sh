@@ -66,7 +66,13 @@ useradd -m byzerllm -g ai
 echo "byzerllm:${USER_PASSWORD}" | sudo chpasswd
 
 echo "Setup sudo permission for byzerllm"
-echo "byzerllm ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+if sudo -n true 2>/dev/null; then
+    echo "User has sudo permission"
+else
+    echo "Grant user sudo permission"
+    echo "byzerllm ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+fi
     
 echo "swith to user byzerllm"
 su - byzerllm
@@ -76,9 +82,14 @@ echo "Install Conda environment"
 CONDA_INSTALL_PATH=$HOME/miniconda3
 
 echo "Download the latest version of Miniconda"
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
-chmod +x ~/miniconda.sh
-./miniconda.sh -b -p $HOME/miniconda3
+
+if [[ -d "$HOME/miniconda3" ]]; then
+    echo "Miniconda is already installed"
+else
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+    chmod +x ~/miniconda.sh
+    ./miniconda.sh -b -p $HOME/miniconda3    
+fi
 
 # echo "export PATH=\"$CONDA_INSTALL_PATH/bin:\$PATH\"" >> ~/.bashrc
 echo "Initialize conda and activate the base environment"
