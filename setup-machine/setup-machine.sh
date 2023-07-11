@@ -258,9 +258,10 @@ EOF
 
     echo "Setup Ray"
 
-    cat <<EOF >> ~/softwares/ray.start.master.sh
+    cat <<EOF > ~/softwares/ray.start.master.sh
 ray stop && ray start --head --dashboard-host 127.0.0.1  '--resources={"master": 1, "passwordless_ssh_node": 1000}'
-EOF 
+EOF
+    
     chmod u+x ~/softwares/ray.start.master.sh
 
     echo "Start Ray"
@@ -328,13 +329,13 @@ EOF
 
 echo "Start Byzer lang"
 cd $BYZER_LANG_HOME
-./bin/byzer.sh start
+./bin/byzer.sh restart
 
 sleep 10
-
+cd $BYZER_NOTEBOOK_HOME
 echo "Start Byzer notebook"
 
-./bin/notebook.sh start
+./bin/notebook.sh restart
 
     cat <<EOF
 1. The byzer-lang is installed at ${BYZER_LANG_HOME}
