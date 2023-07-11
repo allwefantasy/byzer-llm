@@ -156,7 +156,13 @@ fi
 
 
 echo "Create conda environments: byzerllm-dev"
-conda create -y --name byzerllm-dev python=3.10.11
+
+if conda env list | grep -q "^byzerllm-dev "; then
+    echo "Conda environment byzerllm-dev exists"
+else
+    conda create -y --name byzerllm-dev python=3.10.11
+fi
+
 conda activate byzerllm-dev
 
 echo "Create some basic folders: models projects byzerllm_stroage softwares data"
