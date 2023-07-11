@@ -26,7 +26,9 @@ EOF
 # check USER_PASSWORD is set or not
 if [[ -z "${USER_PASSWORD}" ]]; then
     echo "We will try to create a user byzerllm  in this Machine. You should specify the USER_PASSWORD of byzerllm first"
-    echo "The new password of byzerllm is: "
+    echo ""
+    echo "Please input the USER_PASSWORD of byzerllm: "
+    echo ""
     read USER_PASSWORD    
 fi
 
@@ -84,7 +86,7 @@ else
 fi
     
 echo "swith to user byzerllm"
-su - byzerllm
+su byzerllm
 
 echo "Install Conda environment"
 
