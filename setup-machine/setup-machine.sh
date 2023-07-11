@@ -16,7 +16,7 @@ BYZER_NOTEBOOK_VERSION="1.2.5"
 DEFUALT_MYSQL_PASSWORD=${DEFUALT_MYSQL_PASSWORD:-"mlsql"}
 
 cat <<EOF
-This script will help you install Byzer-LLM enviroment on your machine (CentOS or Ubuntu)
+This script will help you install Byzer-LLM enviroment on your machine (CentOS 8 or Ubuntu 20.04/22.04)
 
 You should execute this script twice, first time as root user, second time as byzerllm user.
 The first time, this script create a user byzerllm.
