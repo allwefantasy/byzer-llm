@@ -271,7 +271,7 @@ byzer.server.dryrun=false
 
 byzer.server.runtime.driver-memory=24g
 
-streaming.name=Byzer-lang-desktop
+streaming.name=Byzer-lang-engine
 streaming.rest=true
 streaming.thrift=false
 streaming.platform=spark
