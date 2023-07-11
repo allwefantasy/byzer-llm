@@ -352,6 +352,7 @@ echo "Start Byzer notebook"
 
 4. Please according to the https://docs.byzer.org/#/byzer-lang/zh-cn/byzer-llm/deploy to setup the byzer-lang and byzer-notebook
 EOF
+
 fi
 
 
@@ -363,12 +364,12 @@ read masterIP
 echo "The name of this worker is: "
 read workerName
 ray stop && ray start --address="${masterIP}:6379"  "--resources={\"${workerName}\": 1}"
-EOF  
+EOF
 
     cat <<EOF
 ray start script is installed at $HOME/softwares/ray.start.worker.sh
     You can use `bash ray.start.master.sh` to start ray cluster
     You can use `bash ray.start.worker.sh` to start ray worker
-EOF    
+EOF
 
 fi
