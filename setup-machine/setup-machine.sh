@@ -140,6 +140,16 @@ if [[ $DRIVER_INSTALLED == false ]];then
     fi
 fi
 
+echo "Create conda environments: byzerllm-dev"
+
+if conda env list | grep -q "^byzerllm-dev "; then
+    echo "Conda environment byzerllm-dev exists"
+else
+    conda create -y --name byzerllm-dev python=3.10.11
+fi
+
+conda activate byzerllm-dev
+
 echo "Now install the NVIDIA toolkit with conda"
 
 # for now pytorch use cuda 11.7.0 by default.
@@ -153,17 +163,6 @@ else
     echo "Fail to install NVIDIA toolkit from conda"
     exit 1
 fi
-
-
-echo "Create conda environments: byzerllm-dev"
-
-if conda env list | grep -q "^byzerllm-dev "; then
-    echo "Conda environment byzerllm-dev exists"
-else
-    conda create -y --name byzerllm-dev python=3.10.11
-fi
-
-conda activate byzerllm-dev
 
 echo "Create some basic folders: models projects byzerllm_stroage softwares data"
 
