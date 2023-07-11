@@ -236,7 +236,7 @@ export JAVA_HOME=${BYZER_LANG_HOME}/jdk8
 export PATH=${JAVA_HOME}/bin:$PATH
 EOF
 
-    source activate ~/.bashrc
+    source ~/.bashrc
 
     echo "Setup MySQL"
     if command -v docker &> /dev/null; then
@@ -244,15 +244,17 @@ EOF
     else
         echo "docker is not installed, now install docker"    
         if [ "$OS" = "ubuntu" ]; then
-            sudo apt install -y docker.io
+            sudo apt install -y docker.io            
         elif [ "$OS" = "centos" ]; then
             sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
             sudo dnf install -y docker-ce docker-ce-cli containerd.io
+            sudo systemctl start docker
+            sudo systemctl enable docker
         fi
     fi
 
     echo "Start MySQL"
-    docker run --name metadb -e MYSQL_ROOT_PASSWORD=${DEFUALT_MYSQL_PASSWORD} -p 3306:3306 -d mysql:5.7
+    sudo docker run --name metadb -e MYSQL_ROOT_PASSWORD=${DEFUALT_MYSQL_PASSWORD} -p 3306:3306 -d mysql:5.7
 
     echo "Setup Ray"
 
