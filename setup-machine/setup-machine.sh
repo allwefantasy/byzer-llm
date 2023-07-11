@@ -176,7 +176,12 @@ done
 
 
 echo "Install some basic python packages"
-git clone https://gitee.com/allwefantasy/byzer-llm
+if [[ -d "byzer-llm" ]]; then
+    echo "byzer-llm is already created"
+else
+    git clone https://gitee.com/allwefantasy/byzer-llm
+fi
+
 pip install -r byzer-llm/demo-requirements.txt
 
 echo "Setup TGI support in Byzer-LLM"
