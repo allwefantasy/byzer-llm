@@ -79,7 +79,7 @@ fi
 
 echo "Setup sudo permission for byzerllm"
 
-if sudo -n true 2>/dev/null; then
+if sudo -n -U byzerllm true 2>/dev/null; then
     echo "User has sudo permission"
 else
     echo "Grant user sudo permission"
