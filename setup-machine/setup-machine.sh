@@ -177,7 +177,7 @@ done
 
 echo "Install some basic python packages"
 if [[ -d "byzer-llm" ]]; then
-    echo "byzer-llm is already created"
+    echo "byzer-llm project is already exists"
 else
     git clone https://gitee.com/allwefantasy/byzer-llm
 fi
@@ -197,7 +197,7 @@ else
 fi 
 
 
-cd byzer-llm
+cd ~/byzer-llm
 
 if pip show flash-attn >/dev/null 2>&1; then
     echo "Package flash-attn is already installed"
@@ -349,8 +349,10 @@ echo "Start Byzer notebook"
 
 4. Please according to the https://docs.byzer.org/#/byzer-lang/zh-cn/byzer-llm/deploy to setup the byzer-lang and byzer-notebook
 EOF
+fi
 
-else
+
+if [[ $ROLE == "worker" ]];then
 
     cat <<EOF >> ~/softwares/ray.start.worker.sh
 echo "The master ip is: "
