@@ -358,13 +358,15 @@ fi
 
 if [[ $ROLE == "worker" ]];then
 
-    cat <<EOF >> ~/softwares/ray.start.worker.sh
+    cat <<EOF > ~/softwares/ray.start.worker.sh
 echo "The master ip is: "
 read masterIP
 echo "The name of this worker is: "
 read workerName
 ray stop && ray start --address="${masterIP}:6379"  "--resources={\"${workerName}\": 1}"
 EOF
+
+chmod u+x ~/softwares/ray.start.worker.sh
 
     cat <<EOF
 ray start script is installed at $HOME/softwares/ray.start.worker.sh
