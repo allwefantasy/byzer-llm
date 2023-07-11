@@ -18,13 +18,16 @@ DEFUALT_MYSQL_PASSWORD=${DEFUALT_MYSQL_PASSWORD:-"mlsql"}
 cat <<EOF
 This script will help you install Byzer-LLM enviroment on your machine (CentOS or Ubuntu)
 
-1. Make sure the script is executed by root user.
-2. Byzer-lang Version: ${BYZER_VERSION}
-3. Byzer-notebook Version: ${BYZER_NOTEBOOK_VERSION}
+You should execute this script twice, first time as root user, second time as byzerllm user.
+The first time, this script create a user byzerllm.
+The second time, this script install the byzer-llm enviroment for byzerllm user.
+
+1. Byzer-lang Version: ${BYZER_VERSION}
+2. Byzer-notebook Version: ${BYZER_NOTEBOOK_VERSION}
 EOF
 
 # check USER_PASSWORD is set or not
-if [[ -z "${USER_PASSWORD}" ]]; then
+if [[ -z "${USER_PASSWORD}" && "${USER}" != "byzerllm" ]]; then
     echo "We will try to create a user byzerllm  in this Machine. You should specify the USER_PASSWORD of byzerllm first"
     echo ""
     echo "Please input the USER_PASSWORD of byzerllm: "
@@ -141,7 +144,7 @@ echo "Now install the NVIDIA toolkit with conda"
 
 # for now pytorch use cuda 11.7.0 by default.
 # We should update this version when pytorch update the default version
-conda install -y cuda==11.7.0 -c nvidia
+conda install -y cuda -c nvidia/label/cuda-11.7.0
 
 
 if command -v nvcc &> /dev/null; then
@@ -158,7 +161,14 @@ conda activate byzerllm-dev
 
 echo "Create some basic folders: models projects byzerllm_stroage softwares data"
 
-mkdir models projects byzerllm_stroage softwares data
+for dir in models projects byzerllm_stroage softwares data; do
+    if [[ -d "$HOME/$dir" ]]; then
+        echo "$dir is already created"
+    else
+        mkdir $HOME/$dir
+    fi
+done
+
 
 echo "Install some basic python packages"
 git clone https://gitee.com/allwefantasy/byzer-llm
