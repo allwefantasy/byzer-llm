@@ -8,6 +8,8 @@ echo ""
 
 echo "Welcome to Byzer-LLM setup script"
 
+cd ~
+
 ROLE=${ROLE:-"master"}
 OS="ubuntu"
 BYZER_VERSION="2.3.8"
