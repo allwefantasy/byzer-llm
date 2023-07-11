@@ -29,7 +29,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
 
 
 def init_model(model_dir,infer_params:Dict[str,str]={}): 
-    infer_mode = infer_params.get("infer_mode","simple")
+    infer_mode = infer_params.get("inferMode","simple")
 
     if infer_mode == "tgi":
         import byzerllm.utils.inference as TGI
