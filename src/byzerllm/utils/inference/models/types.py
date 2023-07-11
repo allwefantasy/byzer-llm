@@ -237,18 +237,5 @@ class Generation:
     token_is_special: bool
     generated_text: Optional[GeneratedText]
 
-    def to_client(self) -> generate_pb2.Generation:
-    return generate_pb2.Generation(
-        request_id=self.request_id,
-        prefill_tokens=self.prefill_tokens.to_pb()
-        if self.prefill_tokens is not None
-        else None,
-        token_id=self.token_id,
-        token_logprob=self.token_logprob,
-        token_text=self.token_text,
-        token_is_special=self.token_is_special,
-        generated_text=self.generated_text.to_pb()
-        if self.generated_text is not None
-        else None,
-    )
+  
 
