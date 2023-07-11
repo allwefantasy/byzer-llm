@@ -62,9 +62,17 @@ fi
 
 
 echo "Setup basic user byzerllm "
-groupadd ai
-useradd -m byzerllm -g ai
-echo "byzerllm:${USER_PASSWORD}" | sudo chpasswd
+
+if id -u byzerllm >/dev/null 2>&1; then
+    echo "User exists"
+else
+    echo "User byzerllm does not exist"
+    groupadd ai
+    useradd -m byzerllm -g ai
+    echo "byzerllm:${USER_PASSWORD}" | sudo chpasswd
+fi
+
+
 
 echo "Setup sudo permission for byzerllm"
 
