@@ -12,6 +12,7 @@ ROLE=${ROLE:-"master"}
 OS="ubuntu"
 BYZER_VERSION="2.3.8"
 BYZER_NOTEBOOK_VERSION="1.2.5"
+DEFUALT_MYSQL_PASSWORD=${DEFUALT_MYSQL_PASSWORD:-"mlsql"}
 
 cat <<EOF
 This script will help you install Byzer-LLM enviroment on your machine (CentOS or Ubuntu)
@@ -203,7 +204,7 @@ EOF
     fi
 
     echo "Start MySQL"
-    docker run --name metadb -e MYSQL_ROOT_PASSWORD=mlsql -p 3306:3306 -d mysql:5.7
+    docker run --name metadb -e MYSQL_ROOT_PASSWORD=${DEFUALT_MYSQL_PASSWORD} -p 3306:3306 -d mysql:5.7
 
     echo "Setup Ray"
 
@@ -214,9 +215,76 @@ EOF
 
     echo "Start Ray"
     ~/softwares/ray.start.master.sh
+        
+    # echo "Modify the byzer config file"    
+    cat <<EOF > ${BYZER_LANG_HOME}/conf/byzer.properties.override
+byzer.server.mode=all-in-one
+byzer.server.dryrun=false
 
-    # echo "Start Byzer-lang"
-    # python setup-machine.py --start-byzer-lang
+byzer.server.runtime.driver-memory=24g
+
+streaming.name=Byzer-lang-desktop
+streaming.rest=true
+streaming.thrift=false
+streaming.platform=spark
+streaming.spark.service=true
+streaming.job.cancel=true
+streaming.datalake.path=./data/
+streaming.driver.port=9003
+streaming.enableHiveSupport=false
+streaming.plugin.clzznames=tech.mlsql.plugins.ds.MLSQLExcelApp,tech.mlsql.plugins.assert.app.MLSQLAssert,tech.mlsql.plugins.shell.app.MLSQLShell,tech.mlsql.plugins.mllib.app.MLSQLMllib,tech.mlsql.plugins.llm.LLMApp,tech.mlsql.plugins.execsql.ExecSQLApp
+
+spark.mlsql.log.driver.enablePrint=true
+spark.mlsql.path.schemas=oss,s3a,s3,abfs,file
+spark.mlsql.session.expireTime=10d
+spark.local.dir=/home/byzerllm/byzerllm_stroage    
+
+EOF
+
+wget https://download.byzer.org/byzer-extensions/nightly-build/byzer-llm-3.3_2.12-0.1.0-SNAPSHOT.jar -O $BYZER_LANG_HOME/plugin/byzer-llm-3.3_2.12-0.1.0-SNAPSHOT.jar
+
+# echo "Modify the byzer notebook config file"
+
+cat <<EOF > ${BYZER_NOTEBOOK_HOME}/conf/notebook.properties
+notebook.port=9002
+notebook.session.timeout=12h
+notebook.security.key=6173646661736466e4bda0e8bf983161
+notebook.services.communication.token=6173646661736466e4bda0e8bf983161
+
+notebook.database.type=mysql
+notebook.database.ip=localhost
+notebook.database.port=3306
+notebook.database.name=notebook
+notebook.database.username=root
+notebook.database.password=${DEFUALT_MYSQL_PASSWORD}
+notebook.user.home=/home/byzerllm/data/notebook
+notebook.url=http://localhost:9002
+notebook.mlsql.engine-url=http://127.0.0.1:9003
+notebook.mlsql.engine-backup-url=http://127.0.0.1:9003
+notebook.mlsql.auth-client=streaming.dsl.auth.client.DefaultConsoleClient
+
+notebook.job.history.max-size=2000000
+notebook.job.history.max-time=30
+notebook.env.is-trial=true
+
+notebook.redis.host=localhost
+notebook.redis.port=6379
+notebook.redis.password=redis_pwd
+notebook.redis.database=0
+
+notebook.env.is-trial=true   
+
+EOF
+
+echo "Start Byzer lang"
+cd $BYZER_LANG_HOME
+./bin/byzer.sh start
+
+sleep 10
+
+echo "Start Byzer notebook"
+
+./bin/notebook.sh start
 
     cat <<EOF
 1. The byzer-lang is installed at ${BYZER_LANG_HOME}
@@ -245,7 +313,7 @@ ray stop && ray start --address="${masterIP}:6379"  "--resources={\"${workerName
 EOF  
 
     cat <<EOF
-ray start script is installed at $HOME/softwares/ray.start.master.sh
+ray start script is installed at $HOME/softwares/ray.start.worker.sh
     You can use `bash ray.start.master.sh` to start ray cluster
     You can use `bash ray.start.worker.sh` to start ray worker
 EOF    
