@@ -316,14 +316,7 @@ notebook.mlsql.auth-client=streaming.dsl.auth.client.DefaultConsoleClient
 
 notebook.job.history.max-size=2000000
 notebook.job.history.max-time=30
-notebook.env.is-trial=true
-
-notebook.redis.host=localhost
-notebook.redis.port=6379
-notebook.redis.password=redis_pwd
-notebook.redis.database=0
-
-notebook.env.is-trial=true   
+notebook.env.is-trial=false
 
 EOF
 
