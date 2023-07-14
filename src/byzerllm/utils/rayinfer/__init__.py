@@ -17,11 +17,16 @@ def _build_yaml(
         model_dir:str,
         num_gpus_per_worker:int=1,
 ):
+    model_id = base64.b64encode(model_dir.encode("utf-8")).decode("utf-8").replace("=","")
     template = f"""deployment_config:
-  max_concurrent_queries: 64    
+  max_concurrent_queries: 64  
+  ray_actor_options:
+      resources:
+        accelerator_type_cpu: 0.01  
 model_config:
   batching: continuous
-  model_id: {model_dir}
+  model_id: {model_id}
+  model_url: {model_dir}
   max_input_words: 800
   initialization:    
     initializer:
@@ -45,7 +50,7 @@ scaling_config:
   num_cpus_per_worker: 1
   placement_strategy: "STRICT_PACK"
 """ 
-    model_id = base64.b64encode(model_dir.encode("utf-8")).decode("utf-8").replace("=","")
+    
     deploy_dir = os.path.join("byzer_model_deploy")
     deploy_file = os.path.join("byzer_model_deploy",model_id)
     if not os.path.exists(deploy_dir):
