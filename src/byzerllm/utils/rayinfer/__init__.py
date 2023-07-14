@@ -17,8 +17,7 @@ def _build_yaml(
         model_dir:str,
         num_gpus_per_worker:int=1,
 ):
-    template = f"""
-deployment_config:
+    template = f"""deployment_config:
   max_concurrent_queries: 64    
 model_config:
   batching: continuous
@@ -44,7 +43,7 @@ scaling_config:
   num_workers: 1
   num_gpus_per_worker: {num_gpus_per_worker}
   num_cpus_per_worker: 1
-  placement_strategy: "STRICT_PACK"  
+  placement_strategy: "STRICT_PACK"
 """ 
     model_id = base64.b64encode(model_dir.encode("utf-8")).decode("utf-8").replace("=","")
     deploy_dir = os.path.join("byzer_model_deploy")
