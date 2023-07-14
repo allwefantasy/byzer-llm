@@ -6,7 +6,6 @@ from typing import Union
 import socket
 import os
 import base64
-import shutil
 
 def _get_free_port():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -54,7 +53,7 @@ scaling_config:
         os.makedirs(deploy_dir) 
 
     if os.path.exists(deploy_file):
-        shutil.rmtree(deploy_file)
+        os.remove(deploy_file)
 
     with open(deploy_file, "w") as f:
         f.write(template)
