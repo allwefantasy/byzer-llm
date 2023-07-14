@@ -5,6 +5,7 @@ import ray._private.usage.usage_lib
 from typing import Union
 import socket
 import os
+import base64
 
 def _get_free_port():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -46,7 +47,7 @@ scaling_config:
   num_cpus_per_worker: 1
   placement_strategy: "STRICT_PACK"  
 """ 
-    model_id = model_dir.replace("/", "--").replace(".", "_")
+    model_id = base64.b64encode(model_dir.encode("utf-8")).decode("utf-8").replace("=","")
     deploy_dir = os.path.join("byzer_model_deploy",model_id)
     if not os.path.exists(deploy_dir):
         os.makedirs(deploy_dir)
