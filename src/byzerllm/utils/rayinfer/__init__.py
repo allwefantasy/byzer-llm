@@ -38,7 +38,7 @@ model_config:
       repetition_penalty: 1.1
       top_p: 0.8
       top_k: 50
-    prompt_format: "Below is an instruction that describes a task. Write a response that appropriately completes the request.\n### Instruction:\n{instruction}\n### Response:\n"
+    prompt_format: "Below is an instruction that describes a task. Write a response that appropriately completes the request.\n### Instruction:\n{{instruction}}\n### Response:\n"
     stopping_sequences: ["### Response:", "### End"]
 scaling_config:
   num_workers: 1
