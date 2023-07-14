@@ -3,6 +3,8 @@ from byzerllm.utils.inference.models import get_model
 from byzerllm.utils.inference.models.flash_causal_lm import FlashCausalLMBatch
 from byzerllm.utils.inference.models.types import BatchRequest,Request,StoppingCriteriaParameters,NextTokenChooserParameters
 import torch
+import torch.multiprocessing as mp
+import os
 
 def chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=2048, 
@@ -31,9 +33,8 @@ def chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
             break
 
     return [(generations[0].generated_text.text,"")]
-    
 
-def init_model(model_dir,infer_params:Dict[str,str]={}): 
+def _init_model(model_dir,infer_params:Dict[str,str]={}): 
     sharded = infer_params.get("model.sharded",True)
     quantize = infer_params.get("model.quantize","bitsandbytes")
     model = get_model(model_dir,
@@ -45,7 +46,40 @@ def init_model(model_dir,infer_params:Dict[str,str]={}):
     model.eval()       
     import types
     model.stream_chat = types.MethodType(chat, model)     
-    return (model,model.tokenizer)
+    return (model,model.tokenizer)    
+
+def get_available_port():
+    import socket    
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)    
+    s.bind(('localhost', 0))    
+    port = s.getsockname()[1]    
+    s.close()    
+    return port
+
+def init_model(model_dir,infer_params:Dict[str,str]={}): 
+    sharded = infer_params.get("model.sharded",True)
+    # use os.environ["CUDA_VISIBLE_DEVICES"] to get available gpus
+    gpu_ids = [int(item) for item in os.environ["CUDA_VISIBLE_DEVICES"].split(",")]
+    if len(gpu_ids) == 1:
+        return _init_model(model_dir,infer_params)
+    
+    # use torch.multiprocessing.spawn to init model in each process
+    master_port = get_available_port()
+    
+    for rank in range(gpu_ids):
+        env = {
+        "RANK": rank,
+        "WORLD_SIZE": str(len(gpu_ids)),
+        "MASTER_ADDR": "127.0.0.1",
+        "MASTER_PORT": master_port,
+        "NCCL_BLOCKING_WAIT": "1",
+        "SAFETENSORS_FAST_GPU":"1"
+    }
+        mp.spawn(_init_model, args=(model_dir,infer_params), 
+                 nprocs=len(gpu_ids), 
+                 join=True,
+                 env=env)
+
 
 
         

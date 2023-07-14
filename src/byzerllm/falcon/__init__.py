@@ -2,6 +2,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import transformers
 import torch
 import os
+import ray
 from typing import Any,Any,Dict, List,Tuple,Generator
 
 
@@ -28,12 +29,28 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     return [(answer,"")]
 
 
+def tgi_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
+        max_length:int=4096, 
+        top_p:float=0.95,
+        temperature:float=0.1,**kwargs):
+    model = self
+    response = ray.get(model.generate_text.remote(ins))
+    return [(response.generated_text,"")]
+
+
 def init_model(model_dir,infer_params:Dict[str,str]={}): 
-    infer_mode = infer_params.get("inferMode","simple")
+    infer_mode = infer_params.get("inferMode","transformers")
 
     if infer_mode == "tgi":
         import byzerllm.utils.inference as TGI
         return TGI.init_model(model_dir,infer_params)
+    
+    if infer_mode == "ray/tgi":        
+        from byzerllm.utils.rayinfer import build_model_serving
+        model = build_model_serving(model_dir)        
+        model.stream_chat = types.MethodType(tgi_chat, model) 
+        return (model,None)    
+        
 
     pretrained_model_dir = os.path.join(model_dir,"pretrained_model")
     adaptor_model_dir = model_dir
