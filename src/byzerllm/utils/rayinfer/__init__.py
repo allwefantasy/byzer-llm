@@ -73,7 +73,7 @@ def build_model_serving(model_dir):
        run({...LLMApp})         # run a single LLMApp
        run("models/model1.yaml", "models/model2.yaml", {...LLMApp}) # mix and match
     """
-    deployments, model_configs = llm_server(list(_build_yaml(model_dir)))
+    deployments, model_configs = llm_server(list(_build_yaml(model_dir,num_gpus_per_worker=4)))
     ray._private.usage.usage_lib.record_library_usage("aviary")
     model_id, deployment = deployments.items()[0]
     model_id = model_id.replace("/", "--").replace(".", "_")
