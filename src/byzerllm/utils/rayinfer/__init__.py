@@ -48,15 +48,14 @@ scaling_config:
   placement_strategy: "STRICT_PACK"  
 """ 
     model_id = base64.b64encode(model_dir.encode("utf-8")).decode("utf-8").replace("=","")
-    deploy_dir = os.path.join("byzer_model_deploy",model_id)
+    deploy_dir = os.path.join("byzer_model_deploy")
+    deploy_file = os.path.join("byzer_model_deploy",model_id)
     if not os.path.exists(deploy_dir):
-        os.makedirs(deploy_dir)
-
-    t_file = os.path.join(deploy_dir,"") 
-    with open(os.path.join(deploy_dir,""), "w") as f:
+        os.makedirs(deploy_dir)    
+    with open(deploy_file, "w") as f:
         f.write(template)
 
-    return t_file    
+    return deploy_file    
    
           
 
