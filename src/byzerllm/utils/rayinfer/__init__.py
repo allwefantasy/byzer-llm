@@ -50,9 +50,9 @@ scaling_config:
   num_cpus_per_worker: 1
   placement_strategy: "STRICT_PACK"
 """ 
-    
-    deploy_dir = os.path.join("byzer_model_deploy")
-    deploy_file = os.path.join("byzer_model_deploy",model_id)
+    curr = os.expanduser("~")
+    deploy_dir = os.path.join(curr,"byzer_model_deploy")
+    deploy_file = os.path.join(curr,"byzer_model_deploy",model_id)
     if not os.path.exists(deploy_dir):
         os.makedirs(deploy_dir) 
 
