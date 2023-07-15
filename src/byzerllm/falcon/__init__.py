@@ -51,6 +51,7 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
 
 def init_model(model_dir,infer_params:Dict[str,str]={}): 
     infer_mode = infer_params.get("inferMode","transformers")
+    
 
     if infer_mode == "tgi":
         import byzerllm.utils.inference as TGI
@@ -63,8 +64,9 @@ def init_model(model_dir,infer_params:Dict[str,str]={}):
         return (model,None) 
 
     if infer_mode == "vllm":
+        workerUseRay = infer_params.get("workerUseRay","false") == "true"
         from vllm import LLM                
-        llm = LLM(model=model_dir,tensor_parallel_size=len(ray.get_gpu_ids()))
+        llm = LLM(model=model_dir,tensor_parallel_size=len(ray.get_gpu_ids()),worker_use_ray=workerUseRay)
         llm.stream_chat = types.MethodType(vllm_chat, llm) 
         return (llm,None)                        
 
