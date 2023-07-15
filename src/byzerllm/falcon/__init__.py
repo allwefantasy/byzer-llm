@@ -1,5 +1,5 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
-import transformers
+import ray
 import torch
 import os
 import ray
@@ -37,6 +37,17 @@ def tgi_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     response = ray.get(model.generate_text.remote(ins))
     return [(response.generated_text,"")]
 
+def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
+        max_length:int=4096, 
+        top_p:float=0.95,
+        temperature:float=0.1,**kwargs):
+    from vllm import  SamplingParams
+    model = self
+    sampling_params = SamplingParams(temperature=temperature, top_p=top_p, max_length=max_length)
+    outputs = model.generate([ins], sampling_params)    
+    generated_text = outputs[0].outputs[0].text
+    return [(generated_text,"")]
+
 
 def init_model(model_dir,infer_params:Dict[str,str]={}): 
     infer_mode = infer_params.get("inferMode","transformers")
@@ -49,8 +60,13 @@ def init_model(model_dir,infer_params:Dict[str,str]={}):
         from byzerllm.utils.rayinfer import build_model_serving
         model = build_model_serving(model_dir)        
         model.stream_chat = types.MethodType(tgi_chat, model) 
-        return (model,None)    
-        
+        return (model,None) 
+
+    if infer_mode == "vllm":
+        from vllm import LLM                
+        llm = LLM(model=model_dir,tensor_parallel_size=len(ray.get_gpu_ids()))
+        llm.stream_chat = types.MethodType(vllm_chat, llm) 
+        return (llm,None)                        
 
     pretrained_model_dir = os.path.join(model_dir,"pretrained_model")
     adaptor_model_dir = model_dir
