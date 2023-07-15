@@ -65,7 +65,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={}):
 
     if infer_mode == "vllm":
         workerUseRay = infer_params.get("workerUseRay","false") == "true"
-        print(f"infer_mode:{infer_mode} workerUseRay:{workerUseRay}")
+        print(f"infer_mode:{infer_mode} workerUseRay:{workerUseRay} tensor_parallel_size: {len(ray.get_gpu_ids())}")
         from vllm import LLM                
         llm = LLM(model=model_dir,tensor_parallel_size=len(ray.get_gpu_ids()),worker_use_ray=workerUseRay)
         llm.stream_chat = types.MethodType(vllm_chat, llm) 
