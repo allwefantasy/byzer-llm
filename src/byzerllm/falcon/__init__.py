@@ -63,7 +63,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         model.stream_chat = types.MethodType(tgi_chat, model) 
         return (model,None) 
 
-    if infer_mode == "vllm":
+    if infer_mode == "ray/vllm":
         workerUseRay = infer_params.get("workerUseRay","false") == "true"
         print(f"infer_mode:{infer_mode} workerUseRay:{workerUseRay} tensor_parallel_size: {len(ray.get_gpu_ids())}")
         from vllm import LLM                
