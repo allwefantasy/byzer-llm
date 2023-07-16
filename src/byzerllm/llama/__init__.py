@@ -23,13 +23,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     return [(answer,"")]
 
 
-def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}):   
-    infer_mode = infer_params.get("infer_mode","simple")
-
-    if infer_mode == "tgi":
-        import byzerllm.utils.inference as TGI
-        return TGI.init_model(model_dir,infer_params)
-         
+def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}):        
     tokenizer = AutoTokenizer.from_pretrained(model_dir)
     tokenizer.padding_side="right"
     tokenizer.pad_token_id=0
