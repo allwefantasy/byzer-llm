@@ -50,7 +50,7 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
 
 
 def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}): 
-    infer_mode = infer_params.get("inferMode","transformers")
+    infer_mode = sys_conf.get("infer_backend","transformers")
     
 
     if infer_mode == "tgi":
@@ -65,10 +65,11 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
 
     if infer_mode == "ray/vllm":
         workerUseRay = infer_params.get("workerUseRay","false") == "true"
-        print(f"infer_mode:{infer_mode} workerUseRay:{workerUseRay} tensor_parallel_size: {len(ray.get_gpu_ids())}")
+        num_gpus = int(sys_conf["num_gpus"])
+        print(f"infer_mode:{infer_mode} workerUseRay:{workerUseRay} tensor_parallel_size: {num_gpus}")
         from vllm import LLM                
         llm = LLM(model=model_dir,
-                  tensor_parallel_size=len(ray.get_gpu_ids()),
+                  tensor_parallel_size=num_gpus,
                   worker_use_ray=workerUseRay,  
                   trust_remote_code=True,                
                   disable_log_stats=False)
