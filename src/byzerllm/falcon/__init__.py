@@ -44,7 +44,7 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         temperature:float=0.1,**kwargs):
     from vllm import  SamplingParams
     model = self
-    sampling_params = SamplingParams(temperature=temperature, top_p=top_p, max_length=max_length)
+    sampling_params = SamplingParams(temperature=temperature, top_p=top_p, max_tokens=max_length)
     outputs = model.generate([ins], sampling_params)    
     generated_text = outputs[0].outputs[0].text
     return [(generated_text,"")]
