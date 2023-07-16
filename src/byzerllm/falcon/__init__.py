@@ -4,6 +4,7 @@ import torch
 import os
 import ray
 from typing import Any,Any,Dict, List,Tuple,Generator
+import types
 
 
 from pyjava.api.mlsql import DataServer
@@ -94,8 +95,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         from peft import PeftModel
         model = PeftModel.from_pretrained(model, adaptor_model_dir)
 
-    model.eval()       
-    import types
+    model.eval()           
     model.stream_chat = types.MethodType(stream_chat, model)     
     return (model,tokenizer)
 
