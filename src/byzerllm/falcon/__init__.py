@@ -58,15 +58,16 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         import byzerllm.utils.inference as TGI
         return TGI.init_model(model_dir,infer_params)
     
-    if infer_mode == "ray/tgi":        
+    if infer_mode == "ray/tgi":   
+        num_gpus = int(sys_conf.get("num_gpus",1))     
         from byzerllm.utils.rayinfer import build_model_serving
-        model = build_model_serving(model_dir)        
+        model = build_model_serving(model_dir, num_gpus_per_worker=num_gpus)        
         model.stream_chat = types.MethodType(tgi_chat, model) 
         return (model,None) 
 
     if infer_mode == "ray/vllm":
         workerUseRay = infer_params.get("workerUseRay","false") == "true"
-        num_gpus = int(sys_conf["num_gpus"])
+        num_gpus = int(sys_conf.get("num_gpus",1))
         print(f"infer_mode:{infer_mode} workerUseRay:{workerUseRay} tensor_parallel_size: {num_gpus}")
         from vllm import LLM                
         llm = LLM(model=model_dir,
