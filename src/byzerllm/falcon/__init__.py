@@ -49,7 +49,7 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     return [(generated_text,"")]
 
 
-def init_model(model_dir,infer_params:Dict[str,str]={}): 
+def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}): 
     infer_mode = infer_params.get("inferMode","transformers")
     
 
