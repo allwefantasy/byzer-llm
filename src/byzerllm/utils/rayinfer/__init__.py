@@ -13,11 +13,11 @@ def _get_free_port():
         return s.getsockname()[1]
 
 
-def _build_yaml(
+def _build_deepspeed_yaml(
         udfName:str,
         model_dir:str,
         num_gpus_per_worker:int=1,
-):
+):        
     model_id = udfName
     template = f"""deployment_config:
   max_concurrent_queries: 64  
@@ -75,7 +75,74 @@ scaling_config:
     with open(deploy_file, "w") as f:
         f.write(template)
 
-    return deploy_file    
+    return deploy_file   
+
+def _build_devicemap_yaml(
+        udfName:str,
+        model_dir:str,
+        num_gpus_per_worker:int=1,
+):        
+    model_id = udfName
+    template = f"""deployment_config:
+  max_concurrent_queries: 64  
+  ray_actor_options:
+      resources:
+        master: 0.0001
+model_config:
+  batching: static
+  model_id: {model_id}
+  model_url: {model_dir}
+  max_input_words: 800
+  initialization:
+    hf_model_id: {model_dir}
+    initializer:
+      type: DeviceMap
+      dtype: bfloat16
+      from_pretrained_kwargs:
+        trust_remote_code: true
+        use_cache: true
+      use_bettertransformer: false
+      torch_compile:
+        backend: inductor
+        mode: max-autotune
+    pipeline: transformers
+  generation:
+    max_input_words: 800
+    max_batch_size: 18
+    generate_kwargs:
+      do_sample: true
+      max_new_tokens: 512
+      min_new_tokens: 16
+      temperature: 0.7
+      repetition_penalty: 1.1
+      top_p: 0.8
+      top_k: 5
+    prompt_format:      
+      system: "{{instruction}}\\n"
+      assistant: "{{instruction}}\\n"
+      trailing_assistant: ""
+      user: "{{instruction}}\\n"
+      default_system_message: ""
+    stopping_sequences: []
+scaling_config:
+  num_workers: 4
+  num_gpus_per_worker: 1
+  num_cpus_per_worker: 1
+  pg_timeout_s: 6000
+""" 
+    curr = os.path.expanduser("~")
+    deploy_dir = os.path.join(curr,"byzer_model_deploy")
+    deploy_file = os.path.join(deploy_dir,model_id)
+    if not os.path.exists(deploy_dir):
+        os.makedirs(deploy_dir) 
+
+    if os.path.exists(deploy_file):
+        os.remove(deploy_file)
+
+    with open(deploy_file, "w") as f:
+        f.write(template)
+
+    return deploy_file   
    
           
 
@@ -91,7 +158,7 @@ def build_model_serving(udfName,model_dir,num_gpus_per_worker:int=1):
        run({...LLMApp})         # run a single LLMApp
        run("models/model1.yaml", "models/model2.yaml", {...LLMApp}) # mix and match
     """
-    model_yaml = _build_yaml(udfName,model_dir,num_gpus_per_worker=num_gpus_per_worker)
+    model_yaml = _build_devicemap_yaml(udfName,model_dir,num_gpus_per_worker=num_gpus_per_worker)
     print(f"the path of model_yaml[{model_dir}]: {model_yaml}")
     router, deployments, deployment_routes, app_names = llm_server([model_yaml])
     ray._private.usage.usage_lib.record_library_usage("aviary")
