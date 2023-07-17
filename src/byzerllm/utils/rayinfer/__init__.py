@@ -21,6 +21,9 @@ def _build_yaml(
     model_id = udfName
     template = f"""deployment_config:
   max_concurrent_queries: 64  
+  ray_actor_options:
+      resources:
+        master: 0.0001
 model_config:
   batching: static
   model_id: {model_id}
