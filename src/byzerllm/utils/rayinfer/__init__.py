@@ -24,17 +24,22 @@ def _build_yaml(
       resources:
         accelerator_type_cpu: 0.01  
 model_config:
-  batching: continuous
+  batching: static
   model_id: {model_id}
   model_url: {model_dir}
   max_input_words: 800
   initialization:    
     initializer:
-      type: TextGenerationInference
-    pipeline: TextGenerationInference
+      type: DeepSpeed
+    dtype: float16
+      from_pretrained_kwargs:
+        use_cache: true
+      use_kernel: true
+      max_tokens: 1536  
+    pipeline: transformers
   generation:
-    max_batch_total_tokens: 40960
-    max_batch_prefill_tokens: 9216
+    max_input_words: 800
+    max_batch_size: 18
     generate_kwargs:
       do_sample: true
       max_new_tokens: 512
@@ -42,8 +47,7 @@ model_config:
       temperature: 0.7
       repetition_penalty: 1.1
       top_p: 0.8
-      top_k: 50    
-    stopping_sequences: ["### Response:", "### End"]
+      top_k: 50
 scaling_config:
   num_workers: 1
   num_gpus_per_worker: {num_gpus_per_worker}
