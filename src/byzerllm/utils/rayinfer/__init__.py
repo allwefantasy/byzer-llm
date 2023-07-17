@@ -47,12 +47,14 @@ model_config:
       temperature: 0.7
       repetition_penalty: 1.1
       top_p: 0.8
-      top_k: 50
+      top_k: 5
+    prompt_format:
+      system: ""
+    stopping_sequences: []
 scaling_config:
   num_workers: 1
   num_gpus_per_worker: {num_gpus_per_worker}
   num_cpus_per_worker: 1
-  placement_strategy: "STRICT_PACK"
 """ 
     curr = os.path.expanduser("~")
     deploy_dir = os.path.join(curr,"byzer_model_deploy")
