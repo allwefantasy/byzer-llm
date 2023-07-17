@@ -88,14 +88,16 @@ def build_model_serving(model_dir,num_gpus_per_worker:int=1):
        run({...LLMApp})         # run a single LLMApp
        run("models/model1.yaml", "models/model2.yaml", {...LLMApp}) # mix and match
     """
-    deployments, model_configs = llm_server(_build_yaml(model_dir,num_gpus_per_worker=num_gpus_per_worker))
+    router, deployments, deployment_routes, app_names = llm_server(list(_build_yaml(model_dir,num_gpus_per_worker=num_gpus_per_worker)))
     ray._private.usage.usage_lib.record_library_usage("aviary")
-    model_id, deployment = deployments.items()[0]
-    model_id = model_id.replace("/", "--").replace(".", "_")
+    model_id = deployments.keys()[0]
+    app = deployments[model_id]
+    route = deployment_routes[model_id]
+    app_name = app_names[model_id]
     model_infer =  serve.run(
-            deployment,
-            name=model_id,
-            route_prefix=f"/{model_id}",
+            app,
+            name=app_name,
+            route_prefix=route,
             host="127.0.0.1",
             port=int(_get_free_port()),
             _blocking=False,
