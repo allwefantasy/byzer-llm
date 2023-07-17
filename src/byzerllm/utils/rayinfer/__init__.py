@@ -61,6 +61,7 @@ scaling_config:
   num_workers: 4
   num_gpus_per_worker: 1
   num_cpus_per_worker: 1
+  pg_timeout_s: 6000
 """ 
     curr = os.path.expanduser("~")
     deploy_dir = os.path.join(curr,"byzer_model_deploy")
