@@ -202,10 +202,6 @@ if [[ "${TGI_SUPPORT}" == "true" ]]; then
 fi
 
 
-
-
-
-
 if [[ "${TGI_SUPPORT}" == "true" ]]; then
     cd ~/byzer-llm
     
@@ -308,6 +304,7 @@ wget https://download.byzer.org/byzer-extensions/nightly-build/byzer-llm-3.3_2.1
 # echo "Modify the byzer notebook config file"
 
 cat <<EOF > ${BYZER_NOTEBOOK_HOME}/conf/notebook.properties
+notebook.logo=Zen Copilot私有化大模型控制台
 notebook.port=9002
 notebook.session.timeout=12h
 notebook.security.key=6173646661736466e4bda0e8bf983161
