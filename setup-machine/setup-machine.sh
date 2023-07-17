@@ -14,6 +14,7 @@ OS="ubuntu"
 BYZER_VERSION="2.3.8"
 BYZER_NOTEBOOK_VERSION="1.2.5"
 DEFUALT_MYSQL_PASSWORD=${DEFUALT_MYSQL_PASSWORD:-"mlsql"}
+TGI_SUPPORT=${TGI_SUPPORT:-"false"}
 
 cat <<EOF
 This script will help you install Byzer-LLM enviroment on your machine (CentOS 8 or Ubuntu 20.04/22.04)
@@ -184,36 +185,46 @@ fi
 
 pip install -r byzer-llm/demo-requirements.txt
 
-echo "Setup TGI support in Byzer-LLM"
 
-if pip show custom-kernels >/dev/null 2>&1; then
-    echo "Package custom-kernels is already installed"
-else
-    echo "Package custom-kernels is not installed"
-    echo "Try to install custom-kernels"
-    git clone https://gitee.com/mirrors/text-generation-inference
-    cd  text-generation-inference/server/custom_kernels
-    pip install .
-fi 
+if [[ "${TGI_SUPPORT}" == "true" ]]; then
+
+    echo "Setup TGI support in Byzer-LLM"
+    if pip show custom-kernels >/dev/null 2>&1; then
+        echo "Package custom-kernels is already installed"
+    else
+        echo "Package custom-kernels is not installed"
+        echo "Try to install custom-kernels"
+        git clone https://gitee.com/mirrors/text-generation-inference
+        cd  text-generation-inference/server/custom_kernels
+        pip install .
+    fi 
+
+fi
 
 
-cd ~/byzer-llm
 
-if pip show flash-attn >/dev/null 2>&1; then
-    echo "Package flash-attn is already installed"
-else
-    echo "Package flash-attn is not installed"
-    echo "Install tgi flash attention dependency, it may take a while"
-    make install-flash-attention
-fi 
 
-if pip show vllm >/dev/null 2>&1; then
-    echo "Package vllm is already installed"
-else
-    echo "Package vllm is not installed"
-    echo "Install TGI vllm dependency it may take a while "
-    make install-vllm
-fi 
+
+
+if [[ "${TGI_SUPPORT}" == "true" ]]; then
+    cd ~/byzer-llm
+    
+    if pip show flash-attn >/dev/null 2>&1; then
+        echo "Package flash-attn is already installed"
+    else
+        echo "Package flash-attn is not installed"
+        echo "Install tgi flash attention dependency, it may take a while"
+        make install-flash-attention
+    fi 
+
+    if pip show vllm >/dev/null 2>&1; then
+        echo "Package vllm is already installed"
+    else
+        echo "Package vllm is not installed"
+        echo "Install TGI vllm dependency it may take a while "
+        make install-vllm
+    fi 
+fi  
 
 
 cd $HOME/softwares
