@@ -29,12 +29,13 @@ model_config:
   model_id: {model_id}
   model_url: {model_dir}
   max_input_words: 800
-  initialization:    
+  initialization:
+    hf_model_id: {model_dir}
     initializer:
       type: DeepSpeed
       dtype: float16
       from_pretrained_kwargs:
-        use_cache: true
+        trust_remote_code: true
       use_kernel: true
       max_tokens: 1536  
     pipeline: transformers
@@ -97,13 +98,16 @@ def build_model_serving(udfName,model_dir,num_gpus_per_worker:int=1):
     app = deployments[model_id]
     route = deployment_routes[model_id]
     app_name = app_names[model_id]
-    model_infer =  serve.run(
+
+    available_port = _get_free_port()
+    model_infer = serve.run(
             app,
             name=app_name,
             route_prefix=route,
             host="127.0.0.1",
-            port=int(_get_free_port()),
+            port=available_port,
             _blocking=False,
         )
+    print(f"[{model_id}] [{app_name}] Model serving is running on 127.0.0.1:{available_port}",flush=True)
     return model_infer
         
