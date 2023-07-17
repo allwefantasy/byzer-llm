@@ -23,7 +23,7 @@ def _build_yaml(
   max_concurrent_queries: 64  
   ray_actor_options:
       resources:
-        num_gpus: 1
+        num_cpus: 0.01
 model_config:
   batching: static
   model_id: {model_id}
@@ -57,8 +57,8 @@ model_config:
       default_system_message: "Below is an instruction that describes a task. Write a response that appropriately completes the request."
     stopping_sequences: []
 scaling_config:
-  num_workers: 1
-  num_gpus_per_worker: {num_gpus_per_worker}
+  num_workers: 4
+  num_gpus_per_worker: 1
   num_cpus_per_worker: 1
 """ 
     curr = os.path.expanduser("~")
