@@ -22,7 +22,7 @@ def _build_yaml(
   max_concurrent_queries: 64  
   ray_actor_options:
       resources:
-        accelerator_type_cpu: 0.01  
+        num_cpus: 0.01  
 model_config:
   batching: static
   model_id: {model_id}
