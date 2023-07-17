@@ -66,9 +66,10 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         return (model,None) 
     
     if infer_mode == "ray/deepspeed":   
-        num_gpus = int(sys_conf.get("num_gpus",1))     
+        num_gpus = int(sys_conf.get("num_gpus",1))   
+        udfName = infer_params["udfName"]
         from byzerllm.utils.rayinfer import build_model_serving
-        model = build_model_serving(model_dir, num_gpus_per_worker=num_gpus)        
+        model = build_model_serving(udfName,model_dir, num_gpus_per_worker=num_gpus)        
         model.stream_chat = types.MethodType(ray_chat, model) 
         return (model,None) 
 

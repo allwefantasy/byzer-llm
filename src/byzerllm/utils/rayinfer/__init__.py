@@ -14,10 +14,11 @@ def _get_free_port():
 
 
 def _build_yaml(
+        udfName:str,
         model_dir:str,
         num_gpus_per_worker:int=1,
 ):
-    model_id = base64.b64encode(model_dir.encode("utf-8")).decode("utf-8").replace("=","")
+    model_id = udfName
     template = f"""deployment_config:
   max_concurrent_queries: 64  
   ray_actor_options:
@@ -76,7 +77,7 @@ scaling_config:
    
           
 
-def build_model_serving(model_dir,num_gpus_per_worker:int=1):
+def build_model_serving(udfName,model_dir,num_gpus_per_worker:int=1):
     """Run the LLM Server on the local Ray Cluster
 
     Args:
@@ -88,7 +89,7 @@ def build_model_serving(model_dir,num_gpus_per_worker:int=1):
        run({...LLMApp})         # run a single LLMApp
        run("models/model1.yaml", "models/model2.yaml", {...LLMApp}) # mix and match
     """
-    model_yaml = _build_yaml(model_dir,num_gpus_per_worker=num_gpus_per_worker)
+    model_yaml = _build_yaml(udfName,model_dir,num_gpus_per_worker=num_gpus_per_worker)
     print(f"the path of model_yaml[{model_dir}]: {model_yaml}")
     router, deployments, deployment_routes, app_names = llm_server([model_yaml])
     ray._private.usage.usage_lib.record_library_usage("aviary")
