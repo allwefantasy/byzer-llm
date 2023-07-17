@@ -48,8 +48,12 @@ model_config:
       repetition_penalty: 1.1
       top_p: 0.8
       top_k: 5
-    prompt_format:
-      system: ""
+    prompt_format:      
+      system: "{{instruction}}\\n"
+      assistant: "{{instruction}}\\n"
+      trailing_assistant: "{{instruction}}\\n"
+      user: "{{instruction}}\\n"
+      default_system_message: "Below is an instruction that describes a task. Write a response that appropriately completes the request."
     stopping_sequences: []
 scaling_config:
   num_workers: 1
