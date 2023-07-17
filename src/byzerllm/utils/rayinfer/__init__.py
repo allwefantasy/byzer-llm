@@ -92,7 +92,7 @@ def build_model_serving(model_dir,num_gpus_per_worker:int=1):
     print(f"the path of model_yaml[{model_dir}]: {model_yaml}")
     router, deployments, deployment_routes, app_names = llm_server([model_yaml])
     ray._private.usage.usage_lib.record_library_usage("aviary")
-    model_id = deployments.keys()[0]
+    model_id = [item for item in deployments.keys()][0]
     app = deployments[model_id]
     route = deployment_routes[model_id]
     app_name = app_names[model_id]
