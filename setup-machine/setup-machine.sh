@@ -15,6 +15,7 @@ BYZER_VERSION="2.3.8"
 BYZER_NOTEBOOK_VERSION="1.2.5"
 DEFUALT_MYSQL_PASSWORD=${DEFUALT_MYSQL_PASSWORD:-"mlsql"}
 TGI_SUPPORT=${TGI_SUPPORT:-"false"}
+NOTEBOOK_LOGO=${NOTEBOOK_LOGO:-"Byzer Notebook"}
 
 cat <<EOF
 This script will help you install Byzer-LLM enviroment on your machine (CentOS 8 or Ubuntu 20.04/22.04)
@@ -304,7 +305,7 @@ wget https://download.byzer.org/byzer-extensions/nightly-build/byzer-llm-3.3_2.1
 # echo "Modify the byzer notebook config file"
 
 cat <<EOF > ${BYZER_NOTEBOOK_HOME}/conf/notebook.properties
-notebook.logo=Zen Copilot私有化大模型控制台
+notebook.logo=${NOTEBOOK_LOGO}
 notebook.port=9002
 notebook.session.timeout=12h
 notebook.security.key=6173646661736466e4bda0e8bf983161
