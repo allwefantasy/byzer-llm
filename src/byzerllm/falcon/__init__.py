@@ -69,7 +69,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         num_gpus = int(sys_conf.get("num_gpus",1))     
         from byzerllm.utils.rayinfer import build_model_serving
         model = build_model_serving(model_dir, num_gpus_per_worker=num_gpus)        
-        model.stream_chat = types.MethodType(tgi_chat, model) 
+        model.stream_chat = types.MethodType(ray_chat, model) 
         return (model,None) 
 
     if infer_mode == "ray/vllm":
