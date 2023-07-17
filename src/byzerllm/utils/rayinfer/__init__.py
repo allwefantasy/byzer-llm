@@ -31,7 +31,7 @@ model_config:
   initialization:    
     initializer:
       type: DeepSpeed
-    dtype: float16
+      dtype: float16
       from_pretrained_kwargs:
         use_cache: true
       use_kernel: true
