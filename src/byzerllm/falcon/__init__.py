@@ -30,7 +30,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     return [(answer,"")]
 
 
-def tgi_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
+def ray_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
@@ -59,6 +59,13 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         return TGI.init_model(model_dir,infer_params)
     
     if infer_mode == "ray/tgi":   
+        num_gpus = int(sys_conf.get("num_gpus",1))     
+        from byzerllm.utils.rayinfer import build_model_serving
+        model = build_model_serving(model_dir, num_gpus_per_worker=num_gpus)        
+        model.stream_chat = types.MethodType(ray_chat, model) 
+        return (model,None) 
+    
+    if infer_mode == "ray/deepspeed":   
         num_gpus = int(sys_conf.get("num_gpus",1))     
         from byzerllm.utils.rayinfer import build_model_serving
         model = build_model_serving(model_dir, num_gpus_per_worker=num_gpus)        
