@@ -88,7 +88,7 @@ def build_model_serving(model_dir,num_gpus_per_worker:int=1):
        run({...LLMApp})         # run a single LLMApp
        run("models/model1.yaml", "models/model2.yaml", {...LLMApp}) # mix and match
     """
-    deployments, model_configs = llm_server([_build_yaml(model_dir,num_gpus_per_worker=num_gpus_per_worker)])
+    deployments, model_configs = llm_server(_build_yaml(model_dir,num_gpus_per_worker=num_gpus_per_worker))
     ray._private.usage.usage_lib.record_library_usage("aviary")
     model_id, deployment = deployments.items()[0]
     model_id = model_id.replace("/", "--").replace(".", "_")
