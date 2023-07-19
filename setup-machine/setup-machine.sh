@@ -148,6 +148,11 @@ source $CONDA_PREFIX/bin/activate byzerllm-dev
 
 echo "Setup pip mirror"
 
+if [[ ! -d "$HOME/.pip" ]]; then
+    mkdir -p ~/.pip   
+fi
+
+
 cat <<EOF > ~/.pip/pip.conf
 [global]
  trusted-host = mirrors.aliyun.com
