@@ -180,6 +180,7 @@ else
 fi
 
 source $CONDA_PREFIX/bin/activate byzerllm-dev
+# conda activate byzerllm-dev
 
 echo "Setup pip mirror"
 
@@ -283,7 +284,8 @@ if [[ $ROLE == "master" ]];then
 
     cat <<EOF >> ~/.bashrc
 export JAVA_HOME=${BYZER_LANG_HOME}/jdk8
-export PATH=${JAVA_HOME}/bin:$PATH
+export PATH=${BYZER_LANG_HOME}/jdk8/bin:$PATH
+source $CONDA_PREFIX/bin/activate byzerllm-dev
 EOF
 
     source ~/.bashrc
