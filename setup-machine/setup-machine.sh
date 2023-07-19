@@ -91,6 +91,10 @@ if [[ "${USER}" != "byzerllm" ]];then
     exit 0
 fi
 
+echo "Setup basic environment for byzerllm user"
+echo "go to home directory"
+cd ~
+
 echo "Install Conda environment"
 
 CONDA_INSTALL_PATH=$HOME/miniconda3
@@ -107,7 +111,7 @@ fi
 
 # echo "export PATH=\"$CONDA_INSTALL_PATH/bin:\$PATH\"" >> ~/.bashrc
 echo "Initialize conda and activate the base environment"
-"$CONDA_INSTALL_PATH/bin/conda" init bash
+$CONDA_INSTALL_PATH/bin/conda init bash
 source ~/.bashrc
 
 echo "Now check the nvidia driver and toolkit"
