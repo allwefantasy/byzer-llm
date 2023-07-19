@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig
 import ray
 import torch
 import os
@@ -6,14 +6,13 @@ import ray
 from typing import Any,Any,Dict, List,Tuple,Generator
 import types
 
-
 from pyjava.api.mlsql import DataServer
 from .. import BlockRow
 
 
 
 def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
-        max_length:int=4096, 
+        max_length:int=1024, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
         
@@ -24,7 +23,10 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         max_new_tokens=max_length,
         repetition_penalty=1.05,
         temperature=temperature,
-        eos_token_id=tokenizer.eos_token_id
+        attention_mask=tokens.attention_mask,
+        eos_token_id=tokenizer.eos_token_id,
+        pad_token_id=tokenizer.eos_token_id,
+        bos_token_id=tokenizer.bos_token_id
     )
     answer = tokenizer.decode(response[0][tokens["input_ids"].shape[1]:], skip_special_tokens=True)
     return [(answer,"")]
@@ -52,6 +54,7 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
 
 def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}): 
     infer_mode = sys_conf.get("infer_backend","transformers")
+    quatization = infer_params.get("quatization","false") == "true"
     
 
     if infer_mode == "tgi":
@@ -96,7 +99,24 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     tokenizer = AutoTokenizer.from_pretrained(pretrained_model_dir)
     tokenizer.padding_side="right"
     tokenizer.pad_token_id=0
-    model = AutoModelForCausalLM.from_pretrained(pretrained_model_dir,trust_remote_code=True,
+    tokenizer.bos_token_id = 1
+
+    if quatization:
+        nf4_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=False,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+        )
+        model = AutoModelForCausalLM.from_pretrained(
+            pretrained_model_dir,
+            trust_remote_code=True,            
+            device_map="auto",
+            quantization_config=nf4_config,
+        )
+
+    else:
+        model = AutoModelForCausalLM.from_pretrained(pretrained_model_dir,trust_remote_code=True,
                                                 device_map='auto',                                                
                                                 torch_dtype=torch.bfloat16                                                
                                                 )
@@ -104,7 +124,9 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         from peft import PeftModel
         model = PeftModel.from_pretrained(model, adaptor_model_dir)
 
-    model.eval()           
+    model.eval()  
+    if quatization:
+        model = torch.compile(model)
     model.stream_chat = types.MethodType(stream_chat, model)     
     return (model,tokenizer)
 
