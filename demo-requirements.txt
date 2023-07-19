@@ -21,7 +21,6 @@ tensorboard
 pyjava==0.6.4
 byzerllm @ git+https://gitee.com/allwefantasy/byzer-llm.git
 # byzerllm @ git+https://github.com/allwefantasy/byzer-llm.git
-protobuf==3.20.0
 
 # dependencies only for sparkdesk
 websockets
@@ -40,5 +39,7 @@ SwissArmyTransformer
 
 ## TGI dependencies for quick inference
 # pip install flash-attn --no-build-isolation 
+
+protobuf==3.20.0
 
 
