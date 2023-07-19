@@ -77,13 +77,6 @@ else
     groupadd ai
     useradd -m byzerllm -g ai
     echo "byzerllm:${USER_PASSWORD}" | sudo chpasswd
-fi
-
-echo "Setup sudo permission for byzerllm"
-
-if sudo -u byzerllm -l true 2>/dev/null; then
-    echo "User has sudo permission"
-else
     echo "Grant user sudo permission"
     echo "byzerllm ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
     cat <<EOF
@@ -93,7 +86,6 @@ EOF
     exit 0
 fi
     
-
 if [[ "${USER}" != "byzerllm" ]];then
     echo "Please try to execute this script again in byzerllm user."
     exit 0
