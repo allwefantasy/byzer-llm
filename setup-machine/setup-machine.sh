@@ -144,7 +144,7 @@ else
     conda create -y --name byzerllm-dev python=3.10.11
 fi
 
-conda $CONDA_PREFIX/bin/activate byzerllm-dev
+source $CONDA_PREFIX/bin/activate byzerllm-dev
 
 echo "Setup pip mirror"
 
