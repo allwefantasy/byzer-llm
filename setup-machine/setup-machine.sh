@@ -91,8 +91,6 @@ if [[ "${USER}" != "byzerllm" ]];then
     exit 0
 fi
 
-sudo chsh -s /bin/bash
-
 echo "Install Conda environment"
 
 CONDA_INSTALL_PATH=$HOME/miniconda3
