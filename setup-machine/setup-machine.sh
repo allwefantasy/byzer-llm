@@ -144,6 +144,14 @@ fi
 
 conda activate byzerllm-dev
 
+echo "Setup pip mirror"
+
+cat <<EOF > ~/.pip/pip.conf
+[global]
+ trusted-host = mirrors.aliyun.com
+ index-url = https://mirrors.aliyun.com/pypi/simple
+EOF
+
 echo "Now install the NVIDIA toolkit with conda"
 
 # for now pytorch use cuda 11.7.0 by default.
