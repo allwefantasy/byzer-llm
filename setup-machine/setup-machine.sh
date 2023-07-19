@@ -284,7 +284,7 @@ if [[ $ROLE == "master" ]];then
 
     cat <<EOF >> ~/.bashrc
 export JAVA_HOME=${BYZER_LANG_HOME}/jdk8
-export PATH=${BYZER_LANG_HOME}/jdk8/bin:$PATH
+export PATH=\${JAVA_HOME}/jdk8/bin:\$PATH
 source $CONDA_PREFIX/bin/activate byzerllm-dev
 EOF
 
