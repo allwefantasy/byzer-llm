@@ -67,6 +67,39 @@ else
     fi
 fi
 
+if command -v wget &> /dev/null; then
+    echo "wget is installed"    
+else
+    echo "wget is not installed, now install wget"    
+    if [ "$OS" = "ubuntu" ]; then
+        apt install -y wget
+    elif [ "$OS" = "centos" ]; then
+        yum install -y wget
+    fi
+fi
+
+if command -v curl &> /dev/null; then
+    echo "curl is installed"    
+else
+    echo "curl is not installed, now install curl"    
+    if [ "$OS" = "ubuntu" ]; then
+        apt install -y curl
+    elif [ "$OS" = "centos" ]; then
+        yum install -y curl
+    fi
+fi
+
+if command -v ifconfig &> /dev/null; then
+    echo "ifconfig is installed"    
+else
+    echo "ifconfig is not installed, now install ifconfig"    
+    if [ "$OS" = "ubuntu" ]; then
+        apt install -y net-tools
+    elif [ "$OS" = "centos" ]; then
+        yum install -y net-tools
+    fi
+fi
+
 
 echo "Setup basic user byzerllm "
 
@@ -271,8 +304,16 @@ EOF
     fi
 
     echo "Start MySQL"
-    sudo docker run --name metadb -e MYSQL_ROOT_PASSWORD=${DEFUALT_MYSQL_PASSWORD} -p 3306:3306 -d mysql:5.7
-
+    
+    MAX_RETRIES=3
+    RETRY_DELAY=5
+    
+    for i in $(seq 1 $MAX_RETRIES); do
+        sudo docker run --name metadb -e MYSQL_ROOT_PASSWORD=${DEFUALT_MYSQL_PASSWORD} -p 3306:3306 -d mysql:5.7 && break
+        echo "Failed to start container. Retrying in $RETRY_DELAY seconds..."
+        sleep $RETRY_DELAY
+    done
+    
     echo "Setup Ray"
 
     cat <<EOF > ~/softwares/ray.start.master.sh
