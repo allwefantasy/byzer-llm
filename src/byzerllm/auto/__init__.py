@@ -88,7 +88,8 @@ For example:
         from vllm import LLM                
         llm = LLM(model=model_dir,
                   tensor_parallel_size=num_gpus,
-                  worker_use_ray=workerUseRay,  
+                  worker_use_ray=workerUseRay, 
+                  tokenizer_mode="slow", 
                   trust_remote_code=True,                
                   disable_log_stats=False)
         llm.stream_chat = types.MethodType(vllm_chat, llm) 
