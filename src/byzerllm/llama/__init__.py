@@ -18,7 +18,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     for item in his:
         his_str.append(f"{user_role}:{item[0]}")
         his_str.append(f"{assistant_role}:{item[1]}")
-    user_ins = ins if ins.startWith(f"{user_role}:") else f"{user_role}:{ins}\n{assistant_role}:"
+    user_ins = ins if len(his_str)==0 or ins.startWith(f"{user_role}:") else f"{user_role}:{ins}\n{assistant_role}:"
     fin_ins = his_str.join("\n") + user_ins
 
     tokens = tokenizer(fin_ins, return_token_type_ids=False,return_tensors="pt").to(device)
