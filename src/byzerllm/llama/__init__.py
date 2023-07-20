@@ -6,12 +6,20 @@ from typing import Dict,List,Tuple
 
 
 def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
-        max_length:int=4096, 
+        max_length:int=1024, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
         
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    tokens = tokenizer(ins, return_token_type_ids=False,return_tensors="pt").to(device)
+
+    his_str = []
+    for item in his:
+        his_str.append(f"User:{item[0]}")
+        his_str.append(f"Assistant:{item[1]}")
+
+    fin_ins = his_str.join("\n") + ins
+
+    tokens = tokenizer(fin_ins, return_token_type_ids=False,return_tensors="pt").to(device)
     response = self.generate(
         input_ids=tokens["input_ids"],
         max_new_tokens=max_length,
