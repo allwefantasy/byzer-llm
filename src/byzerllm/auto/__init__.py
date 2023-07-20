@@ -91,9 +91,9 @@ For example:
                   worker_use_ray=workerUseRay,                   
                   trust_remote_code=True,                
                   disable_log_stats=False)
-        tokenizer = llm.get_tokenizer()
-        tokenizer.padding_side="right"
-        tokenizer.pad_token_id=0
+        # tokenizer = llm.get_tokenizer()
+        # tokenizer.padding_side="right"
+        # tokenizer.pad_token_id=0
         llm.stream_chat = types.MethodType(vllm_chat, llm) 
         return (llm,None)                        
 

@@ -11,13 +11,15 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         temperature:float=0.1,**kwargs):
         
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    user_role = kwargs.get("userRole","User")
+    assistant_role = kwargs.get("assistantRole","Assistant")
 
     his_str = []
     for item in his:
-        his_str.append(f"User:{item[0]}")
-        his_str.append(f"Assistant:{item[1]}")
+        his_str.append(f"{user_role}:{item[0]}")
+        his_str.append(f"{assistant_role}:{item[1]}")
 
-    fin_ins = his_str.join("\n") + ins
+    fin_ins = his_str.join("\n") + f"{user_role}:{ins}\n{assistant_role}:"
 
     tokens = tokenizer(fin_ins, return_token_type_ids=False,return_tensors="pt").to(device)
     response = self.generate(
