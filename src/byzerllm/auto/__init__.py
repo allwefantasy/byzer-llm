@@ -21,10 +21,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         max_new_tokens=max_length,
         repetition_penalty=1.05,
         temperature=temperature,
-        attention_mask=tokens.attention_mask,
-        eos_token_id=tokenizer.eos_token_id,
-        pad_token_id=tokenizer.eos_token_id,
-        bos_token_id=tokenizer.bos_token_id
+        attention_mask=tokens.attention_mask        
     )
     answer = tokenizer.decode(response[0][tokens["input_ids"].shape[1]:], skip_special_tokens=True)
     return [(answer,"")]
@@ -52,6 +49,7 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
 
 def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}): 
     infer_mode = sys_conf.get("infer_backend","transformers")
+    quatization = infer_params.get("quatization","false") == "true"
     
     if infer_mode == "transformers":
         raise Exception('''
@@ -103,10 +101,7 @@ For example:
     if not is_adaptor_model:        
         pretrained_model_dir = model_dir
 
-    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_dir)
-    tokenizer.padding_side="right"
-    tokenizer.pad_token_id=0
-    tokenizer.bos_token_id = 1
+    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_dir)    
 
     if quatization:
         nf4_config = BitsAndBytesConfig(
