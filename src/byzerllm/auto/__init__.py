@@ -88,10 +88,12 @@ For example:
         from vllm import LLM                
         llm = LLM(model=model_dir,
                   tensor_parallel_size=num_gpus,
-                  worker_use_ray=workerUseRay, 
-                  tokenizer_mode="slow", 
+                  worker_use_ray=workerUseRay,                   
                   trust_remote_code=True,                
                   disable_log_stats=False)
+        tokenizer = llm.get_tokenizer()
+        tokenizer.padding_side="right"
+        tokenizer.pad_token_id=0
         llm.stream_chat = types.MethodType(vllm_chat, llm) 
         return (llm,None)                        
 
