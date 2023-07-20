@@ -50,6 +50,7 @@ model_config:
       repetition_penalty: 1.1
       top_p: 0.8
       top_k: 5
+      return_token_type_ids: false
     prompt_format:      
       system: "{{instruction}}\\n"
       assistant: "{{instruction}}\\n"
@@ -117,6 +118,7 @@ model_config:
       repetition_penalty: 1.1
       top_p: 0.8
       top_k: 5
+      return_token_type_ids: false
     prompt_format:      
       system: "{{instruction}}\\n"
       assistant: "{{instruction}}\\n"
