@@ -23,13 +23,13 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
             continue        
         new_his.append(f"{role_mapping[item['role']]}:{item['content']}")            
 
-    if len(new_his) > 0:
+    if len(new_his) > 0 and ins != "":
         new_his.append(f"{role_mapping['user']}:{ins}")
         new_his.append(f"{role_mapping['assistant']}:")
     else:
         new_his.append(ins)    
 
-    fin_ins = " ".join(new_his)       
+    fin_ins = "\n".join(new_his)       
 
     tokens = tokenizer(fin_ins, return_token_type_ids=False,return_tensors="pt").to(device)
 
