@@ -33,9 +33,10 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
 
     tokens = tokenizer(fin_ins, return_token_type_ids=False,return_tensors="pt").to(device)
 
-    max_new_tokens = max_length - tokens["input_ids"].shape[1]
+    input_length = tokens["input_ids"].shape[1]
+    max_new_tokens = max_length - input_length
     if max_new_tokens <= 0:
-        raise Exception("Input is too long")
+        raise Exception(f"Input is too long ({input_length}). Try to reduce the length of history or use a larger `max_length` value (now:{max_length})")
 
     response = self.generate(
         input_ids=tokens["input_ids"],
