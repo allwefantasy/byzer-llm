@@ -15,7 +15,7 @@ class ByzerLLMGenerator:
             else:    
                 self.embedding = ByzerLLMEmbeddings(model,tokenizer,use_feature_extraction=use_feature_extraction)
     
-    def extract_history(self,input)-> List[Tuple[str,str]]:
+    def extract_history(self,input)-> List[Dict[str,str]]:
         history = input.get("history",[])
         return history
     

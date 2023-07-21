@@ -5,7 +5,7 @@ from typing import Dict,List,Tuple
 
 
 
-def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
+def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],  
         max_length:int=4090, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
