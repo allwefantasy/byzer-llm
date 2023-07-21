@@ -29,6 +29,9 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     if len(new_his) > 0 and ins != "":
         new_his.append(f"{role_mapping['user']}:{ins}")
         new_his.append(f"{role_mapping['assistant']}:")
+
+    if len(new_his) > 0 and ins == "":
+        new_his.append(f"{role_mapping['assistant']}:")            
     
     if len(new_his) == 0:
         new_his.append(ins)    
