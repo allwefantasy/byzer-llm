@@ -31,8 +31,12 @@ def ray_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         max_length:int=4096, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
+    from aviary.backend.server.models import Prompt
     model = self
-    response = ray.get(model.generate_text.remote(ins))
+    response = ray.get(model.generate_text.remote(Prompt(
+        prompt=ins,
+        use_prompt_format=False
+    ),None))
     return [(response.generated_text,"")]
 
 def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
