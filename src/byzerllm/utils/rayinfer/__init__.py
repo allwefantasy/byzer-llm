@@ -26,6 +26,7 @@ def _build_static_app(
             ray_actor_options= {"resources": {"master": 0.0001}},
         ),
         model_config=StaticBatchingModel(
+          batching="static",
           model_id=model_id,
           model_url=model_dir,
           max_input_words=800,
