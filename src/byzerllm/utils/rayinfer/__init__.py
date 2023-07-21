@@ -25,6 +25,10 @@ def _build_static_app(
             max_concurrent_queries=64,
             ray_actor_options= {"resources": {"master": 0.0001}},
         ),
+        scaling_config=ScalingConfig(num_workers=num_workers, 
+                                       num_gpus_per_worker=kwargs.get("num_gpus_per_worker",1), 
+                                       num_cpus_per_worker=1, 
+                                       pg_timeout_s=6000),
         model_config=StaticBatchingModel(
           batching="static",
           model_id=model_id,
@@ -38,13 +42,20 @@ def _build_static_app(
           generation=StaticBatchingGenerationConfig(
             max_input_words=800,
             max_batch_size=18,
-            generate_kwargs={"do_sample":True,"max_new_tokens":512,"min_new_tokens":16,"temperature":0.7,"repetition_penalty":1.1,"top_p":0.8,"top_k":5,"return_token_type_ids":False},
-            prompt_format={"system": "{{instruction}}\\n","assistant": "{{instruction}}\\n","trailing_assistant": "{{instruction}}\\n","user": "{{instruction}}\\n","default_system_message": "Below is an instruction that describes a task. Write a response that appropriately completes the request."},
-            stopping_sequences=[],
-          ),
-          scaling_config=ScalingConfig(num_workers=num_workers, num_gpus_per_worker=kwargs.get("num_gpus_per_worker",1), 
-                                       num_cpus_per_worker=1, pg_timeout_s=6000),
-        ))       
+            generate_kwargs={"do_sample":True,
+                             "max_new_tokens":512,
+                             "min_new_tokens":16,
+                             "temperature":0.7,
+                             "repetition_penalty":1.1,
+                             "top_p":0.8,"top_k":5,
+                             "return_token_type_ids":False},
+            prompt_format={"system": "{{instruction}}\\n","assistant": "{{instruction}}\\n",
+                           "trailing_assistant": "{{instruction}}\\n",
+                           "user": "{{instruction}}\\n",
+                           "default_system_message": "Below is an instruction that describes a task. Write a response that appropriately completes the request."},
+            stopping_sequences=[],)
+            )
+          )       
     return llmapp
     
    
