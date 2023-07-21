@@ -2,6 +2,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import transformers
 import torch
 from typing import Dict,List,Tuple
+from byzerllm.utils import generate_instruction_from_history,compute_max_new_tokens
 
 
 
@@ -16,35 +17,13 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
         "user":"User",        
         "assistant":"Assistant",
     }
-    new_his = []    
-    for item in his:
-        if item["role"] == "system":
-            new_his.append(item["content"])
-            continue        
-        new_his.append(f"{role_mapping[item['role']]}:{item['content']}")            
-
-    # here we should make sure the user build the conversation string manually also
-    # works. This means if the user do not provide  the history, then
-    # we should treat ins as conversation string which the user build manually
-    if len(new_his) > 0 and ins != "":
-        new_his.append(f"{role_mapping['user']}:{ins}")
-        new_his.append(f"{role_mapping['assistant']}:")
-
-    if len(new_his) > 0 and ins == "":
-        new_his.append(f"{role_mapping['assistant']}:")            
     
-    if len(new_his) == 0:
-        new_his.append(ins)    
-
-    fin_ins = "\n".join(new_his)       
+    fin_ins = generate_instruction_from_history(ins,his,role_mapping=role_mapping)     
 
     tokens = tokenizer(fin_ins, return_token_type_ids=False,return_tensors="pt").to(device)
-
-    input_length = tokens["input_ids"].shape[1]
-    max_new_tokens = max_length - input_length
-    if max_new_tokens <= 0:
-        raise Exception(f"Input is too long ({input_length}). Try to reduce the length of history or use a larger `max_length` value (now:{max_length})")
-
+    
+    max_new_tokens = compute_max_new_tokens(tokens,max_length)    
+    
     response = self.generate(
         input_ids=tokens["input_ids"],
         max_new_tokens= max_new_tokens,

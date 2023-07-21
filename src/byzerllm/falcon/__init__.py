@@ -5,6 +5,7 @@ import os
 import ray
 from typing import Any,Any,Dict, List,Tuple,Generator
 import types
+from byzerllm.utils import generate_instruction_from_history,compute_max_new_tokens
 
 from pyjava.api.mlsql import DataServer
 from .. import BlockRow
@@ -14,11 +15,18 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
         
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    tokens = tokenizer(ins, return_token_type_ids=False,return_tensors="pt").to(device)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")    
+    role_mapping = {        
+        "user":"User",        
+        "assistant":"Assistant",
+    }
+    fin_ins = generate_instruction_from_history(ins,his,role_mapping=role_mapping)     
+    tokens = tokenizer(fin_ins, return_token_type_ids=False,return_tensors="pt").to(device)
+    max_new_tokens = compute_max_new_tokens(tokens,max_length)
+
     response = self.generate(
         input_ids=tokens["input_ids"],
-        max_new_tokens=max_length,
+        max_new_tokens=max_new_tokens,
         repetition_penalty=1.05,
         temperature=temperature,
         attention_mask=tokens.attention_mask,

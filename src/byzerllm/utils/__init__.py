@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, List, Optional,Union
+from typing import Any, List, Dict,Union
 
 def print_flush(*args, **kwargs):
     print(*args, **kwargs, flush=True)
@@ -20,3 +20,38 @@ def timeout(duration: float):
         yield
     finally:
         signal.alarm(0)
+
+def generate_instruction_from_history(ins:str,his:List[Dict[str,str]],role_mapping:Dict[str,str]={        
+        "user":"User",        
+        "assistant":"Assistant",
+    }):
+
+    new_his = []    
+    for item in his:
+        if item["role"] == "system":
+            new_his.append(item["content"])
+            continue        
+        new_his.append(f"{role_mapping[item['role']]}:{item['content']}")            
+
+    # here we should make sure the user build the conversation string manually also
+    # works. This means if the user do not provide  the history, then
+    # we should treat ins as conversation string which the user build manually
+    if len(new_his) > 0 and ins != "":
+        new_his.append(f"{role_mapping['user']}:{ins}")
+        new_his.append(f"{role_mapping['assistant']}:")
+
+    if len(new_his) > 0 and ins == "":
+        new_his.append(f"{role_mapping['assistant']}:")            
+    
+    if len(new_his) == 0:
+        new_his.append(ins)    
+
+    fin_ins = "\n".join(new_his)
+    return fin_ins  
+
+def compute_max_new_tokens(tokens,max_length:int):
+    input_length = tokens["input_ids"].shape[1]
+    max_new_tokens = max_length - input_length
+    if max_new_tokens <= 0:
+        raise Exception(f"Input is too long ({input_length}). Try to reduce the length of history or use a larger `max_length` value (now:{max_length})")
+    return max_new_tokens
