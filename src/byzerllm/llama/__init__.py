@@ -23,10 +23,14 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
             continue        
         new_his.append(f"{role_mapping[item['role']]}:{item['content']}")            
 
+    # here we should make sure the user build the conversation string manually also
+    # works. This means if the user do not provide  the history, then
+    # we should treat ins as conversation string which the user build manually
     if len(new_his) > 0 and ins != "":
         new_his.append(f"{role_mapping['user']}:{ins}")
         new_his.append(f"{role_mapping['assistant']}:")
-    else:
+    
+    if len(new_his) == 0:
         new_his.append(ins)    
 
     fin_ins = "\n".join(new_his)       
