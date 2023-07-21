@@ -6,33 +6,40 @@ from typing import Dict,List,Tuple
 
 
 def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
-        max_length:int=1024, 
+        max_length:int=4090, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
         
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")    
     
-    user_role = kwargs.get("userRole","User")
-    assistant_role = kwargs.get("assistantRole","Assistant")
-    system_msg = kwargs.get("systemMsg","You are a helpful assistant. Think it over and answer the user question correctly.")
-    show_final_instruction = kwargs.get("show_final_instruction","false") == "true"
-    his_str = []
+    role_mapping = {        
+        "user":"User",        
+        "assistant":"Assistant",
+    }
+    new_his = []    
     for item in his:
-        if item[0] == "system_msg":
-            system_msg = item[1]            
-            continue
-        his_str.append(f"{user_role}:{item[0]}")
-        his_str.append(f"{assistant_role}:{item[1]}")
-    user_ins = ins if len(his_str)==0 or ins.startWith(f"{user_role}:") else f"{user_role}:{ins}\n{assistant_role}:"
-    fin_ins = system_msg + "\n" + his_str.join("\n") + user_ins
-    
-    if show_final_instruction:
-        print(fin_ins,flush=True)
+        if item["role"] == "system":
+            new_his.append(item["content"])
+            continue        
+        new_his.append(f"{role_mapping[item['role']]}:{item['content']}")            
+
+    if len(new_his) > 0:
+        new_his.append(f"{role_mapping['user']}:{ins}")
+        new_his.append(f"{role_mapping['assistant']}:")
+    else:
+        new_his.append(ins)    
+
+    fin_ins = " ".join(new_his)       
 
     tokens = tokenizer(fin_ins, return_token_type_ids=False,return_tensors="pt").to(device)
+
+    max_new_tokens = max_length - tokens["input_ids"].shape[1]
+    if max_new_tokens <= 0:
+        raise Exception("Input is too long")
+
     response = self.generate(
         input_ids=tokens["input_ids"],
-        max_new_tokens=max_length,
+        max_new_tokens= max_new_tokens,
         repetition_penalty=1.05,
         temperature=temperature,
         eos_token_id=tokenizer.eos_token_id

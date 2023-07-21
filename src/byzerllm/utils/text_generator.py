@@ -17,25 +17,7 @@ class ByzerLLMGenerator:
     
     def extract_history(self,input)-> List[Tuple[str,str]]:
         history = input.get("history",[])
-        is_openai_format = False
-        
-        if len(history) > 0:
-            if "role" in history[0] and "content" in history[0]:
-                is_openai_format = True
-        
-        new_his = []
-        
-        if is_openai_format:
-            for item in history:
-                if item["role"] == "system":
-                    new_his.append(("system_msg",item["content"]))
-                if item["role"] == "user":
-                    new_his.append((item["content"],""))
-                else:
-                    new_his[-1] = (new_his[-1][0],item["content"])
-            return new_his
-        
-        return [(item["query"],item["response"]) for item in history]
+        return history
     
     def predict(self,query:Dict[str,Any]):
         ins = query["instruction"]
