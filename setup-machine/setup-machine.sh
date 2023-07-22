@@ -266,6 +266,31 @@ if [[ "${TGI_SUPPORT}" == "true" ]]; then
     fi 
 fi  
 
+## When use deepspeed inference, it will throws RuntimeError: Error building extension 'transformer_inference'. 
+## This is because the /home/byzerllm/miniconda3/envs/byzerllm-dev has no lib64, we should make a soft link to lib to fix this issue.
+## You can use the following command to reproduce this issue
+# python -c """
+# import deepspeed
+# import transformers
+# import os
+# model = transformers.AutoModelForCausalLM.from_pretrained('/home/byzerllm/models/llama-7b-cn')
+# world_size = int(os.getenv('WORLD_SIZE', '1'))
+# model = deepspeed.init_inference(
+#             model,
+#             mp_size=world_size,
+#             replace_with_kernel_inject=True,
+#             replace_method='auto',
+#         )
+# """
+
+if [[ -d "$CONDA_INSTALL_PATH/envs/byzerllm-dev/lib64" ]]; then
+    echo "lib64 is already exists"
+else
+    echo "$CONDA_INSTALL_PATH/envs/byzerllm-dev/lib64 in is not exists,this will cause RuntimeError: Error building extension 'transformer_inference' when use deepspeed inference"
+    echo "Try to create a soft link to lib64"
+    ln -s $CONDA_INSTALL_PATH/envs/byzerllm-dev/lib $CONDA_INSTALL_PATH/envs/byzerllm-dev/lib64
+fi
+
 
 cd $HOME/softwares
 
