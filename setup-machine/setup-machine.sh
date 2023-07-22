@@ -15,6 +15,8 @@ BYZER_VERSION="2.3.8"
 BYZER_NOTEBOOK_VERSION="1.2.5"
 DEFUALT_MYSQL_PASSWORD=${DEFUALT_MYSQL_PASSWORD:-"mlsql"}
 TGI_SUPPORT=${TGI_SUPPORT:-"false"}
+VLLM_SUPPORT=${VLLM_SUPPORT:-"false"}
+AVIARY_SUPPORT=${AVIARY_SUPPORT:-"false"}
 NOTEBOOK_LOGO=${NOTEBOOK_LOGO:-"Byzer Notebook"}
 
 cat <<EOF
@@ -231,40 +233,64 @@ pip install -r byzer-llm/demo-requirements.txt
 
 
 if [[ "${TGI_SUPPORT}" == "true" ]]; then
-
     echo "Setup TGI support in Byzer-LLM"
-    if pip show custom-kernels >/dev/null 2>&1; then
-        echo "Package custom-kernels is already installed"
-    else
-        echo "Package custom-kernels is not installed"
-        echo "Try to install custom-kernels"
-        git clone https://gitee.com/mirrors/text-generation-inference
-        cd  text-generation-inference/server/custom_kernels
-        pip install .
-    fi 
+    export RUSTUP_DIST_SERVER=https://mirrors.ustc.edu.cn/rust-static
+    export RUSTUP_UPDATE_ROOT=https://mirrors.ustc.edu.cn/rust-static/rustup
+    wget "https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init" && chmod +x rustup-init && ./rustup-init -y && rm rustup-init && source "$HOME/.cargo/env"
+    # source "$HOME/.cargo/env" && PROTOC_ZIP=protoc-21.12-linux-x86_64.zip && curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v21.12/$PROTOC_ZIP && sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc && sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*' && rm -f $PROTOC_ZIP    
+    source "$HOME/.cargo/env" && PROTOC_ZIP=protoc-21.12-linux-x86_64.zip && curl -OL https://gitee.com/allwefantasy/byzer-llm/releases/download/dependency-protoc/$PROTOC_ZIP && sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc && sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*' && rm -f $PROTOC_ZIP    
+    source "$HOME/.cargo/env" && pip install tensorboard ninja text-generation
+    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST="8.0 8.6 9.0" && git clone https://gitee.com/mirrors/text-generation-inference && cd text-generation-inference && git checkout 5e6ddfd6a4fecc394255d7109f87c420c98b4e15 && BUILD_EXTENSIONS=True make install
+    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST="8.0 8.6 9.0" && cd text-generation-inference/server && BUILD_EXTENSIONS=True make install-flash-attention
+    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST="8.0 8.6 9.0" && cd text-generation-inference/server && BUILD_EXTENSIONS=True make install-flash-attention-v2
+    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST="8.0 8.6 9.0" && cd text-generation-inference/server && make install-vllm   
+    # if pip show custom-kernels >/dev/null 2>&1; then
+    #     echo "Package custom-kernels is already installed"
+    # else
+    #     echo "Package custom-kernels is not installed"
+    #     echo "Try to install custom-kernels"
+    #     git clone https://gitee.com/mirrors/text-generation-inference
+    #     cd  text-generation-inference/server/custom_kernels
+    #     pip install .
+    # fi 
 
+    # cd ~/byzer-llm
+    
+    # if pip show flash-attn >/dev/null 2>&1; then
+    #     echo "Package flash-attn is already installed"
+    # else
+    #     echo "Package flash-attn is not installed"
+    #     echo "Install tgi flash attention dependency, it may take a while"
+    #     make install-flash-attention
+    # fi 
+
+    # if pip show vllm >/dev/null 2>&1; then
+    #     echo "Package vllm is already installed"
+    # else
+    #     echo "Package vllm is not installed"
+    #     echo "Install TGI vllm dependency it may take a while "
+    #     make install-vllm
+    # fi 
+fi  
+
+if [[ "${VLLM_SUPPORT}" == "true" ]]; then
+    echo "Setup VLLM support in Byzer-LLM"
+    source $CONDA_PREFIX/bin/activate byzerllm-dev
+    pip install "git+https://gitee.com/allwefantasy/ori-vllm.git"
 fi
 
-
-if [[ "${TGI_SUPPORT}" == "true" ]]; then
-    cd ~/byzer-llm
-    
-    if pip show flash-attn >/dev/null 2>&1; then
-        echo "Package flash-attn is already installed"
-    else
-        echo "Package flash-attn is not installed"
-        echo "Install tgi flash attention dependency, it may take a while"
-        make install-flash-attention
-    fi 
-
-    if pip show vllm >/dev/null 2>&1; then
-        echo "Package vllm is already installed"
-    else
-        echo "Package vllm is not installed"
-        echo "Install TGI vllm dependency it may take a while "
-        make install-vllm
-    fi 
-fi  
+if [[ "${AVIARY_SUPPORT}" == "true" ]]; then
+    pip uninstall -y ray && pip install -U https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-3.0.0.dev0-cp310-cp310-manylinux2014_x86_64.whl 
+    export FORCE_CUDA=1 NVCC_PREPEND_FLAGS="--forward-unknown-opts" DS_BUILD_OPS=1 DS_BUILD_AIO=0 DS_BUILD_SPARSE_ATTN=0 TORCH_CUDA_ARCH_LIST="8.0 8.6 9.0" && pip install \
+  "awscrt" \
+  "Jinja2" \
+  "numexpr>=2.7.3" \
+  "git+https://gitee.com/allwefantasy/DeepSpeed.git@aviary" \
+  "numpy<1.24" \
+  "ninja"
+    pip install --no-deps "git+https://gitee.com/allwefantasy/optimum.git"
+    pip install --no-deps "git+https://gitee.com/allwefantasy/aviary.git"
+fi
 
 ## When use deepspeed inference, it will throws RuntimeError: Error building extension 'transformer_inference'. 
 ## This is because the /home/byzerllm/miniconda3/envs/byzerllm-dev has no lib64, we should make a soft link to lib to fix this issue.
