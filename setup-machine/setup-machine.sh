@@ -280,7 +280,7 @@ if [[ "${VLLM_SUPPORT}" == "true" ]]; then
 fi
 
 if [[ "${AVIARY_SUPPORT}" == "true" ]]; then
-    pip uninstall -y ray && pip install -U https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-3.0.0.dev0-cp310-cp310-manylinux2014_x86_64.whl 
+    pip uninstall -y ray && pip install -U https://gitee.com/allwefantasy/byzer-llm/releases/download/dependency-ray-3.0.0/ray-3.0.0.dev0-cp310-cp310-manylinux2014_x86_64.whl
     export FORCE_CUDA=1 NVCC_PREPEND_FLAGS="--forward-unknown-opts" DS_BUILD_OPS=1 DS_BUILD_AIO=0 DS_BUILD_SPARSE_ATTN=0 TORCH_CUDA_ARCH_LIST="8.0 8.6 9.0" && pip install \
   "awscrt" \
   "Jinja2" \
