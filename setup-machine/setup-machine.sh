@@ -199,9 +199,9 @@ EOF
 
 echo "Now install the NVIDIA toolkit with conda"
 
-# for now pytorch use cuda 11.7.0 by default.
+# for now pytorch use cuda 11.8.0 by default.
 # We should update this version when pytorch update the default version
-conda install -y cuda -c nvidia/label/cuda-11.7.0
+conda install -y cuda -c nvidia/label/cuda-11.8.0
 
 
 if command -v nvcc &> /dev/null; then
