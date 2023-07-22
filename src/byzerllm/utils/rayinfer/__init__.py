@@ -61,7 +61,7 @@ def _build_static_app(
    
           
 
-def build_model_serving(udfName,model_dir,mode,num_gpus_per_worker:int=1):
+def build_model_serving(udfName,model_dir,mode,num_workers:int=1):
     """Run the LLM Server on the local Ray Cluster
 
     Args:
@@ -78,7 +78,7 @@ def build_model_serving(udfName,model_dir,mode,num_gpus_per_worker:int=1):
     if mode == "deepspeed":
        initializer = DeepSpeed(dtype="float16", from_pretrained_kwargs={"trust_remote_code": True}, use_kernel=True, max_tokens=1536)  
     
-    model_yaml = _build_static_app(udfName,model_dir,initializer,num_gpus_per_worker=num_gpus_per_worker)
+    model_yaml = _build_static_app(udfName,model_dir,initializer,num_workers=num_workers)
 
     router, deployments, deployment_routes, app_names = llm_server([model_yaml])
     ray._private.usage.usage_lib.record_library_usage("aviary")

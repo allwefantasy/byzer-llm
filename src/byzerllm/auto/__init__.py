@@ -71,11 +71,11 @@ For example:
         return TGI.init_model(model_dir,infer_params)        
     
     if infer_mode in ["ray/deepspeed","ray/devicemap"]:   
-        num_gpus = int(sys_conf.get("num_gpus",1))   
+        num_workers = int(sys_conf.get("num_gpus",1))   
         udfName = infer_params["udfName"]
         mode = infer_mode.split("/")[1]
         from byzerllm.utils.rayinfer import build_model_serving
-        model = build_model_serving(udfName,model_dir, mode=mode, num_gpus_per_worker=num_gpus)        
+        model = build_model_serving(udfName,model_dir, mode=mode, num_workers=num_workers)        
         model.stream_chat = types.MethodType(ray_chat, model) 
         return (model,None) 
 
