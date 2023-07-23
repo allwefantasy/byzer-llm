@@ -137,7 +137,7 @@ class DeepSpeedInference:
             }}    
             worker_cls = ray.remote(
                         num_cpus=0,
-                        num_gpus=1,
+                        num_gpus=0,
                         resources={f"node:{master_addr}": 1e-3},
                         runtime_env=runtime_env,                        
                     )(worker_cls).remote
