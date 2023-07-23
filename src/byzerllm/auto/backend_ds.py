@@ -45,7 +45,7 @@ def _init_distributed_environment(
             backend="nccl",
             world_size=parallel_config.world_size,
             rank=rank,
-            init_method=distributed_init_method,
+            init_method=distributed_init_method,            
         )
 
         if parallel_config.backend == "nccl":
@@ -127,11 +127,29 @@ class DeepSpeedInference:
         print(f"deepspeed inference: master_addr:{master_addr},master_port:{master_port}",flush=True)
         workers = []
         for rank in range(parallel_config.world_size):    
-            worker_cls = Worker                   
+            worker_cls = Worker  
+            runtime_env = self.model_config.initialization.runtime_env or {}
+            runtime_env.setdefault("env_vars", {})
+            runtime_env["env_vars"].setdefault(
+                "PYTORCH_CUDA_ALLOC_CONF", "backend:cudaMallocAsync",
+            ) 
+            runtime_env["env_vars"].setdefault(
+                "RANK", str(rank),
+            )  
+            runtime_env["env_vars"].setdefault(
+                "LOCAL_RANK", str(rank),
+            ) 
+            runtime_env["env_vars"].setdefault(
+                "WORLD_SIZE", str(parallel_config.world_size),
+            )  
+            runtime_env["env_vars"].setdefault(
+                "LOCAL_WORLD_SIZE", str(parallel_config.world_size),
+            )                           
             worker_cls = ray.remote(
                         num_cpus=0,
                         num_gpus=1,
-                        resources={f"node:{master_addr}": 1e-3}                        
+                        resources={f"node:{master_addr}": 1e-3},
+                        runtime_env=runtime_env,                        
                     )(worker_cls).remote
             worker = worker_cls(parallel_config,rank,distributed_init_method)
             workers.append(worker)
