@@ -98,7 +98,7 @@ For example:
     if  infer_mode == "ray/raw/deepspeed":
         from .backend_ds import DeepSpeedInference,ParallelConfig        
         num_gpus = int(sys_conf.get("num_gpus",1))
-        model = DeepSpeedInference(ParallelConfig(world_size=num_gpus,model_dir=model_dir))    
+        model = DeepSpeedInference(ParallelConfig(num_workers=num_gpus,model_dir=model_dir))    
         return (model,None)                     
 
     pretrained_model_dir = os.path.join(model_dir,"pretrained_model")
