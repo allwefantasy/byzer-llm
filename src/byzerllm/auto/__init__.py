@@ -95,11 +95,11 @@ For example:
         llm.stream_chat = types.MethodType(vllm_chat, llm) 
         return (llm,None)  
 
-    if  infer_mode == "deepseed":
+    if  infer_mode == "deepspeed":
         import deepspeed
         num_gpus = int(sys_conf.get("num_gpus",1))
         tokenizer = AutoTokenizer.from_pretrained(model_dir,trust_remote_code=True)  
-        AutoModelForCausalLM.from_pretrained(pretrained_model_dir,trust_remote_code=True,                                                                                                
+        model = AutoModelForCausalLM.from_pretrained(pretrained_model_dir,trust_remote_code=True,                                                                                                
                                                 torch_dtype=torch.bfloat16                                                
                                                 )       
         ds_engine = deepspeed.init_inference(model,
