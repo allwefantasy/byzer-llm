@@ -62,13 +62,19 @@ class Worker:
         # Initialize the distributed environment.
         _init_distributed_environment(parallel_config, rank,
                                       distributed_init_method)
-        print(f"deepspeed inference worker:rank:{rank} load model {parallel_config.model_dir}",flush=True)
-        tokenizer = AutoTokenizer.from_pretrained(parallel_config.model_dir,trust_remote_code=True)  
-        model = AutoModelForCausalLM.from_pretrained(parallel_config.model_dir,trust_remote_code=True)       
+        
+        self.model = None
+        self.tokenizer = None
+       
+
+    def init_model(self):
+        print(f"deepspeed inference worker:rank:{self.rank} load model {self.parallel_config.model_dir}",flush=True)
+        tokenizer = AutoTokenizer.from_pretrained(self.parallel_config.model_dir,trust_remote_code=True)  
+        model = AutoModelForCausalLM.from_pretrained(self.parallel_config.model_dir,trust_remote_code=True)       
         model = model.eval()
     
         ds_engine = deepspeed.init_inference(model,
-                                mp_size=parallel_config.world_size,
+                                mp_size=self.parallel_config.world_size,
                                 dtype=torch.half,
                                 replace_method="auto",
                                 replace_with_kernel_inject=True)
@@ -108,7 +114,8 @@ class DeepSpeedInference:
                     )(worker_cls).remote
             worker = worker_cls(parallel_config,rank,distributed_init_method)
             workers.append(worker)
-        self.workers  = workers
+        self.workers  = workers  
+        [worker.init_model.remote() for worker in self.workers]      
 
     def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=1024, 
