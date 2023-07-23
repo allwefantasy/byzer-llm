@@ -97,6 +97,7 @@ For example:
 
     if  infer_mode == "deepspeed":
         import deepspeed
+        print(f"infer_mode:{infer_mode} tensor_parallel_size: {num_gpus}")
         num_gpus = int(sys_conf.get("num_gpus",1))
         tokenizer = AutoTokenizer.from_pretrained(model_dir,trust_remote_code=True)  
         model = AutoModelForCausalLM.from_pretrained(pretrained_model_dir,trust_remote_code=True,                                                                                                
