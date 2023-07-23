@@ -64,7 +64,7 @@ class Worker:
                                       distributed_init_method)
         print(f"deepspeed inference worker:rank:{rank} load model {parallel_config.model_dir}",flush=True)
         tokenizer = AutoTokenizer.from_pretrained(parallel_config.model_dir,trust_remote_code=True)  
-        model = AutoModelForCausalLM.from_pretrained(parallel_config.model_dir,trust_remote_code=True, torch_dtype=torch.bfloat16 )       
+        model = AutoModelForCausalLM.from_pretrained(parallel_config.model_dir,trust_remote_code=True)       
         model = model.eval()
     
         ds_engine = deepspeed.init_inference(model,
@@ -79,6 +79,7 @@ class Worker:
         max_length:int=4096, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         tokens = self.okenizer(ins, return_token_type_ids=False,return_tensors="pt").to(device)
         response = self.model.generate(
             input_ids=tokens["input_ids"],
@@ -103,7 +104,7 @@ class DeepSpeedInference:
             worker_cls = ray.remote(
                         num_cpus=0,
                         num_gpus=1,
-                        resources={f"node:${master_addr}": 1e-3},
+                        resources={f"node:{master_addr}": 1e-3},
                     )(worker_cls).remote
             worker = worker_cls(parallel_config,rank,distributed_init_method)
             workers.append(worker)
