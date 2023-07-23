@@ -100,7 +100,7 @@ For example:
         num_gpus = int(sys_conf.get("num_gpus",1))
         print(f"infer_mode:{infer_mode} tensor_parallel_size: {num_gpus}")
         tokenizer = AutoTokenizer.from_pretrained(model_dir,trust_remote_code=True)  
-        model = AutoModelForCausalLM.from_pretrained(pretrained_model_dir,trust_remote_code=True,                                                                                                
+        model = AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True,                                                                                                
                                                 torch_dtype=torch.bfloat16                                                
                                                 )       
         ds_engine = deepspeed.init_inference(model,
