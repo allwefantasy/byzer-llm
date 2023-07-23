@@ -3,12 +3,14 @@ from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig
 import ray
 import torch
 import deepspeed
+import os
 from ray.air.util.torch_dist import (
     ActorHandle,
     _get_node_and_gpu_ids,
     _init_torch_distributed,
     get_address_and_port,
 )
+from ray.train.constants import DEFAULT_NCCL_SOCKET_IFNAME
 
 class ParallelConfig:
     """Configuration for the distributed execution.
@@ -21,7 +23,8 @@ class ParallelConfig:
     def __init__(
         self,
         num_workers:int,
-        model_dir:str              
+        model_dir:str,
+        backend: str = "nccl",              
     ) -> None:
         self.world_size = num_workers
         self.model_dir = model_dir
@@ -42,6 +45,20 @@ def _init_distributed_environment(
             rank=rank,
             init_method=distributed_init_method,
         )
+
+        if parallel_config.backend == "nccl":
+            # Same as in Ray Train
+            os.environ["NCCL_ASYNC_ERROR_HANDLING"] = "1"
+            # All workers on a same node should share the same set of
+            # visible GPUs. Otherwise they can't talk among themselves.
+            os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(gid) for gid in gpu_ids)
+            if "NCCL_SOCKET_IFNAME" not in os.environ:
+                os.environ["NCCL_SOCKET_IFNAME"] = DEFAULT_NCCL_SOCKET_IFNAME
+
+        os.environ["RANK"] = str(rank)
+        os.environ["LOCAL_RANK"] = str(rank)
+        os.environ["WORLD_SIZE"] = str(parallel_config.world_size)
+        os.environ["LOCAL_WORLD_SIZE"] = str(parallel_config.world_size)
         print(f"deepspeed inference worker:rank:{rank} init_process_group success. ",flush=True)
         # A small all_reduce for warmup.
         torch.distributed.all_reduce(torch.zeros(1).cuda())
@@ -106,11 +123,11 @@ class DeepSpeedInference:
         print(f"deepspeed inference: master_addr:{master_addr},master_port:{master_port}",flush=True)
         workers = []
         for rank in range(parallel_config.world_size):    
-            worker_cls = Worker
+            worker_cls = Worker                   
             worker_cls = ray.remote(
                         num_cpus=0,
                         num_gpus=1,
-                        resources={f"node:{master_addr}": 1e-3},
+                        resources={f"node:{master_addr}": 1e-3}                        
                     )(worker_cls).remote
             worker = worker_cls(parallel_config,rank,distributed_init_method)
             workers.append(worker)
