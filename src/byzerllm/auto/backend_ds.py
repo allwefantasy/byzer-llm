@@ -128,7 +128,7 @@ class DeepSpeedInference:
         workers = []
         for rank in range(parallel_config.world_size):    
             worker_cls = Worker  
-            runtime_env = self.model_config.initialization.runtime_env or {}
+            runtime_env = {}
             runtime_env.setdefault("env_vars", {})
             runtime_env["env_vars"].setdefault(
                 "PYTORCH_CUDA_ALLOC_CONF", "backend:cudaMallocAsync",
