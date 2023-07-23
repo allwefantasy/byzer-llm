@@ -100,7 +100,7 @@ class Worker:
         self.tokenizer = tokenizer
 
     def get_gpu_ids(self):
-        return ray().get_gpu_ids()    
+        return ray.get_gpu_ids()    
 
     def execute_model(self,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
