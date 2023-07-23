@@ -107,7 +107,7 @@ class Worker:
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        tokens = self.okenizer(ins, return_token_type_ids=False,return_tensors="pt").to(device)
+        tokens = self.tokenizer(ins, return_token_type_ids=False,return_tensors="pt").to(device)
         response = self.model.generate(
             input_ids=tokens["input_ids"],
             max_new_tokens=max_length,
