@@ -64,7 +64,7 @@ def _init_distributed_environment(
         print(f"deepspeed inference worker:rank:{rank} init_process_group success. ",flush=True)
         # A small all_reduce for warmup.
         torch.distributed.all_reduce(torch.zeros(1).cuda())
-        print(f"deepspeed inference worker:rank:{rank} A small all_reduce for warmup",flush=True)
+        print(f'deepspeed inference worker:rank:{rank} CUDA_VISIBLE_DEVICES:{os.environ["CUDA_VISIBLE_DEVICES"]}',flush=True)
 
 class Worker:
     
