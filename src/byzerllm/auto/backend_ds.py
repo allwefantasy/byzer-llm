@@ -128,23 +128,12 @@ class DeepSpeedInference:
         workers = []
         for rank in range(parallel_config.world_size):    
             worker_cls = Worker  
-            runtime_env = {}
-            runtime_env.setdefault("env_vars", {})
-            runtime_env["env_vars"].setdefault(
-                "PYTORCH_CUDA_ALLOC_CONF", "backend:cudaMallocAsync",
-            ) 
-            runtime_env["env_vars"].setdefault(
-                "RANK", str(rank),
-            )  
-            runtime_env["env_vars"].setdefault(
-                "LOCAL_RANK", str(rank),
-            ) 
-            runtime_env["env_vars"].setdefault(
-                "WORLD_SIZE", str(parallel_config.world_size),
-            )  
-            runtime_env["env_vars"].setdefault(
-                "LOCAL_WORLD_SIZE", str(parallel_config.world_size),
-            )                           
+            runtime_env = {"env_vars": {
+              "RANK":  str(rank),
+              "LOCAL_RANK": str(rank),
+              "LOCAL_WORLD_SIZE":str(parallel_config.world_size),
+              "WORLD_SIZE":str(parallel_config.world_size),
+            }}    
             worker_cls = ray.remote(
                         num_cpus=0,
                         num_gpus=1,
