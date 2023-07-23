@@ -126,8 +126,14 @@ class DeepSpeedInference:
         distributed_init_method = f"tcp://{master_addr}:{master_port}"  
         print(f"deepspeed inference: master_addr:{master_addr},master_port:{master_port}",flush=True)
         workers = []
+        
         for rank in range(parallel_config.world_size):    
             worker_cls = Worker  
+            # deepspeed will use rank as the device id, and the 
+            # ray will automatically set CUDA_VISIBLE_DEVICES for each worker according to the num_gpus
+            # for example, suppose we have 0,1,2,4 gpus, and we have 4 workers, then the CUDA_VISIBLE_DEVICES 
+            # for the last worker will be 3, and the deepspeed will use 3 as the device id, which is wrong because
+            # he can only see one gpu. So we need to set CUDA_VISIBLE_DEVICES to 0,1,2,3 for each worker.
             runtime_env = {"env_vars": {
               "RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES":"true",
               "CUDA_VISIBLE_DEVICES":"0,1,2,3"
