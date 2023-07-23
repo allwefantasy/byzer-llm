@@ -68,7 +68,7 @@ For example:
 
     if infer_mode == "tgi":
         import byzerllm.utils.inference as TGI
-        return TGI.init_model(model_dir,infer_params)        
+        return TGI.init_model(model_dir,infer_params)                
     
     if infer_mode in ["ray/deepspeed","ray/devicemap"]:   
         num_workers = int(sys_conf.get("num_gpus",1))   
@@ -93,7 +93,23 @@ For example:
         # tokenizer.padding_side="right"
         # tokenizer.pad_token_id=0
         llm.stream_chat = types.MethodType(vllm_chat, llm) 
-        return (llm,None)                        
+        return (llm,None)  
+
+    if  infer_mode == "deepseed":
+        import deepspeed
+        num_gpus = int(sys_conf.get("num_gpus",1))
+        tokenizer = AutoTokenizer.from_pretrained(model_dir,trust_remote_code=True)  
+        AutoModelForCausalLM.from_pretrained(pretrained_model_dir,trust_remote_code=True,                                                                                                
+                                                torch_dtype=torch.bfloat16                                                
+                                                )       
+        ds_engine = deepspeed.init_inference(model,
+                                 mp_size=num_gpus,
+                                 dtype=torch.half,
+                                 replace_method="auto",
+                                 replace_with_kernel_inject=True)
+        model = ds_engine.module 
+        model.stream_chat = types.MethodType(stream_chat, model)     
+        return (model,tokenizer)                     
 
     pretrained_model_dir = os.path.join(model_dir,"pretrained_model")
     adaptor_model_dir = model_dir
@@ -129,7 +145,8 @@ For example:
 
     model.eval()  
     if quatization:
-        model = torch.compile(model)
+        model = torch.compile(model)   
+
     model.stream_chat = types.MethodType(stream_chat, model)     
     return (model,tokenizer)
 
