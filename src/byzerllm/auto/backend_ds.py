@@ -133,6 +133,7 @@ class DeepSpeedInference:
               "LOCAL_RANK": str(rank),
               "LOCAL_WORLD_SIZE":str(parallel_config.world_size),
               "WORLD_SIZE":str(parallel_config.world_size),
+              "CUDA_VISIBLE_DEVICES":"0,1,2,3"
             }}    
             worker_cls = ray.remote(
                         num_cpus=0,
