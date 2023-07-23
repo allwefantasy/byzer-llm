@@ -23,11 +23,12 @@ class ParallelConfig:
     def __init__(
         self,
         num_workers:int,
-        model_dir:str,
+        model_dir:str,        
         backend: str = "nccl",              
     ) -> None:
         self.world_size = num_workers
         self.model_dir = model_dir
+        self.backend = backend
     
 
 DeviceID = Tuple[int, Optional[str], int]
@@ -36,6 +37,7 @@ def _init_distributed_environment(
         parallel_config: ParallelConfig,
         rank: int,
         distributed_init_method: str,
+        gpu_ids: List[int],
     ) -> None:
         
         """Initialize the distributed environment."""
@@ -74,17 +76,16 @@ class Worker:
     ) -> None:
         self.parallel_config = parallel_config        
         self.rank = rank
-        self.distributed_init_method = distributed_init_method
-
-        # Initialize the distributed environment.
-        _init_distributed_environment(parallel_config, rank,
-                                      distributed_init_method)
-        
+        self.distributed_init_method = distributed_init_method                
         self.model = None
         self.tokenizer = None
        
 
-    def init_model(self):
+    def init_model(self,gpu_ids:List[int]):
+        # Initialize the distributed environment.
+        _init_distributed_environment(self.parallel_config, self.rank,
+                                      self.distributed_init_method,gpu_ids)
+        
         print(f"deepspeed inference worker:rank:{self.rank} load model {self.parallel_config.model_dir}",flush=True)
         tokenizer = AutoTokenizer.from_pretrained(self.parallel_config.model_dir,trust_remote_code=True)  
         model = AutoModelForCausalLM.from_pretrained(self.parallel_config.model_dir,trust_remote_code=True)       
@@ -97,6 +98,9 @@ class Worker:
                                 replace_with_kernel_inject=True)
         self.model = ds_engine.module
         self.tokenizer = tokenizer
+
+    def get_gpu_ids(self):
+        return ray().get_gpu_ids()    
 
     def execute_model(self,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
@@ -132,7 +136,10 @@ class DeepSpeedInference:
             worker = worker_cls(parallel_config,rank,distributed_init_method)
             workers.append(worker)
         self.workers  = workers  
-        [worker.init_model.remote() for worker in self.workers]      
+        gpu_ids = []
+        for items in ray.get([worker.get_gpu_ids.remote() for worker in self.workers]):
+            gpu_ids.extend(items)
+        [worker.init_model.remote(gpu_ids) for worker in self.workers]      
 
     def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=1024, 
