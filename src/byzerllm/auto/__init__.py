@@ -95,22 +95,11 @@ For example:
         llm.stream_chat = types.MethodType(vllm_chat, llm) 
         return (llm,None)  
 
-    if  infer_mode == "deepspeed":
-        import deepspeed        
+    if  infer_mode == "ray/raw/deepspeed":
+        from .backend_ds import DeepSpeedInference,ParallelConfig        
         num_gpus = int(sys_conf.get("num_gpus",1))
-        print(f"infer_mode:{infer_mode} tensor_parallel_size: {num_gpus}")
-        tokenizer = AutoTokenizer.from_pretrained(model_dir,trust_remote_code=True)  
-        model = AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True,                                                                                                
-                                                torch_dtype=torch.bfloat16                                                
-                                                )       
-        ds_engine = deepspeed.init_inference(model,
-                                 mp_size=num_gpus,
-                                 dtype=torch.half,
-                                 replace_method="auto",
-                                 replace_with_kernel_inject=True)
-        model = ds_engine.module 
-        model.stream_chat = types.MethodType(stream_chat, model)     
-        return (model,tokenizer)                     
+        model = DeepSpeedInference(ParallelConfig(world_size=num_gpus,model_dir=model_dir))    
+        return (model,None)                     
 
     pretrained_model_dir = os.path.join(model_dir,"pretrained_model")
     adaptor_model_dir = model_dir
