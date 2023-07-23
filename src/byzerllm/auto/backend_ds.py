@@ -129,10 +129,7 @@ class DeepSpeedInference:
         for rank in range(parallel_config.world_size):    
             worker_cls = Worker  
             runtime_env = {"env_vars": {
-              "RANK":  str(rank),
-              "LOCAL_RANK": str(rank),
-              "LOCAL_WORLD_SIZE":str(parallel_config.world_size),
-              "WORLD_SIZE":str(parallel_config.world_size),
+              "RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES":"true",
               "CUDA_VISIBLE_DEVICES":"0,1,2,3"
             }}    
             worker_cls = ray.remote(
