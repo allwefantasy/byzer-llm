@@ -42,8 +42,10 @@ def _init_distributed_environment(
             rank=rank,
             init_method=distributed_init_method,
         )
+        print(f"deepspeed inference worker:rank:{rank} init_process_group success. ",flush=True)
         # A small all_reduce for warmup.
         torch.distributed.all_reduce(torch.zeros(1).cuda())
+        print(f"deepspeed inference worker:rank:{rank} A small all_reduce for warmup",flush=True)
 
 class Worker:
     
@@ -60,10 +62,11 @@ class Worker:
         # Initialize the distributed environment.
         _init_distributed_environment(parallel_config, rank,
                                       distributed_init_method)
-        # for now get model
+        print(f"deepspeed inference worker:rank:{rank} load model {parallel_config.model_dir}",flush=True)
         tokenizer = AutoTokenizer.from_pretrained(parallel_config.model_dir,trust_remote_code=True)  
         model = AutoModelForCausalLM.from_pretrained(parallel_config.model_dir,trust_remote_code=True, torch_dtype=torch.bfloat16 )       
         model = model.eval()
+    
         ds_engine = deepspeed.init_inference(model,
                                 mp_size=parallel_config.world_size,
                                 dtype=torch.half,
@@ -93,6 +96,7 @@ class DeepSpeedInference:
 
         master_addr, master_port = get_address_and_port()        
         distributed_init_method = f"tcp://{master_addr}:{master_port}"  
+        print(f"deepspeed inference: master_addr:{master_addr},master_port:{master_port}",flush=True)
         workers = []
         for rank in range(parallel_config.world_size):    
             worker_cls = Worker
