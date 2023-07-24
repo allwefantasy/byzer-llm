@@ -53,9 +53,7 @@ def _init_distributed_environment(
         os.environ["LOCAL_RANK"] = str(rank)
         os.environ["WORLD_SIZE"] = str(parallel_config.world_size)
         os.environ["LOCAL_WORLD_SIZE"] = str(parallel_config.world_size)
-        print(f"deepspeed inference worker:rank:{rank} init_process_group success. ",flush=True)
-        # A small all_reduce for warmup.
-        torch.distributed.all_reduce(torch.zeros(1).cuda())
+        print(f"deepspeed inference worker:rank:{rank} init_process_group success. ",flush=True)        
         print(f'deepspeed inference worker:rank:{rank} CUDA_VISIBLE_DEVICES:{os.environ["CUDA_VISIBLE_DEVICES"]}',flush=True)
         
         """Initialize the distributed environment."""
@@ -65,6 +63,8 @@ def _init_distributed_environment(
             rank=rank,
             init_method=distributed_init_method,            
         )
+        # A small all_reduce for warmup.
+        torch.distributed.all_reduce(torch.zeros(1).cuda())
 
         
 
