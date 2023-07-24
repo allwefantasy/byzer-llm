@@ -1,5 +1,9 @@
 from pathlib import Path
-from typing import Any, List, Dict,Union
+from typing import Any, TypeVar, Dict,Union,List
+import torch
+from transformers import PreTrainedTokenizer
+
+T = TypeVar("T")
 
 def print_flush(*args, **kwargs):
     print(*args, **kwargs, flush=True)
@@ -55,3 +59,32 @@ def compute_max_new_tokens(tokens,max_length:int):
     if max_new_tokens <= 0:
         raise Exception(f"Input is too long ({input_length}). Try to reduce the length of history or use a larger `max_length` value (now:{max_length})")
     return max_new_tokens
+
+def tokenize_string(tokenizer: PreTrainedTokenizer, key: str) -> Union[int, List[int]]:
+    """Tokenize a string using a tokenizer.
+
+    Args:
+        tokenizer (PreTrainedTokenizer): Tokenizer to use.
+        key (str): String to tokenize.
+    """
+    token_ids = tokenizer.encode(key, add_special_tokens=False)
+    return token_ids[0] if len(token_ids) == 1 else token_ids
+
+def tokenize_stopping_sequences_where_needed(
+    tokenizer: PreTrainedTokenizer,
+    stopping_sequences: List[Union[str, int, List[int]]],
+) -> List[Union[List[int], int]]:
+    """If any sequence is a string, tokenize it.
+
+    Args:
+        tokenizer (PreTrainedTokenizer): Tokenizer to use.
+        stopping_sequences (List[Union[str, int, List[int]]]): Stopping sequences to
+            tokenize. Can be ids, sequences of ids or strings.
+    """
+    if not stopping_sequences:
+        return None
+    return [
+        tokenize_string(tokenizer, sequence) if isinstance(sequence, str) else sequence
+        for sequence in stopping_sequences
+    ]
+

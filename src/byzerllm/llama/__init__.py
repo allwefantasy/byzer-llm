@@ -2,8 +2,9 @@ from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig
 import transformers
 import torch
 from typing import Dict,List,Tuple
-from byzerllm.utils import generate_instruction_from_history,compute_max_new_tokens
+from byzerllm.utils import generate_instruction_from_history,compute_max_new_tokens,tokenize_stopping_sequences_where_needed
 import os
+import time
 
 
 
@@ -12,7 +13,13 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
         
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")    
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
+    timeout_s = float(kwargs.get("timeout_s",60*5))
+    
+    stopping_sequences = []
+    
+    if "stopping_sequences" in kwargs:        
+        stopping_sequences = tokenize_stopping_sequences_where_needed(tokenizer,kwargs["stopping_sequences"].split(","))
     
     role_mapping = {        
         "user":"User",        
@@ -24,13 +31,15 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
     tokens = tokenizer(fin_ins, return_token_type_ids=False,return_tensors="pt").to(device)
     
     max_new_tokens = compute_max_new_tokens(tokens,max_length)    
-    
+    start_timestamp = time.time()
     response = self.generate(
         input_ids=tokens["input_ids"],
         max_new_tokens= max_new_tokens,
         repetition_penalty=1.05,
         temperature=temperature,
-        eos_token_id=tokenizer.eos_token_id
+        eos_token_id=tokenizer.eos_token_id,
+        max_time_criteria=(timeout_s,start_timestamp),
+        stopping_sequences=stopping_sequences,
     )
     answer = tokenizer.decode(response[0][tokens["input_ids"].shape[1]:], skip_special_tokens=True)
     return [(answer,"")]
