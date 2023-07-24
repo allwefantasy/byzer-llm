@@ -42,8 +42,8 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
         temperature=temperature,
         eos_token_id=tokenizer.eos_token_id,
         early_stopping=True,
-        max_time_criteria=(timeout_s,start_timestamp),
-        stopping_sequences=stopping_sequences,
+        # max_time_criteria=(timeout_s,start_timestamp),
+        # stopping_sequences=stopping_sequences,
     )
     answer = tokenizer.decode(response[0][tokens["input_ids"].shape[1]:], skip_special_tokens=True)
     return [(answer,"")]
