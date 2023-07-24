@@ -50,8 +50,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
 
 
 def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}):
-    longContextMode = infer_params.get("longContextMode","true") == "true"
-
+    longContextMode = infer_params.get("longContextMode","true") == "true"    
     if longContextMode:
         old_init = transformers.models.llama.modeling_llama.LlamaRotaryEmbedding.__init__
         def ntk_scaled_init(self, dim, max_position_embeddings=2048, base=10000, device=None):
@@ -72,11 +71,13 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     if not is_adaptor_model:        
         pretrained_model_dir = model_dir
 
-    tokenizer = AutoTokenizer.from_pretrained(model_dir,trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_dir,trust_remote_code=True)
     tokenizer.padding_side="right"
     tokenizer.pad_token_id=0
     
     quatization = infer_params.get("quatization","false") == "true"
+
+    print(f"longContextMode:{longContextMode} quatization:{quatization}",flush=True)
 
     if quatization:
         nf4_config = BitsAndBytesConfig(
