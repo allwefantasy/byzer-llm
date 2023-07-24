@@ -50,9 +50,9 @@ def _init_distributed_environment(
                 os.environ["NCCL_SOCKET_IFNAME"] = DEFAULT_NCCL_SOCKET_IFNAME
 
         os.environ["RANK"] = str(rank)
-        os.environ["LOCAL_RANK"] = str(rank)
+        # os.environ["LOCAL_RANK"] = str(rank)
         os.environ["WORLD_SIZE"] = str(parallel_config.world_size)
-        os.environ["LOCAL_WORLD_SIZE"] = str(parallel_config.world_size)        
+        # os.environ["LOCAL_WORLD_SIZE"] = str(parallel_config.world_size)        
         print(f'deepspeed inference worker after:rank:{rank} CUDA_VISIBLE_DEVICES:{os.environ["CUDA_VISIBLE_DEVICES"]}',flush=True)
         
         """Initialize the distributed environment."""
