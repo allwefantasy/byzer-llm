@@ -40,14 +40,6 @@ def _init_distributed_environment(
         gpu_ids: List[int],
     ) -> None:
         
-        """Initialize the distributed environment."""
-        torch.distributed.init_process_group(
-            backend="nccl",
-            world_size=parallel_config.world_size,
-            rank=rank,
-            init_method=distributed_init_method,            
-        )
-
         if parallel_config.backend == "nccl":
             # Same as in Ray Train
             os.environ["NCCL_ASYNC_ERROR_HANDLING"] = "1"
@@ -65,6 +57,16 @@ def _init_distributed_environment(
         # A small all_reduce for warmup.
         torch.distributed.all_reduce(torch.zeros(1).cuda())
         print(f'deepspeed inference worker:rank:{rank} CUDA_VISIBLE_DEVICES:{os.environ["CUDA_VISIBLE_DEVICES"]}',flush=True)
+        
+        """Initialize the distributed environment."""
+        torch.distributed.init_process_group(
+            backend="nccl",
+            world_size=parallel_config.world_size,
+            rank=rank,
+            init_method=distributed_init_method,            
+        )
+
+        
 
 class Worker:
     
