@@ -32,12 +32,16 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
     
     max_new_tokens = compute_max_new_tokens(tokens,max_length)    
     start_timestamp = time.time()
+
+    print(f"stopping_sequences:{stopping_sequences} timeout_s:{timeout_s}",flush=True)
+
     response = self.generate(
         input_ids=tokens["input_ids"],
         max_new_tokens= max_new_tokens,
         repetition_penalty=1.05,
         temperature=temperature,
         eos_token_id=tokenizer.eos_token_id,
+        early_stopping=True
         max_time_criteria=(timeout_s,start_timestamp),
         stopping_sequences=stopping_sequences,
     )
