@@ -52,8 +52,7 @@ def _init_distributed_environment(
         os.environ["RANK"] = str(rank)
         os.environ["LOCAL_RANK"] = str(rank)
         os.environ["WORLD_SIZE"] = str(parallel_config.world_size)
-        os.environ["LOCAL_WORLD_SIZE"] = str(parallel_config.world_size)
-        print(f"deepspeed inference worker:rank:{rank} init_process_group success. ",flush=True)        
+        os.environ["LOCAL_WORLD_SIZE"] = str(parallel_config.world_size)        
         print(f'deepspeed inference worker:rank:{rank} CUDA_VISIBLE_DEVICES:{os.environ["CUDA_VISIBLE_DEVICES"]}',flush=True)
         
         """Initialize the distributed environment."""
