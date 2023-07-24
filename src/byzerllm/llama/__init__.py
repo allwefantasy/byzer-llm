@@ -40,7 +40,10 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
         max_new_tokens= max_new_tokens,
         repetition_penalty=1.05,
         temperature=temperature,
+        attention_mask=tokens.attention_mask,
         eos_token_id=tokenizer.eos_token_id,
+        pad_token_id=tokenizer.eos_token_id,
+        bos_token_id=tokenizer.bos_token_id
         early_stopping=True,
         # max_time_criteria=(timeout_s,start_timestamp),
         # stopping_sequences=stopping_sequences,
@@ -74,6 +77,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     tokenizer = AutoTokenizer.from_pretrained(pretrained_model_dir,trust_remote_code=True)
     tokenizer.padding_side="right"
     tokenizer.pad_token_id=0
+    tokenizer.bos_token_id = 1
     
     quatization = infer_params.get("quatization","false") == "true"
 
