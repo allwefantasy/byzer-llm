@@ -41,7 +41,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
         repetition_penalty=1.05,
         temperature=temperature,
         eos_token_id=tokenizer.eos_token_id,
-        early_stopping=True
+        early_stopping=True,
         max_time_criteria=(timeout_s,start_timestamp),
         stopping_sequences=stopping_sequences,
     )
