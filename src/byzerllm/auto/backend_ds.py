@@ -54,7 +54,7 @@ def _init_distributed_environment(
         os.environ["WORLD_SIZE"] = str(parallel_config.world_size)
         # os.environ["LOCAL_WORLD_SIZE"] = str(parallel_config.world_size)        
         print(f'deepspeed inference worker after:rank:{rank} CUDA_VISIBLE_DEVICES:{os.environ["CUDA_VISIBLE_DEVICES"]}',flush=True)
-        
+        torch.cuda.set_device(rank)
         """Initialize the distributed environment."""
         torch.distributed.init_process_group(
             backend="nccl",
