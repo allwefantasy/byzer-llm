@@ -231,7 +231,8 @@ fi
 
 pip install -r byzer-llm/demo-requirements.txt
 
-
+# in some cuda version, the 9.0 is not supported, if that case, try to remove 9.0 from TORCH_CUDA_ARCH_LIST_VALUE
+TORCH_CUDA_ARCH_LIST_VALUE="8.0 8.6 9.0"
 if [[ "${TGI_SUPPORT}" == "true" ]]; then
     echo "Setup TGI support in Byzer-LLM"
     export RUSTUP_DIST_SERVER=https://mirrors.ustc.edu.cn/rust-static
@@ -240,10 +241,10 @@ if [[ "${TGI_SUPPORT}" == "true" ]]; then
     # source "$HOME/.cargo/env" && PROTOC_ZIP=protoc-21.12-linux-x86_64.zip && curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v21.12/$PROTOC_ZIP && sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc && sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*' && rm -f $PROTOC_ZIP    
     source "$HOME/.cargo/env" && PROTOC_ZIP=protoc-21.12-linux-x86_64.zip && curl -OL https://gitee.com/allwefantasy/byzer-llm/releases/download/dependency-protoc/$PROTOC_ZIP && sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc && sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*' && rm -f $PROTOC_ZIP    
     source "$HOME/.cargo/env" && pip install tensorboard ninja text-generation
-    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST="8.0 8.6 9.0" && git clone https://gitee.com/mirrors/text-generation-inference && cd text-generation-inference && git checkout 5e6ddfd6a4fecc394255d7109f87c420c98b4e15 && BUILD_EXTENSIONS=True make install
-    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST="8.0 8.6 9.0" && cd text-generation-inference/server && BUILD_EXTENSIONS=True make install-flash-attention
-    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST="8.0 8.6 9.0" && cd text-generation-inference/server && BUILD_EXTENSIONS=True make install-flash-attention-v2
-    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST="8.0 8.6 9.0" && cd text-generation-inference/server && make install-vllm   
+    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST_VALUE} && git clone https://gitee.com/mirrors/text-generation-inference && cd text-generation-inference && git checkout 5e6ddfd6a4fecc394255d7109f87c420c98b4e15 && BUILD_EXTENSIONS=True make install
+    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST_VALUE} && cd text-generation-inference/server && BUILD_EXTENSIONS=True make install-flash-attention
+    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST_VALUE} && cd text-generation-inference/server && BUILD_EXTENSIONS=True make install-flash-attention-v2
+    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST_VALUE} && cd text-generation-inference/server && make install-vllm   
     # if pip show custom-kernels >/dev/null 2>&1; then
     #     echo "Package custom-kernels is already installed"
     # else
@@ -281,7 +282,7 @@ fi
 
 if [[ "${AVIARY_SUPPORT}" == "true" ]]; then
     pip uninstall -y ray && pip install -U https://gitee.com/allwefantasy/byzer-llm/releases/download/dependency-ray-3.0.0/ray-3.0.0.dev0-cp310-cp310-manylinux2014_x86_64.whl
-    export FORCE_CUDA=1 NVCC_PREPEND_FLAGS="--forward-unknown-opts" DS_BUILD_OPS=1 DS_BUILD_AIO=0 DS_BUILD_SPARSE_ATTN=0 TORCH_CUDA_ARCH_LIST="8.0 8.6 9.0" && pip install \
+    export FORCE_CUDA=1 NVCC_PREPEND_FLAGS="--forward-unknown-opts" DS_BUILD_OPS=1 DS_BUILD_AIO=0 DS_BUILD_SPARSE_ATTN=0 ${TORCH_CUDA_ARCH_LIST_VALUE} && pip install \
   "awscrt" \
   "Jinja2" \
   "numexpr>=2.7.3" \
