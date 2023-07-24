@@ -148,7 +148,7 @@ class DeepSpeedInference:
             worker = worker_cls(parallel_config,rank,distributed_init_method)
             workers.append(worker)
         self.workers  = workers           
-        [worker.init_model.remote(gpu_ids) for worker in self.workers]      
+        ray.get([worker.init_model.remote(gpu_ids) for worker in self.workers])
 
     def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=1024, 
