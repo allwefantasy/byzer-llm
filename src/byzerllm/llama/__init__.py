@@ -1,8 +1,9 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig
 import transformers
 import torch
 from typing import Dict,List,Tuple
 from byzerllm.utils import generate_instruction_from_history,compute_max_new_tokens
+import os
 
 
 
@@ -51,14 +52,45 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         
         transformers.models.llama.modeling_llama.LlamaRotaryEmbedding.__init__ = ntk_scaled_init
 
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+    pretrained_model_dir = os.path.join(model_dir,"pretrained_model")
+    adaptor_model_dir = model_dir
+    is_adaptor_model = os.path.exists(pretrained_model_dir)
+
+    if not is_adaptor_model:        
+        pretrained_model_dir = model_dir
+
+    tokenizer = AutoTokenizer.from_pretrained(model_dir,trust_remote_code=True)
     tokenizer.padding_side="right"
     tokenizer.pad_token_id=0
-    model = AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True,
+    
+    quatization = infer_params.get("quatization","false") == "true"
+
+    if quatization:
+        nf4_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=False,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+        )
+        model = AutoModelForCausalLM.from_pretrained(
+            pretrained_model_dir,
+            trust_remote_code=True,            
+            device_map="auto",
+            quantization_config=nf4_config,
+        )
+
+    else:
+        model = AutoModelForCausalLM.from_pretrained(pretrained_model_dir,trust_remote_code=True,
                                                 device_map='auto',                                                
                                                 torch_dtype=torch.bfloat16                                                
                                                 )
-    model.eval()       
+    if is_adaptor_model:
+        from peft import PeftModel
+        model = PeftModel.from_pretrained(model, adaptor_model_dir)
+
+    model.eval()  
+    if quatization:
+        model = torch.compile(model)      
     import types
     model.stream_chat = types.MethodType(stream_chat, model)     
     return (model,tokenizer)
