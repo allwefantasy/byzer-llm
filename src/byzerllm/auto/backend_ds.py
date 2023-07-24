@@ -98,7 +98,8 @@ class Worker:
                                 replace_method="auto",
                                 replace_with_kernel_inject=True)
         self.model = ds_engine.module
-        self.tokenizer = tokenizer      
+        self.tokenizer = tokenizer  
+        print(f"deepspeed inference worker:rank:{self.rank} init successfully",flush=True)    
 
     def execute_model(self,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
