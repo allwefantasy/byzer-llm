@@ -99,10 +99,7 @@ class Worker:
                                 replace_method="auto",
                                 replace_with_kernel_inject=True)
         self.model = ds_engine.module
-        self.tokenizer = tokenizer
-
-    def get_gpu_ids(self):
-        return ray.get_gpu_ids()    
+        self.tokenizer = tokenizer      
 
     def execute_model(self,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
@@ -128,6 +125,7 @@ class DeepSpeedInference:
         distributed_init_method = f"tcp://{master_addr}:{master_port}"  
         print(f"deepspeed inference: master_addr:{master_addr},master_port:{master_port}",flush=True)
         workers = []
+        gpu_ids = ",".join([str(gpu) for gpu in ray.get_gpu_ids()])
         
         for rank in range(parallel_config.world_size):    
             worker_cls = Worker  
@@ -138,7 +136,7 @@ class DeepSpeedInference:
             # he can only see one gpu. So we need to set CUDA_VISIBLE_DEVICES to 0,1,2,3 for each worker.
             runtime_env = {"env_vars": {
               "RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES":"true",
-              "CUDA_VISIBLE_DEVICES":"0,1,2,3"
+              "CUDA_VISIBLE_DEVICES":gpu_ids
             }}    
             worker_cls = ray.remote(
                         num_cpus=0,
@@ -148,10 +146,7 @@ class DeepSpeedInference:
                     )(worker_cls).remote
             worker = worker_cls(parallel_config,rank,distributed_init_method)
             workers.append(worker)
-        self.workers  = workers  
-        gpu_ids = []
-        for items in ray.get([worker.get_gpu_ids.remote() for worker in self.workers]):
-            gpu_ids.extend(items)
+        self.workers  = workers           
         [worker.init_model.remote(gpu_ids) for worker in self.workers]      
 
     def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
