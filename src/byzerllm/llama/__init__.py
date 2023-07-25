@@ -3,12 +3,9 @@ import transformers
 import torch
 from typing import Dict,List,Tuple
 from byzerllm.utils import (generate_instruction_from_history,
-compute_max_new_tokens,tokenize_stopping_sequences_where_needed,timeit,StopSequencesCriteria)
+compute_max_new_tokens,tokenize_stopping_sequences,StopSequencesCriteria)
 import os
 
-
-
-@timeit
 def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],  
         max_length:int=4090, 
         top_p:float=0.95,
@@ -21,7 +18,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
     stopping_criteria = None
     
     if "stopping_sequences" in kwargs:        
-        stopping_sequences = tokenize_stopping_sequences_where_needed(tokenizer,kwargs["stopping_sequences"].split(","))
+        stopping_sequences = tokenize_stopping_sequences(tokenizer,kwargs["stopping_sequences"].split(","))
         stopping_criteria=StoppingCriteriaList([StopSequencesCriteria(stops=stopping_sequences)])
     
     role_mapping = {        

@@ -105,17 +105,25 @@ def tokenize_stopping_sequences_where_needed(
         for sequence in stopping_sequences
     ]
 
-class StopSequencesCriteria(StoppingCriteria):
+def  tokenize_stopping_sequences(tokenizer,stop_words):
+    stop_words_ids = [ 
+        tokenizer(stop_word, return_tensors='pt')['input_ids'].squeeze() for stop_word in stop_words]
+    return stop_words_ids
+
+class StoppingCriteriaSub(StoppingCriteria):
 
     def __init__(self, stops = [], encounters=1):
-        super().__init__()
-        self.stops = stops
+      super().__init__()
+      self.stops = stops
+      self.ENCOUNTERS = encounters
 
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):        
-        for stop in self.stops:
-            if torch.all((stop == input_ids[0][-len(stop):])).item():
-                return True
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
+      stop_count = 0
+      for stop in self.stops:
+        stop_count = (stop == input_ids[0]).sum().item()
 
-        return False
+      if stop_count >= self.ENCOUNTERS:
+          return True
+      return False
 
 
