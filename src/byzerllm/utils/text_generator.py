@@ -36,7 +36,7 @@ class ByzerLLMGenerator:
         if "image" in query:
             new_params["image"] = query["image"] 
 
-        for p in ["inference_mode"] :
+        for p in ["inference_mode","stopping_sequences","timeout_s"]:
             if p in query:
                 new_params[p] = query[p]
             
