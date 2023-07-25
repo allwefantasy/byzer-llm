@@ -19,7 +19,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
     stopping_criteria = None
     
     if "stopping_sequences" in kwargs:        
-        stopping_sequences = tokenize_stopping_sequences(tokenizer,kwargs["stopping_sequences"].split(","))
+        stopping_sequences = [torch.tensor(word).to(device) for word in tokenize_stopping_sequences(tokenizer,kwargs["stopping_sequences"].split(","))]    
         stopping_criteria=StoppingCriteriaList([StopSequencesCriteria(stops=stopping_sequences)])
     
     role_mapping = {        

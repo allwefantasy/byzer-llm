@@ -106,24 +106,27 @@ def tokenize_stopping_sequences_where_needed(
     ]
 
 def  tokenize_stopping_sequences(tokenizer,stop_words):
-    stop_words_ids = [ 
-        tokenizer(stop_word, return_tensors='pt')['input_ids'].squeeze() for stop_word in stop_words]
+    stop_words_ids = []
+    for stop_word in stop_words:
+        w = tokenize_string(tokenizer, stop_word)
+        # remove the first token which is empty token 
+        # this should work for only llama model
+        if w[0] == 29871 and tokenizer.decode([w[0]],skip_special_tokens=False) == "":
+            w = w[1:]
+        stop_words_ids.append(w)    
     return stop_words_ids
 
 class StopSequencesCriteria(StoppingCriteria):
 
     def __init__(self, stops = [], encounters=1):
-      super().__init__()
+      super().__init__()      
       self.stops = stops
       self.ENCOUNTERS = encounters
 
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
-      stop_count = 0
-      for stop in self.stops:
-        stop_count = (stop == input_ids[0]).sum().item()
-
-      if stop_count >= self.ENCOUNTERS:
-          return True
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):               
+      for stop in self.stops:        
+        if torch.all((stop == input_ids[0][-len(stop):])).item():
+            return True
       return False
 
 
