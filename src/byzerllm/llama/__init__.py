@@ -18,11 +18,11 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
     timeout_s = float(kwargs.get("timeout_s",60*5))
     
     
-    stopping_criteria = []
+    stopping_criteria = None
     
     if "stopping_sequences" in kwargs:        
         stopping_sequences = tokenize_stopping_sequences_where_needed(tokenizer,kwargs["stopping_sequences"].split(","))
-        stopping_criteria.append(StoppingCriteriaList([StopSequencesCriteria(stops=stopping_sequences)]))
+        stopping_criteria=StoppingCriteriaList([StopSequencesCriteria(stops=stopping_sequences)])
     
     role_mapping = {        
         "user":"User",        
