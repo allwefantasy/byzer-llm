@@ -1,9 +1,8 @@
 from pathlib import Path
 from typing import Any, TypeVar, Dict,Union,List
 from functools import wraps
-from transformers.generation_utils import StoppingCriteria
 import time
-from transformers import PreTrainedTokenizer
+from transformers import PreTrainedTokenizer,StoppingCriteria
 import torch
 
 T = TypeVar("T")
