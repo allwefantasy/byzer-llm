@@ -13,14 +13,8 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
         temperature:float=0.1,**kwargs):
         
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
-    timeout_s = float(kwargs.get("timeout_s",60*5))
-    
-    
-    stopping_criteria = None
-    
-    if "stopping_sequences" in kwargs:        
-        stopping_sequences = [torch.tensor(word).to(device) for word in tokenize_stopping_sequences(tokenizer,kwargs["stopping_sequences"].split(","))]    
-        stopping_criteria=StoppingCriteriaList([StopSequencesCriteria(stops=stopping_sequences)])
+    timeout_s = float(kwargs.get("timeout_s",60*5)) 
+    skip_check_min_length = int(kwargs.get("stopping_sequences_skip_check_min_length",0))       
     
     role_mapping = {        
         "user":"User",        
@@ -30,6 +24,18 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
     fin_ins = generate_instruction_from_history(ins,his,role_mapping=role_mapping)     
 
     tokens = tokenizer(fin_ins, return_token_type_ids=False,return_tensors="pt").to(device)
+
+    stopping_criteria = None
+    
+    if "stopping_sequences" in kwargs:        
+        stopping_sequences = [torch.tensor(word).to(device) for word in tokenize_stopping_sequences(tokenizer,kwargs["stopping_sequences"].split(","))]    
+        input_length = tokens["input_ids"].shape[1]
+        stopping_criteria=StoppingCriteriaList([StopSequencesCriteria(
+            tokenizer=tokenizer,
+            stops=stopping_sequences,
+            input_start=input_length,
+            skip_check_min_length=skip_check_min_length
+            )])
     
     max_new_tokens = compute_max_new_tokens(tokens,max_length)   
 
