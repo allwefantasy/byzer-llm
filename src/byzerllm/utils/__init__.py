@@ -1,7 +1,10 @@
 from pathlib import Path
 from typing import Any, TypeVar, Dict,Union,List
-import torch
+from functools import wraps
+from transformers.generation_utils import StoppingCriteria
+import time
 from transformers import PreTrainedTokenizer
+import torch
 
 T = TypeVar("T")
 
@@ -24,6 +27,21 @@ def timeout(duration: float):
         yield
     finally:
         signal.alarm(0)
+
+def timeit(func):
+    """
+    Decorator to time a function.
+    """
+
+    @wraps(func)
+    def inner(*args, **kwargs):
+        start_time = time.monotonic()
+        ret = func(*args, **kwargs)
+        time_taken = time.monotonic() - start_time
+        print(f"{func} took {time_taken} s to complete",flush=True)
+        return ret
+
+    return inner
 
 def generate_instruction_from_history(ins:str,his:List[Dict[str,str]],role_mapping:Dict[str,str]={        
         "user":"User",        
@@ -87,4 +105,18 @@ def tokenize_stopping_sequences_where_needed(
         tokenize_string(tokenizer, sequence) if isinstance(sequence, str) else sequence
         for sequence in stopping_sequences
     ]
+
+class StopSequencesCriteria(StoppingCriteria):
+
+    def __init__(self, stops = [], encounters=1):
+        super().__init__()
+        self.stops = [stop for stop in stops]
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):        
+        for stop in self.stops:
+            if torch.all((stop == input_ids[0][-len(stop):])).item():
+                return True
+
+        return False
+
 
