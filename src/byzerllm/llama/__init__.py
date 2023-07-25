@@ -5,6 +5,7 @@ from typing import Dict,List,Tuple
 from byzerllm.utils import (generate_instruction_from_history,
 compute_max_new_tokens,tokenize_stopping_sequences,StopSequencesCriteria)
 import os
+import time
 
 def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],  
         max_length:int=4090, 
@@ -33,7 +34,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
     max_new_tokens = compute_max_new_tokens(tokens,max_length)   
 
     print(f"max_new_tokens:{max_new_tokens} stopping_sequences:{stopping_sequences} max_time:{timeout_s}",flush=True)
-
+    start_time = time.monotonic()        
     response = self.generate(
         input_ids=tokens["input_ids"],
         max_new_tokens= max_new_tokens,
@@ -46,8 +47,11 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
         early_stopping=True,
         max_time=timeout_s,
         stopping_criteria=stopping_criteria,
-    )
-    answer = tokenizer.decode(response[0][tokens["input_ids"].shape[1]:], skip_special_tokens=True)
+    )    
+    time_taken = time.monotonic() - start_time    
+    new_tokens = response[0][tokens["input_ids"].shape[1]:]
+    print(f"generate took {time_taken} s to complete. tokens/s:{len(new_tokens)/time_taken}",flush=True)
+    answer = tokenizer.decode(new_tokens, skip_special_tokens=True)
     return [(answer,"")]
 
 
