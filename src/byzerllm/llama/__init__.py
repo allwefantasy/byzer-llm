@@ -33,7 +33,10 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
 
     tokens = tokenizer(fin_ins, return_token_type_ids=False,return_tensors="pt").to(device)
     
-    max_new_tokens = compute_max_new_tokens(tokens,max_length)            
+    max_new_tokens = compute_max_new_tokens(tokens,max_length)   
+
+    print(f"max_new_tokens:{max_new_tokens} stopping_criteria:{stopping_criteria} max_time:{timeout_s}",flush=True)
+
     response = self.generate(
         input_ids=tokens["input_ids"],
         max_new_tokens= max_new_tokens,
