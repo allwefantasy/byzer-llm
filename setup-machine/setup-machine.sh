@@ -18,6 +18,27 @@ TGI_SUPPORT=${TGI_SUPPORT:-"false"}
 VLLM_SUPPORT=${VLLM_SUPPORT:-"false"}
 AVIARY_SUPPORT=${AVIARY_SUPPORT:-"false"}
 NOTEBOOK_LOGO=${NOTEBOOK_LOGO:-"Byzer Notebook"}
+PYPI_MIRROR=${PYPI_MIRROR:-"aliyun"}
+RAY_DASHBOARD_HOST=${RAY_DASHBOARD_HOST:-"0.0.0.0"}
+
+# --- define pypi download mirror ---
+setup_pypi_mirror() {
+  echo "Setup pip mirror"
+
+  if [[ ! -d "$HOME/.pip" ]]; then
+      mkdir -p ~/.pip
+  fi
+  
+  if [ ${PYPI_MIRROR} == "aliyun" ]; then
+    cat <<EOF > ~/.pip/pip.conf
+[global]
+ trusted-host = mirrors.aliyun.com
+ index-url = https://mirrors.aliyun.com/pypi/simple
+EOF
+  elif [ ${PYPI_MIRROR} == "tsinghua" ]; then
+    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+  fi
+}
 
 cat <<EOF
 This script will help you install Byzer-LLM enviroment on your machine (CentOS 8 or Ubuntu 20.04/22.04)
@@ -110,7 +131,7 @@ if id -u byzerllm >/dev/null 2>&1; then
 else
     echo "User byzerllm does not exist"
     groupadd ai
-    useradd -m byzerllm -g ai
+    useradd -m byzerllm -g ai -s /bin/bash
     echo "byzerllm:${USER_PASSWORD}" | sudo chpasswd
     echo "Grant user sudo permission"
     echo "byzerllm ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
@@ -133,6 +154,7 @@ cd ~
 echo "Install Conda environment"
 
 CONDA_INSTALL_PATH=$HOME/miniconda3
+CONDA_PREFIX=$CONDA_INSTALL_PATH
 
 echo "Download the latest version of Miniconda"
 
@@ -184,18 +206,7 @@ fi
 source $CONDA_PREFIX/bin/activate byzerllm-dev
 # conda activate byzerllm-dev
 
-echo "Setup pip mirror"
-
-if [[ ! -d "$HOME/.pip" ]]; then
-    mkdir -p ~/.pip   
-fi
-
-
-cat <<EOF > ~/.pip/pip.conf
-[global]
- trusted-host = mirrors.aliyun.com
- index-url = https://mirrors.aliyun.com/pypi/simple
-EOF
+setup_pypi_mirror
 
 echo "Now install the NVIDIA toolkit with conda"
 
@@ -371,7 +382,7 @@ EOF
     echo "Setup Ray"
 
     cat <<EOF > ~/softwares/ray.start.master.sh
-ray stop && ray start --head --dashboard-host 127.0.0.1  '--resources={"master": 1, "passwordless_ssh_node": 1000}'
+ray stop && ray start --head --dashboard-host ${RAY_DASHBOARD_HOST} '--resources={"master": 1, "passwordless_ssh_node": 1000}'
 EOF
     
     chmod u+x ~/softwares/ray.start.master.sh
