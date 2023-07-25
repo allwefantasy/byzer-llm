@@ -85,7 +85,7 @@ def tokenize_string(tokenizer: PreTrainedTokenizer, key: str) -> Union[int, List
         key (str): String to tokenize.
     """
     token_ids = tokenizer.encode(key, add_special_tokens=False)
-    return token_ids[0] if len(token_ids) == 1 else token_ids
+    return token_ids
 
 def tokenize_stopping_sequences_where_needed(
     tokenizer: PreTrainedTokenizer,
@@ -109,7 +109,7 @@ class StopSequencesCriteria(StoppingCriteria):
 
     def __init__(self, stops = [], encounters=1):
         super().__init__()
-        self.stops = [stop for stop in stops]
+        self.stops = stops
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):        
         for stop in self.stops:
