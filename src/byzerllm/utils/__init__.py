@@ -110,7 +110,7 @@ def  tokenize_stopping_sequences(tokenizer,stop_words):
         tokenizer(stop_word, return_tensors='pt')['input_ids'].squeeze() for stop_word in stop_words]
     return stop_words_ids
 
-class StoppingCriteriaSub(StoppingCriteria):
+class StopSequencesCriteria(StoppingCriteria):
 
     def __init__(self, stops = [], encounters=1):
       super().__init__()
