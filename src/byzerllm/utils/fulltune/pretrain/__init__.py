@@ -198,9 +198,9 @@ class Worker:
             step += 1
         return   
     
-    def train(self):
+    def train(self):        
+        model_engine = self.prepare_model([0,1,2,3])
         data_engine = self.prepare_data()
-        model_engine = self.prepare_model()
         epoch = 0
         while True:
             self.train(data_engine, model_engine)
