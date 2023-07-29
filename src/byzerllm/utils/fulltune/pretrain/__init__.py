@@ -44,7 +44,7 @@ DEFUALT_CONFIG = '''
     "job_name": "baichuan-7b-pt"
   },
   "zero_optimization": {
-    "stage": 3,
+    "stage": 2,
     "contiguous_gradients": false,
     "allgather_bucket_size": 1e8,
     "reduce_bucket_size": 1e8,
