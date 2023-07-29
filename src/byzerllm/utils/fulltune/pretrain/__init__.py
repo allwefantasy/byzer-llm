@@ -14,6 +14,7 @@ from ray.air.util.torch_dist import (
     _init_torch_distributed,
     get_address_and_port,
 )
+import dataclasses
 from ray.train.constants import DEFAULT_NCCL_SOCKET_IFNAME
 from ..base_model.modeling_baichuan import BaiChuanForCausalLM
 from ..base_model.configuration_baichuan import BaiChuanConfig
@@ -59,12 +60,22 @@ DEFUALT_CONFIG = '''
 }
 
 '''
-args={"steps_per_epoch":4096,
-      "checkpoint_saving_path":"/mnt/nvme0n1/byzerllm/data/checkpoints",
-      "max_length":4096,
-      "data_dir":"/home/byzerllm/data/raw_data",
-      "tokenizer_path":"/home/byzerllm/models/baichuan-7B"
-      }
+
+@dataclasses.dataclass
+class TrainArgs:
+    steps_per_epoch: int = 4096
+    checkpoint_saving_path: str = "/mnt/nvme0n1/byzerllm/data/checkpoints"
+    max_length: int = 4096
+    data_dir: str = "/home/byzerllm/data/raw_data"
+    tokenizer_path: str = "/home/byzerllm/models/baichuan-7B"
+
+args = TrainArgs()
+# args={"steps_per_epoch":4096,
+#       "checkpoint_saving_path":"/mnt/nvme0n1/byzerllm/data/checkpoints",
+#       "max_length":4096,
+#       "data_dir":"/home/byzerllm/data/raw_data",
+#       "tokenizer_path":"/home/byzerllm/models/baichuan-7B"
+#       }
 
 class DataEngine():
     def __init__(self, data_dir, tokenizer_path, micro_batch_size, max_length):
