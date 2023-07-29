@@ -237,6 +237,7 @@ class Worker:
 
             model_parameters = filter(lambda p: p.requires_grad, model.parameters())
             model_engine, _, _, _ = deepspeed.initialize(model=model,
+                                                         config=json.loads(DEFUALT_CONFIG),
                                                         optimizer=None,
                                                         model_parameters=model_parameters)
             return model_engine
