@@ -255,7 +255,7 @@ class DeepSpeedTrain:
             worker = worker_cls(parallel_config,rank,distributed_init_method)
             workers.append(worker)
         self.workers  = workers           
-        ray.get([worker.train.remote() for worker in self.workers])
+        # ray.get([worker.train.remote() for worker in self.workers])
     
               
     def _run_workers(
