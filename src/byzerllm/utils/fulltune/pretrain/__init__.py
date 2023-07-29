@@ -44,7 +44,7 @@ DEFUALT_CONFIG = '''
     "job_name": "baichuan-7b-pt"
   },
   "zero_optimization": {
-    "stage": 2,
+    "stage": 3,
     "contiguous_gradients": false,
     "allgather_bucket_size": 1e8,
     "reduce_bucket_size": 1e8,
@@ -65,7 +65,7 @@ DEFUALT_CONFIG = '''
 class TrainArgs:
     steps_per_epoch: int = 4096
     checkpoint_saving_path: str = "/mnt/nvme0n1/byzerllm/data/checkpoints"
-    max_length: int = 4096
+    max_length: int = 1024
     data_dir: str = "/home/byzerllm/data/raw_data"
     tokenizer_path: str = "/home/byzerllm/models/baichuan-7B"
 
@@ -229,8 +229,9 @@ class Worker:
         _init_distributed_environment(self.parallel_config, self.rank,
                                       self.distributed_init_method,gpu_ids)
         
+        # check the enabled parameter here: https://github.com/microsoft/DeepSpeed/issues/3234
         with deepspeed.zero.Init(config_dict_or_path=json.loads(DEFUALT_CONFIG),
-                             enabled=False,
+                             enabled=True,
                              mem_efficient_linear=False,
                              mpu=None):
             model = BaiChuanForCausalLM(BaiChuanConfig())
