@@ -59,7 +59,12 @@ DEFUALT_CONFIG = '''
 }
 
 '''
-args={"steps_per_epoch":4096,"checkpoint_saving_path":"./checkpoints","max_length":4096}
+args={"steps_per_epoch":4096,
+      "checkpoint_saving_path":"/mnt/nvme0n1/byzerllm/data/checkpoints",
+      "max_length":4096,
+      "data_dir":"/home/byzerllm/data/raw_data",
+      "tokenizer_path":"/home/byzerllm/models/baichuan-7B"
+      }
 
 class DataEngine():
     def __init__(self, data_dir, tokenizer_path, micro_batch_size, max_length):
@@ -191,7 +196,16 @@ class Worker:
             epoch += 1
             model_engine.save_checkpoint(f"{args.checkpoint_saving_path}",
                                         tag=f"Epoch-{epoch}")
-
+    def prepare_data(self):
+        data_dir = args.data_dir
+        tokenizer_path = args.tokenizer_path
+        ds_config = json.loads(DEFUALT_CONFIG)
+        micro_batch_size = ds_config["train_micro_batch_size_per_gpu"]
+        max_length = args.max_length
+        data_engine = DataEngine(data_dir, tokenizer_path, micro_batch_size, max_length)
+        data_engine.load_data()
+        return data_engine
+    
     def prepare_model(self,gpu_ids:List[int]):
         # Initialize the distributed environment.
         _init_distributed_environment(self.parallel_config, self.rank,
@@ -241,7 +255,7 @@ class DeepSpeedTrain:
             worker = worker_cls(parallel_config,rank,distributed_init_method)
             workers.append(worker)
         self.workers  = workers           
-        ray.get([worker.init_model.remote(gpu_ids) for worker in self.workers])
+        ray.get([worker.train.remote() for worker in self.workers])
     
               
     def _run_workers(
@@ -269,6 +283,6 @@ class DeepSpeedTrain:
         for other_output in all_outputs[1:]:
             assert output == other_output
         return output  
-    
-      
+
+
 
