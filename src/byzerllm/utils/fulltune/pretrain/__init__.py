@@ -233,6 +233,9 @@ class DeepSpeedTrain:
         print(f"deepspeed inference: master_addr:{master_addr},master_port:{master_port}",flush=True)
         workers = []
         gpu_ids = ray.get_gpu_ids()
+        if not gpu_ids:
+            gpu_ids = [0,1,2,3]
+
         gpu_ids_str = ",".join([str(gpu) for gpu in gpu_ids])
         
         for rank in range(parallel_config.world_size):    
