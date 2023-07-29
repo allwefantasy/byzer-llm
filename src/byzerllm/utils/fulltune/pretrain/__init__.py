@@ -44,7 +44,7 @@ DEFUALT_CONFIG = '''
     "job_name": "baichuan-7b-pt"
   },
   "zero_optimization": {
-    "stage": 2,
+    "stage": 3,
     "contiguous_gradients": false,
     "allgather_bucket_size": 1e8,
     "reduce_bucket_size": 1e8,
@@ -230,7 +230,7 @@ class Worker:
                                       self.distributed_init_method,gpu_ids)
         
         with deepspeed.zero.Init(config_dict_or_path=json.loads(DEFUALT_CONFIG),
-                             enabled=True,
+                             enabled=False,
                              mem_efficient_linear=False,
                              mpu=None):
             model = BaiChuanForCausalLM(BaiChuanConfig())
