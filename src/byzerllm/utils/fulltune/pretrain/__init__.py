@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple,Any
+from typing import List, Optional, Tuple,Any,Dict
 from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig
 import ray
 import torch
@@ -130,13 +130,13 @@ class ParallelConfig:
         self,
         num_workers:int,
         model_dir:str,
-        ds_config:str,        
+        ds_config:Dict[Any,Any],        
         backend: str = "nccl",              
     ) -> None:
         self.world_size = num_workers
         self.model_dir = model_dir
         self.backend = backend
-        self.ds_config = ds_config if ds_config else DEFUALT_CONFIG
+        self.ds_config = ds_config if ds_config else json.loads(DEFUALT_CONFIG)
     
 
 DeviceID = Tuple[int, Optional[str], int]
