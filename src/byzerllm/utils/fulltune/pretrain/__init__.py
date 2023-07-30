@@ -46,7 +46,7 @@ DEFUALT_CONFIG = '''
   "zero_optimization": {
     "stage": 2,
     "offload_optimizer": {
-            "device": "cpu",
+         "device": "cpu"
      },
     "contiguous_gradients": true,
     "allgather_bucket_size": 1e8,
