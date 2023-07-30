@@ -70,15 +70,8 @@ class TrainArgs:
     checkpoint_saving_path: str = "/mnt/nvme0n1/byzerllm/data/checkpoints"
     max_length: int = 1024
     data_dir: str = "/home/byzerllm/data/raw_data"
-    tokenizer_path: str = "/home/byzerllm/models/baichuan-7B"
-
-args = TrainArgs()
-# args={"steps_per_epoch":4096,
-#       "checkpoint_saving_path":"/mnt/nvme0n1/byzerllm/data/checkpoints",
-#       "max_length":4096,
-#       "data_dir":"/home/byzerllm/data/raw_data",
-#       "tokenizer_path":"/home/byzerllm/models/baichuan-7B"
-#       }
+    model_path: str = "/home/byzerllm/models/baichuan-7B"
+    tokenizer_path: str = "/home/byzerllm/models/baichuan-7B/tokenizer.model"
 
 class DataEngine():
     def __init__(self, data_dir, tokenizer_path, micro_batch_size, max_length):
@@ -129,14 +122,16 @@ class ParallelConfig:
     def __init__(
         self,
         num_workers:int,
-        model_dir:str,
-        ds_config:Dict[Any,Any],        
+        model_dir:str,          
+        ds_config:Dict[Any,Any], 
+        train_args = TrainArgs(),     
         backend: str = "nccl",              
     ) -> None:
         self.world_size = num_workers
         self.model_dir = model_dir
         self.backend = backend
         self.ds_config = ds_config if ds_config else json.loads(DEFUALT_CONFIG)
+        self.train_args = train_args
     
 
 DeviceID = Tuple[int, Optional[str], int]
@@ -200,10 +195,10 @@ class Worker:
         self.model = None
         self.tokenizer = None
 
-    def _train(data_engine, model_engine):
+    def _train(self,data_engine, model_engine):
         model_engine.train()
         step = 0
-        while step < args.steps_per_epoch:
+        while step < self.parallel_config.trainArgs.steps_per_epoch:
             data = data_engine.get_data()
             loss = model_engine(data, labels=data).loss
             model_engine.backward(loss)
@@ -218,13 +213,13 @@ class Worker:
         while True:
             self.train(data_engine, model_engine)
             epoch += 1
-            model_engine.save_checkpoint(f"{args.checkpoint_saving_path}",
+            model_engine.save_checkpoint(f"{self.parallel_config.train_args.checkpoint_saving_path}",
                                         tag=f"Epoch-{epoch}")
     def prepare_data(self):
-        data_dir = args.data_dir
-        tokenizer_path = args.tokenizer_path        
+        data_dir = self.parallel_config.train_args.data_dir
+        tokenizer_path = self.parallel_config.train_args.tokenizer_path        
         micro_batch_size = self.ds_config["train_micro_batch_size_per_gpu"]
-        max_length = args.max_length
+        max_length = self.parallel_config.train_args.max_length
         data_engine = DataEngine(data_dir, tokenizer_path, micro_batch_size, max_length)
         data_engine.load_data()
         return data_engine
