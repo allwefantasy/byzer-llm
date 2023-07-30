@@ -124,8 +124,7 @@ class ParallelConfig:
     def __init__(
         self,
         num_workers:int,            
-        ds_config:Dict[Any,Any], 
-        gpu_ids: List[int] = [],
+        ds_config:Dict[Any,Any],         
         train_args = TrainArgs(),     
         backend: str = "nccl",              
     ) -> None:
@@ -137,23 +136,29 @@ class ParallelConfig:
 def _init_distributed_environment(
         parallel_config: ParallelConfig,
         rank: int,
-        distributed_init_method: str,
-        gpu_ids: List[int],
+        distributed_init_method: str        
     ) -> None:        
         if parallel_config.backend == "nccl":
             # Same as in Ray Train
             os.environ["NCCL_ASYNC_ERROR_HANDLING"] = "1"
             # All workers on a same node should share the same set of
             # visible GPUs. Otherwise they can't talk among themselves.
-            os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(gid) for gid in gpu_ids)
+            # os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(gid) for gid in gpu_ids)
             if "NCCL_SOCKET_IFNAME" not in os.environ:
                 os.environ["NCCL_SOCKET_IFNAME"] = DEFAULT_NCCL_SOCKET_IFNAME
 
         os.environ["RANK"] = str(rank)
-        os.environ["LOCAL_RANK"] = str(rank)
+        # os.environ["LOCAL_RANK"] = str(rank)
         os.environ["WORLD_SIZE"] = str(parallel_config.world_size)
-        os.environ["LOCAL_WORLD_SIZE"] = str(parallel_config.world_size)        
-        print(f'deepspeed inference worker after:rank:{rank} CUDA_VISIBLE_DEVICES:{os.environ["CUDA_VISIBLE_DEVICES"]}',flush=True)
+        # os.environ["LOCAL_WORLD_SIZE"] = str(parallel_config.world_size)        
+        print(f'''
+deepspeed worker config:
+              RANK:{rank} 
+              WORLD_SIZE:{parallel_config.world_size}
+              CUDA_VISIBLE_DEVICES:{os.environ["CUDA_VISIBLE_DEVICES"]} 
+              LOCAL_RANK:{os.environ["LOCAL_RANK"]}
+              LOCAL_WORLD_SIZE:{os.environ["LOCAL_WORLD_SIZE"]}
+''',flush=True) 
         # torch.cuda.set_device(rank)
         """Initialize the distributed environment."""
         deepspeed.init_distributed(
@@ -209,7 +214,7 @@ class Worker:
         return   
     
     def train(self):        
-        model_engine = self.prepare_model([0,1,2,3])
+        model_engine = self.prepare_model()
         data_engine = self.prepare_data()
         epoch = 0
         while True:
@@ -229,20 +234,12 @@ class Worker:
     def set_ds_envs(self,gpu_ids:List[int],local_rank:int,local_world_size:int):        
         os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(gid) for gid in gpu_ids)
         os.environ["LOCAL_RANK"] = str(local_rank)
-        os.environ["LOCAL_WORLD_SIZE"] = str(local_world_size)                  
-        print(f'''
-deepspeed worker config:
-              RANK:{self.rank} 
-              WORLD_SIZE:{self.parallel_config.world_size}
-              CUDA_VISIBLE_DEVICES:{os.environ["CUDA_VISIBLE_DEVICES"]} 
-              LOCAL_RANK:{os.environ["LOCAL_RANK"]}
-              LOCAL_WORLD_SIZE:{os.environ["LOCAL_WORLD_SIZE"]}
-''',flush=True)  
+        os.environ["LOCAL_WORLD_SIZE"] = str(local_world_size) 
     
-    def prepare_model(self,gpu_ids:List[int]):
+    def prepare_model(self):
         # Initialize the distributed environment.
         _init_distributed_environment(self.parallel_config, self.rank,
-                                      self.distributed_init_method,gpu_ids)
+                                      self.distributed_init_method)
         
         # check the enabled parameter here: https://github.com/microsoft/DeepSpeed/issues/3234
         
@@ -267,12 +264,7 @@ class DeepSpeedTrain:
         master_addr, master_port = get_address_and_port()        
         distributed_init_method = f"tcp://{master_addr}:{master_port}"  
         print(f"deepspeed: master_addr:{master_addr},master_port:{master_port}",flush=True)
-        workers = []
-
-        # for simplicity, we assume that the gpu_ids are the same for all workers
-        gpu_ids = parallel_config.gpu_ids
-        gpu_ids_str = ",".join([str(gpu) for gpu in gpu_ids])
-        
+        workers = []        
         for rank in range(parallel_config.world_size):    
             worker_cls = Worker  
             # deepspeed will use rank as the device id, and the 
