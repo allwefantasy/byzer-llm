@@ -67,6 +67,7 @@ DEFUALT_CONFIG = '''
 @dataclasses.dataclass
 class TrainArgs:
     steps_per_epoch: int = 4096
+    is_partition_data: bool = False
     epoches:int = 1
     checkpoint_saving_path: str = "/mnt/nvme0n1/byzerllm/data/checkpoints"
     max_length: int = 1024
@@ -252,7 +253,11 @@ class Worker:
         tokenizer_path = self.parallel_config.train_args.tokenizer_path        
         micro_batch_size = self.ds_config["train_micro_batch_size_per_gpu"]
         max_length = self.parallel_config.train_args.max_length
-        data_engine = DataEngine(data_dir, tokenizer_path, micro_batch_size, max_length,self.parallel_config.world_size,self.rank)
+
+        world_size = 1 if self.parallel_config.train_args.is_partition_data else self.parallel_config.world_size
+        rank = 0 if self.parallel_config.train_args.is_partition_data else self.rank
+
+        data_engine = DataEngine(data_dir, tokenizer_path, micro_batch_size, max_length,world_size,rank)
         data_engine.load_data()
         return data_engine     
     
