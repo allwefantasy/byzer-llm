@@ -67,6 +67,7 @@ DEFUALT_CONFIG = '''
 @dataclasses.dataclass
 class TrainArgs:
     steps_per_epoch: int = 4096
+    epoches:int = 1
     checkpoint_saving_path: str = "/mnt/nvme0n1/byzerllm/data/checkpoints"
     max_length: int = 1024
     data_dir: str = "/home/byzerllm/data/raw_data"
@@ -241,7 +242,7 @@ class Worker:
         model_engine = self.prepare_model()
         data_engine = self.prepare_data()
         epoch = 0
-        while True:
+        while epoch < self.parallel_config.train_args.epoches:
             self._train(data_engine, model_engine)
             epoch += 1
             model_engine.save_checkpoint(f"{self.parallel_config.train_args.checkpoint_saving_path}",
