@@ -121,14 +121,12 @@ class ParallelConfig:
 
     def __init__(
         self,
-        num_workers:int,
-        model_dir:str,          
+        num_workers:int,            
         ds_config:Dict[Any,Any], 
         train_args = TrainArgs(),     
         backend: str = "nccl",              
     ) -> None:
-        self.world_size = num_workers
-        self.model_dir = model_dir
+        self.world_size = num_workers        
         self.backend = backend
         self.ds_config = ds_config if ds_config else json.loads(DEFUALT_CONFIG)
         self.train_args = train_args
@@ -247,7 +245,7 @@ class Worker:
            
 
 class DeepSpeedTrain:
-    def __init__(self,parallel_config: ParallelConfig ):    
+    def __init__(self,parallel_config: ParallelConfig):    
 
         master_addr, master_port = get_address_and_port()        
         distributed_init_method = f"tcp://{master_addr}:{master_port}"  
