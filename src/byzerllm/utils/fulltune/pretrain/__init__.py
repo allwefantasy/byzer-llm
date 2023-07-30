@@ -288,9 +288,8 @@ class DeepSpeedTrain:
         self.node_id_to_workers = {}
         self.node_id_to_gpus = {}
         for worker in self.workers:
-            device = ray.get(worker.get_node_and_gpu_ids.remote())
-            print(f"deepspeed: device:{device}",flush=True)
-            
+            device = ray.get(worker.get_node_and_gpu_ids.remote())            
+     
             if device.node_id not in self.node_id_to_workers:
                 self.node_id_to_workers[device.node_id] = []
             
