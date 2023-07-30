@@ -133,6 +133,7 @@ class ParallelConfig:
         self.backend = backend
         self.ds_config = ds_config if ds_config else json.loads(DEFUALT_CONFIG)
         self.train_args = train_args
+        self.gpu_ids = gpu_ids
     
 def _init_distributed_environment(
         parallel_config: ParallelConfig,
