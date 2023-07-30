@@ -73,6 +73,12 @@ class TrainArgs:
     model_path: str = "/home/byzerllm/models/baichuan-7B"
     tokenizer_path: str = "/home/byzerllm/models/baichuan-7B/tokenizer.model"
 
+@dataclasses.dataclass
+class DeviceID:
+    node_id: int
+    gpu_ids: List[int]
+    rank: int
+
 class DataEngine():
     def __init__(self, data_dir, tokenizer_path, micro_batch_size, max_length):
         self.MIN_TEXT_LEN = 20
@@ -112,17 +118,14 @@ class DataEngine():
         return data
 
 class ParallelConfig:
-    """Configuration for the distributed execution.
-
-    Args:
-        pipeline_parallel_size: Number of pipeline parallel groups.
-        tensor_parallel_size: Number of tensor parallel groups.        
+    """Configuration for the distributed execution.    
     """
 
     def __init__(
         self,
         num_workers:int,            
         ds_config:Dict[Any,Any], 
+        gpu_ids: List[int] = [],
         train_args = TrainArgs(),     
         backend: str = "nccl",              
     ) -> None:
@@ -131,16 +134,12 @@ class ParallelConfig:
         self.ds_config = ds_config if ds_config else json.loads(DEFUALT_CONFIG)
         self.train_args = train_args
     
-
-DeviceID = Tuple[int, Optional[str], int]
-
 def _init_distributed_environment(
         parallel_config: ParallelConfig,
         rank: int,
         distributed_init_method: str,
         gpu_ids: List[int],
-    ) -> None:
-        print(f'deepspeed inference worker before::rank:{rank} CUDA_VISIBLE_DEVICES:{os.environ["CUDA_VISIBLE_DEVICES"]}',flush=True)
+    ) -> None:        
         if parallel_config.backend == "nccl":
             # Same as in Ray Train
             os.environ["NCCL_ASYNC_ERROR_HANDLING"] = "1"
@@ -192,6 +191,11 @@ class Worker:
         self.ds_config = self.parallel_config.ds_config
         self.model = None
         self.tokenizer = None
+    
+    def get_node_and_gpu_ids(self):
+        """Returns the node and GPU ids of the current worker."""
+        node_id, gpu_ids = _get_node_and_gpu_ids()
+        return DeviceID(node_id, gpu_ids, self.rank)
 
     def _train(self,data_engine, model_engine):
         model_engine.train()
@@ -222,6 +226,19 @@ class Worker:
         data_engine.load_data()
         return data_engine
     
+    def set_ds_envs(self,gpu_ids:List[int],local_rank:int,local_world_size:int):        
+        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(gid) for gid in gpu_ids)
+        os.environ["LOCAL_RANK"] = str(local_rank)
+        os.environ["LOCAL_WORLD_SIZE"] = str(local_world_size)                  
+        print(f'''
+deepspeed worker config:
+              RANK:{self.rank} 
+              WORLD_SIZE:{self.parallel_config.world_size}
+              CUDA_VISIBLE_DEVICES:{os.environ["CUDA_VISIBLE_DEVICES"]} 
+              LOCAL_RANK:{os.environ["LOCAL_RANK"]}
+              LOCAL_WORLD_SIZE:{os.environ["LOCAL_WORLD_SIZE"]}
+''',flush=True)  
+    
     def prepare_model(self,gpu_ids:List[int]):
         # Initialize the distributed environment.
         _init_distributed_environment(self.parallel_config, self.rank,
@@ -249,12 +266,11 @@ class DeepSpeedTrain:
 
         master_addr, master_port = get_address_and_port()        
         distributed_init_method = f"tcp://{master_addr}:{master_port}"  
-        print(f"deepspeed inference: master_addr:{master_addr},master_port:{master_port}",flush=True)
+        print(f"deepspeed: master_addr:{master_addr},master_port:{master_port}",flush=True)
         workers = []
-        gpu_ids = ray.get_gpu_ids()
-        if not gpu_ids:
-            gpu_ids = [0,1,2,3]
 
+        # for simplicity, we assume that the gpu_ids are the same for all workers
+        gpu_ids = parallel_config.gpu_ids
         gpu_ids_str = ",".join([str(gpu) for gpu in gpu_ids])
         
         for rank in range(parallel_config.world_size):    
@@ -265,19 +281,39 @@ class DeepSpeedTrain:
             # for the last worker will be 3, and the deepspeed will use 3 as the device id, which is wrong because
             # he can only see one gpu. So we need to set CUDA_VISIBLE_DEVICES to 0,1,2,3 for each worker.
             runtime_env = {"env_vars": {
-              "RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES":"true",
-              "CUDA_VISIBLE_DEVICES":gpu_ids_str
+              # "RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES":"true",
+              # "CUDA_VISIBLE_DEVICES":gpu_ids_str
             }}    
             worker_cls = ray.remote(
                         num_cpus=0,
-                        num_gpus=0,
-                        resources={f"node:{master_addr}": 1e-3},
+                        num_gpus=1,
+                        # resources={f"node:{master_addr}": 1e-3},
                         runtime_env=runtime_env,                        
                     )(worker_cls).remote
             worker = worker_cls(parallel_config,rank,distributed_init_method)
             workers.append(worker)
-        self.workers  = workers           
-        # ray.get([worker.train.remote() for worker in self.workers])
+        self.workers  = workers        
+        self.node_id_to_workers = {}
+        self.node_id_to_gpus = {}
+        for worker in self.workers:
+            device = ray.get(worker.get_node_and_gpu_ids.remote())
+            
+            if device.node_id not in self.node_id_to_workers:
+                self.node_id_to_workers[device.node_id] = []
+            
+            if device.node_id not in self.node_id_to_gpus:
+                self.node_id_to_gpus[device.node_id] = []    
+            
+            self.node_id_to_workers[device.node_id].append(worker)    
+            self.node_id_to_gpus[device.node_id].extend(device.gpu_ids).sort()
+
+        for node_id, workers in self.node_id_to_workers.items():
+            for local_rank,worker in enumerate(workers):                
+                ray.get(worker.set_ds_envs.remote(
+                    gpu_ids=self.node_id_to_gpus[node_id],
+                    local_rank=local_rank,
+                    local_world_size=len(self.node_id_to_gpus[node_id])
+                ))               
     
               
     def _run_workers(
