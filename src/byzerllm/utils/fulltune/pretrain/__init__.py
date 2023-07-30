@@ -209,7 +209,7 @@ class Worker:
         data_engine = self.prepare_data()
         epoch = 0
         while True:
-            self.train(data_engine, model_engine)
+            self._train(data_engine, model_engine)
             epoch += 1
             model_engine.save_checkpoint(f"{self.parallel_config.train_args.checkpoint_saving_path}",
                                         tag=f"Epoch-{epoch}")
