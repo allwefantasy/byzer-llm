@@ -129,12 +129,14 @@ class ParallelConfig:
     def __init__(
         self,
         num_workers:int,
-        model_dir:str,        
+        model_dir:str,
+        ds_config:str,        
         backend: str = "nccl",              
     ) -> None:
         self.world_size = num_workers
         self.model_dir = model_dir
         self.backend = backend
+        self.ds_config = ds_config if ds_config else DEFUALT_CONFIG
     
 
 DeviceID = Tuple[int, Optional[str], int]
@@ -194,7 +196,7 @@ class Worker:
         self.parallel_config = parallel_config        
         self.rank = rank
         self.distributed_init_method = distributed_init_method        
-        self.ds_config = json.loads(DEFUALT_CONFIG)        
+        self.ds_config = self.parallel_config.ds_config
         self.model = None
         self.tokenizer = None
 
