@@ -125,15 +125,13 @@ class ParallelConfig:
         self,
         num_workers:int,            
         ds_config:Dict[Any,Any],         
-        train_args = TrainArgs(), 
-        gpu_ids: Optional[List[int]] = None,    
+        train_args = TrainArgs(),            
         backend: str = "nccl",              
     ) -> None:
         self.world_size = num_workers        
         self.backend = backend
         self.ds_config = ds_config if ds_config else json.loads(DEFUALT_CONFIG)
-        self.train_args = train_args
-        self.gpu_ids = gpu_ids
+        self.train_args = train_args        
     
 def _init_distributed_environment(
         parallel_config: ParallelConfig,
@@ -149,9 +147,9 @@ def _init_distributed_environment(
             if "NCCL_SOCKET_IFNAME" not in os.environ:
                 os.environ["NCCL_SOCKET_IFNAME"] = DEFAULT_NCCL_SOCKET_IFNAME
 
-        os.environ["RANK"] = str(rank)
+        # os.environ["RANK"] = str(rank)
         # os.environ["LOCAL_RANK"] = str(rank)
-        os.environ["WORLD_SIZE"] = str(parallel_config.world_size)
+        # os.environ["WORLD_SIZE"] = str(parallel_config.world_size)
         # os.environ["LOCAL_WORLD_SIZE"] = str(parallel_config.world_size)        
         print(f'''
 deepspeed worker config:
@@ -181,6 +179,30 @@ deepspeed worker config:
         # torch.distributed.all_reduce(torch.zeros(1).cuda())
 
         
+
+class ResourceWorker:
+    def __init__(
+        self,        
+        parallel_config: ParallelConfig,        
+        rank: int,
+        distributed_init_method: str,
+       
+    ) -> None:
+        self.parallel_config = parallel_config        
+        self.rank = rank
+        self.distributed_init_method = distributed_init_method        
+        self.ds_config = self.parallel_config.ds_config
+
+    def get_node_and_gpu_ids(self):
+        """Returns the node and GPU ids of the current worker."""
+        node_id, gpu_ids = _get_node_and_gpu_ids()
+        return DeviceID(node_id, gpu_ids, self.rank)  
+
+    def rank(self):
+        return self.rank  
+    
+    def get_node_ip_address(self):
+        return ray.util.get_node_ip_address()
 
 
 class Worker:
@@ -231,12 +253,7 @@ class Worker:
         max_length = self.parallel_config.train_args.max_length
         data_engine = DataEngine(data_dir, tokenizer_path, micro_batch_size, max_length)
         data_engine.load_data()
-        return data_engine
-    
-    def set_ds_envs(self,gpu_ids:List[int],local_rank:int,local_world_size:int):        
-        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(str(gid) for gid in gpu_ids)
-        os.environ["LOCAL_RANK"] = str(local_rank)
-        os.environ["LOCAL_WORLD_SIZE"] = str(local_world_size) 
+        return data_engine     
     
     def prepare_model(self):
         # Initialize the distributed environment.
@@ -266,36 +283,29 @@ class DeepSpeedTrain:
         master_addr, master_port = get_address_and_port()        
         distributed_init_method = f"tcp://{master_addr}:{master_port}"  
         print(f"deepspeed: master_addr:{master_addr},master_port:{master_port}",flush=True)
-        workers = []        
+
+        # get resource manually. If use num_gpus, the ray will set cuda_visible_devices automatically, and this
+        # will cause the deepspeed can't get the right gpu_ids enven if we set the cuda_visible_devices manually.                
+        resource_workers = [] 
+        workers = []       
+        
         for rank in range(parallel_config.world_size):    
-            worker_cls = Worker  
-            gpu_ids = parallel_config.gpu_ids
-            env_vars = {}
-            if gpu_ids:
-                env_vars = {
-                     "RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES":"true",
-                     "CUDA_VISIBLE_DEVICES": ",".join([str(gid) for gid in gpu_ids])
-                    }
-                
-            # deepspeed will use rank as the device id, and the 
-            # ray will automatically set CUDA_VISIBLE_DEVICES for each worker according to the num_gpus
-            # for example, suppose we have 0,1,2,4 gpus, and we have 4 workers, then the CUDA_VISIBLE_DEVICES 
-            # for the last worker will be 3, and the deepspeed will use 3 as the device id, which is wrong because
-            # he can only see one gpu. So we need to set CUDA_VISIBLE_DEVICES to 0,1,2,3 for each worker.
-            runtime_env = {"env_vars": env_vars}    
+            worker_cls = ResourceWorker                        
             worker_cls = ray.remote(
                         num_cpus=0,
-                        num_gpus= 1 if gpu_ids else 0,
+                        num_gpus=1,
                         # resources={f"node:{master_addr}": 1e-3},
-                        runtime_env=runtime_env,                        
+                        # runtime_env=runtime_env,                        
                     )(worker_cls).remote
             worker = worker_cls(parallel_config,rank,distributed_init_method)
-            workers.append(worker)
-        self.workers  = workers        
+            resource_workers.append(worker)
+
+        self.resource_workers  = resource_workers        
         self.node_id_to_workers = {}
         self.node_id_to_gpus = {}
-        for worker in self.workers:
-            device = ray.get(worker.get_node_and_gpu_ids.remote())            
+
+        for resource_worker in self.resource_workers:
+            device = ray.get(resource_worker.get_node_and_gpu_ids.remote())            
      
             if device.node_id not in self.node_id_to_workers:
                 self.node_id_to_workers[device.node_id] = []
@@ -303,17 +313,34 @@ class DeepSpeedTrain:
             if device.node_id not in self.node_id_to_gpus:
                 self.node_id_to_gpus[device.node_id] = []    
             
-            self.node_id_to_workers[device.node_id].append(worker)    
+            self.node_id_to_workers[device.node_id].append(resource_worker)    
             self.node_id_to_gpus[device.node_id].extend(device.gpu_ids)
             self.node_id_to_gpus[device.node_id].sort()
 
-        for node_id, workers in self.node_id_to_workers.items():
-            for local_rank,worker in enumerate(workers):                
-                ray.get(worker.set_ds_envs.remote(
-                    gpu_ids= gpu_ids if gpu_ids else self.node_id_to_gpus[node_id],
-                    local_rank=local_rank,
-                    local_world_size=len(self.node_id_to_gpus[node_id])
-                ))               
+        for node_id, resource_workers in self.node_id_to_workers.items():
+            for local_rank,resource_worker in enumerate(resource_workers):
+                rank = ray.get(resource_worker.rank.remote()) 
+                worker_cls = Worker  
+                gpu_ids = self.node_id_to_gpus[node_id]
+                env_vars = {
+                        "RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES":"true",
+                        "CUDA_VISIBLE_DEVICES": ",".join([str(gid) for gid in gpu_ids]),
+                        "LOCAL_RANK": str(local_rank),
+                        "RANK": str(rank),
+                        "LOCAL_WORLD_SIZE": str(len(gpu_ids)),
+                        "WORLD_SIZE": str(parallel_config.world_size)
+                        }                                        
+                runtime_env = {"env_vars": env_vars}  
+                node_ip = ray.get(resource_worker.get_node_ip_address.remote())  
+                worker_cls = ray.remote(
+                            num_cpus=0,
+                            num_gpus=0,
+                            resources={f"node:{node_ip}": 1e-3},
+                            runtime_env=runtime_env,                        
+                        )(worker_cls).remote
+                worker = worker_cls(parallel_config,rank,distributed_init_method)
+                workers.append(worker)  
+        self.workers = workers                              
     
               
     def _run_workers(
