@@ -309,7 +309,7 @@ class DeepSpeedTrain:
         for node_id, workers in self.node_id_to_workers.items():
             for local_rank,worker in enumerate(workers):                
                 ray.get(worker.set_ds_envs.remote(
-                    gpu_ids=self.node_id_to_gpus[node_id],
+                    gpu_ids= gpu_ids if gpu_ids else self.node_id_to_gpus[node_id],
                     local_rank=local_rank,
                     local_world_size=len(self.node_id_to_gpus[node_id])
                 ))               
