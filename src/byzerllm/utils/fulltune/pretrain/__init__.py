@@ -125,7 +125,8 @@ class ParallelConfig:
         self,
         num_workers:int,            
         ds_config:Dict[Any,Any],         
-        train_args = TrainArgs(),     
+        train_args = TrainArgs(), 
+        gpu_ids: Optional[List[int]] = None,    
         backend: str = "nccl",              
     ) -> None:
         self.world_size = num_workers        
@@ -267,18 +268,23 @@ class DeepSpeedTrain:
         workers = []        
         for rank in range(parallel_config.world_size):    
             worker_cls = Worker  
+            gpu_ids = parallel_config.gpu_ids
+            env_vars = {}
+            if gpu_ids:
+                env_vars = {
+                     "RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES":"true",
+                     "CUDA_VISIBLE_DEVICES": ",".join([str(gid) for gid in gpu_ids])
+                    }
+                
             # deepspeed will use rank as the device id, and the 
             # ray will automatically set CUDA_VISIBLE_DEVICES for each worker according to the num_gpus
             # for example, suppose we have 0,1,2,4 gpus, and we have 4 workers, then the CUDA_VISIBLE_DEVICES 
             # for the last worker will be 3, and the deepspeed will use 3 as the device id, which is wrong because
             # he can only see one gpu. So we need to set CUDA_VISIBLE_DEVICES to 0,1,2,3 for each worker.
-            runtime_env = {"env_vars": {
-              # "RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES":"true",
-              # "CUDA_VISIBLE_DEVICES":gpu_ids_str
-            }}    
+            runtime_env = {"env_vars": env_vars}    
             worker_cls = ray.remote(
                         num_cpus=0,
-                        num_gpus=1,
+                        num_gpus= 1 if gpu_ids else 0,
                         # resources={f"node:{master_addr}": 1e-3},
                         runtime_env=runtime_env,                        
                     )(worker_cls).remote
