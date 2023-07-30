@@ -298,7 +298,8 @@ class DeepSpeedTrain:
                 self.node_id_to_gpus[device.node_id] = []    
             
             self.node_id_to_workers[device.node_id].append(worker)    
-            self.node_id_to_gpus[device.node_id].extend(device.gpu_ids).sort()
+            self.node_id_to_gpus[device.node_id].extend(device.gpu_ids)
+            self.node_id_to_gpus[device.node_id].sort()
 
         for node_id, workers in self.node_id_to_workers.items():
             for local_rank,worker in enumerate(workers):                
