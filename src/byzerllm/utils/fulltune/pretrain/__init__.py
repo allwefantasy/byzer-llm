@@ -196,7 +196,7 @@ class Worker:
     def _train(self,data_engine, model_engine):
         model_engine.train()
         step = 0
-        while step < self.parallel_config.trainArgs.steps_per_epoch:
+        while step < self.parallel_config.train_args.steps_per_epoch:
             data = data_engine.get_data()
             loss = model_engine(data, labels=data).loss
             model_engine.backward(loss)
