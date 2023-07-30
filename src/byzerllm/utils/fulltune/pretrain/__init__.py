@@ -80,7 +80,7 @@ class DeviceID:
     rank: int
 
 class DataEngine():
-    def __init__(self, data_dir, tokenizer_path, micro_batch_size, max_length):
+    def __init__(self, data_dir, tokenizer_path, micro_batch_size, max_length,world_size,rank):
         self.MIN_TEXT_LEN = 20
         self.EOS_TOKEN_ID = 2
         self.data_dir = data_dir
@@ -93,7 +93,7 @@ class DataEngine():
                                    for x in os.listdir(self.data_dir)]
         self.local_input_paths = [x for i, x in
                                   enumerate(self.global_input_paths)
-                                  if i % dist.get_world_size() == dist.get_rank()]
+                                  if i % world_size == rank]
 
     def load_data(self):
         for file_path in self.local_input_paths:
@@ -251,7 +251,7 @@ class Worker:
         tokenizer_path = self.parallel_config.train_args.tokenizer_path        
         micro_batch_size = self.ds_config["train_micro_batch_size_per_gpu"]
         max_length = self.parallel_config.train_args.max_length
-        data_engine = DataEngine(data_dir, tokenizer_path, micro_batch_size, max_length)
+        data_engine = DataEngine(data_dir, tokenizer_path, micro_batch_size, max_length,self.parallel_config.world_size,self.rank)
         data_engine.load_data()
         return data_engine     
     
