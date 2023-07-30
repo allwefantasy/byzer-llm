@@ -44,8 +44,11 @@ DEFUALT_CONFIG = '''
     "job_name": "baichuan-7b-pt"
   },
   "zero_optimization": {
-    "stage": 3,
-    "contiguous_gradients": false,
+    "stage": 2,
+    "offload_optimizer": {
+            "device": "cpu",
+     },
+    "contiguous_gradients": true,
     "allgather_bucket_size": 1e8,
     "reduce_bucket_size": 1e8,
     "overlap_comm": true,
@@ -190,7 +193,8 @@ class Worker:
     ) -> None:
         self.parallel_config = parallel_config        
         self.rank = rank
-        self.distributed_init_method = distributed_init_method                
+        self.distributed_init_method = distributed_init_method        
+        self.ds_config = json.loads(DEFUALT_CONFIG)        
         self.model = None
         self.tokenizer = None
 
@@ -216,9 +220,8 @@ class Worker:
                                         tag=f"Epoch-{epoch}")
     def prepare_data(self):
         data_dir = args.data_dir
-        tokenizer_path = args.tokenizer_path
-        ds_config = json.loads(DEFUALT_CONFIG)
-        micro_batch_size = ds_config["train_micro_batch_size_per_gpu"]
+        tokenizer_path = args.tokenizer_path        
+        micro_batch_size = self.ds_config["train_micro_batch_size_per_gpu"]
         max_length = args.max_length
         data_engine = DataEngine(data_dir, tokenizer_path, micro_batch_size, max_length)
         data_engine.load_data()
@@ -230,15 +233,16 @@ class Worker:
                                       self.distributed_init_method,gpu_ids)
         
         # check the enabled parameter here: https://github.com/microsoft/DeepSpeed/issues/3234
-        with deepspeed.zero.Init(config_dict_or_path=json.loads(DEFUALT_CONFIG),
-                             enabled=True,
+        
+        with deepspeed.zero.Init(config_dict_or_path=self.ds_config,
+                             enabled=self.ds_config["zero_optimization"]["stage"] == 3,
                              mem_efficient_linear=False,
                              mpu=None):
             model = BaiChuanForCausalLM(BaiChuanConfig())
 
             model_parameters = filter(lambda p: p.requires_grad, model.parameters())
             model_engine, _, _, _ = deepspeed.initialize(model=model,
-                                                         config=json.loads(DEFUALT_CONFIG),
+                                                         config=self.ds_config,
                                                         optimizer=None,
                                                         model_parameters=model_parameters)
             return model_engine
