@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple,Any,Dict
+from typing import List, Optional, Tuple,Any,Dict,Callable
 from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig
 import ray
 import torch
@@ -16,9 +16,6 @@ from ray.air.util.torch_dist import (
 )
 import dataclasses
 from ray.train.constants import DEFAULT_NCCL_SOCKET_IFNAME
-from ..base_model.modeling_baichuan import BaiChuanForCausalLM
-from ..base_model.configuration_baichuan import BaiChuanConfig
-
 
 DEFUALT_CONFIG = '''
 {
@@ -70,7 +67,7 @@ class TrainArgs:
     is_partition_data: bool = False
     epoches:int = 1
     checkpoint_saving_path: str = "/mnt/nvme0n1/byzerllm/data/checkpoints"
-    max_length: int = 1024
+    max_length: int = 4096
     data_dir: str = "/home/byzerllm/data/raw_data"
     model_path: str = "/home/byzerllm/models/baichuan-7B"
     tokenizer_path: str = "/home/byzerllm/models/baichuan-7B/tokenizer.model"
@@ -126,6 +123,7 @@ class ParallelConfig:
     def __init__(
         self,
         num_workers:int,            
+        get_model:Callable[[str,Dict],Any],
         ds_config:Dict[Any,Any],         
         train_args = TrainArgs(),            
         backend: str = "nccl",              
@@ -133,7 +131,8 @@ class ParallelConfig:
         self.world_size = num_workers        
         self.backend = backend
         self.ds_config = ds_config if ds_config else json.loads(DEFUALT_CONFIG)
-        self.train_args = train_args        
+        self.train_args = train_args  
+        self.get_model = get_model      
     
 def _init_distributed_environment(
         parallel_config: ParallelConfig,
@@ -220,6 +219,7 @@ class Worker:
         self.rank = rank
         self.distributed_init_method = distributed_init_method        
         self.ds_config = self.parallel_config.ds_config
+        self.get_model = self.parallel_config.get_model
         self.model = None
         self.tokenizer = None
     
@@ -272,8 +272,7 @@ class Worker:
                              enabled=self.ds_config["zero_optimization"]["stage"] == 3,
                              mem_efficient_linear=False,
                              mpu=None):
-            model = BaiChuanForCausalLM(BaiChuanConfig())
-
+            model = self.get_model()            
             model_parameters = filter(lambda p: p.requires_grad, model.parameters())
             model_engine, _, _, _ = deepspeed.initialize(model=model,
                                                          config=self.ds_config,
