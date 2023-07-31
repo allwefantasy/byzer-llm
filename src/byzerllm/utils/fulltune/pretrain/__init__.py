@@ -410,7 +410,52 @@ class DeepSpeedTrain:
 
 
 def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
-    pass
+    import datetime
+    import uuid
+    
+    
+    
+    localPathPrefix = train_params.get("localPathPrefix","/tmp/byzerllm")
+    
+    current_time = datetime.now()
+    formatted_time = current_time.strftime("%Y%m%d-%H%-M-%S")
+    rd = f"sft-{formatted_time}-{str(uuid.uuid4())}"
+
+    sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}"
+    
+    data_dir = train_params["data_dir"] if "data_dir" in train_params else os.path.join(localPathPrefix,rd,"finetune_data")
+    output_dir = os.path.join(localPathPrefix,rd,"finetune_model")
+    
+    model_dir = os.path.join(localPathPrefix,rd,"pretrained_model")
+    
+    if "localModelDir" in train_params:
+        model_dir = train_params["localModelDir"]
+
+
+    def get_model():
+        return AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True,
+                                                device_map='auto')
+    
+
+
+
+    dst = DeepSpeedTrain(ParallelConfig(
+    num_workers=16,
+    get_model = get_model,
+    ds_config=  json.loads(train_params.get("ds_config","{}")), 
+    train_args=TrainArgs(
+        model_path=model_dir,
+        tokenizer_path = f"{model_dir}/tokenizer.model",
+        data_dir = data_dir,  
+        checkpoint_saving_path = output_dir,   
+        steps_per_epoch = int(train_params.get("steps_per_epoch",10)),
+        max_length = int(train_params.get("max_length",4096)),
+        epoches=int(train_params.get("epoches",1)),
+        is_partition_data = len(data_refs) != 0
+        )
+    ))
+
+    ray.get([worker.train.remote() for worker in dst.workers])
 
 
 
