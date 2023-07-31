@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple,Any,Dict,Callable
+from typing import List, Optional, Tuple,Any,Dict,Callable,Generator
 from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig
 import ray
 import torch
@@ -8,6 +8,10 @@ import sentencepiece as spm
 import numpy as np
 import json
 import os
+from pyjava.storage import streaming_tar as STar
+from pyjava import RayContext
+from pyjava.api.mlsql import DataServer
+from byzerllm import BlockRow
 from ray.air.util.torch_dist import (
     ActorHandle,
     _get_node_and_gpu_ids,
@@ -123,8 +127,9 @@ class ParallelConfig:
     def __init__(
         self,
         num_workers:int,            
-        get_model:Callable[[str,Dict],Any],
+        get_model:Callable[[str,Dict],Any],        
         ds_config:Dict[Any,Any],         
+        data_refs:List[DataServer] = [],
         train_args = TrainArgs(),            
         backend: str = "nccl",              
     ) -> None:
@@ -132,7 +137,8 @@ class ParallelConfig:
         self.backend = backend
         self.ds_config = ds_config if ds_config else json.loads(DEFUALT_CONFIG)
         self.train_args = train_args  
-        self.get_model = get_model      
+        self.get_model = get_model 
+        self.data_refs = data_refs     
     
 def _init_distributed_environment(
         parallel_config: ParallelConfig,
@@ -249,6 +255,34 @@ class Worker:
             model_engine.save_checkpoint(f"{self.parallel_config.train_args.checkpoint_saving_path}",
                                         tag=f"Epoch-{epoch}")
     def prepare_data(self):
+        data_dir = self.parallel_config.train_args.data_dir
+
+        if self.parallel_config.data_refs: 
+            train_file = os.path.join(data_dir,"train.txt")
+            
+            '''
+            simplely write data to text file
+            may need to be think how to handle for new line if the conversation contains new line. This is because
+            the data_engine will get data line by line util touch the limit of max_length, then this seuqence will be
+            used to train the model.
+            But since this is for pretraining, it should be fine.
+            '''
+            with open(train_file,"w") as f: 
+                count = 0
+                for item in RayContext.collect_from(self.data_refs):                
+                    if "conversation" in item:
+                        item["conversation"] = item["conversation"].tolist()
+                        s =  " ".join(conversation)
+                        f.write(s+"\n")                    
+                    elif "history" in item:
+                        # support alpaca format data
+                        conversation = [sub.tolist() for sub in item["history"].tolist()]
+                        conversation = [{"human":x[0],"assistant":x[1]} for x in conversation]
+                        latest_conversation = [{"human":item["instruction"],"assistant":item["output"]}] if "instruction" in item and item["instruction"] else []
+                        s = " ".join(conversation) + " ".join(latest_conversation)
+                        f.write(s+"\n")                     
+                    count += 1  
+
         data_dir = self.parallel_config.train_args.data_dir
         tokenizer_path = self.parallel_config.train_args.tokenizer_path        
         micro_batch_size = self.ds_config["train_micro_batch_size_per_gpu"]
@@ -372,7 +406,11 @@ class DeepSpeedTrain:
         output = all_outputs[0]
         for other_output in all_outputs[1:]:
             assert output == other_output
-        return output  
+        return output 
+
+
+def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
+    pass
 
 
 
