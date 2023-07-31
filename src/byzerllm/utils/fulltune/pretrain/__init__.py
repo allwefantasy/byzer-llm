@@ -66,11 +66,11 @@ class TrainArgs:
     steps_per_epoch: int = 4096
     is_partition_data: bool = False
     epoches:int = 1
-    checkpoint_saving_path: str = "/mnt/nvme0n1/byzerllm/data/checkpoints"
+    checkpoint_saving_path: str = "/home/byzerllm/data/checkpoints"
     max_length: int = 4096
     data_dir: str = "/home/byzerllm/data/raw_data"
-    model_path: str = "/home/byzerllm/models/baichuan-7B"
-    tokenizer_path: str = "/home/byzerllm/models/baichuan-7B/tokenizer.model"
+    model_path: str 
+    tokenizer_path: str 
 
 @dataclasses.dataclass
 class DeviceID:
