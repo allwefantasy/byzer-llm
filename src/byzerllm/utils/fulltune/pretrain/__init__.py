@@ -412,9 +412,7 @@ class DeepSpeedTrain:
 def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
     import datetime
     import uuid
-    
-    
-    
+        
     localPathPrefix = train_params.get("localPathPrefix","/tmp/byzerllm")
     
     current_time = datetime.now()
@@ -433,8 +431,7 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
 
 
     def get_model():
-        return AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True,
-                                                device_map='auto')
+        return AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True)
     
 
 
