@@ -133,15 +133,9 @@ class StopSequencesCriteria(StoppingCriteria):
     def to_str(self,s):
         return self.tokenizer.decode(s,skip_special_tokens=True)     
 
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor): 
-      
-      if len(input_ids[0][self.input_start:]) < self.skip_check_min_length:              
-          return False
-      
-      for index,stop in enumerate(self.stops):                
-        if torch.all((stop == input_ids[0][-len(stop):])).item():
-            return True
-        if self.stop_words[index] == self.to_str(input_ids[0][-len(stop):]):
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):                   
+      for index,stop in enumerate(self.stops):                        
+        if  self.to_str(input_ids[0][-(len(stop)+10):]).endswith(self.stop_words[index]):
             return True
       return False
 
