@@ -434,8 +434,6 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
         return AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True)
     
 
-
-
     dst = DeepSpeedTrain(ParallelConfig(
     num_workers=16,
     get_model = get_model,
