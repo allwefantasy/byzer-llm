@@ -440,7 +440,7 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     
 
     dst = DeepSpeedTrain(ParallelConfig(
-    num_workers=16,
+    num_workers=num_gpus,
     get_model = get_model,
     ds_config=  json.loads(train_params.get("ds_config","{}")), 
     train_args=TrainArgs(
