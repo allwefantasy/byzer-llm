@@ -416,7 +416,7 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
         
     localPathPrefix = train_params.get("localPathPrefix","/tmp/byzerllm")
     
-    current_time = datetime.now()
+    current_time = datetime.datetime.now()
     formatted_time = current_time.strftime("%Y%m%d-%H%-M-%S")
     rd = f"sft-{formatted_time}-{str(uuid.uuid4())}"
 
