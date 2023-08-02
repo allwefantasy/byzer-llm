@@ -67,8 +67,8 @@ DEFUALT_CONFIG = '''
 
 @dataclasses.dataclass
 class TrainArgs:
-    model_path: str 
-    tokenizer_path: str
+    model_path: str = "" 
+    tokenizer_path: str = ""
     steps_per_epoch: int = 4096
     is_partition_data: bool = False
     epoches:int = 1
