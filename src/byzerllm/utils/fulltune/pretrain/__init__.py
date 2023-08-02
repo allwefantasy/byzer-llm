@@ -420,6 +420,10 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     rd = f"sft-{formatted_time}-{str(uuid.uuid4())}"
 
     sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}"
+
+    num_gpus = int(sys_conf.get("num_gpus",0))
+    
+    assert num_gpus > 0, 'num_gpus must be greater than 0. Try to fix it with `!byzerllm setup "num_gpus=4"`'
     
     data_dir = train_params["data_dir"] if "data_dir" in train_params else os.path.join(localPathPrefix,rd,"finetune_data")
     output_dir = os.path.join(localPathPrefix,rd,"finetune_model")
