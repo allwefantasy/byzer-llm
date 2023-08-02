@@ -67,14 +67,15 @@ DEFUALT_CONFIG = '''
 
 @dataclasses.dataclass
 class TrainArgs:
+    model_path: str 
+    tokenizer_path: str
     steps_per_epoch: int = 4096
     is_partition_data: bool = False
     epoches:int = 1
     checkpoint_saving_path: str = "/home/byzerllm/data/checkpoints"
     max_length: int = 4096
     data_dir: str = "/home/byzerllm/data/raw_data"
-    model_path: str 
-    tokenizer_path: str 
+     
 
 @dataclasses.dataclass
 class DeviceID:
