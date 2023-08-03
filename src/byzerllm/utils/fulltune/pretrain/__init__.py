@@ -376,7 +376,7 @@ class DeepSpeedTrain:
                 runtime_env = {"env_vars": env_vars}  
                 node_ip = ray.get(resource_worker.get_node_ip_address.remote())  
                 worker_cls = ray.remote(
-                            num_cpus=0,
+                            num_cpus=0, 
                             num_gpus=0,
                             resources={f"node:{node_ip}": 1e-3},
                             runtime_env=runtime_env,                        
