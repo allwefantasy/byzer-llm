@@ -201,11 +201,11 @@ class ResourceWorker:
     def __init__(
         self,        
         parallel_config: ParallelConfig,        
-        rank: int        
+        rank: int,        
        
     ) -> None:
         self.parallel_config = parallel_config        
-        self.rank = rank        
+        self.rank = rank          
         self.ds_config = self.parallel_config.ds_config
 
     def get_node_and_gpu_ids(self):
