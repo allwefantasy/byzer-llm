@@ -211,6 +211,9 @@ class ResourceWorker:
     
     def get_node_ip_address(self):
         return ray.util.get_node_ip_address()
+    
+    def get_address_and_port(self):
+        return get_address_and_port()
 
 
 class Worker:
@@ -218,13 +221,11 @@ class Worker:
     def __init__(
         self,        
         parallel_config: ParallelConfig,        
-        rank: int,
-        distributed_init_method: str,
+        rank: int        
        
     ) -> None:
         self.parallel_config = parallel_config        
-        self.rank = rank
-        self.distributed_init_method = distributed_init_method        
+        self.rank = rank        
         self.ds_config = self.parallel_config.ds_config
         self.get_model = self.parallel_config.get_model
         self.model = None
@@ -320,9 +321,7 @@ class Worker:
 class DeepSpeedTrain:
     def __init__(self,parallel_config: ParallelConfig):    
 
-        master_addr, master_port = get_address_and_port()        
-        distributed_init_method = f"tcp://{master_addr}:{master_port}"  
-        print(f"deepspeed: master_addr:{master_addr},master_port:{master_port}",flush=True)
+        
 
         # get resource manually. If use num_gpus, the ray will set cuda_visible_devices automatically, and this
         # will cause the deepspeed can't get the right gpu_ids enven if we set the cuda_visible_devices manually.                
@@ -337,8 +336,12 @@ class DeepSpeedTrain:
                         # resources={f"node:{master_addr}": 1e-3},
                         # runtime_env=runtime_env,                        
                     )(worker_cls).remote
-            worker = worker_cls(parallel_config,rank,distributed_init_method)
+            worker = worker_cls(parallel_config,rank)
             resource_workers.append(worker)
+
+        master_addr, master_port = ray.get(resource_workers[0].get_address_and_port.remote())          
+        distributed_init_method = f"tcp://{master_addr}:{master_port}"  
+        print(f"deepspeed: master_addr:{master_addr},master_port:{master_port}",flush=True)
 
         self.resource_workers  = resource_workers        
         self.node_id_to_workers = {}
