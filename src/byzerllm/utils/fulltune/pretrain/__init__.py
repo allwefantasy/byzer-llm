@@ -274,8 +274,7 @@ class Worker:
             log_dir = os.path.join(log_dir,job_name)
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
-            proc = subprocess.Popen(['tensorboard', '--logdir', log_dir,"--port",str(port),"--host",ip])
-            proc.wait(timeout=30)                        
+            subprocess.Popen(['tensorboard', '--logdir', log_dir,"--port",str(port),"--host",ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)                                    
             return (ip,port)
         return None
 
