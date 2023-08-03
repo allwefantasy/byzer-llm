@@ -253,6 +253,7 @@ class Worker:
         self.distributed_init_method = distributed_init_method        
         self.model = None
         self.tokenizer = None
+        self.tensorboard_pid = None        
     
     def get_node_and_gpu_ids(self):
         """Returns the node and GPU ids of the current worker."""
@@ -274,7 +275,8 @@ class Worker:
             log_dir = os.path.join(log_dir,job_name)
             if not os.path.exists(log_dir):
                 os.makedirs(log_dir)
-            subprocess.Popen(['tensorboard', '--logdir', log_dir,"--port",str(port),"--host",ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)                                    
+            tb_process = subprocess.Popen(['tensorboard', '--logdir', log_dir,"--port",str(port),"--host",ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)                                    
+            self.tensorboard_pid = tb_process.pid
             return (ip,port)
         return None
 
