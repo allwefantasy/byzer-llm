@@ -257,7 +257,27 @@ class Worker:
     def get_node_and_gpu_ids(self):
         """Returns the node and GPU ids of the current worker."""
         node_id, gpu_ids = _get_node_and_gpu_ids()
-        return DeviceID(node_id, gpu_ids, self.rank)
+        return DeviceID(node_id, gpu_ids, self.rank)        
+    
+    def setup_tensorboard(self)->Optional[Tuple[str,int]]:
+        #         "tensorboard": {
+        #     "enabled": true,
+        #     "output_path": "/home/byzerllm/data/train_ck/logs/",
+        #     "job_name": "7b-pt"
+        # },
+        tensorboard_config = self.ds_config.get("tensorboard", {"enabled":False})
+        if tensorboard_config["enabled"]:   
+            import subprocess               
+            ip, port = get_address_and_port()
+            log_dir = tensorboard_config["output_path"]
+            job_name = tensorboard_config["job_name"]
+            log_dir = os.path.join(log_dir,job_name)
+            if not os.path.exists(log_dir):
+                os.makedirs(log_dir)
+            proc = subprocess.Popen(['tensorboard', '--logdir', log_dir,"--port",str(port),"--host",ip])
+            proc.wait(timeout=30)                        
+            return (ip,port)
+        return None
 
     def _train(self,data_engine, model_engine):
         model_engine.train()
@@ -414,6 +434,11 @@ class DeepSpeedTrain:
                         )(worker_cls).remote
                 worker = worker_cls(parallel_config,rank,distributed_init_method)
                 workers.append(worker)  
+                if rank == 0:
+                    addr_port = ray.get(worker.setup_tensorboard.remote())
+                    if addr_port:
+                        print(f"tensorboard: http://{addr_port[0]}:{addr_port[1]}",flush=True)
+
         self.workers = workers                              
     
               
