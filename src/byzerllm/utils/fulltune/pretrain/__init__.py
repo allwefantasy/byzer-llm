@@ -175,6 +175,7 @@ deepspeed worker config:
               CUDA_VISIBLE_DEVICES:{os.environ["CUDA_VISIBLE_DEVICES"]} 
               LOCAL_RANK:{os.environ["LOCAL_RANK"]}
               LOCAL_WORLD_SIZE:{os.environ["LOCAL_WORLD_SIZE"]}
+              NCCL_SOCKET_IFNAME：{os.environ["NCCL_SOCKET_IFNAME"]}
 ''',flush=True) 
         # torch.cuda.set_device(rank)
         """Initialize the distributed environment."""
