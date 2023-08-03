@@ -141,6 +141,13 @@ class ParallelConfig:
         self.train_args = train_args  
         self.get_model = get_model 
         self.data_refs = data_refs 
+        # if the nodes in cluster  have different network interface name, we need to set the NCCL_SOCKET_IFNAME 
+        # manually otherwise you may meet the following error in deepspeed:
+        # torch.distributed.DistBackendError: NCCL error in: ../torch/csrc/distributed/c10d/ProcessGroupNCCL.cpp:1275, 
+        # internal error, NCCL version 2.14.3
+        # ncclInternalError: Internal check failed.
+        # Last error:
+        # Proxy Call to rank 8 failed (Connect)
         self.setup_nccl_socket_ifname_by_ip = setup_nccl_socket_ifname_by_ip    
     
 def _init_distributed_environment(
