@@ -471,11 +471,15 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     def get_model():
         return AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True)
     
+    setup_nccl_socket_ifname_by_ip = False
+    if "setup_nccl_socket_ifname_by_ip" in train_params:
+        setup_nccl_socket_ifname_by_ip = train_params["setup_nccl_socket_ifname_by_ip"] == "true"
 
     dst = DeepSpeedTrain(ParallelConfig(
     num_workers=num_gpus,
     get_model = get_model,
     ds_config=  json.loads(train_params.get("ds_config","{}")), 
+    setup_nccl_socket_ifname_by_ip = setup_nccl_socket_ifname_by_ip,
     train_args=TrainArgs(
         model_path=model_dir,
         tokenizer_path = f"{model_dir}/tokenizer.model",
