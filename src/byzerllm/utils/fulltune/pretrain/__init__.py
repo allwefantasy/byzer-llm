@@ -132,14 +132,16 @@ class ParallelConfig:
         ds_config:Dict[Any,Any],         
         data_refs:List[DataServer] = [],
         train_args = TrainArgs(),            
-        backend: str = "nccl",              
+        backend: str = "nccl",  
+        setup_nccl_socket_ifname_by_ip:bool = False
     ) -> None:
         self.world_size = num_workers        
         self.backend = backend
         self.ds_config = ds_config if ds_config else json.loads(DEFUALT_CONFIG)
         self.train_args = train_args  
         self.get_model = get_model 
-        self.data_refs = data_refs     
+        self.data_refs = data_refs 
+        self.setup_nccl_socket_ifname_by_ip = setup_nccl_socket_ifname_by_ip    
     
 def _init_distributed_environment(
         parallel_config: ParallelConfig,
@@ -214,6 +216,20 @@ class ResourceWorker:
     
     def get_address_and_port(self):
         return get_address_and_port()
+    
+    def get_network_interface(self):
+        import netifaces
+        interfaces = netifaces.interfaces()
+        target_iface = ""
+        for iface in interfaces:
+            addrs = netifaces.ifaddresses(iface)
+            if netifaces.AF_INET in addrs:
+                ip = addrs[netifaces.AF_INET][0]['addr']
+                address = self.get_node_ip_address()
+                if ip == address:
+                    target_iface = iface
+                    break
+        return target_iface        
 
 
 class Worker:
@@ -346,6 +362,7 @@ class DeepSpeedTrain:
         self.resource_workers  = resource_workers        
         self.node_id_to_workers = {}
         self.node_id_to_gpus = {}
+        self.node_id_to_nccl_socket_device = {}
 
         for resource_worker in self.resource_workers:
             device = ray.get(resource_worker.get_node_and_gpu_ids.remote())            
@@ -360,16 +377,23 @@ class DeepSpeedTrain:
             self.node_id_to_gpus[device.node_id].extend(device.gpu_ids)
             self.node_id_to_gpus[device.node_id].sort()
 
+            if parallel_config.setup_nccl_socket_ifname_by_ip:
+                self.node_id_to_nccl_socket_device[device.node_id] = ray.get(resource_worker.get_network_interface.remote())
+
         for node_id, resource_workers in self.node_id_to_workers.items():
             for local_rank,resource_worker in enumerate(resource_workers):
                 rank = ray.get(resource_worker.rank.remote()) 
                 worker_cls = Worker  
                 gpu_ids = self.node_id_to_gpus[node_id]
+                nccl_socket_ifname = DEFAULT_NCCL_SOCKET_IFNAME
+                if parallel_config.setup_nccl_socket_ifname_by_ip:
+                    nccl_socket_ifname = self.node_id_to_nccl_socket_device[node_id]
                 env_vars = {
                         "RAY_EXPERIMENTAL_NOSET_CUDA_VISIBLE_DEVICES":"true",
                         "CUDA_VISIBLE_DEVICES": ",".join([str(gid) for gid in gpu_ids]),
                         "LOCAL_RANK": str(local_rank),
                         "RANK": str(rank),
+                        "NCCL_SOCKET_IFNAME": f"={nccl_socket_ifname}",
                         "LOCAL_WORLD_SIZE": str(len(gpu_ids)),
                         "WORLD_SIZE": str(parallel_config.world_size)
                         }                                        

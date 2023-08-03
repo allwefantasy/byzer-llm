@@ -1,3 +1,4 @@
+netifaces
 peft @ git+https://gitee.com/allwefantasy/peft.git
 # peft @ git+https://github.com/huggingface/peft.git
 accelerate
