@@ -201,11 +201,10 @@ class ResourceWorker:
     def __init__(
         self,        
         parallel_config: ParallelConfig,        
-        rank: int,        
-       
+        rank: int               
     ) -> None:
         self.parallel_config = parallel_config        
-        self.rank = rank          
+        self.rank = rank        
         self.ds_config = self.parallel_config.ds_config
 
     def get_node_and_gpu_ids(self):
@@ -242,13 +241,15 @@ class Worker:
     def __init__(
         self,        
         parallel_config: ParallelConfig,        
-        rank: int        
+        rank: int,
+        distributed_init_method:str                
        
     ) -> None:
         self.parallel_config = parallel_config        
         self.rank = rank        
         self.ds_config = self.parallel_config.ds_config
         self.get_model = self.parallel_config.get_model
+        self.distributed_init_method = distributed_init_method        
         self.model = None
         self.tokenizer = None
     
