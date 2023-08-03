@@ -512,9 +512,9 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
         tokenizer_path = f"{model_dir}/tokenizer.model",
         data_dir = data_dir,  
         checkpoint_saving_path = output_dir,   
-        steps_per_epoch = int(train_params.get("steps_per_epoch",10)),
-        max_length = int(train_params.get("max_length",4096)),
-        epoches=int(train_params.get("epoches",1)),
+        steps_per_epoch = int(train_params.get("sfft.int.steps_per_epoch",10)),
+        max_length = int(train_params.get("sfft.int.max_length",4096)),
+        epoches=int(train_params.get("sfft.int.epoches",1)),
         is_partition_data = len(data_refs) != 0
         )
     ))
