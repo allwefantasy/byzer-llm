@@ -498,6 +498,7 @@ class DeepSpeedTrain:
             assert output == other_output
         return output 
 
+@ray.remote(num_cpus=0,num_gpus=0)
 class DeepSpeedTrainer:
     def __init__(self,name:str) -> None:
         self.sft_name = name
@@ -608,13 +609,8 @@ class DeepSpeedTrainer:
 
 
 def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
-    sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}"
-    
-    print_flush(f"Start to train model with job {sft_name}")
-
-    worker_cls = ray.remote(name=sft_name)(DeepSpeedTrainer).remote()
-    worker = worker_cls(name=sft_name)
-    
+    sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}"    
+    worker = DeepSpeedTrainer.remote(name=sft_name)     
     chunks,obj_count = ray.get(worker.sfft_train(data_refs,train_params,sys_conf).remote())
     
     checkpoint_path = ray.get(worker.get_checkpoint_path().remote())
