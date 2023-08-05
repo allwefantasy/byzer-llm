@@ -494,8 +494,8 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     if "localModelDir" in train_params:
         model_dir = train_params["localModelDir"]
 
-    pretrained_model_type = train_params.get("pretrainedModelType","")    
-
+    pretrained_model_type = train_params.get("pretrainedModelType","")   
+    
     def get_model():
         if pretrained_model_type == "llama2":            
             return AutoModelForCausalLM.from_pretrained(model_dir,
@@ -507,7 +507,25 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     setup_nccl_socket_ifname_by_ip = False
     if "setup_nccl_socket_ifname_by_ip" in train_params:
         setup_nccl_socket_ifname_by_ip = train_params["setup_nccl_socket_ifname_by_ip"] == "true"
+    
+    tokenizer_path = train_params["sfft.str.tokenizer_path"] if "sfft.str.tokenizer_path" in train_params else f"{model_dir}/tokenizer.model"
+    is_partition_data = len(data_refs) != 0
+    max_length = int(train_params.get("sfft.int.max_length",4096))
+    epoches = int(train_params.get("sfft.int.epoches",1))
+    steps_per_epoch = int(train_params.get("sfft.int.steps_per_epoch",10))
 
+    print(f'''
+Train Configuration:
+    pretrained_model_type:{pretrained_model_type} 
+    model_dir:{model_dir} 
+    output_dir:{output_dir}
+    is_partition_data:{is_partition_data}
+    max_length:{max_length}
+    epoches:{epoches}
+    steps_per_epoch:{steps_per_epoch} 
+    setup_nccl_socket_ifname_by_ip:{setup_nccl_socket_ifname_by_ip}   
+    num_gpus:{num_gpus}            
+          ''',flush=True)   
     dst = DeepSpeedTrain(ParallelConfig(
     num_workers=num_gpus,
     get_model = get_model,
@@ -515,13 +533,13 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     setup_nccl_socket_ifname_by_ip = setup_nccl_socket_ifname_by_ip,
     train_args=TrainArgs(
         model_path=model_dir,
-        tokenizer_path = train_params["sfft.str.tokenizer_path"] if "sfft.str.tokenizer_path" in train_params else f"{model_dir}/tokenizer.model",
+        tokenizer_path = tokenizer_path,
         data_dir = data_dir,  
         checkpoint_saving_path = output_dir,   
-        steps_per_epoch = int(train_params.get("sfft.int.steps_per_epoch",10)),
-        max_length = int(train_params.get("sfft.int.max_length",4096)),
-        epoches=int(train_params.get("sfft.int.epoches",1)),
-        is_partition_data = len(data_refs) != 0
+        steps_per_epoch = steps_per_epoch,
+        max_length = max_length,
+        epoches=epoches,
+        is_partition_data = is_partition_data
         )
     ))
 
