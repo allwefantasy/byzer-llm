@@ -494,7 +494,9 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     if "localModelDir" in train_params:
         model_dir = train_params["localModelDir"]
 
-    pretrained_model_type = train_params.get("pretrainedModelType","")   
+    pretrained_model_type = train_params.get("pretrainedModelType","")
+    if "/" in  pretrained_model_type:
+        pretrained_model_type = pretrained_model_type.split("/")[-1]
     
     def get_model():
         if pretrained_model_type == "llama2":            
