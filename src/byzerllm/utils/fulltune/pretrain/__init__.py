@@ -514,7 +514,7 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     epoches = int(train_params.get("sfft.int.epoches",1))
     steps_per_epoch = int(train_params.get("sfft.int.steps_per_epoch",10))
 
-    print(train_params.get("deepspeedConfig","{}"))
+    print(train_params.get("deepspeedConfig","{}"),flush=True)
 
     ds_config=  json.loads(train_params.get("deepspeedConfig","{}"))
 
