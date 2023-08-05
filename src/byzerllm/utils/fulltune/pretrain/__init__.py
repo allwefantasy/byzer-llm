@@ -509,7 +509,7 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     setup_nccl_socket_ifname_by_ip = setup_nccl_socket_ifname_by_ip,
     train_args=TrainArgs(
         model_path=model_dir,
-        tokenizer_path = f"{model_dir}/tokenizer.model",
+        tokenizer_path = train_params["sfft.str.tokenizer_path"] if "sfft.str.tokenizer_path" in train_params else f"{model_dir}/tokenizer.model",
         data_dir = data_dir,  
         checkpoint_saving_path = output_dir,   
         steps_per_epoch = int(train_params.get("sfft.int.steps_per_epoch",10)),

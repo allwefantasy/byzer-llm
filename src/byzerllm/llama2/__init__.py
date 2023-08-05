@@ -4,6 +4,12 @@ import torch
 from typing import Dict,List,Tuple
 from byzerllm.utils import (generate_instruction_from_history,
 compute_max_new_tokens,tokenize_stopping_sequences,StopSequencesCriteria)
+
+from typing import Dict, Any,List,Generator
+from pyjava.storage import streaming_tar as STar
+from pyjava import RayContext
+from pyjava.api.mlsql import DataServer
+from byzerllm import BlockRow
 import os
 import time
 
@@ -120,5 +126,24 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     import types
     model.stream_chat = types.MethodType(stream_chat, model)     
     return (model,tokenizer)
+
+
+
+def sft_train(data_refs:List[DataServer],
+              train_params:Dict[str,str],
+              conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
+    from ..utils.sft import sft_train as common_sft_train
+    return common_sft_train(data_refs,train_params,conf) 
+
+
+def sfft_train(data_refs:List[DataServer],
+              train_params:Dict[str,str],
+              conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
+    from ..utils.fulltune.pretrain import sfft_train as common_sfft_train
+    return common_sfft_train(data_refs,train_params,conf) 
+
+
+
+
 
 
