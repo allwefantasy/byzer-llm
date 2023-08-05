@@ -610,7 +610,7 @@ class DeepSpeedTrainer:
 def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
     sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}"        
 
-    worker_cls = ray.remote()(DeepSpeedTrainer).remote
+    worker_cls = ray.remote(num_gpus=0)(DeepSpeedTrainer).remote
     worker = worker_cls(name=sft_name)
     
     chunks,obj_count = ray.get(worker.sfft_train.remote(data_refs,train_params,sys_conf))
