@@ -517,7 +517,7 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     steps_per_epoch = int(train_params.get("sfft.int.steps_per_epoch",10))
     
     try:
-        ds_config=  json.loads(train_params.get("deepspeedConfig","{}"))
+        ds_config=  json.loads(train_params.get("deepspeedConfig",DEFUALT_CONFIG))
     except Exception as e:        
         print(f'deepspeedConfig is not a valid json string:\n{train_params.get("deepspeedConfig","{}")}',flush=True)
         print(f"Byzer-LLM will ues the default deepspeed config:\n{DEFUALT_CONFIG}",flush=True)
