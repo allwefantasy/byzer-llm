@@ -488,7 +488,7 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     
     data_dir = train_params["localDataDir"] if "localDataDir" in train_params else os.path.join(localPathPrefix,rd,"finetune_data")
     output_dir = os.path.join(localPathPrefix,rd,"finetune_model")
-    
+    tensorboard_dir = os.path.join(localPathPrefix,rd,"tensorboard_dir")
     model_dir = os.path.join(localPathPrefix,rd,"pretrained_model")
     
     if "localModelDir" in train_params:
@@ -513,6 +513,12 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     max_length = int(train_params.get("sfft.int.max_length",4096))
     epoches = int(train_params.get("sfft.int.epoches",1))
     steps_per_epoch = int(train_params.get("sfft.int.steps_per_epoch",10))
+    ds_config=  json.loads(train_params.get("deepspeedConfig","{}"))
+
+    if "tensorboard"  in ds_config and  ds_config["tensorboard"].get("enabled",False):
+        if "output_path" not in ds_config["tensorboard"]:
+            ds_config["tensorboard"]["output_path"] = tensorboard_dir
+            ds_config["tensorboard"]["job_name"] = sft_name
 
     print(f'''
 Train Configuration:
@@ -526,10 +532,12 @@ Train Configuration:
     setup_nccl_socket_ifname_by_ip:{setup_nccl_socket_ifname_by_ip}   
     num_gpus:{num_gpus}            
           ''',flush=True)   
+    
+
     dst = DeepSpeedTrain(ParallelConfig(
     num_workers=num_gpus,
     get_model = get_model,
-    ds_config=  json.loads(train_params.get("deepspeedConfig","{}")), 
+    ds_config = ds_config,     
     setup_nccl_socket_ifname_by_ip = setup_nccl_socket_ifname_by_ip,
     train_args=TrainArgs(
         model_path=model_dir,
