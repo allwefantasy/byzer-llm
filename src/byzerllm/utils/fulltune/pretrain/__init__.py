@@ -486,7 +486,7 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     
     assert num_gpus > 0, 'num_gpus must be greater than 0. Try to fix it with `!byzerllm setup "num_gpus=4"`'
     
-    data_dir = train_params["data_dir"] if "data_dir" in train_params else os.path.join(localPathPrefix,rd,"finetune_data")
+    data_dir = train_params["dataDir"] if "dataDir" in train_params else os.path.join(localPathPrefix,rd,"finetune_data")
     output_dir = os.path.join(localPathPrefix,rd,"finetune_model")
     
     model_dir = os.path.join(localPathPrefix,rd,"pretrained_model")
@@ -505,8 +505,8 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
             return AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True)
     
     setup_nccl_socket_ifname_by_ip = False
-    if "setup_nccl_socket_ifname_by_ip" in train_params:
-        setup_nccl_socket_ifname_by_ip = train_params["setup_nccl_socket_ifname_by_ip"] == "true"
+    if "sfft.bool.setup_nccl_socket_ifname_by_ip" in train_params:
+        setup_nccl_socket_ifname_by_ip = train_params["sfft.bool.setup_nccl_socket_ifname_by_ip"] == "true"
     
     tokenizer_path = train_params["sfft.str.tokenizer_path"] if "sfft.str.tokenizer_path" in train_params else f"{model_dir}/tokenizer.model"
     is_partition_data = len(data_refs) != 0
