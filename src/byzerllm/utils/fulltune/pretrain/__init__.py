@@ -601,7 +601,7 @@ class DeepSpeedTrainer:
 
         self.dst = dst
         ray.get([worker.train.remote() for worker in dst.workers])
-        if train_params.get("keepModelLocal","true") == "true":
+        if train_params.get("detached","true") == "true":
             return [],0
         chunks,count = ray.get(dst.workers[0].get_checkpoint.remote())
         return chunks,count
@@ -610,11 +610,19 @@ class DeepSpeedTrainer:
 def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
     sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}"        
 
-    worker_cls = ray.remote(num_gpus=0)(DeepSpeedTrainer).remote
+    detached = train_params.get("detached","true") == "true"
+    options = {"name":sft_name}
+    if detached:        
+        options["lifetime"] = "detached"
+                
+    worker_cls = ray.remote(**options)(DeepSpeedTrainer).remote
     worker = worker_cls(name=sft_name)
-    
-    chunks,obj_count = ray.get(worker.sfft_train.remote(data_refs,train_params,sys_conf))
-    
+
+    if detached:
+        worker.sfft_train.remote(data_refs,train_params,sys_conf)
+        return []
+        
+    chunks,obj_count = ray.get(worker.sfft_train.remote(data_refs,train_params,sys_conf))    
     checkpoint_path = ray.get(worker.get_checkpoint_path.remote())
     node = ray.get(worker.dst.resource_workers[0].get_node_ip_address.remote())
     print_flush(f"The model is finised training, Please check the path: {node}:{checkpoint_path}")
