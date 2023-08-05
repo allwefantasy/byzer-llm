@@ -40,15 +40,16 @@ DEFUALT_CONFIG = '''
     }
   },
   "tensorboard": {
-    "enabled": true,
-    "output_path": "logs/",
-    "job_name": "baichuan-7b-pt"
+    "enabled": true    
   },
   "zero_optimization": {
-    "stage": 2,
+    "stage": 3,
     "offload_optimizer": {
+         "device": "cpu"         
+     },           
+    "offload_param": {
          "device": "cpu"
-     },
+    },
     "contiguous_gradients": true,
     "allgather_bucket_size": 1e8,
     "reduce_bucket_size": 1e8,
@@ -62,7 +63,6 @@ DEFUALT_CONFIG = '''
     "enabled": true
   }
 }
-
 '''
 
 @dataclasses.dataclass
@@ -513,10 +513,12 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     max_length = int(train_params.get("sfft.int.max_length",4096))
     epoches = int(train_params.get("sfft.int.epoches",1))
     steps_per_epoch = int(train_params.get("sfft.int.steps_per_epoch",10))
-
-    print(train_params.get("deepspeedConfig","{}"),flush=True)
-
-    ds_config=  json.loads(train_params.get("deepspeedConfig","{}"))
+    
+    try:
+        ds_config=  json.loads(train_params.get("deepspeedConfig","{}"))
+    except Exception as e:
+        print(train_params.get("deepspeedConfig","{}"),flush=True)
+        raise Exception("deepspeedConfig is not a valid json string")
 
     if "tensorboard"  in ds_config and  ds_config["tensorboard"].get("enabled",False):
         if "output_path" not in ds_config["tensorboard"]:
