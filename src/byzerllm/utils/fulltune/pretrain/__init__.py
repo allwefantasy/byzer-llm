@@ -494,9 +494,13 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     if "localModelDir" in train_params:
         model_dir = train_params["localModelDir"]
 
+    pretrained_model_type = train_params.get("pretrainedModelType","")    
 
     def get_model():
-        return AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True)
+        if pretrained_model_type == "llama2":            
+            return AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True)
+        else:
+            return AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True)
     
     setup_nccl_socket_ifname_by_ip = False
     if "setup_nccl_socket_ifname_by_ip" in train_params:
