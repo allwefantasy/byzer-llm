@@ -498,7 +498,9 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
 
     def get_model():
         if pretrained_model_type == "llama2":            
-            return AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True)
+            return AutoModelForCausalLM.from_pretrained(model_dir,
+                                                        trust_remote_code=True,
+                                                        ignore_mismatched_sizes=True)
         else:
             return AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True)
     
