@@ -516,9 +516,11 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     
     try:
         ds_config=  json.loads(train_params.get("deepspeedConfig","{}"))
-    except Exception as e:
-        print(train_params.get("deepspeedConfig","{}"),flush=True)
-        raise Exception("deepspeedConfig is not a valid json string")
+    except Exception as e:        
+        print(f'deepspeedConfig is not a valid json string:\n{train_params.get("deepspeedConfig","{}")}',flush=True)
+        print(f"Byzer-LLM will ues the default deepspeed config:\n{DEFUALT_CONFIG}",flush=True)
+        ds_config = json.loads(DEFUALT_CONFIG)
+        
 
     if "tensorboard"  in ds_config and  ds_config["tensorboard"].get("enabled",False):
         if "output_path" not in ds_config["tensorboard"]:
