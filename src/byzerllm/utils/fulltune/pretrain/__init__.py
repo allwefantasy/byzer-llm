@@ -513,6 +513,9 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     max_length = int(train_params.get("sfft.int.max_length",4096))
     epoches = int(train_params.get("sfft.int.epoches",1))
     steps_per_epoch = int(train_params.get("sfft.int.steps_per_epoch",10))
+
+    print(train_params.get("deepspeedConfig","{}"))
+
     ds_config=  json.loads(train_params.get("deepspeedConfig","{}"))
 
     if "tensorboard"  in ds_config and  ds_config["tensorboard"].get("enabled",False):
