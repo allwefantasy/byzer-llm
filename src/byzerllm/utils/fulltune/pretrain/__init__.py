@@ -507,7 +507,7 @@ class DeepSpeedTrainer:
     def get_checkpoint_path(self):
         return self.output_dir    
 
-    def sfft_train(self,data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Dict[str, str])->(Generator[BlockRow,Any,Any],int):
+    def sfft_train(self,data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Dict[str, str]):
         import datetime
         import uuid
             
