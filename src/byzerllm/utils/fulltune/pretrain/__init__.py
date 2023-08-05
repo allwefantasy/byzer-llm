@@ -19,6 +19,8 @@ from ray.air.util.torch_dist import (
     get_address_and_port,
 )
 import dataclasses
+from ... import print_flush
+import shutil
 from ray.train.constants import DEFAULT_NCCL_SOCKET_IFNAME
 
 DEFUALT_CONFIG = '''
@@ -69,6 +71,7 @@ DEFUALT_CONFIG = '''
 class TrainArgs:
     model_path: str = "" 
     tokenizer_path: str = ""
+    sft_name: str = ""
     steps_per_epoch: int = 4096
     is_partition_data: bool = False
     epoches:int = 1
@@ -289,7 +292,33 @@ class Worker:
             model_engine.backward(loss)
             model_engine.step()
             step += 1
-        return   
+        return  
+
+    def get_checkpoint(self):
+        if self.rank == 0:
+            sft_name = self.parallel_config.train_args.sft_name
+            final_path = self.parallel_config.train_args.checkpoint_saving_path
+            # copy the pretrained model to output dir
+            # print_flush(f'[{sft_name}] Copy {self.sft_config["model_name_or_path"]} to {os.path.join(final_path,"pretrained_model")}')        
+            # shutil.copytree(self.sft_config["model_name_or_path"],os.path.join(final_path,"pretrained_model"))
+            result = []
+            count = 0
+            print_flush(f"[{sft_name}] Store model({final_path}) to Ray object store")
+            for item in STar.build_rows_from_file(final_path):
+                if count % 1000 == 0:
+                    print_flush(f"[{sft_name}] Progress: {count} processed")
+                count += 1    
+                result.append(ray.put(item))
+            
+            print_flush(f'''
+                [{sft_name}] Train Actor already finished.
+                [{sft_name}] It may take a while to transfer the model from Ray object store to delta lake. 
+                [{sft_name}] Try to check the progress in Byzer console or Byzer Notebook. 
+                ''')    
+            return (result,count) 
+        return None
+
+
     
     def train(self):        
         model_engine = self.prepare_model()
@@ -469,98 +498,133 @@ class DeepSpeedTrain:
             assert output == other_output
         return output 
 
+class DeepSpeedTrainer:
+    def __init__(self,name:str) -> None:
+        self.sft_name = name
+        self.dst = None 
+        self.output_dir = None
+
+    def get_checkpoint_path(self):
+        return self.output_dir    
+
+    def sfft_train(self,data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Dict[str, str])->(Generator[BlockRow,Any,Any],int):
+        import datetime
+        import uuid
+            
+        localPathPrefix = train_params.get("localPathPrefix","/tmp/byzerllm")
+        
+        current_time = datetime.datetime.now()
+        formatted_time = current_time.strftime("%Y%m%d-%H%-M-%S")
+        rd = f"sft-{formatted_time}-{str(uuid.uuid4())}"
+
+        sft_name = self.sft_name
+
+        num_gpus = int(sys_conf.get("num_gpus",0))
+        
+        assert num_gpus > 0, 'num_gpus must be greater than 0. Try to fix it with `!byzerllm setup "num_gpus=4"`'
+        
+        data_dir = train_params["localDataDir"] if "localDataDir" in train_params else os.path.join(localPathPrefix,rd,"finetune_data")
+        output_dir = os.path.join(localPathPrefix,rd,"finetune_model")
+        self.output_dir = output_dir
+        tensorboard_dir = os.path.join(localPathPrefix,rd,"tensorboard_dir")
+        model_dir = os.path.join(localPathPrefix,rd,"pretrained_model")
+        
+        if "localModelDir" in train_params:
+            model_dir = train_params["localModelDir"]
+
+        pretrained_model_type = train_params.get("pretrainedModelType","")
+        if "/" in  pretrained_model_type:
+            pretrained_model_type = pretrained_model_type.split("/")[-1]
+        
+        def get_model():
+            if pretrained_model_type == "llama2":            
+                return AutoModelForCausalLM.from_pretrained(model_dir,
+                                                            trust_remote_code=True,
+                                                            ignore_mismatched_sizes=True)
+            else:
+                return AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True)
+        
+        setup_nccl_socket_ifname_by_ip = False
+        if "sfft.bool.setup_nccl_socket_ifname_by_ip" in train_params:
+            setup_nccl_socket_ifname_by_ip = train_params["sfft.bool.setup_nccl_socket_ifname_by_ip"] == "true"
+        
+        tokenizer_path = train_params["sfft.str.tokenizer_path"] if "sfft.str.tokenizer_path" in train_params else f"{model_dir}/tokenizer.model"
+        is_partition_data = len(data_refs) != 0
+        max_length = int(train_params.get("sfft.int.max_length",4096))
+        epoches = int(train_params.get("sfft.int.epoches",1))
+        steps_per_epoch = int(train_params.get("sfft.int.steps_per_epoch",10))
+        
+        try:
+            ds_config=  json.loads(train_params.get("deepspeedConfig",DEFUALT_CONFIG))
+        except Exception as e:        
+            print(f'deepspeedConfig is not a valid json string:\n{train_params.get("deepspeedConfig","{}")}',flush=True)
+            print(f"Byzer-LLM will ues the default deepspeed config:\n{DEFUALT_CONFIG}",flush=True)
+            ds_config = json.loads(DEFUALT_CONFIG)
+            
+
+        if "tensorboard"  in ds_config and  ds_config["tensorboard"].get("enabled",False):
+            if "output_path" not in ds_config["tensorboard"]:
+                ds_config["tensorboard"]["output_path"] = tensorboard_dir
+                ds_config["tensorboard"]["job_name"] = sft_name
+
+        print(f'''
+    Train Configuration:
+        pretrained_model_type:{pretrained_model_type} 
+        model_dir:{model_dir} 
+        output_dir:{output_dir}
+        is_partition_data:{is_partition_data}
+        max_length:{max_length}
+        epoches:{epoches}
+        steps_per_epoch:{steps_per_epoch} 
+        setup_nccl_socket_ifname_by_ip:{setup_nccl_socket_ifname_by_ip}   
+        num_gpus:{num_gpus}            
+            ''',flush=True)   
+        
+
+        dst = DeepSpeedTrain(ParallelConfig(
+        num_workers=num_gpus,
+        get_model = get_model,
+        ds_config = ds_config,     
+        setup_nccl_socket_ifname_by_ip = setup_nccl_socket_ifname_by_ip,
+        train_args=TrainArgs(
+            model_path=model_dir,
+            tokenizer_path = tokenizer_path,
+            data_dir = data_dir,  
+            checkpoint_saving_path = output_dir,   
+            steps_per_epoch = steps_per_epoch,
+            max_length = max_length,
+            epoches=epoches,
+            is_partition_data = is_partition_data,
+            sft_name=sft_name
+            )
+        ))
+
+        self.dst = dst
+        ray.get([worker.train.remote() for worker in dst.workers])
+        if train_params.get("keepModelLocal","true") == "true":
+            return [],0
+        chunks,count = ray.get(dst.workers[0].get_checkpoint.remote())
+        return chunks,count
 
 def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
-    import datetime
-    import uuid
-        
-    localPathPrefix = train_params.get("localPathPrefix","/tmp/byzerllm")
-    
-    current_time = datetime.datetime.now()
-    formatted_time = current_time.strftime("%Y%m%d-%H%-M-%S")
-    rd = f"sft-{formatted_time}-{str(uuid.uuid4())}"
-
     sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}"
-
-    num_gpus = int(sys_conf.get("num_gpus",0))
+    worker_cls = ray.remote(name=sft_name)(DeepSpeedTrainer).remote()
+    worker = worker_cls(name=sft_name)
     
-    assert num_gpus > 0, 'num_gpus must be greater than 0. Try to fix it with `!byzerllm setup "num_gpus=4"`'
+    chunks,obj_count = ray.get(worker.sfft_train(data_refs,train_params,sys_conf).remote())
     
-    data_dir = train_params["localDataDir"] if "localDataDir" in train_params else os.path.join(localPathPrefix,rd,"finetune_data")
-    output_dir = os.path.join(localPathPrefix,rd,"finetune_model")
-    tensorboard_dir = os.path.join(localPathPrefix,rd,"tensorboard_dir")
-    model_dir = os.path.join(localPathPrefix,rd,"pretrained_model")
+    checkpoint_path = ray.get(worker.get_checkpoint_path().remote())
+    node = ray.get(worker.dst.resource_workers[0].get_node_ip_address.remote())
+    print_flush(f"The model is finised training, Please check the path: {node}:{checkpoint_path}")
     
-    if "localModelDir" in train_params:
-        model_dir = train_params["localModelDir"]
+    if obj_count == 0:    
+        return []
 
-    pretrained_model_type = train_params.get("pretrainedModelType","")
-    if "/" in  pretrained_model_type:
-        pretrained_model_type = pretrained_model_type.split("/")[-1]
-    
-    def get_model():
-        if pretrained_model_type == "llama2":            
-            return AutoModelForCausalLM.from_pretrained(model_dir,
-                                                        trust_remote_code=True,
-                                                        ignore_mismatched_sizes=True)
-        else:
-            return AutoModelForCausalLM.from_pretrained(model_dir,trust_remote_code=True)
-    
-    setup_nccl_socket_ifname_by_ip = False
-    if "sfft.bool.setup_nccl_socket_ifname_by_ip" in train_params:
-        setup_nccl_socket_ifname_by_ip = train_params["sfft.bool.setup_nccl_socket_ifname_by_ip"] == "true"
-    
-    tokenizer_path = train_params["sfft.str.tokenizer_path"] if "sfft.str.tokenizer_path" in train_params else f"{model_dir}/tokenizer.model"
-    is_partition_data = len(data_refs) != 0
-    max_length = int(train_params.get("sfft.int.max_length",4096))
-    epoches = int(train_params.get("sfft.int.epoches",1))
-    steps_per_epoch = int(train_params.get("sfft.int.steps_per_epoch",10))
-    
-    try:
-        ds_config=  json.loads(train_params.get("deepspeedConfig",DEFUALT_CONFIG))
-    except Exception as e:        
-        print(f'deepspeedConfig is not a valid json string:\n{train_params.get("deepspeedConfig","{}")}',flush=True)
-        print(f"Byzer-LLM will ues the default deepspeed config:\n{DEFUALT_CONFIG}",flush=True)
-        ds_config = json.loads(DEFUALT_CONFIG)
-        
-
-    if "tensorboard"  in ds_config and  ds_config["tensorboard"].get("enabled",False):
-        if "output_path" not in ds_config["tensorboard"]:
-            ds_config["tensorboard"]["output_path"] = tensorboard_dir
-            ds_config["tensorboard"]["job_name"] = sft_name
-
-    print(f'''
-Train Configuration:
-    pretrained_model_type:{pretrained_model_type} 
-    model_dir:{model_dir} 
-    output_dir:{output_dir}
-    is_partition_data:{is_partition_data}
-    max_length:{max_length}
-    epoches:{epoches}
-    steps_per_epoch:{steps_per_epoch} 
-    setup_nccl_socket_ifname_by_ip:{setup_nccl_socket_ifname_by_ip}   
-    num_gpus:{num_gpus}            
-          ''',flush=True)   
-    
-
-    dst = DeepSpeedTrain(ParallelConfig(
-    num_workers=num_gpus,
-    get_model = get_model,
-    ds_config = ds_config,     
-    setup_nccl_socket_ifname_by_ip = setup_nccl_socket_ifname_by_ip,
-    train_args=TrainArgs(
-        model_path=model_dir,
-        tokenizer_path = tokenizer_path,
-        data_dir = data_dir,  
-        checkpoint_saving_path = output_dir,   
-        steps_per_epoch = steps_per_epoch,
-        max_length = max_length,
-        epoches=epoches,
-        is_partition_data = is_partition_data
-        )
-    ))
-
-    ray.get([worker.train.remote() for worker in dst.workers])
-
-
+    print_flush(f"[{sft_name}] Transform Model from Ray object store to new storage(delta lake), total refs: {obj_count}. ")
+    count = 0
+    for item in chunks:
+        if count % 1000 == 0:
+            print_flush(f"[{sft_name}] Process: {float(count)/obj_count*100}%")
+        count += 1
+        yield ray.get(item)
 
