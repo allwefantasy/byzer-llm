@@ -486,7 +486,7 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     
     assert num_gpus > 0, 'num_gpus must be greater than 0. Try to fix it with `!byzerllm setup "num_gpus=4"`'
     
-    data_dir = train_params["dataDir"] if "dataDir" in train_params else os.path.join(localPathPrefix,rd,"finetune_data")
+    data_dir = train_params["localDataDir"] if "localDataDir" in train_params else os.path.join(localPathPrefix,rd,"finetune_data")
     output_dir = os.path.join(localPathPrefix,rd,"finetune_model")
     
     model_dir = os.path.join(localPathPrefix,rd,"pretrained_model")
@@ -529,7 +529,7 @@ Train Configuration:
     dst = DeepSpeedTrain(ParallelConfig(
     num_workers=num_gpus,
     get_model = get_model,
-    ds_config=  json.loads(train_params.get("ds_config","{}")), 
+    ds_config=  json.loads(train_params.get("deepspeedConfig","{}")), 
     setup_nccl_socket_ifname_by_ip = setup_nccl_socket_ifname_by_ip,
     train_args=TrainArgs(
         model_path=model_dir,
