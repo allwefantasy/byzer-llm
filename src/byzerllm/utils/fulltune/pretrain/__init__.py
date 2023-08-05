@@ -606,8 +606,12 @@ class DeepSpeedTrainer:
         chunks,count = ray.get(dst.workers[0].get_checkpoint.remote())
         return chunks,count
 
+
 def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
     sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}"
+    
+    print_flush(f"Start to train model with job {sft_name}")
+
     worker_cls = ray.remote(name=sft_name)(DeepSpeedTrainer).remote()
     worker = worker_cls(name=sft_name)
     
