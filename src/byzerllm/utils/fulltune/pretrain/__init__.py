@@ -355,7 +355,11 @@ class Worker:
                         conversation = [{"human":x[0],"assistant":x[1]} for x in conversation]
                         latest_conversation = [{"human":item["instruction"],"assistant":item["output"]}] if "instruction" in item and item["instruction"] else []
                         s = " ".join(conversation) + " ".join(latest_conversation)
-                        f.write(s+"\n")                     
+                        f.write(s+"\n")
+                    elif "text" in item:
+                        f.write(item["text"]+"\n")
+                    else:
+                        raise Exception("Unknow data format")                             
                     count += 1  
 
         data_dir = self.parallel_config.train_args.data_dir
