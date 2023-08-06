@@ -298,9 +298,15 @@ class Worker:
         if self.rank == 0:
             sft_name = self.parallel_config.train_args.sft_name
             final_path = self.parallel_config.train_args.checkpoint_saving_path
-            # copy the pretrained model to output dir
-            # print_flush(f'[{sft_name}] Copy {self.sft_config["model_name_or_path"]} to {os.path.join(final_path,"pretrained_model")}')        
-            # shutil.copytree(self.sft_config["model_name_or_path"],os.path.join(final_path,"pretrained_model"))
+            # get the last checkpoint
+            # the checkpoint path is like this:
+            # /home/byzerllm/data/sft-20230805-1224-30-173a8dca-9e4a-411c-9fcb-fc979e3460f6/finetune_model/Epoch-1
+            # /home/byzerllm/data/sft-20230805-1224-30-173a8dca-9e4a-411c-9fcb-fc979e3460f6/finetune_model/Epoch-2
+            # get the last one
+            dirs = os.listdir(final_path)
+            dirs.sort(key=lambda x: int(x.split("-")[-1]))
+            final_path = os.path.join(final_path,dirs[-1])
+
             result = []
             count = 0
             print_flush(f"[{sft_name}] Store model({final_path}) to Ray object store")
