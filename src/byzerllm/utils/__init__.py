@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any, TypeVar, Dict,Union,List
 from functools import wraps
 import time
+import json
 from transformers import PreTrainedTokenizer,StoppingCriteria
 import torch
 
@@ -138,5 +139,8 @@ class StopSequencesCriteria(StoppingCriteria):
         if  self.to_str(input_ids[0][-(len(stop)+10):]).endswith(self.stop_words[index]):
             return True
       return False
+
+def load_json_str(json_str:str):        
+    return json.loads(json_str)    
 
 
