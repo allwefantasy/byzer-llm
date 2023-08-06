@@ -255,7 +255,8 @@ class Worker:
         self.rank = rank        
         self.ds_config = self.parallel_config.ds_config
         self.get_model = self.parallel_config.get_model
-        self.distributed_init_method = distributed_init_method        
+        self.distributed_init_method = distributed_init_method 
+        self.data_dir = os.path.join(self.parallel_config.train_args.data_dir,f"data-{self.rank}")       
         self.model = None
         self.tokenizer = None
         self.tensorboard_pid = None        
@@ -329,22 +330,21 @@ class Worker:
 
     
     def train(self):        
+        model_engine = self.prepare_model()
         data_engine = self.prepare_data()
-        model_engine = self.prepare_model()        
         epoch = 0
         while epoch < self.parallel_config.train_args.epoches:
             self._train(data_engine, model_engine)
             epoch += 1
             model_engine.save_checkpoint(f"{self.parallel_config.train_args.checkpoint_saving_path}",
                                         tag=f"Epoch-{epoch}")
-    def prepare_data(self):
-        data_dir = self.parallel_config.train_args.data_dir
-
+    def prepare_data(self):        
+        
         if self.parallel_config.data_refs: 
-            if not os.path.exists(data_dir):
-                os.makedirs(data_dir)
+            if not os.path.exists(self.data_dir):
+                os.makedirs(self.data_dir)
 
-            train_file = os.path.join(data_dir,"train.txt")
+            train_file = os.path.join(self.data_dir,f"train.txt")
             
             '''
             simplely write data to text file
@@ -355,7 +355,9 @@ class Worker:
             '''
             with open(train_file,"w") as f: 
                 count = 0
-                for item in RayContext.collect_from([self.parallel_config.data_refs[self.rank]]):                
+                data_ref = self.parallel_config.data_refs[self.rank]
+                print(f"Start to read data to {data_ref.host}:{data_ref.port}. target file:{train_file}",flush=True)
+                for item in RayContext.collect_from([data_ref]):                
                     if "conversation" in item:
                         item["conversation"] = item["conversation"].tolist()
                         s =  " ".join(conversation)
@@ -381,7 +383,7 @@ class Worker:
         world_size = 1 if self.parallel_config.train_args.is_partition_data else self.parallel_config.world_size
         rank = 0 if self.parallel_config.train_args.is_partition_data else self.rank
 
-        data_engine = DataEngine(data_dir, tokenizer_path, micro_batch_size, max_length,world_size,rank)
+        data_engine = DataEngine(self.data_dir, tokenizer_path, micro_batch_size, max_length,world_size,rank)
         data_engine.load_data()
         return data_engine     
     
