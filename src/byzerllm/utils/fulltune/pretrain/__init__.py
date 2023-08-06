@@ -533,6 +533,18 @@ class DeepSpeedTrainer:
         
         assert num_gpus > 0, 'num_gpus must be greater than 0. Try to fix it with `!byzerllm setup "num_gpus=4"`'
         
+        is_partition_data = len(data_refs) != 0
+
+        if is_partition_data:
+            assert num_gpus == data_refs, f'''The number of data refs({len(data_refs)}) must be equal to the number of GPUs({num_gpus}).
+            Try to fix it with `!byzerllm setup "num_gpus={len(data_refs)}"` or repartition the data with the following command:
+            
+            ```
+            run oldTable as TableRepartition.`` where partitionNum="{num_gpus}" as newTable;
+            ```
+            Notice that make sure Byzer engine have CPUs more than {num_gpus}.
+            '''
+
         data_dir = train_params["localDataDir"] if "localDataDir" in train_params else os.path.join(localPathPrefix,rd,"finetune_data")
         output_dir = os.path.join(localPathPrefix,rd,"finetune_model")
         self.output_dir = output_dir
@@ -558,8 +570,7 @@ class DeepSpeedTrainer:
         if "sfft.bool.setup_nccl_socket_ifname_by_ip" in train_params:
             setup_nccl_socket_ifname_by_ip = train_params["sfft.bool.setup_nccl_socket_ifname_by_ip"] == "true"
         
-        tokenizer_path = train_params["sfft.str.tokenizer_path"] if "sfft.str.tokenizer_path" in train_params else f"{model_dir}/tokenizer.model"
-        is_partition_data = len(data_refs) != 0
+        tokenizer_path = train_params["sfft.str.tokenizer_path"] if "sfft.str.tokenizer_path" in train_params else f"{model_dir}/tokenizer.model"        
         max_length = int(train_params.get("sfft.int.max_length",4096))
         epoches = int(train_params.get("sfft.int.epoches",1))
         steps_per_epoch = int(train_params.get("sfft.int.steps_per_epoch",10))
@@ -593,7 +604,8 @@ class DeepSpeedTrainer:
         
 
         dst = DeepSpeedTrain(ParallelConfig(
-        num_workers=num_gpus,
+        data_refs = data_refs,
+        num_workers = num_gpus,
         get_model = get_model,
         ds_config = ds_config,     
         setup_nccl_socket_ifname_by_ip = setup_nccl_socket_ifname_by_ip,
@@ -630,15 +642,15 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
         options["lifetime"] = "detached"
                 
     worker_cls = ray.remote(**options)(DeepSpeedTrainer).remote
-    worker = worker_cls(name=sft_name)
+    trainer = worker_cls(name=sft_name)
 
     if detached:
-        worker.sfft_train.remote(data_refs,train_params,sys_conf)
+        trainer.sfft_train.remote(data_refs,train_params,sys_conf)
         return []
         
-    chunks,obj_count = ray.get(worker.sfft_train.remote(data_refs,train_params,sys_conf))    
-    checkpoint_path = ray.get(worker.get_checkpoint_path.remote())
-    node = ray.get(worker.dst.resource_workers[0].get_node_ip_address.remote())
+    chunks,obj_count = ray.get(trainer.sfft_train.remote(data_refs,train_params,sys_conf))    
+    checkpoint_path = ray.get(trainer.get_checkpoint_path.remote())
+    node = ray.get(trainer.dst.resource_workers[0].get_node_ip_address.remote())
     print_flush(f"The model is finised training, Please check the path: {node}:{checkpoint_path}")
     
     if obj_count == 0:    
