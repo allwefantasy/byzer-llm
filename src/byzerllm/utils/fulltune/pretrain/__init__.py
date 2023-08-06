@@ -329,8 +329,8 @@ class Worker:
 
     
     def train(self):        
-        model_engine = self.prepare_model()
         data_engine = self.prepare_data()
+        model_engine = self.prepare_model()        
         epoch = 0
         while epoch < self.parallel_config.train_args.epoches:
             self._train(data_engine, model_engine)
