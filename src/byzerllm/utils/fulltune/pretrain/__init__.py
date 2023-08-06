@@ -582,6 +582,7 @@ class DeepSpeedTrainer:
         pretrained_model_type:{pretrained_model_type} 
         model_dir:{model_dir} 
         output_dir:{output_dir}
+        data_dir:{data_dir}
         is_partition_data:{is_partition_data}
         max_length:{max_length}
         epoches:{epoches}
