@@ -343,7 +343,7 @@ class Worker:
         if self.parallel_config.data_refs: 
             if not os.path.exists(data_dir):
                 os.makedirs(data_dir)
-                
+
             train_file = os.path.join(data_dir,"train.txt")
             
             '''
@@ -373,7 +373,7 @@ class Worker:
                         raise Exception("Unknow data format")                             
                     count += 1  
 
-        data_dir = self.parallel_config.train_args.data_dir
+        
         tokenizer_path = self.parallel_config.train_args.tokenizer_path        
         micro_batch_size = self.ds_config["train_micro_batch_size_per_gpu"]
         max_length = self.parallel_config.train_args.max_length
