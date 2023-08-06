@@ -341,6 +341,9 @@ class Worker:
         data_dir = self.parallel_config.train_args.data_dir
 
         if self.parallel_config.data_refs: 
+            if not os.path.exists(data_dir):
+                os.makedirs(data_dir)
+                
             train_file = os.path.join(data_dir,"train.txt")
             
             '''
