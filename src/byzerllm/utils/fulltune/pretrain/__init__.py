@@ -536,7 +536,7 @@ class DeepSpeedTrainer:
         is_partition_data = len(data_refs) != 0
 
         if is_partition_data:
-            assert num_gpus == data_refs, f'''The number of data refs({len(data_refs)}) must be equal to the number of GPUs({num_gpus}).
+            assert num_gpus == len(data_refs), f'''The number of data refs({len(data_refs)}) must be equal to the number of GPUs({num_gpus}).
             Try to fix it with `!byzerllm setup "num_gpus={len(data_refs)}"` or repartition the data with the following command:
             
             ```
