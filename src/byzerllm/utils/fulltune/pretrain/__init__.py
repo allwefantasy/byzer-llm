@@ -423,6 +423,7 @@ class DeepSpeedTrain:
             worker_cls = ray.remote(
                         num_cpus=0,
                         num_gpus=1,
+                        name=f"RW-{rank}-{parallel_config.train_args.sft_name}",
                         # resources={f"node:{master_addr}": 1e-3},
                         # runtime_env=runtime_env,                        
                     )(worker_cls).remote
@@ -476,6 +477,7 @@ class DeepSpeedTrain:
                 worker_cls = ray.remote(
                             num_cpus=0, 
                             num_gpus=0,
+                            name=f"W-{rank}-{parallel_config.train_args.sft_name}",
                             resources={f"node:{node_ip}": 1e-3},
                             runtime_env=runtime_env,                        
                         )(worker_cls).remote
