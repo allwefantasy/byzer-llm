@@ -6,6 +6,8 @@ import deepspeed
 import deepspeed.comm as dist
 import sentencepiece as spm
 import numpy as np
+import datetime
+import uuid
 import json
 import os
 from pyjava.storage import streaming_tar as STar
@@ -517,17 +519,12 @@ class DeepSpeedTrainer:
     def get_checkpoint_path(self):
         return self.output_dir    
 
-    def sfft_train(self,data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Dict[str, str]):
-        import datetime
-        import uuid
-            
+    def sfft_train(self,data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Dict[str, str]):                
+
         localPathPrefix = train_params.get("localPathPrefix","/tmp/byzerllm")
-        
-        current_time = datetime.datetime.now()
-        formatted_time = current_time.strftime("%Y%m%d-%H%-M-%S")
-        rd = f"sft-{formatted_time}-{str(uuid.uuid4())}"
 
         sft_name = self.sft_name
+        rd = f"{sft_name}-{str(uuid.uuid4())}"        
 
         num_gpus = int(sys_conf.get("num_gpus",0))
         
@@ -619,7 +616,10 @@ class DeepSpeedTrainer:
 
 
 def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
-    sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}"        
+    
+    current_time = datetime.datetime.now()
+    formatted_time = current_time.strftime("%Y%m%d-%H-%M-%S")
+    sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}-{formatted_time}"        
 
     detached = train_params.get("detached","true") == "true"
     options = {"name":sft_name}
