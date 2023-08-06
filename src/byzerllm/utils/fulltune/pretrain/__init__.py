@@ -355,7 +355,7 @@ class Worker:
             '''
             with open(train_file,"w") as f: 
                 count = 0
-                for item in RayContext.collect_from(self.data_refs):                
+                for item in RayContext.collect_from([self.parallel_config.data_refs[self.rank]]):                
                     if "conversation" in item:
                         item["conversation"] = item["conversation"].tolist()
                         s =  " ".join(conversation)
