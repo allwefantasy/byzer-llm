@@ -125,11 +125,12 @@ def sft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Di
     
     localPathPrefix = train_params.get("localPathPrefix","/tmp/byzerllm")
     
-    current_time = datetime.now()
-    formatted_time = current_time.strftime("%Y%m%d-%H%-M-%S")
-    rd = f"sft-{formatted_time}-{str(uuid.uuid4())}"
+    current_time = datetime.datetime.now()
+    formatted_time = current_time.strftime("%Y%m%d-%H-%M-%S")
+    sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}-{formatted_time}"        
 
-    sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}"
+
+    rd = f"{sft_name}-{str(uuid.uuid4())}"    
     
     model_dir = os.path.join(localPathPrefix,rd,"pretrained_model")
 

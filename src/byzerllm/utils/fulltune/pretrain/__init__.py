@@ -649,7 +649,7 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     trainer = worker_cls(name=sft_name)
 
     if detached:
-        trainer.sfft_train.remote(data_refs,train_params,sys_conf)
+        trainer.sfft_train.remote(data_refs,train_params,sys_conf)        
         return []
         
     chunks,obj_count = ray.get(trainer.sfft_train.remote(data_refs,train_params,sys_conf))    
