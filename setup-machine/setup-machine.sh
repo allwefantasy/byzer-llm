@@ -476,19 +476,19 @@ fi
 if [[ $ROLE == "worker" ]];then
 
     cat <<EOF > ~/softwares/ray.start.worker.sh
-echo "The master ip is: "
+echo -n "The master ip is: "
 read masterIP
-echo "The name of this worker is: "
+echo -n "The name of this worker is: "
 read workerName
-ray stop && ray start --address="${masterIP}:6379"  "--resources={\"${workerName}\": 1}"
+ray stop && ray start --address="\${masterIP}:6379"  "--resources={\"\${workerName}\": 1}"
 EOF
 
 chmod u+x ~/softwares/ray.start.worker.sh
 
     cat <<EOF
 ray start script is installed at $HOME/softwares/ray.start.worker.sh
-    You can use `bash ray.start.master.sh` to start ray cluster
-    You can use `bash ray.start.worker.sh` to start ray worker
+    You can use \`bash ray.start.master.sh\` to start ray cluster
+    You can use \`bash ray.start.worker.sh\` to start ray worker
 EOF
 
 fi
