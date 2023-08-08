@@ -125,7 +125,7 @@ def sft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Di
     
     localPathPrefix = train_params.get("localPathPrefix","/tmp/byzerllm")
     
-    current_time = datetime.datetime.now()
+    current_time = datetime.now()
     formatted_time = current_time.strftime("%Y%m%d-%H-%M-%S")
     sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}-{formatted_time}"        
 
