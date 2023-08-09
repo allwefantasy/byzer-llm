@@ -105,6 +105,16 @@ class SFT:
         # copy the pretrained model to output dir
         print_flush(f'[{sft_name}] Copy {self.sft_config["model_name_or_path"]} to {os.path.join(final_path,"pretrained_model")}')        
         shutil.copytree(self.sft_config["model_name_or_path"],os.path.join(final_path,"pretrained_model"))
+        
+        # if detached, do not transfer the model to delta lake
+        detached = self.train_params.get("detached","false") == "true"
+        if detached:
+            print_flush(f'''
+              [{sft_name}] Train Actor is already finished. You can check the model in: {final_path}              
+              ''') 
+            return ([],0)
+        
+        # push the model to ray object store
         result = []
         count = 0
         print_flush(f"[{sft_name}] Store model({final_path}) to Ray object store")
@@ -128,8 +138,7 @@ def sft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Di
     current_time = datetime.now()
     formatted_time = current_time.strftime("%Y%m%d-%H-%M-%S")
     sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}-{formatted_time}"        
-
-
+    
     rd = f"{sft_name}-{str(uuid.uuid4())}"    
     
     model_dir = os.path.join(localPathPrefix,rd,"pretrained_model")
@@ -190,14 +199,19 @@ def sft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Di
        }
     }         
     
-    train_actor = SFT.options(**train_worker_conf).remote(data_refs,sft_config,train_params,sys_conf)
+    train_actor = SFT.options(name=sft_name,**train_worker_conf).remote(data_refs,sft_config,train_params,sys_conf)
+    detached = train_params.get("detached","false") == "true"
+    
+    if detached:
+        train_actor.train.remote([])
+        return [] 
 
     try:        
         items,obj_count = ray.get(train_actor.train.remote([]))
     except Exception as e:
         ray.kill(train_actor)
-        raise e
-
+        raise e  
+            
     print_flush(f"[{sft_name}] Transform Model from Ray object store to new storage(delta lake), total refs: {obj_count}. ")
     count = 0
     for item in items:
