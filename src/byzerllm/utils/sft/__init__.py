@@ -198,14 +198,15 @@ def sft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Di
            "train_file":data_file,
        }
     }         
-    
-    train_actor = SFT.options(name=sft_name,**train_worker_conf).remote(data_refs,sft_config,train_params,sys_conf)
+        
     detached = train_params.get("detached","false") == "true"
     
     if detached:
+        train_actor = SFT.options(name=sft_name,lifetime="detached", **train_worker_conf).remote(data_refs,sft_config,train_params,sys_conf)
         train_actor.train.remote([])
         return [] 
 
+    train_actor = SFT.options(name=sft_name,**train_worker_conf).remote(data_refs,sft_config,train_params,sys_conf)
     try:        
         items,obj_count = ray.get(train_actor.train.remote([]))
     except Exception as e:
