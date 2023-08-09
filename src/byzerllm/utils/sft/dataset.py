@@ -32,11 +32,11 @@ class SFTDataset(Dataset):
         # 收集多轮对话
         utterances = []
         for x in conversation:
-            utterances.append(x['human'])
-            utterances.append(x['assistant'])
+            utterances.append(f"User:{x['human']}\n")
+            utterances.append(f"Assistant:{x['assistant']}\n")
         utterances_ids = self.tokenizer(utterances).input_ids
 
-        # 模型的输入格式为：<s>input1</s>target1</s>input2</s>target2</s>...
+        # 模型的输入格式为：<s>User:input1</s>target1</s>input2</s>target2</s>...
         if self.bos_token_id is None:
             input_ids = []
             target_mask = []  # 用于对input进行mask，只计算target部分的loss           
