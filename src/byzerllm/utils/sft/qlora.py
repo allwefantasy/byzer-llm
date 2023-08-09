@@ -180,9 +180,8 @@ def init_components(args, training_args,extra_params):
     # 初始化损失函数
     print(f'Initializing loss function (ignore_index={tokenizer.pad_token_id})...',flush=True)
     loss_func = TargetLMLoss(ignore_index=tokenizer.pad_token_id)
-
-    # 加载训练集
-    train_dataset = SFTDataset(args.train_file, tokenizer, args.max_seq_length)
+    
+    train_dataset = SFTDataset(args.train_file, tokenizer, args.max_seq_length, **extra_params)
     data_collator = SFTDataCollator(tokenizer, args.max_seq_length)
 
     # 初始化Trainer
