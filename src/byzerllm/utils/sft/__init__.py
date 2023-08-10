@@ -84,18 +84,26 @@ class SFT:
                     item["conversation"] = item["conversation"].tolist()
                     s = json.dumps(item,ensure_ascii=False)               
                     f.write(s+"\n")                    
-                elif "history" in item:
+                elif "instruction" in item and "output" in item :
                     # support alpaca format data
-                    conversation = [sub.tolist() for sub in item["history"].tolist()]
+                    history = item.get("history",[]) 
+                    
+                    if hasattr(history,"tolist"):
+                        history = history.tolist()
+
+                    input = item.get("input","")
+                    conversation = [sub.tolist() for sub in history]
                     conversation = [{"human":x[0],"assistant":x[1]} for x in conversation]
-                    latest_conversation = [{"human":item["instruction"],"assistant":item["output"]}] if "instruction" in item and item["instruction"] else []
+                    latest_conversation = [{"human":item["instruction"]+"\n"+input,"assistant":item["output"]}] if "instruction" in item and item["instruction"] else []
                     s = json.dumps({
                         "category":"",
                         "conversation":conversation + latest_conversation,
                         "conversation_id":count,
                         "dataset":"",                
                     },ensure_ascii=False)               
-                    f.write(s+"\n")                     
+                    f.write(s+"\n") 
+                else:
+                    raise Exception(f"Unknown data format: {item}")                                            
                 count += 1       
                 
         
