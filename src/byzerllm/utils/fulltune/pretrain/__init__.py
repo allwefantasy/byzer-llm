@@ -118,6 +118,10 @@ class DataEngine():
                         self.data.append(data[:index])
                         data = []
         return
+    
+    def reset(self):
+        self.data = []
+        self.load_data()
 
     def get_data(self):
         data = self.data.pop(0)
@@ -338,6 +342,8 @@ class Worker:
             epoch += 1
             model_engine.save_checkpoint(f"{self.parallel_config.train_args.checkpoint_saving_path}",
                                         tag=f"Epoch-{epoch}")
+            data_engine.reset()
+            
     def prepare_data(self):        
         
         if self.parallel_config.data_refs: 
