@@ -3,12 +3,19 @@ import json
 import os
 import uuid
 import shutil
+from typing import Optional, Tuple, List, Dict, Any
 from datetime import datetime
 from typing import Dict, Any,List,Generator
 from pyjava.storage import streaming_tar as STar
 from pyjava import RayContext
 from pyjava.api.mlsql import DataServer
 from byzerllm import BlockRow
+from ray.air.util.torch_dist import (
+    ActorHandle,
+    _get_node_and_gpu_ids,
+    _init_torch_distributed,
+    get_address_and_port,
+)
 from . import qlora as QLoraTrainer
 from byzerllm import restore_model
 from .. import print_flush
@@ -60,6 +67,17 @@ class SFT:
         self.train_params = train_params
         self.sys_conf = sys_conf
 
+    def setup_tensorboard(self)->Optional[Tuple[str,int]]:        
+        logging_dir = self.sft_config["logging_dir"]
+        import subprocess               
+        ip, port = get_address_and_port()
+        log_dir = logging_dir            
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+        tb_process = subprocess.Popen(['tensorboard', '--logdir', log_dir,"--port",str(port),"--host",ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)                                    
+        self.tensorboard_pid = tb_process.pid
+        return (ip,port)
+
     def train(self,args:List[str]):
         
         sft_name = self.train_params["name"] if "name" in self.train_params else f"sft-{self.sys_conf['OWNER']}"
@@ -105,8 +123,10 @@ class SFT:
                 else:
                     raise Exception(f"Unknown data format: {item}")                                            
                 count += 1       
-                
         
+        ip,port = self.setup_tensorboard()
+        print_flush(f"[{sft_name}] Tensorboard is running at: {ip}:{port}")
+
         final_path = QLoraTrainer.train(json.dumps(self.sft_config,ensure_ascii=False), args, {
             "model_type": self.train_params.get("model_type","casual_lm")
         })
