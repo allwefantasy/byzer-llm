@@ -30,15 +30,24 @@ class ByzerLLMGenerator:
             raise Exception("This model do not support text generation service")
 
         his = self.extract_history(query) 
-
+        
+        # notice that not all parameters in query are used in model stream_chat function
+        # only the following parameters and the name starts with "gen." or "generation." are used
+        # the prefix "gen." or "generation." will be removed when passing to model stream_chat function
         new_params = {}
         
         if "image" in query:
             new_params["image"] = query["image"] 
-
+        
         for p in ["inference_mode","stopping_sequences","timeout_s","stopping_sequences_skip_check_min_length"]:
             if p in query:
                 new_params[p] = query[p]
+
+        for k,v in query.items():
+            if k.startswith("gen."):
+                new_params[k[len("gen."):]] = v
+            if k.startswith("generation."):
+                new_params[k[len("generation."):]] = v     
             
         response = self.model.stream_chat(self.tokenizer, 
         ins, his, 
