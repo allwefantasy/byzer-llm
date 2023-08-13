@@ -1,0 +1,9 @@
+diffusers
+onnx  ==               1.13.1
+onnx-graphsurgeon ==   0.3.26
+onnxruntime     ==     1.14.1
+polygraphy        ==   0.47.1
+tensorrt        ==     8.6.1
+tokenizers        ==   0.13.2
+torch          
+transformers        == 4.26.1

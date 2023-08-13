@@ -43,7 +43,3 @@ def is_installed(package: str):
         return False
 
     return spec is not None
-
-
-def tensorrt_is_available():
-    return is_installed("tensorrt")

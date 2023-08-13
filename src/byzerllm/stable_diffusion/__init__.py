@@ -7,9 +7,8 @@ from byzerllm.stable_diffusion.api.models.diffusion import (
     ImageGenerationOptions,
     MultidiffusionOptions,
 )
-from byzerllm.stable_diffusion.api.models.tensorrt import BuildEngineOptions
+
 from byzerllm.stable_diffusion.model import DiffusersModel
-from byzerllm.stable_diffusion.acceleration.tensorrt.engine import EngineBuilder
 
 # model_name = "runwayml/stable-diffusion-v1-5"
 
@@ -59,7 +58,7 @@ def init_model(
 # width min=64,max=2048
 # height min=64,max=2048
 # scale_slider min=1,max=4
-def generate_image_by_diffusers(
+def generate_image(
     model,
     prompt,
     negative_prompt,
@@ -69,8 +68,8 @@ def generate_image_by_diffusers(
     batch_count=1,
     cfg_scale=7.5,
     seed=-1,
-    width=768,
-    height=768,
+    width=512,
+    height=512,
     enable_hires=False,
     enable_multidiff=False,
     upscaler_mode="bilinear",
@@ -149,51 +148,3 @@ def generate_image_by_diffusers(
     except Exception as e:
         traceback.print_exc()
         yield []
-
-
-# opt_image_height min=1 max=2048
-# opt_image_width min=1 max=2048
-# min_latent_resolution min=1 max=2048
-# max_latent_resolution min=1 max=2048
-# onnx_opset min=7 max=18
-def generate_image_by_tensorrt(
-    model,
-    max_batch_size=1,
-    opt_image_height=512,
-    opt_image_width=512,
-    min_latent_resolution=256,
-    max_latent_resolution=1024,
-    build_enable_refit=False,
-    build_static_batch=False,
-    build_dynamic_shape=True,
-    build_all_tactics=False,
-    build_preview_features=True,
-    onnx_opset=17,
-    force_engine_build=False,
-    force_onnx_export=False,
-    force_onnx_optimize=False,
-    full_acceleration=False,
-):
-    print("Building Engine...")
-    model.teardown()
-    opts = BuildEngineOptions(
-        max_batch_size=max_batch_size,
-        opt_image_height=opt_image_height,
-        opt_image_width=opt_image_width,
-        min_latent_resolution=min_latent_resolution,
-        max_latent_resolution=max_latent_resolution,
-        build_enable_refit=build_enable_refit,
-        build_static_batch=build_static_batch,
-        build_dynamic_shape=build_dynamic_shape,
-        build_all_tactics=build_all_tactics,
-        build_preview_features=build_preview_features,
-        onnx_opset=onnx_opset,
-        force_engine_build=force_engine_build,
-        force_onnx_export=force_onnx_export,
-        force_onnx_optimize=force_onnx_optimize,
-        full_acceleration=full_acceleration,
-    )
-    builder = EngineBuilder(model, opts)
-    builder.build()
-    model.activate()
-    print("Engine built finish...")

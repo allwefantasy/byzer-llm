@@ -37,7 +37,6 @@ from byzerllm.stable_diffusion.config import ROOT_DIR
 from byzerllm.stable_diffusion.diffusion.piplines.lpw import LongPromptWeightingPipeline
 from byzerllm.stable_diffusion.diffusion.upscalers.multidiffusion import (
     Multidiffusion,
-    MultidiffusionTensorRT,
 )
 
 
@@ -754,11 +753,7 @@ class DiffusersPipeline(DiffusersPipelineModel):
         # 7. Denoising loop
         if opts.multidiffusion.enable:
             # multidiff denoise
-            self.multidiff = (
-                MultidiffusionTensorRT(self)
-                if self.__mode__ == "tensorrt"
-                else Multidiffusion(self)
-            )
+            self.multidiff = Multidiffusion(self)
             views = self.multidiff.get_views(
                 opts.height,
                 opts.width,

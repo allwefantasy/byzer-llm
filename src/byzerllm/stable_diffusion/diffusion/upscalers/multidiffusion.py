@@ -201,22 +201,3 @@ class Multidiffusion:
                         callback(step, timestep, latents)
 
         return 1 / 0.18215 * latents
-
-
-class MultidiffusionTensorRT(Multidiffusion):
-    def align_unet_inputs(
-        self,
-        latent_model_input: torch.Tensor,
-        prompt_embeds: torch.Tensor,
-        views_batch_size: int,
-        real_batch_size: int,
-    ):
-        # expand latent to tensorrt batch size
-        shape = latent_model_input.shape[1:]
-        latent_align = torch.zeros(
-            views_batch_size * 2, *shape, device=latent_model_input.device
-        )
-        latent_align[: real_batch_size * 2, :, :, :] += latent_model_input
-        # repeat prompt_embeds for batch
-        prompt_embeds_align = torch.cat([prompt_embeds] * views_batch_size)
-        return latent_align, prompt_embeds_align

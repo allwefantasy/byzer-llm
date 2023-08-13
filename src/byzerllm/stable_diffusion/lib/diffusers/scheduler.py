@@ -14,12 +14,9 @@ SCHEDULERS = {
     "dpm++_2s": diffusers.schedulers.DPMSolverSinglestepScheduler,
     "dpm++_2m": diffusers.schedulers.DPMSolverMultistepScheduler,
     "dpm++_2m_karras": diffusers.schedulers.DPMSolverMultistepScheduler,
-    # "dpm++_sde": diffusers.schedulers.DPMSolverSDEScheduler,
-    # "dpm++_sde_karras": diffusers.schedulers.DPMSolverSDEScheduler,
     "heun": diffusers.schedulers.HeunDiscreteScheduler,
     "heun_karras": diffusers.schedulers.HeunDiscreteScheduler,
     "lms": diffusers.schedulers.LMSDiscreteScheduler,
-    # "lms_karras": diffusers.schedulers.LMSDiscreteScheduler,
     "pndm": diffusers.schedulers.PNDMScheduler,
 }
 
