@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 
 
 class SFTDataset(Dataset):
-    def __init__(self, file, tokenizer, max_seq_length):
+    def __init__(self, file, tokenizer, max_seq_length,**kwargs):
         self.tokenizer = tokenizer
         self.bos_token_id = tokenizer.bos_token_id
         self.eos_token_id = tokenizer.eos_token_id
@@ -19,6 +19,11 @@ class SFTDataset(Dataset):
             data_list = f.readlines()
         print("there are {} data in dataset".format(len(data_list)))
         self.data_list = data_list
+        self.system_msg = kwargs.get('system_msg', 'You are a helpful assistant. Think it over and answer the user question correctly.\n')
+        self.user_role = kwargs.get('user_role', 'User')
+        self.assistant_role = kwargs.get('assistant_role', 'Assistant')
+        self.user_role_prefix = f"{self.user_role}:"
+        self.assistant_role_prefix = f"{self.assistant_role}:"
 
     def __len__(self):
         return len(self.data_list)
@@ -30,13 +35,13 @@ class SFTDataset(Dataset):
         conversation = data['conversation']
 
         # 收集多轮对话
-        utterances = []
+        utterances = [self.system_msg]
         for x in conversation:
-            utterances.append(x['human'])
-            utterances.append(x['assistant'])
+            utterances.append(f"{self.user_role_prefix}{x['human']}\n")
+            utterances.append(f"{self.assistant_role_prefix}:{x['assistant']}\n")
         utterances_ids = self.tokenizer(utterances).input_ids
 
-        # 模型的输入格式为：<s>input1</s>target1</s>input2</s>target2</s>...
+        # 模型的输入格式为：<s>User:input1</s>target1</s>input2</s>target2</s>...
         if self.bos_token_id is None:
             input_ids = []
             target_mask = []  # 用于对input进行mask，只计算target部分的loss           

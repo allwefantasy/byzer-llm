@@ -11,7 +11,7 @@ ray[data]==2.5.0
 pyarrow==12.0.1
 sentence-transformers==2.2.2
 datasets
-langchain==0.0.216
+langchain
 faiss-gpu
 paramiko
 einops

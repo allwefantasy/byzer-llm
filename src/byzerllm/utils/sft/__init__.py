@@ -3,12 +3,19 @@ import json
 import os
 import uuid
 import shutil
+from typing import Optional, Tuple, List, Dict, Any
 from datetime import datetime
 from typing import Dict, Any,List,Generator
 from pyjava.storage import streaming_tar as STar
 from pyjava import RayContext
 from pyjava.api.mlsql import DataServer
 from byzerllm import BlockRow
+from ray.air.util.torch_dist import (
+    ActorHandle,
+    _get_node_and_gpu_ids,
+    _init_torch_distributed,
+    get_address_and_port,
+)
 from . import qlora as QLoraTrainer
 from byzerllm import restore_model
 from .. import print_flush
@@ -60,6 +67,17 @@ class SFT:
         self.train_params = train_params
         self.sys_conf = sys_conf
 
+    def setup_tensorboard(self)->Optional[Tuple[str,int]]:        
+        logging_dir = self.sft_config["logging_dir"]
+        import subprocess               
+        ip, port = get_address_and_port()
+        log_dir = logging_dir            
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+        tb_process = subprocess.Popen(['tensorboard', '--logdir', log_dir,"--port",str(port),"--host",ip], stdout=subprocess.PIPE, stderr=subprocess.PIPE)                                    
+        self.tensorboard_pid = tb_process.pid
+        return (ip,port)
+
     def train(self,args:List[str]):
         
         sft_name = self.train_params["name"] if "name" in self.train_params else f"sft-{self.sys_conf['OWNER']}"
@@ -84,27 +102,47 @@ class SFT:
                     item["conversation"] = item["conversation"].tolist()
                     s = json.dumps(item,ensure_ascii=False)               
                     f.write(s+"\n")                    
-                elif "history" in item:
+                elif "instruction" in item and "output" in item :
                     # support alpaca format data
-                    conversation = [sub.tolist() for sub in item["history"].tolist()]
+                    history = item.get("history",[]) 
+                    
+                    if hasattr(history,"tolist"):
+                        history = history.tolist()
+
+                    input = item.get("input","")
+                    conversation = [sub.tolist() for sub in history]
                     conversation = [{"human":x[0],"assistant":x[1]} for x in conversation]
-                    latest_conversation = [{"human":item["instruction"],"assistant":item["output"]}] if "instruction" in item and item["instruction"] else []
+                    latest_conversation = [{"human":item["instruction"]+"\n"+input,"assistant":item["output"]}] if "instruction" in item and item["instruction"] else []
                     s = json.dumps({
                         "category":"",
                         "conversation":conversation + latest_conversation,
                         "conversation_id":count,
                         "dataset":"",                
                     },ensure_ascii=False)               
-                    f.write(s+"\n")                     
+                    f.write(s+"\n") 
+                else:
+                    raise Exception(f"Unknown data format: {item}")                                            
                 count += 1       
-                
         
+        ip,port = self.setup_tensorboard()
+        print_flush(f"[{sft_name}] Tensorboard is running at: {ip}:{port}")
+
         final_path = QLoraTrainer.train(json.dumps(self.sft_config,ensure_ascii=False), args, {
             "model_type": self.train_params.get("model_type","casual_lm")
         })
         # copy the pretrained model to output dir
         print_flush(f'[{sft_name}] Copy {self.sft_config["model_name_or_path"]} to {os.path.join(final_path,"pretrained_model")}')        
         shutil.copytree(self.sft_config["model_name_or_path"],os.path.join(final_path,"pretrained_model"))
+        
+        # if detached, do not transfer the model to delta lake
+        detached = self.train_params.get("detached","false") == "true"
+        if detached:
+            print_flush(f'''
+              [{sft_name}] Train Actor is already finished. You can check the model in: {final_path}              
+              ''') 
+            return ([],0)
+        
+        # push the model to ray object store
         result = []
         count = 0
         print_flush(f"[{sft_name}] Store model({final_path}) to Ray object store")
@@ -125,11 +163,10 @@ def sft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Di
     
     localPathPrefix = train_params.get("localPathPrefix","/tmp/byzerllm")
     
-    current_time = datetime.datetime.now()
+    current_time = datetime.now()
     formatted_time = current_time.strftime("%Y%m%d-%H-%M-%S")
     sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}-{formatted_time}"        
-
-
+    
     rd = f"{sft_name}-{str(uuid.uuid4())}"    
     
     model_dir = os.path.join(localPathPrefix,rd,"pretrained_model")
@@ -138,6 +175,7 @@ def sft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Di
         model_dir = train_params["localModelDir"]
 
     output_dir = os.path.join(localPathPrefix,rd,"finetune_model")
+    logging_dir = os.path.join(localPathPrefix,rd,"logging")
     data_dir = os.path.join(localPathPrefix,rd,"finetune_data")
     data_file = os.path.join(data_dir,"data.jsonl")
 
@@ -185,19 +223,26 @@ def sft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Di
        **train_params_sft,
        **{
            "output_dir":output_dir,
+           "logging_dir": logging_dir,
            "model_name_or_path":model_dir,
            "train_file":data_file,
        }
     }         
+        
+    detached = train_params.get("detached","false") == "true"
     
-    train_actor = SFT.options(**train_worker_conf).remote(data_refs,sft_config,train_params,sys_conf)
+    if detached:
+        train_actor = SFT.options(name=sft_name,lifetime="detached", **train_worker_conf).remote(data_refs,sft_config,train_params,sys_conf)
+        train_actor.train.remote([])
+        return [] 
 
+    train_actor = SFT.options(name=sft_name,**train_worker_conf).remote(data_refs,sft_config,train_params,sys_conf)
     try:        
         items,obj_count = ray.get(train_actor.train.remote([]))
     except Exception as e:
         ray.kill(train_actor)
-        raise e
-
+        raise e  
+            
     print_flush(f"[{sft_name}] Transform Model from Ray object store to new storage(delta lake), total refs: {obj_count}. ")
     count = 0
     for item in items:

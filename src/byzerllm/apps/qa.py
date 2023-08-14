@@ -71,8 +71,8 @@ class ByzerLLMQA:
                 temp_docs.append(f'{index}. {doc[0].page_content}')
             else:
                 temp_docs.append(f'{doc[0].page_content}')
-            if hasattr(doc[0],"meta"):        
-                temp_metas.append(doc[0].meta)    
+            if hasattr(doc[0],"metadata"):        
+                temp_metas.append(doc[0].metadata)    
        
         newq = doc_chunk_sep.join(temp_docs) 
         show_full_query  = hint == "show_full_query"         
