@@ -1,3 +1,4 @@
+import json
 import time
 import traceback
 from typing import Dict, List
@@ -16,19 +17,58 @@ from byzerllm.stable_diffusion.model import DiffusersModel
 def stream_chat(
     self,
     tokenizer,
-    prompt: str,
-    negative_prompt: str,
+    ins: str,
     his: List[Dict[str, str]] = [],
     max_length: int = 4090,
     top_p: float = 0.95,
     temperature: float = 0.1,
     **kwargs,
 ):
-    # images = self(ins).images
-    images = generate_image_by_diffusers(
-        self, prompt=prompt, negative_prompt=negative_prompt
+    prompt = ins
+    negative_prompt = kwargs.get("negatvie_prompt", "")
+    sampler_name = kwargs.get("sampler_name", "euler_a")
+    sampling_steps = int(kwargs.get("sampling_steps", 25))
+    batch_size = int(kwargs.get("batch_size", 1))
+    batch_count = int(kwargs.get("batch_count", 1))
+    cfg_scale = float(kwargs.get("cfg_scale", 7.5))
+    seed = int(kwargs.get("seed", -1))
+    width = int(kwargs.get("width", 768))
+    height = int(kwargs.get("height", 768))
+    enable_hires = "true" == kwargs.get("enable_hires", "false")
+    enable_multidiff = "true" == kwargs.get("enable_multidiff", "false")
+    upscaler_mode = kwargs.get("upscaler_mode", "bilinear")
+    scale_slider = float(kwargs.get("scale_slider", 1.5))
+    views_batch_size = int(kwargs.get("views_batch_size", 4))
+    window_size = int(kwargs.get("window_size", 64))
+    stride = int(kwargs.get("stride", 16))
+    init_image = kwargs.get("init_image", None)
+    strength = float(kwargs.get("strength", 0.5))
+
+    # TODO: init_image format change
+    images = generate_image(
+        self,
+        prompt=prompt,
+        negative_prompt=negative_prompt,
+        sampler_name=sampler_name,
+        sampling_steps=sampling_steps,
+        batch_size=batch_size,
+        batch_count=batch_count,
+        cfg_scale=cfg_scale,
+        seed=seed,
+        width=width,
+        height=height,
+        enable_hires=enable_hires,
+        enable_multidiff=enable_multidiff,
+        upscaler_mode=upscaler_mode,
+        scale_slider=scale_slider,
+        views_batch_size=views_batch_size,
+        window_size=window_size,
+        stride=stride,
+        init_image=init_image,
+        strength=strength,
     )
-    return images
+    content = json.dumps([{"prompt": i[0], "img64": i[1]} for i in images])
+    return [(content, "")]
 
 
 def init_model(
@@ -68,8 +108,8 @@ def generate_image(
     batch_count=1,
     cfg_scale=7.5,
     seed=-1,
-    width=512,
-    height=512,
+    width=768,
+    height=768,
     enable_hires=False,
     enable_multidiff=False,
     upscaler_mode="bilinear",
@@ -141,7 +181,8 @@ def generate_image(
 
         results = []
         for images, opts in image:
-            results.extend(images)
+            for i in images:
+                results.extend(i)
 
         print(f"Finished in {end -start:0.4f} seconds")
         yield results

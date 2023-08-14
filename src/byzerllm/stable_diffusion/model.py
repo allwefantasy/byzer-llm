@@ -14,7 +14,7 @@ from byzerllm.stable_diffusion.config import (
     XFORMERS,
 )
 from byzerllm.stable_diffusion.diffusion.piplines.diffusers import DiffusersPipeline
-from byzerllm.stable_diffusion.images import save_image
+from byzerllm.stable_diffusion.images import save_image_base64
 from byzerllm.stable_diffusion.lib.diffusers.scheduler import (
     SCHEDULERS,
     parser_schedulers_config,
@@ -139,7 +139,7 @@ class DiffusersModel:
 
             results.append(
                 (
-                    [save_image(img, opts) for img in images],
+                    [save_image_base64(img, opts) for img in images],
                     ImageGenerationOptions.parse_obj(
                         {"seed": manual_seed, **opts.dict()}
                     ),

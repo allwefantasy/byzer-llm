@@ -14,6 +14,7 @@ from byzerllm.stable_diffusion.config import (
     OUTPUT_NAME_IMG2IMG,
     OUTPUT_NAME_TEXT2IMG,
 )
+from byzerllm.stable_diffusion.utils import img2b64
 
 
 def get_category(opts: ImageGenerationOptions):
@@ -26,6 +27,14 @@ def replace_invalid_chars(filepath, replace_with="_"):
     replace_with = replace_with
 
     return re.sub(invalid_chars, replace_with, filepath)
+
+
+def save_image_base64(img: Image.Image, opts: ImageGenerationOptions):
+    metadata = PngInfo()
+    metadata.add_text("parameters", opts.json())
+    prompt = opts.prompt
+    img64 = img2b64(img)
+    return (prompt, img64)
 
 
 def save_image(img: Image.Image, opts: ImageGenerationOptions):
@@ -52,8 +61,6 @@ def save_image(img: Image.Image, opts: ImageGenerationOptions):
     img.save(filepath, pnginfo=metadata)
     return filepath
 
-
-def get_image_filepath(category: str, filename: str):
     dir = OUTPUT_DIR_TEXT2IMG if category == "txt2img" else OUTPUT_DIR_IMG2IMG
     return os.path.join(dir, filename)
 
