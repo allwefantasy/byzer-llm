@@ -74,13 +74,8 @@ def stream_chat(
 def init_model(
     model_dir, infer_params: Dict[str, str] = {}, sys_conf: Dict[str, str] = {}
 ):
-    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # # all params from infer_params can set in method from_pretrained
-    # model = StableDiffusionPipeline.from_pretrained(model_name, torch_dtype=torch.float16)
-    # model.to(device)
-    # import types
-    # model.stream_chat = types.MethodType(stream_chat, model)
-    # return (model, None)
+    # TODO: localPathPrefix添加参数
+    # localPathPrefix = infer_params.get("localPathPrefix", "")
     model = DiffusersModel(model_dir)
     model.activate()
     import types
