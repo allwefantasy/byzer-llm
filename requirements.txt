@@ -36,11 +36,19 @@ SwissArmyTransformer
 # dependencies only for chatglm
 # jieba
 # rouge_chinese
-# icetk  
+# icetk
 
 ## TGI dependencies for quick inference
-# pip install flash-attn --no-build-isolation 
+# pip install flash-attn --no-build-isolation
 
 protobuf==3.20.0
 
 
+sentencepiece
+safetensors
+pydantic
+nltk
+pillow
+diffusers
+lycoris
+lycoris-lora
