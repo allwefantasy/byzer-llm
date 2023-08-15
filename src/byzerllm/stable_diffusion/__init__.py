@@ -72,7 +72,8 @@ def stream_chat(
         init_image=init_image,
         strength=strength,
     )
-    content = json.dumps([{"prompt": i[0], "img64": i[1]} for i in images])
+    flatten = lambda l: [item for sublist in l for item in sublist]
+    content = json.dumps(flatten(images))
     return [(content, "")]
 
 
@@ -196,8 +197,8 @@ def generate_image(
 
         results = []
         for images, opts in image:
-            for i in images:
-                results.extend(i)
+            for prompt, img64 in images:
+                results.append({"prompt": prompt, "img64": img64})
 
         print(f"Finished in {end -start:0.4f} seconds")
         yield results
