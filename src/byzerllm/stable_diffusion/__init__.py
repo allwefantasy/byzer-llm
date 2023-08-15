@@ -45,7 +45,6 @@ def stream_chat(
     window_size = int(kwargs.get("window_size", 64))
     stride = int(kwargs.get("stride", 16))
     init_image = kwargs.get("init_image", None)
-    print(init_image)
     strength = float(kwargs.get("strength", 0.5))
 
     if init_image is not None:
