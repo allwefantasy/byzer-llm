@@ -6,8 +6,8 @@ import torch
 from diffusers import AutoencoderKL, UNet2DConditionModel
 from diffusers.pipelines.stable_diffusion import convert_from_ckpt
 from transformers import CLIPTextModel
+from byzerllm.stable_diffusion.config import stableDiffusionConfig
 
-from byzerllm.stable_diffusion.config import ROOT_DIR
 from byzerllm.stable_diffusion.shared import (
     hf_diffusers_cache_dir,
     hf_transformers_cache_dir,
@@ -15,12 +15,16 @@ from byzerllm.stable_diffusion.shared import (
 
 
 def convert_checkpoint_to_pipe(model_id: str):
-    ckpt_path = os.path.join(ROOT_DIR, "models", "checkpoints", model_id)
-    if os.path.exists(ckpt_path):
-        return convert_from_ckpt.download_from_original_stable_diffusion_ckpt(
-            ckpt_path,
-            from_safetensors=ckpt_path.endswith(".safetensors"),
-            load_safety_checker=False,
+    if stableDiffusionConfig.get_checkpoint():
+        if os.path.exists(model_id) and os.path.exists(model_id):
+            return convert_from_ckpt.download_from_original_stable_diffusion_ckpt(
+                model_id,
+                from_safetensors=model_id.endswith(".safetensors"),
+                load_safety_checker=False,
+            )
+    else:
+        raise Exception(
+            f"No {model_id} found.In checkpoint mode, model_dir must be a file.Please set the checkpoint path in the model_dir config."
         )
 
 

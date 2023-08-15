@@ -5,3 +5,4 @@ src/byzerllm.egg-info/
 flash-attention/
 vllm/
 notebooks/
+**/__pycache__/**

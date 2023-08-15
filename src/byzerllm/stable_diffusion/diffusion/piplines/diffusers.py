@@ -33,7 +33,6 @@ from byzerllm.stable_diffusion.api.events.generation import (
 )
 
 from byzerllm.stable_diffusion.api.models.diffusion import ImageGenerationOptions
-from byzerllm.stable_diffusion.config import ROOT_DIR
 from byzerllm.stable_diffusion.diffusion.piplines.lpw import LongPromptWeightingPipeline
 from byzerllm.stable_diffusion.diffusion.upscalers.multidiffusion import (
     Multidiffusion,
@@ -49,6 +48,7 @@ class PipeSession:
 class DiffusersPipeline(DiffusersPipelineModel):
     __mode__ = "diffusers"
 
+    # if in checkpoint mode, pretrained_model_id need to endwith '.safetensors'
     @classmethod
     def from_pretrained(
         cls,
@@ -59,20 +59,25 @@ class DiffusersPipeline(DiffusersPipelineModel):
         device: Optional[torch.device] = None,
         variant: str = "fp16",
         subfolder: Optional[str] = None,
+        checkpoint: bool = False,
     ):
-        checkpooint_path = os.path.join(
-            ROOT_DIR, "models", "checkpoints", pretrained_model_id
-        )
+        if checkpoint == True:
+            if os.path.exists(pretrained_model_id) and os.path.isfile(
+                pretrained_model_id
+            ):
+                temporary_pipe = (
+                    convert_from_ckpt.download_from_original_stable_diffusion_ckpt(
+                        pretrained_model_id,
+                        from_safetensors=pretrained_model_id.endswith(".safetensors"),
+                        load_safety_checker=False,
+                        device=device,
+                    ).to(torch_dtype=torch_dtype)
+                )
+            else:
+                raise Exception(
+                    f"checkpoint: {pretrained_model_id} must be a file and checkpoint file: {pretrained_model_id} not found"
+                )
 
-        if os.path.exists(checkpooint_path) and os.path.isfile(checkpooint_path):
-            temporary_pipe = (
-                convert_from_ckpt.download_from_original_stable_diffusion_ckpt(
-                    checkpooint_path,
-                    from_safetensors=pretrained_model_id.endswith(".safetensors"),
-                    load_safety_checker=False,
-                    device=device,
-                ).to(torch_dtype=torch_dtype)
-            )
         else:
             temporary_pipe = DiffusionPipeline.from_pretrained(
                 pretrained_model_id,
@@ -101,12 +106,6 @@ class DiffusersPipeline(DiffusersPipelineModel):
 
         del temporary_pipe
 
-        # if torch.__version__ >= Version("2"):
-        #     try:
-        #         unet = torch.compile(unet, mode="reduce-overhead", fullgraph=True)
-        #     except:
-        #         pass
-
         gc.collect()
         torch.cuda.empty_cache()
 
@@ -121,6 +120,7 @@ class DiffusersPipeline(DiffusersPipelineModel):
             scheduler=scheduler,
             device=device,
             dtype=torch_dtype,
+            checkpoint=checkpoint,
         )
         return pipe
 
@@ -136,6 +136,7 @@ class DiffusersPipeline(DiffusersPipelineModel):
         tokenizer_2: Optional[CLIPTokenizer] = None,
         device: torch.device = torch.device("cpu"),
         dtype: torch.dtype = torch.float32,
+        checkpoint: bool = False,
     ):
         self.id = id
         self.vae = vae
@@ -152,6 +153,7 @@ class DiffusersPipeline(DiffusersPipelineModel):
 
         self.stage_1st = None
         self.session = None
+        self.checkpoint = checkpoint
 
     def to(self, device: torch.device = None, dtype: torch.dtype = None):
         if device is None:
@@ -182,16 +184,20 @@ class DiffusersPipeline(DiffusersPipelineModel):
 
     def swap_vae(self, vae: Optional[str] = None):
         if vae is None:
-            checkpoint_path = os.path.join(ROOT_DIR, "models", "checkpoints", self.id)
-            if os.path.exists(checkpoint_path):
-                temporary_pipe = StableDiffusionPipeline.from_ckpt(
-                    checkpoint_path,
-                    from_safetensors=self.id.endswith(".safetensors"),
-                    load_safety_checker=False,
-                    device=self.device,
-                )
-                self.vae = temporary_pipe.vae
-                del temporary_pipe
+            if self.checkpoint:
+                if os.path.exists(self.id) and os.path.isfile(self.id):
+                    temporary_pipe = StableDiffusionPipeline.from_ckpt(
+                        self.id,
+                        from_safetensors=self.id.endswith(".safetensors"),
+                        load_safety_checker=False,
+                        device=self.device,
+                    )
+                    self.vae = temporary_pipe.vae
+                    del temporary_pipe
+                else:
+                    raise Exception(
+                        f"checkpoint: {self.id} must be a file and checkpoint file: {self.id} not found"
+                    )
             else:
                 self.vae = AutoencoderKL.from_pretrained(
                     self.id, subfolder="vae", device=self.device

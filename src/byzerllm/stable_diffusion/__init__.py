@@ -1,4 +1,5 @@
 import json
+import os
 import time
 import traceback
 from typing import Dict, List
@@ -8,8 +9,10 @@ from byzerllm.stable_diffusion.api.models.diffusion import (
     ImageGenerationOptions,
     MultidiffusionOptions,
 )
+from byzerllm.stable_diffusion.config import stableDiffusionConfig
 
 from byzerllm.stable_diffusion.model import DiffusersModel
+from byzerllm.stable_diffusion.utils import b642img
 
 # model_name = "runwayml/stable-diffusion-v1-5"
 
@@ -44,7 +47,9 @@ def stream_chat(
     init_image = kwargs.get("init_image", None)
     strength = float(kwargs.get("strength", 0.5))
 
-    # TODO: init_image format change
+    if init_image is not None:
+        init_image = b642img(init_image)
+
     images = generate_image(
         self,
         prompt=prompt,
@@ -74,9 +79,24 @@ def stream_chat(
 def init_model(
     model_dir, infer_params: Dict[str, str] = {}, sys_conf: Dict[str, str] = {}
 ):
-    # TODO: localPathPrefix添加参数
-    # localPathPrefix = infer_params.get("localPathPrefix", "")
-    model = DiffusersModel(model_dir)
+    stableDiffusionConfig.set_model_dir(model_dir)
+    localPathPrefix = infer_params.get("localPathPrefix", "")
+    if localPathPrefix != "":
+        stableDiffusionConfig.set_temp_dir(localPathPrefix)
+    else:
+        temp_dir = os.path.join(model_dir, stableDiffusionConfig.get_temp_dir())
+        stableDiffusionConfig.set_temp_dir(temp_dir)
+    xformers = "true" == infer_params.get("xformers", "true")
+    stableDiffusionConfig.set_xformers(xformers)
+    checkpoint = "true" == infer_params.get("checkpoint", "false")
+    stableDiffusionConfig.set_checkpoint(checkpoint)
+    hf_token = infer_params.get("hf_token", "")
+    stableDiffusionConfig.set_hf_token(hf_token)
+    variant = infer_params.get("variant", "fp16")
+    precision = infer_params.get("precision", "fp16")
+    stableDiffusionConfig.set_precision(precision)
+
+    model = DiffusersModel(model_id=model_dir, variant=variant, checkpoint=checkpoint)
     model.activate()
     import types
 

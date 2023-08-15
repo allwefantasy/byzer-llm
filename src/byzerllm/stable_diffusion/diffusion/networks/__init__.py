@@ -6,10 +6,10 @@ from typing import *
 import torch
 import byzerllm.stable_diffusion.diffusion.networks.lyco as lyco
 from byzerllm.stable_diffusion.logger import set_logger
-from byzerllm.stable_diffusion.shared import ROOT_DIR
 from byzerllm.stable_diffusion.api.events import event_handler
 from byzerllm.stable_diffusion.api.events.generation import LoadResourceEvent
 from byzerllm.stable_diffusion.api.models.diffusion import ImageGenerationOptions
+from byzerllm.stable_diffusion.config import stableDiffusionConfig
 
 
 logger = set_logger(__name__)
@@ -33,7 +33,7 @@ def get_networks_from_prompt(prompt: str) -> list:
 
 
 def find_network_filepath(network: str, subfolder: str) -> str:
-    models_dir = os.path.join(ROOT_DIR, "models", subfolder)
+    models_dir = os.path.join(stableDiffusionConfig.get_temp_dir(), subfolder)
 
     for file in glob(os.path.join(models_dir, "**", "*"), recursive=True):
         for ext in [".pt", ".safetensors"]:
