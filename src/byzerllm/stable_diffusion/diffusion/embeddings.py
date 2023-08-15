@@ -11,7 +11,7 @@ from byzerllm.stable_diffusion.api.events.generation import (
     LoadResourceEvent,
     PromptTokenizingEvent,
 )
-from byzerllm.stable_diffusion.config import ROOT_DIR
+from byzerllm.stable_diffusion.config import stableDiffusionConfig
 
 token_replaces = {}
 loaded_embeddings = []
@@ -22,7 +22,7 @@ def on_load_resource(e: LoadResourceEvent):
     global token_replaces, loaded_embeddings
     if not isinstance(e.pipe.text_encoder, CLIPTextModel):
         return
-    embeddings_dir = os.path.join(ROOT_DIR, "models", "embeddings")
+    embeddings_dir = os.path.join(stableDiffusionConfig.get_temp_dir(), "embeddings")
     embeddings = []
     for file in glob.glob(os.path.join(embeddings_dir, "**", "*"), recursive=True):
         safetensors = file.endswith(".safetensors")

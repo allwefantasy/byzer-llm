@@ -7,12 +7,8 @@ from concurrent.futures import ThreadPoolExecutor
 import torch
 from byzerllm.stable_diffusion import utils
 from byzerllm.stable_diffusion.api.models.diffusion import ImageGenerationOptions
+from byzerllm.stable_diffusion.config import stableDiffusionConfig
 
-from byzerllm.stable_diffusion.config import (
-    HF_TOKEN,
-    PRECISION,
-    XFORMERS,
-)
 from byzerllm.stable_diffusion.diffusion.piplines.diffusers import DiffusersPipeline
 from byzerllm.stable_diffusion.images import save_image_base64
 from byzerllm.stable_diffusion.lib.diffusers.scheduler import (
@@ -31,12 +27,19 @@ PrecisionMap = {
 
 
 class DiffusersModel:
-    def __init__(self, model_id: str, mode: str = "diffusers"):
-        self.model_id: str = model_id.split("#")[0]
-        self.variant: str = model_id.split("#")[1] if "#" in model_id else None
+    def __init__(
+        self,
+        model_id: str,
+        checkpoint: bool = False,
+        variant: str = "fp16",
+        mode: str = "diffusers",
+    ):
+        self.model_id: str = model_id
         self.mode: ModelMode = mode
         self.activated: bool = False
         self.pipe = None
+        self.variant = variant
+        self.checkpoint = checkpoint
 
     def available_modes(self):
         modes = ["diffusers"]
@@ -48,22 +51,27 @@ class DiffusersModel:
             return
         device = get_device()
 
-        precision = PRECISION or "fp32"
+        precision = stableDiffusionConfig.get_precision() or "fp32"
         torch_dtype = PrecisionMap[precision]
 
         if self.mode == "diffusers":
             self.pipe = DiffusersPipeline.from_pretrained(
                 self.model_id,
-                use_auth_token=HF_TOKEN,
+                use_auth_token=stableDiffusionConfig.get_hf_token(),
                 torch_dtype=torch_dtype,
                 variant=self.variant,
                 cache_dir=hf_diffusers_cache_dir(),
+                checkpoint=self.checkpoint,
             ).to(device=device)
 
             if Version(torch.__version__) < Version("2"):
                 self.pipe.enable_attention_slicing()
 
-            if utils.is_installed("xformers") and XFORMERS and device.type == "cuda":
+            if (
+                utils.is_installed("xformers")
+                and stableDiffusionConfig.get_xformers()
+                and device.type == "cuda"
+            ):
                 self.pipe.enable_xformers_memory_efficient_attention()
         self.activated = True
 

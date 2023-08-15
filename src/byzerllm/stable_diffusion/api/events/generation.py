@@ -2,9 +2,11 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
 import torch
+from byzerllm.stable_diffusion.api.diffusion.pipelines.diffusers import (
+    DiffusersPipelineModel,
+)
 from byzerllm.stable_diffusion.api.events import BaseEvent, SkippableEvent
 
-from byzerllm.stable_diffusion.piplines.diffusers import DiffusersPipelineModel
 
 @dataclass
 class LoadResourceEvent(BaseEvent):
