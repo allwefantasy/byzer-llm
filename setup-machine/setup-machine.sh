@@ -1,3 +1,4 @@
+#!/bin/bash
 set -e # Exit immediately if any command exits with a non-zero status (i.e., an error).
 # set -x # Print each command before executing it, prefixed with the + character. This can be useful for debugging shell scripts.
 set -o pipefail # # Exit with a non-zero status if any command in a pipeline fails, rather than just the last command.
