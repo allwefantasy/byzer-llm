@@ -43,12 +43,13 @@ SwissArmyTransformer
 
 protobuf==3.20.0
 
-sentencepiece
-safetensors
-pydantic
-nltk
-pillow
-diffusers
-lycoris
-lycoris-lora
+# dependencies only for stable_diffusion
+# sentencepiece
+# safetensors
+# pydantic
+# nltk
+# pillow
+# diffusers
+# lycoris
+# lycoris-lora
 
