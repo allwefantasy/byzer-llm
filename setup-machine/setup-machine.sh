@@ -19,7 +19,26 @@ TGI_SUPPORT=${TGI_SUPPORT:-"false"}
 VLLM_SUPPORT=${VLLM_SUPPORT:-"false"}
 AVIARY_SUPPORT=${AVIARY_SUPPORT:-"false"}
 NOTEBOOK_LOGO=${NOTEBOOK_LOGO:-"Byzer Notebook"}
+
 PYPI_MIRROR=${PYPI_MIRROR:-"aliyun"}
+GIT_MIRROR=${GIT_MIRROR:-"gitee"}
+
+GIT_BYZER_LLM="https://gitee.com/allwefantasy/byzer-llm.git"
+GIT_VLLM="https://gitee.com/allwefantasy/ori-vllm.git"
+GIT_AVIARY="https://gitee.com/allwefantasy/aviary.git"
+GIT_OPTIMUM="https://gitee.com/allwefantasy/optimum.git"
+GIT_AVIARY_DEEPSPEED="https://gitee.com/allwefantasy/DeepSpeed.git@aviary"
+GIT_TGI="https://gitee.com/mirrors/text-generation-inference.git"
+
+if [[ "${GIT_MIRROR}" == "github" ]]; then
+    GIT_BYZER_LLM="https://github.com/allwefantasy/byzer-llm.git"
+    GIT_VLLM="https://github.com/vllm-project/vllm.git"
+    GIT_AVIARY="https://github.com/ray-project/aviary.git"
+    GIT_OPTIMUM="https://github.com/huggingface/optimum.git"
+    GIT_AVIARY_DEEPSPEED="https://github.com/Yard1/DeepSpeed.git@aviary"
+    GIT_TGI="https://github.com/huggingface/text-generation-inference.git"
+fi
+
 RAY_DASHBOARD_HOST=${RAY_DASHBOARD_HOST:-"0.0.0.0"}
 
 # --- define pypi download mirror ---
@@ -156,6 +175,7 @@ echo "Install Conda environment"
 
 CONDA_INSTALL_PATH=$HOME/miniconda3
 CONDA_PREFIX=$CONDA_INSTALL_PATH
+CONDA_COMMAND=$CONDA_INSTALL_PATH/bin/conda
 
 echo "Download the latest version of Miniconda"
 
@@ -198,10 +218,10 @@ fi
 
 echo "Create conda environments: byzerllm-dev"
 
-if conda env list | grep -q "^byzerllm-dev "; then
+if ${CONDA_COMMAND} env list | grep -q "^byzerllm-dev "; then
     echo "Conda environment byzerllm-dev exists"
 else
-    conda create -y --name byzerllm-dev python=3.10.11
+    ${CONDA_COMMAND} create -y --name byzerllm-dev python=3.10.11
 fi
 
 source $CONDA_PREFIX/bin/activate byzerllm-dev
@@ -213,7 +233,7 @@ echo "Now install the NVIDIA toolkit with conda"
 
 # for now pytorch use cuda 11.8.0 by default.
 # We should update this version when pytorch update the default version
-conda install -y cuda -c nvidia/label/cuda-11.8.0
+${CONDA_COMMAND} install -y cuda -c nvidia/label/cuda-11.8.0
 
 
 if command -v nvcc &> /dev/null; then
@@ -237,8 +257,8 @@ done
 echo "Install some basic python packages"
 if [[ -d "byzer-llm" ]]; then
     echo "byzer-llm project is already exists"
-else
-    git clone https://gitee.com/allwefantasy/byzer-llm
+else    
+    git clone ${GIT_BYZER_LLM}
 fi
 
 pip install -r byzer-llm/demo-requirements.txt
@@ -253,7 +273,7 @@ if [[ "${TGI_SUPPORT}" == "true" ]]; then
     # source "$HOME/.cargo/env" && PROTOC_ZIP=protoc-21.12-linux-x86_64.zip && curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v21.12/$PROTOC_ZIP && sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc && sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*' && rm -f $PROTOC_ZIP    
     source "$HOME/.cargo/env" && PROTOC_ZIP=protoc-21.12-linux-x86_64.zip && curl -OL https://gitee.com/allwefantasy/byzer-llm/releases/download/dependency-protoc/$PROTOC_ZIP && sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc && sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*' && rm -f $PROTOC_ZIP    
     source "$HOME/.cargo/env" && pip install tensorboard ninja text-generation
-    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST_VALUE} && git clone https://gitee.com/mirrors/text-generation-inference && cd text-generation-inference && git checkout 5e6ddfd6a4fecc394255d7109f87c420c98b4e15 && BUILD_EXTENSIONS=True make install
+    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST_VALUE} && git clone ${GIT_TGI} && cd text-generation-inference && git checkout 5e6ddfd6a4fecc394255d7109f87c420c98b4e15 && BUILD_EXTENSIONS=True make install
     source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST_VALUE} && cd text-generation-inference/server && BUILD_EXTENSIONS=True make install-flash-attention
     source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST_VALUE} && cd text-generation-inference/server && BUILD_EXTENSIONS=True make install-flash-attention-v2
     source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST_VALUE} && cd text-generation-inference/server && make install-vllm   
@@ -289,7 +309,7 @@ fi
 if [[ "${VLLM_SUPPORT}" == "true" ]]; then
     echo "Setup VLLM support in Byzer-LLM"
     source $CONDA_PREFIX/bin/activate byzerllm-dev
-    pip install "git+https://gitee.com/allwefantasy/ori-vllm.git"
+    pip install "git+${GIT_VLLM}"
 fi
 
 if [[ "${AVIARY_SUPPORT}" == "true" ]]; then
@@ -298,11 +318,11 @@ if [[ "${AVIARY_SUPPORT}" == "true" ]]; then
   "awscrt" \
   "Jinja2" \
   "numexpr>=2.7.3" \
-  "git+https://gitee.com/allwefantasy/DeepSpeed.git@aviary" \
+  "git+${GIT_AVIARY_DEEPSPEED}" \
   "numpy<1.24" \
   "ninja"
-    pip install --no-deps "git+https://gitee.com/allwefantasy/optimum.git"
-    pip install --no-deps "git+https://gitee.com/allwefantasy/aviary.git"
+    pip install --no-deps "git+${GIT_OPTIMUM}"
+    pip install --no-deps "git+${GIT_AVIARY}"
 fi
 
 ## When use deepspeed inference, it will throws RuntimeError: Error building extension 'transformer_inference'. 
