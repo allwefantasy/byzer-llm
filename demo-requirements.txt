@@ -1,6 +1,4 @@
 netifaces
-peft @ git+https://gitee.com/allwefantasy/peft.git
-# peft @ git+https://github.com/huggingface/peft.git
 accelerate
 bitsandbytes==0.39.0
 transformers==4.31.0
@@ -20,8 +18,7 @@ tqdm==4.62.3
 loguru
 tensorboard
 pyjava==0.6.4
-byzerllm @ git+https://gitee.com/allwefantasy/byzer-llm.git
-# byzerllm @ git+https://github.com/allwefantasy/byzer-llm.git
+
 
 # dependencies only for sparkdesk
 websockets
