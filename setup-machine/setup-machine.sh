@@ -377,12 +377,17 @@ cd $HOME/softwares
 
 if [[ $ROLE == "master" ]];then
     echo "Since we are in master mode, we should install Byzer Lang and Byzer Notebook"
+    
+    if [[ ! -f "byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz" ]]; then
+       wget "https://download.byzer.org/byzer/byzer-lang/${BYZER_VERSION}/byzer-lang-all-in-one-linux-amd64-3.3.0-2.3.8.tar.gz" -O byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz    
+    fi
 
-    wget "https://download.byzer.org/byzer/byzer-lang/${BYZER_VERSION}/byzer-lang-all-in-one-linux-amd64-3.3.0-2.3.8.tar.gz" -O byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz
-    tar -zxvf byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz
+    tar -zxvf byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz    
     BYZER_LANG_HOME=$HOME/softwares/byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}
-
-    wget "https://download.byzer.org/byzer/byzer-notebook/${BYZER_NOTEBOOK_VERSION}/byzer-notebook-${BYZER_NOTEBOOK_VERSION}.tar.gz" -O byzer-notebook-${BYZER_NOTEBOOK_VERSION}.tar.gz
+    
+    if [[ ! -f "byzer-notebook-${BYZER_NOTEBOOK_VERSION}.tar.gz" ]]; then
+        wget "https://download.byzer.org/byzer/byzer-notebook/${BYZER_NOTEBOOK_VERSION}/byzer-notebook-${BYZER_NOTEBOOK_VERSION}.tar.gz" -O byzer-notebook-${BYZER_NOTEBOOK_VERSION}.tar.gz
+    fi    
     tar -zxvf byzer-notebook-${BYZER_NOTEBOOK_VERSION}.tar.gz
     BYZER_NOTEBOOK_HOME=$HOME/softwares/byzer-notebook
 
