@@ -372,7 +372,11 @@ if [[ $ROLE == "master" ]];then
     BYZER_NOTEBOOK_HOME=$HOME/softwares/byzer-notebook
 
     echo "Setup JDK"
-
+    # On some Linux distributions, such as Ubuntu 22.04, the contents of the ~/.bashrc file are not executed \
+    # in non-interactive mode, so we need to explicitly set the variables JAVA_HOME and PATH in the script
+    export JAVA_HOME=${BYZER_LANG_HOME}/jdk8
+    export PATH=\${JAVA_HOME}/bin:\$PATH
+    
     cat <<EOF >> ~/.bashrc
 export JAVA_HOME=${BYZER_LANG_HOME}/jdk8
 export PATH=\${JAVA_HOME}/bin:\$PATH
