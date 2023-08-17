@@ -23,6 +23,16 @@ NOTEBOOK_LOGO=${NOTEBOOK_LOGO:-"Byzer Notebook"}
 PYPI_MIRROR=${PYPI_MIRROR:-"aliyun"}
 GIT_MIRROR=${GIT_MIRROR:-"gitee"}
 
+#valid conda channel
+CONDA_MIRROR=${CONDA_MIRROR:-"tuna"}
+support_conda_mirrors=("tuna" "anaconda")
+if [[ " ${support_conda_mirrors[@]} " =~ " ${CONDA_MIRROR} " ]]; then
+    echo "current conda channel is ${CONDA_MIRROR}"
+else
+    echo "not support conda channel: ${CONDA_MIRROR}, please set CONDA_MIRROR to one of ${support_conda_mirrors[@]}"
+    exit 1
+fi
+
 GIT_BYZER_LLM="https://gitee.com/allwefantasy/byzer-llm.git"
 GIT_VLLM="https://gitee.com/allwefantasy/ori-vllm.git"
 GIT_AVIARY="https://gitee.com/allwefantasy/aviary.git"
@@ -182,7 +192,11 @@ echo "Download the latest version of Miniconda"
 if [[ -d "$HOME/miniconda3" ]]; then
     echo "Miniconda is already installed"
 else
-    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+    if [[ $CONDA_MIRROR == "anaconda" ]]; then
+        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+    elif [[ $CONDA_MIRROR == "tuna" ]]; then
+        wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+    fi
     chmod +x ~/miniconda.sh
     ./miniconda.sh -b -p $HOME/miniconda3    
 fi
