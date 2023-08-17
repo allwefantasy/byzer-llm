@@ -1,4 +1,5 @@
-#!/bin/bash
+#! /bin/bash
+
 set -e # Exit immediately if any command exits with a non-zero status (i.e., an error).
 # set -x # Print each command before executing it, prefixed with the + character. This can be useful for debugging shell scripts.
 set -o pipefail # # Exit with a non-zero status if any command in a pipeline fails, rather than just the last command.
@@ -380,7 +381,17 @@ EOF
     else
         echo "docker is not installed, now install docker"    
         if [ "$OS" = "ubuntu" ]; then
-            sudo apt install -y docker.io            
+            sudo apt install -y docker.io 
+            if [ $? -eq 0 ]; then
+                echo "install docker.io succeeded"
+            else
+                sudo apt-get update
+                sudo apt-get install apt-transport-https ca-certificates curl software-properties-common
+                curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+                sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+                sudo apt-get update
+                sudo apt-get install docker-ce
+            fi          
         elif [ "$OS" = "centos" ]; then
             sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
             sudo dnf install -y docker-ce docker-ce-cli containerd.io
@@ -390,15 +401,21 @@ EOF
     fi
 
     echo "Start MySQL"
+
+    if sudo docker ps -a | grep -q "metadb"; then
+        echo "docker is already running"
+    else 
+        echo "docker is not running, now start docker"
+        MAX_RETRIES=3
+        RETRY_DELAY=5
+        for i in $(seq 1 $MAX_RETRIES); do
+            sudo docker run --name metadb -e MYSQL_ROOT_PASSWORD=${DEFUALT_MYSQL_PASSWORD} -p 3306:3306 -d mysql:5.7 && break
+            echo "Failed to start container. Retrying in $RETRY_DELAY seconds..."
+            sleep $RETRY_DELAY
+        done
+    fi
     
-    MAX_RETRIES=3
-    RETRY_DELAY=5
-    
-    for i in $(seq 1 $MAX_RETRIES); do
-        sudo docker run --name metadb -e MYSQL_ROOT_PASSWORD=${DEFUALT_MYSQL_PASSWORD} -p 3306:3306 -d mysql:5.7 && break
-        echo "Failed to start container. Retrying in $RETRY_DELAY seconds..."
-        sleep $RETRY_DELAY
-    done
+
     
     echo "Setup Ray"
 
