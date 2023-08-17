@@ -22,6 +22,7 @@ NOTEBOOK_LOGO=${NOTEBOOK_LOGO:-"Byzer Notebook"}
 
 PYPI_MIRROR=${PYPI_MIRROR:-"aliyun"}
 GIT_MIRROR=${GIT_MIRROR:-"gitee"}
+CONDA_MIRROR=${CONDA_MIRROR:-"https://mirrors.tuna.tsinghua.edu.cn"}
 
 GIT_BYZER_LLM="https://gitee.com/allwefantasy/byzer-llm.git"
 GIT_VLLM="https://gitee.com/allwefantasy/ori-vllm.git"
@@ -182,7 +183,7 @@ echo "Download the latest version of Miniconda"
 if [[ -d "$HOME/miniconda3" ]]; then
     echo "Miniconda is already installed"
 else
-    wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+    wget "{$CONDA_MIRROR}/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh" -O ~/miniconda.sh
     chmod +x ~/miniconda.sh
     ./miniconda.sh -b -p $HOME/miniconda3    
 fi
