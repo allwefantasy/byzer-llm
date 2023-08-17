@@ -138,9 +138,9 @@ if command -v ifconfig &> /dev/null; then
 else
     echo "ifconfig is not installed, now install ifconfig"    
     if [ "$OS" = "ubuntu" ]; then
-        apt install -y net-tools
+        sudo apt install -y net-tools
     elif [ "$OS" = "centos" ]; then
-        yum install -y net-tools
+        sudo yum install -y net-tools
     fi
 fi
 
