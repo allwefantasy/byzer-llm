@@ -229,7 +229,6 @@ else
 fi
 
 source $CONDA_PREFIX/bin/activate byzerllm-dev
-# conda activate byzerllm-dev
 
 setup_pypi_mirror
 
@@ -312,13 +311,11 @@ fi
 
 if [[ "${VLLM_SUPPORT}" == "true" ]]; then
     echo "Setup VLLM support in Byzer-LLM"
-    source $CONDA_PREFIX/bin/activate byzerllm-dev
     pip install "git+${GIT_VLLM}"
 fi
 
 if [[ "${PEFT_SUPPORT}" == "true" ]]; then
     echo "Setup PEFT support in Byzer-LLM"
-    source $CONDA_PREFIX/bin/activate byzerllm-dev
     pip install "git+${GIT_PEFT}"
 fi
 
@@ -379,7 +376,6 @@ if [[ $ROLE == "master" ]];then
     cat <<EOF >> ~/.bashrc
 export JAVA_HOME=${BYZER_LANG_HOME}/jdk8
 export PATH=\${JAVA_HOME}/bin:\$PATH
-source $CONDA_PREFIX/bin/activate byzerllm-dev
 EOF
 
     source ~/.bashrc
@@ -391,7 +387,7 @@ EOF
         echo "docker is not installed, now install docker"    
         if [ "$OS" = "ubuntu" ]; then
             sudo apt install -y docker.io || STATUS=$?
-            if [ STATUS -eq 0 ]; then
+            if [ $STATUS -eq 0 ]; then
                 echo "install docker.io succeeded"
             else
                 sudo apt-get update
