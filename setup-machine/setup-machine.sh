@@ -21,8 +21,8 @@ VLLM_SUPPORT=${VLLM_SUPPORT:-"false"}
 AVIARY_SUPPORT=${AVIARY_SUPPORT:-"false"}
 NOTEBOOK_LOGO=${NOTEBOOK_LOGO:-"Byzer Notebook"}
 
-PYPI_MIRROR=${PYPI_MIRROR:-"aliyun"}
-GIT_MIRROR=${GIT_MIRROR:-"gitee"}
+PYPI_MIRROR=${PYPI_MIRROR:-"default"}
+GIT_MIRROR=${GIT_MIRROR:-"github"}
 
 GIT_BYZER_LLM="https://gitee.com/allwefantasy/byzer-llm.git"
 GIT_VLLM="https://gitee.com/allwefantasy/ori-vllm.git"
