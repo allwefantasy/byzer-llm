@@ -182,7 +182,7 @@ echo "Download the latest version of Miniconda"
 if [[ -d "$HOME/miniconda3" ]]; then
     echo "Miniconda is already installed"
 else
-    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+    wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
     chmod +x ~/miniconda.sh
     ./miniconda.sh -b -p $HOME/miniconda3    
 fi
