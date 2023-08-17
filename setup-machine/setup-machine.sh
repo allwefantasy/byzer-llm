@@ -16,7 +16,6 @@ OS="ubuntu"
 BYZER_VERSION="2.3.8"
 BYZER_NOTEBOOK_VERSION="1.2.5"
 DEFUALT_MYSQL_PASSWORD=${DEFUALT_MYSQL_PASSWORD:-"mlsql"}
-PEFT_SUPPORT=${PEFT_SUPPORT:-"true"}
 TGI_SUPPORT=${TGI_SUPPORT:-"false"}
 VLLM_SUPPORT=${VLLM_SUPPORT:-"false"}
 AVIARY_SUPPORT=${AVIARY_SUPPORT:-"false"}
@@ -278,7 +277,14 @@ else
     git clone ${GIT_BYZER_LLM}
 fi
 
+
+pip install "git+${GIT_PEFT}"
 pip install -r byzer-llm/demo-requirements.txt
+
+# echo install byzer-llm package
+cd byzer-llm
+pip install .
+cd ..
 
 # in some cuda version, the 9.0 is not supported, if that case, try to remove 9.0 from TORCH_CUDA_ARCH_LIST_VALUE
 TORCH_CUDA_ARCH_LIST_VALUE="8.0 8.6 9.0"
@@ -326,11 +332,6 @@ fi
 if [[ "${VLLM_SUPPORT}" == "true" ]]; then
     echo "Setup VLLM support in Byzer-LLM"
     pip install "git+${GIT_VLLM}"
-fi
-
-if [[ "${PEFT_SUPPORT}" == "true" ]]; then
-    echo "Setup PEFT support in Byzer-LLM"
-    pip install "git+${GIT_PEFT}"
 fi
 
 if [[ "${AVIARY_SUPPORT}" == "true" ]]; then
