@@ -16,6 +16,7 @@ OS="ubuntu"
 BYZER_VERSION="2.3.8"
 BYZER_NOTEBOOK_VERSION="1.2.5"
 DEFUALT_MYSQL_PASSWORD=${DEFUALT_MYSQL_PASSWORD:-"mlsql"}
+PEFT_SUPPORT=${PEFT_SUPPORT:-"true"}
 TGI_SUPPORT=${TGI_SUPPORT:-"false"}
 VLLM_SUPPORT=${VLLM_SUPPORT:-"false"}
 AVIARY_SUPPORT=${AVIARY_SUPPORT:-"false"}
@@ -30,6 +31,7 @@ GIT_AVIARY="https://gitee.com/allwefantasy/aviary.git"
 GIT_OPTIMUM="https://gitee.com/allwefantasy/optimum.git"
 GIT_AVIARY_DEEPSPEED="https://gitee.com/allwefantasy/DeepSpeed.git@aviary"
 GIT_TGI="https://gitee.com/mirrors/text-generation-inference.git"
+GIT_PEFT="https://gitee.com/allwefantasy/peft.git"
 
 if [[ "${GIT_MIRROR}" == "github" ]]; then
     GIT_BYZER_LLM="https://github.com/allwefantasy/byzer-llm.git"
@@ -38,6 +40,7 @@ if [[ "${GIT_MIRROR}" == "github" ]]; then
     GIT_OPTIMUM="https://github.com/huggingface/optimum.git"
     GIT_AVIARY_DEEPSPEED="https://github.com/Yard1/DeepSpeed.git@aviary"
     GIT_TGI="https://github.com/huggingface/text-generation-inference.git"
+    GIT_PEFT="https://github.com/huggingface/peft.git"
 fi
 
 RAY_DASHBOARD_HOST=${RAY_DASHBOARD_HOST:-"0.0.0.0"}
@@ -311,6 +314,12 @@ if [[ "${VLLM_SUPPORT}" == "true" ]]; then
     echo "Setup VLLM support in Byzer-LLM"
     source $CONDA_PREFIX/bin/activate byzerllm-dev
     pip install "git+${GIT_VLLM}"
+fi
+
+if [[ "${PEFT_SUPPORT}" == "true" ]]; then
+    echo "Setup PEFT support in Byzer-LLM"
+    source $CONDA_PREFIX/bin/activate byzerllm-dev
+    pip install "git+${GIT_PEFT}"
 fi
 
 if [[ "${AVIARY_SUPPORT}" == "true" ]]; then
