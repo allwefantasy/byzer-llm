@@ -390,8 +390,8 @@ EOF
     else
         echo "docker is not installed, now install docker"    
         if [ "$OS" = "ubuntu" ]; then
-            sudo apt install -y docker.io 
-            if [ $? -eq 0 ]; then
+            sudo apt install -y docker.io || STATUS=$?
+            if [ STATUS -eq 0 ]; then
                 echo "install docker.io succeeded"
             else
                 sudo apt-get update
