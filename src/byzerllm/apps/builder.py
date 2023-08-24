@@ -24,8 +24,9 @@ class OnceWay:
             if i.is_file():
                with open(i.as_posix(),"r",encoding="utf-8") as f:
                  for line in f:
-                    doc = json.loads(line)                    
-                    docs.append(Document(page_content=doc["page_content"],metadata={ "source":doc["source"]}))
+                    doc = json.loads(line)
+                    docs.append(Document(page_content=doc["page_content"],
+                                         metadata={"source": doc["source"], "page_content": doc["page_content"]}))
                     
 
         if  len(docs) > 0:
