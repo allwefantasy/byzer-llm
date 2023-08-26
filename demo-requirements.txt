@@ -18,6 +18,8 @@ tqdm==4.62.3
 loguru
 tensorboard
 pyjava==0.6.4
+tiktoken
+transformers_stream_generator==0.0.4
 
 
 # dependencies only for sparkdesk
