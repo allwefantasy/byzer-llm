@@ -56,6 +56,8 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
             byte_io = io.BytesIO()
             new_image.save(byte_io)
             base64_new_image = base64.b64encode(byte_io.getvalue())
+        else:
+            print("no new image",flush=True)    
     
     output = json.dumps({"response":response,"history":history,"image":base64_new_image,"input_image":image,"input_image_path":image_file})
     return [(output,"")]
