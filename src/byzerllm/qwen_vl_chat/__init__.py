@@ -54,6 +54,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         try:
             import matplotlib.pyplot as plt
             plt.clf() 
+            plt.close()
         except:
             pass
 
