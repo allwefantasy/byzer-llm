@@ -20,6 +20,7 @@ tensorboard
 pyjava==0.6.4
 tiktoken
 transformers_stream_generator==0.0.4
+optimum
 
 
 # dependencies only for sparkdesk
