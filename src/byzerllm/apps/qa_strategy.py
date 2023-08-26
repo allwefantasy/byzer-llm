@@ -1,6 +1,7 @@
 from langchain.docstore.document import Document
 from abc import ABC, abstractmethod
 from typing import List, Tuple,Dict,Any
+import json
 
 
 class DocRetrieveStrategy(ABC):
@@ -36,7 +37,7 @@ class DocRetrieveStrategyFactory(DocRetrieveStrategy):
             print("Using full_doc strategy",flush=True)
             return FullDocRetrieveStrategy().retrieve(docs, k)
         else:
-            return docs
+            return docs[0:k]
 
 
 class DocCombineFormat(ABC):
@@ -59,7 +60,7 @@ class FullDocCombineFormatList(DocCombineFormat):
             temp_docs.append(f'{index}. {doc[0].page_content}')
             if "metadata" in doc[0]:
                 temp_metas.append(doc[0].metadata)
-        return ("\n".join(temp_docs), temp_metas)
+        return (json.dumps(temp_docs,ensure_ascii=False), temp_metas)
 
 
 class FullDocCombineFormatDefault(DocCombineFormat):
@@ -78,6 +79,21 @@ class FullDocCombineFormatDefault(DocCombineFormat):
                 temp_metas.append(doc[0].metadata)
         return ("\n".join(temp_docs), temp_metas)
 
+class JsonCombineFormat(DocCombineFormat):
+    def __init__(self, input: Dict[str,Any]) -> None:
+        self.params = input
+
+    def combine(self, docs: List[Tuple[Document, float]], k: int) -> Tuple[str, List[Dict[Any, Any]]]:
+        if docs is None or len(docs) == 0:
+            return None
+
+        temp_docs = []
+        temp_metas = []
+        for index, doc in enumerate(docs[0:k]):
+            temp_docs.append({"body":doc[0].page_content})
+            if "metadata" in doc[0]:
+                temp_metas.append(doc[0].metadata)
+        return ("\n".join(temp_docs), temp_metas)
 
 class FullDocCombineFormatFactory(DocCombineFormat):
     def __init__(self, input: Dict[str,Any]) -> None:
@@ -87,6 +103,8 @@ class FullDocCombineFormatFactory(DocCombineFormat):
     def combine(self, docs: List[Tuple[Document, float]], k: int) -> Tuple[str, List[Dict[Any, Any]]]:
         if self.format == 'list':
             return FullDocCombineFormatList(self.params).combine(docs, k)
+        elif self.format == 'json':
+            return JsonCombineFormat(self.params).combine(docs, k)
         else:
             return FullDocCombineFormatDefault(self.params).combine(docs, k)
 
