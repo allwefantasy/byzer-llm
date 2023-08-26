@@ -48,7 +48,7 @@ class DocCombineFormat(ABC):
 
 class FullDocCombineFormatList(DocCombineFormat):
     def __init__(self, input: Dict[str,Any]) -> None:
-        self.format = input.get("format","")
+        self.params = input
 
     def combine(self, docs: List[Tuple[Document, float]], k: int) -> Tuple[str, List[Dict[Any, Any]]]:
         if not docs :
@@ -65,7 +65,7 @@ class FullDocCombineFormatList(DocCombineFormat):
 
 class FullDocCombineFormatDefault(DocCombineFormat):
     def __init__(self, input: Dict[str,Any]) -> None:
-        self.format = input.get("format","")
+        self.params = input
 
     def combine(self, docs: List[Tuple[Document, float]], k: int) -> Tuple[str, List[Dict[Any, Any]]]:
         if docs is None or len(docs) == 0:
@@ -83,6 +83,7 @@ class FullDocCombineFormatDefault(DocCombineFormat):
 class FullDocCombineFormatFactory(DocCombineFormat):
     def __init__(self, input: Dict[str,Any]) -> None:
         self.params = input
+        self.format = input.get("format","")       
 
     def combine(self, docs: List[Tuple[Document, float]], k: int) -> Tuple[str, List[Dict[Any, Any]]]:
         if self.format == 'list':
