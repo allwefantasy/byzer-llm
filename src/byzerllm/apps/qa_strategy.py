@@ -11,21 +11,20 @@ class DocRetrieveStrategy(ABC):
 
 class FullDocRetrieveStrategy(DocRetrieveStrategy):
     def retrieve(self, docs: List[Tuple[Document, float]], k: int) -> List[Tuple[Document, float]]:
-        if docs is None or len(docs) == 0:
-            print("empty doc list")
-            return None
+        if not docs:            
+            return []
 
         doc_hits = {}
         for doc in docs:
-            if doc[0].metadata['source'] in doc_hits:
-                doc_hits[doc[0].metadata['source']] = (doc[0], doc[1], doc_hits[doc[0].metadata['source']][2] + 1)
-            else:
-                doc_hits[doc[0].metadata['source']] = (doc[0], doc[1], 1)
+            source = doc[0].metadata['source']            
+            doc,score,hits = doc_hits.get(source, (doc[0], doc[1], 0))
+            doc_hits[source] = (doc,score,hits+1)
+
         # Sort by hits descending and then by score ascending
         sorted_docs = sorted(doc_hits.values(), key=lambda x: (x[2], -1 * x[1]), reverse=True)
-        doc_tuple3 = sorted_docs[0]
-        doc_tuple3[0].page_content = doc_tuple3[0].metadata['page_content']
-        return [(doc_tuple3[0], doc_tuple3[1])]
+        doc,score,hits = sorted_docs[0]
+        doc.page_content = doc.metadata['page_content']
+        return [(doc, score)]
 
 
 class DocRetrieveStrategyFactory(DocRetrieveStrategy):
@@ -34,7 +33,7 @@ class DocRetrieveStrategyFactory(DocRetrieveStrategy):
 
     def retrieve(self, docs: List[Tuple[Document, float]], k: int) -> List[Tuple[Document, float]]:
         if self.strategy == "full_doc":
-            print("Using full_doc strategy")
+            print("Using full_doc strategy",flush=True)
             return FullDocRetrieveStrategy().retrieve(docs, k)
         else:
             return docs
