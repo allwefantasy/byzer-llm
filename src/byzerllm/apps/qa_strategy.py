@@ -1,6 +1,6 @@
 from langchain.docstore.document import Document
 from abc import ABC, abstractmethod
-from typing import List, Tuple
+from typing import List, Tuple,Dict,Any
 
 
 class DocRetrieveStrategy(ABC):
@@ -42,13 +42,16 @@ class DocRetrieveStrategyFactory(DocRetrieveStrategy):
 
 class DocCombineFormat(ABC):
     @abstractmethod
-    def combine(self, docs: List[Tuple[Document, float]], k: int) -> Tuple[List, List]:
+    def combine(self, docs: List[Tuple[Document, float]], k: int) -> Tuple[str, List[Dict[Any, Any]]]:
         pass
 
 
 class FullDocCombineFormatList(DocCombineFormat):
-    def combine(self, docs: List[Tuple[Document, float]], k: int) -> Tuple[List, List]:
-        if docs is None or len(docs) == 0:
+    def __init__(self, input: Dict[str,Any]) -> None:
+        self.format = input.get("format","")
+
+    def combine(self, docs: List[Tuple[Document, float]], k: int) -> Tuple[str, List[Dict[Any, Any]]]:
+        if not docs :
             return None
 
         temp_docs = []
@@ -57,11 +60,14 @@ class FullDocCombineFormatList(DocCombineFormat):
             temp_docs.append(f'{index}. {doc[0].page_content}')
             if "metadata" in doc[0]:
                 temp_metas.append(doc[0].metadata)
-        return (temp_docs, temp_metas)
+        return ("\n".join(temp_docs), temp_metas)
 
 
 class FullDocCombineFormatDefault(DocCombineFormat):
-    def combine(self, docs: List[Tuple[Document, float]], k: int) -> Tuple[List, List]:
+    def __init__(self, input: Dict[str,Any]) -> None:
+        self.format = input.get("format","")
+
+    def combine(self, docs: List[Tuple[Document, float]], k: int) -> Tuple[str, List[Dict[Any, Any]]]:
         if docs is None or len(docs) == 0:
             return None
 
@@ -71,16 +77,16 @@ class FullDocCombineFormatDefault(DocCombineFormat):
             temp_docs.append(f'{doc[0].page_content}')
             if "metadata" in doc[0]:
                 temp_metas.append(doc[0].metadata)
-        return (temp_docs, temp_metas)
+        return ("\n".join(temp_docs), temp_metas)
 
 
 class FullDocCombineFormatFactory(DocCombineFormat):
-    def __init__(self, format: str) -> None:
-        self.format = format
+    def __init__(self, input: Dict[str,Any]) -> None:
+        self.params = input
 
-    def combine(self, docs: List[Tuple[Document, float]], k: int) -> Tuple[List, List]:
+    def combine(self, docs: List[Tuple[Document, float]], k: int) -> Tuple[str, List[Dict[Any, Any]]]:
         if self.format == 'list':
-            return FullDocCombineFormatList().combine(docs, k)
+            return FullDocCombineFormatList(self.params).combine(docs, k)
         else:
-            return FullDocCombineFormatDefault().combine(docs, k)
+            return FullDocCombineFormatDefault(self.params).combine(docs, k)
 

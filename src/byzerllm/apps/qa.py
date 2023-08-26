@@ -54,18 +54,14 @@ class ByzerLLMQA:
 
         docs = sorted(docs_with_score, key=lambda doc: doc[1],reverse=False)
 
-        strategy = input.get("strategy", "full_doc")
+        strategy = input.get("strategy", "")
         docs = DocRetrieveStrategyFactory(strategy).retrieve(docs, k)
 
         if hint == "show_only_context":
             return json.dumps([{"score":float(doc[1]),"content":doc[0].page_content} for doc in docs[0:k]],ensure_ascii=False,indent=4)
-
-        doc_chunk_prefix = input.get("doc_chunk_prefix","")
-        doc_chunk_sep = input.get("doc_chunk_sep","\n")
-
-        temp_docs, temp_metas = FullDocCombineFormatFactory(doc_chunk_prefix).combine(docs, k)
-
-        newq = doc_chunk_sep.join(temp_docs) 
+         
+        newq , temp_metas = FullDocCombineFormatFactory(input).combine(docs, k)
+        
         show_full_query  = hint == "show_full_query"         
 
         if not prompt:
