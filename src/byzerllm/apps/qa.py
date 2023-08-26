@@ -1,19 +1,16 @@
 import json
-from langchain.vectorstores import FAISS
-from langchain.docstore.document import Document
+
 from langchain import PromptTemplate
-from dataclasses import dataclass
-from pathlib import Path
 import ray
 import os
-from typing import Dict,List,Any
+from typing import Dict, List, Any, Tuple
 import uuid
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 from pyjava.storage  import streaming_tar
 import time
-import shutil
 
 from . import BuilderParams,QueryParams
+from .qa_strategy import FullDocCombineFormatFactory, DocRetrieveStrategyFactory
 from .vector_db import VectorDB
 from .client import ByzerLLMClient
 
@@ -55,25 +52,19 @@ class ByzerLLMQA:
         query_vector_db_time = time.time() - time1        
         print(f"VectorDB query time taken:{query_vector_db_time}s. total chunks: {len(docs_with_score)}")   
 
-        docs = sorted(docs_with_score, key=lambda doc: doc[1],reverse=False)                       
+        docs = sorted(docs_with_score, key=lambda doc: doc[1],reverse=False)
 
-        if hint == "show_only_context":            
+        strategy = input.get("strategy", "full_doc")
+        docs = DocRetrieveStrategyFactory(strategy).retrieve(docs, k)
+
+        if hint == "show_only_context":
             return json.dumps([{"score":float(doc[1]),"content":doc[0].page_content} for doc in docs[0:k]],ensure_ascii=False,indent=4)
 
         doc_chunk_prefix = input.get("doc_chunk_prefix","")
         doc_chunk_sep = input.get("doc_chunk_sep","\n")
 
-        temp_docs = [] 
-        temp_metas = []       
+        temp_docs, temp_metas = FullDocCombineFormatFactory(doc_chunk_prefix).combine(docs, k)
 
-        for index,doc in enumerate(docs[0:k]):
-            if doc_chunk_prefix == "list":
-                temp_docs.append(f'{index}. {doc[0].page_content}')
-            else:
-                temp_docs.append(f'{doc[0].page_content}')
-            if hasattr(doc[0],"metadata"):        
-                temp_metas.append(doc[0].metadata)    
-       
         newq = doc_chunk_sep.join(temp_docs) 
         show_full_query  = hint == "show_full_query"         
 
@@ -88,8 +79,9 @@ class ByzerLLMQA:
         
         top_p=float(input.get("top_p",0.7))
         temperature=float(input.get("temperature",0.9))
+        max_length = int(input.get("max_length", 1024))
 
-        v = self.client.chat(final_query,[],extra_query={"top_p":top_p,"temperature":temperature})
+        v = self.client.chat(final_query,[],extra_query={"top_p":top_p,"temperature":temperature, "max_length":max_length})
         chat_time = time.time() - time2
 
         if show_full_query:
