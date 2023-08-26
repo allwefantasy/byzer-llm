@@ -55,7 +55,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         if new_image:
             byte_io = io.BytesIO()
             new_image.save(byte_io)
-            base64_new_image = base64.b64encode(byte_io.getvalue())
+            base64_new_image = base64.b64encode(byte_io.getvalue()).decode('utf-8')
         else:
             print("no new image",flush=True)    
     
