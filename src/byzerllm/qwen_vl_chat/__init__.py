@@ -51,12 +51,12 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         response, history = self.chat(tokenizer, query=query, history=None)                            
     else:        
         response, history = self.chat(tokenizer, ins, history=input_history)         
-        try:
-            import matplotlib.pyplot as plt
-            plt.clf() 
-            plt.close()
-        except:
-            pass
+        # try:
+        #     import matplotlib.pyplot as plt
+        #     plt.clf() 
+        #     plt.close()
+        # except:
+        #     pass
 
         new_image = tokenizer.draw_bbox_on_latest_picture(response, history)        
         if new_image:
