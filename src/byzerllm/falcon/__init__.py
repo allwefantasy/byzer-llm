@@ -79,6 +79,8 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     model.eval()  
     if quatization:
         model = torch.compile(model)
+
+    model = model.to_bettertransformer()    
     model.stream_chat = types.MethodType(stream_chat, model)     
     return (model,tokenizer)
 
