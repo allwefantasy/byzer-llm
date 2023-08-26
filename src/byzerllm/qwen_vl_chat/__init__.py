@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, AutoModel,GenerationConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer,GenerationConfig
 import transformers
 import torch
 import json
@@ -71,7 +71,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     
 
     tokenizer = AutoTokenizer.from_pretrained(pretrained_model_dir,trust_remote_code=True)    
-    model = AutoModel.from_pretrained(pretrained_model_dir,trust_remote_code=True,                                                
+    model = AutoModelForCausalLM.from_pretrained(pretrained_model_dir,trust_remote_code=True,                                                
                                                 bf16=True,
                                                 device_map='auto'
                                                 ).half().cuda()
