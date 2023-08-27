@@ -21,6 +21,7 @@ VLLM_SUPPORT=${VLLM_SUPPORT:-"false"}
 AVIARY_SUPPORT=${AVIARY_SUPPORT:-"false"}
 NOTEBOOK_LOGO=${NOTEBOOK_LOGO:-"Byzer Notebook"}
 
+CUDA_DNN_SUPPORT=${CUDA_DNN_SUPPORT:-"false"}
 PYPI_MIRROR=${PYPI_MIRROR:-"aliyun"}
 GIT_MIRROR=${GIT_MIRROR:-"gitee"}
 
@@ -250,6 +251,12 @@ echo "Now install the NVIDIA toolkit with conda"
 # for now pytorch use cuda 11.8.0 by default.
 # We should update this version when pytorch update the default version
 ${CONDA_COMMAND} install -y cuda -c nvidia/label/cuda-11.8.0
+
+if [[ $CUDA_DNN_SUPPORT == "true" ]]; then
+    ${CONDA_COMMAND} install -y libcublas -c nvidia/label/cuda-11.8.0
+    ${CONDA_COMMAND} install -y cudnn -c nvidia 
+fi
+
 
 
 if command -v nvcc &> /dev/null; then
