@@ -254,7 +254,7 @@ ${CONDA_COMMAND} install -y cuda -c nvidia/label/cuda-11.8.0
 
 if [[ $CUDA_DNN_SUPPORT == "true" ]]; then
     ${CONDA_COMMAND} install -y libcublas -c nvidia/label/cuda-11.8.0
-    ${CONDA_COMMAND} install -y cudnn -c nvidia 
+    ${CONDA_COMMAND} install -y cudnn -c nvidia/label/cuda-11.8.0 
 fi
 
 
