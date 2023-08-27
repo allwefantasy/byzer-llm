@@ -79,7 +79,7 @@ For example:
         model.stream_chat = types.MethodType(ray_chat, model) 
         return (model,None) 
 
-    if infer_mode == "ray/vllm":
+    if infer_mode == "vllm":
         workerUseRay = infer_params.get("workerUseRay","true") == "true"
         num_gpus = int(sys_conf.get("num_gpus",1))
         print(f"infer_mode:{infer_mode} workerUseRay:{workerUseRay} tensor_parallel_size: {num_gpus}")
