@@ -331,7 +331,7 @@ fi
 
 if [[ "${VLLM_SUPPORT}" == "true" ]]; then
     echo "Setup VLLM support in Byzer-LLM"
-    pip install "git+${GIT_VLLM}"
+    pip install --no-deps "git+${GIT_VLLM}"    
 fi
 
 if [[ "${AVIARY_SUPPORT}" == "true" ]]; then
