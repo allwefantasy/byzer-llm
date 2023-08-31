@@ -41,11 +41,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     load_in_4bit = params.get("load_in_4bit",False)
     
     tokenizer = AutoTokenizer.from_pretrained(pretrained_model_dir,trust_remote_code=True)    
-    model = AutoModel.from_pretrained(pretrained_model_dir,trust_remote_code=True,
-                                                load_in_4bit=load_in_4bit,
-                                                device_map='auto',                                                
-                                                torch_dtype=torch.bfloat16                                                
-                                                )
+    model = AutoModel.from_pretrained(pretrained_model_dir,trust_remote_code=True ).half().cuda()
     if is_adaptor_model:
         from peft import PeftModel
         model = PeftModel.from_pretrained(model, adaptor_model_dir)
