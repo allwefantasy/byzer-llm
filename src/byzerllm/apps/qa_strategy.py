@@ -62,7 +62,7 @@ class FullDocCombineFormatList(DocCombineFormat):
             temp_docs.append(f'{index}. {doc[0].page_content}')
             if "metadata" in doc[0]:
                 temp_metas.append(doc[0].metadata)
-        return (json.dumps(temp_docs,ensure_ascii=False), temp_metas)
+        return ("\n".join(temp_docs), temp_metas)
 
 
 class FullDocCombineFormatDefault(DocCombineFormat):
@@ -95,7 +95,7 @@ class JsonCombineFormat(DocCombineFormat):
             temp_docs.append({"body":doc[0].page_content})
             if "metadata" in doc[0]:
                 temp_metas.append(doc[0].metadata)
-        return ("\n".join(temp_docs), temp_metas)
+        return (json.dumps(temp_docs,ensure_ascii=False), temp_metas)
 
 
 class CsvCombineFormat(DocCombineFormat):
