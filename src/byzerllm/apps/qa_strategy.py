@@ -4,6 +4,7 @@ from langchain.docstore.document import Document
 from abc import ABC, abstractmethod
 from typing import List, Tuple,Dict,Any
 import json
+import csv
 
 
 class DocRetrieveStrategy(ABC):
@@ -105,20 +106,17 @@ class CsvCombineFormat(DocCombineFormat):
     def combine(self, docs: List[Tuple[Document, float]], k: int) -> Tuple[str, List[Dict[Any, Any]]]:
         if docs is None or len(docs) == 0:
             return None
+                
+        with io.StringIO() as csv_buffer:
+            csv_writer = csv.DictWriter(csv_buffer, fieldnames=['body'])
+            csv_writer.writeheader()
+            temp_metas = []
+            for index, doc in enumerate(docs[0:k]):
+                csv_writer.writerow({"body": doc[0].page_content})
+                if "metadata" in doc[0]:
+                    temp_metas.append(doc[0].metadata)
 
-        import csv
-        csv_buffer = io.StringIO()
-        csv_writer = csv.DictWriter(csv_buffer, fieldnames=['page_content'])
-        csv_writer.writeheader()
-
-        temp_metas = []
-        for index, doc in enumerate(docs[0:k]):
-            csv_writer.writerow({"page_content": doc[0].page_content})
-            if "metadata" in doc[0]:
-                temp_metas.append(doc[0].metadata)
-
-        value = csv_buffer.getvalue()
-        csv_buffer.close()
+            value = csv_buffer.getvalue()        
         return (value, temp_metas)
 
 
