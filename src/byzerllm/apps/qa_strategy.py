@@ -1,3 +1,5 @@
+import io
+
 from langchain.docstore.document import Document
 from abc import ABC, abstractmethod
 from typing import List, Tuple,Dict,Any
@@ -95,6 +97,31 @@ class JsonCombineFormat(DocCombineFormat):
                 temp_metas.append(doc[0].metadata)
         return ("\n".join(temp_docs), temp_metas)
 
+
+class CsvCombineFormat(DocCombineFormat):
+    def __init__(self, input: Dict[str,Any]) -> None:
+        self.params = input
+
+    def combine(self, docs: List[Tuple[Document, float]], k: int) -> Tuple[str, List[Dict[Any, Any]]]:
+        if docs is None or len(docs) == 0:
+            return None
+
+        import csv
+        csv_buffer = io.StringIO()
+        csv_writer = csv.DictWriter(csv_buffer, fieldnames=['page_content'])
+        csv_writer.writeheader()
+
+        temp_metas = []
+        for index, doc in enumerate(docs[0:k]):
+            csv_writer.writerow({"page_content": doc[0].page_content})
+            if "metadata" in doc[0]:
+                temp_metas.append(doc[0].metadata)
+
+        value = csv_buffer.getvalue()
+        csv_buffer.close()
+        return (value, temp_metas)
+
+
 class FullDocCombineFormatFactory(DocCombineFormat):
     def __init__(self, input: Dict[str,Any]) -> None:
         self.params = input
@@ -105,6 +132,7 @@ class FullDocCombineFormatFactory(DocCombineFormat):
             return FullDocCombineFormatList(self.params).combine(docs, k)
         elif self.format == 'json':
             return JsonCombineFormat(self.params).combine(docs, k)
+        elif self.format == 'csv':
+            return CsvCombineFormat(self.params).combine(docs, k)
         else:
             return FullDocCombineFormatDefault(self.params).combine(docs, k)
-
