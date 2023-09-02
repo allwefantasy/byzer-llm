@@ -230,7 +230,8 @@ if [[ $DRIVER_INSTALLED == false ]];then
     elif [ "$OS" = "centos" ]; then
         sudo dnf config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo
         # here we install cuda also, but it will not be used since will use the cuda installed by conda
-        sudo dnf install -y cuda 
+        # sudo dnf install -y cuda 
+        sudo dnf install -y nvidia-driver
     fi
 fi
 
