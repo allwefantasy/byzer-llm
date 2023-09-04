@@ -20,16 +20,16 @@ class ByzerSentenceTransformerEmbeddings(Embeddings):
             self.device = device
         
         
-    def _encode(self,texts: List[str]):        
-        embeddings = [emb.tolist() for emb in self.model.encode(texts)]
+    def _encode(self,texts: List[str],extract_params={}):        
+        embeddings = [emb.tolist() for emb in self.model.encode(texts,**extract_params)]
         return embeddings
         
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:        
-        embeddings = self._encode(texts)
+    def embed_documents(self, texts: List[str],extract_params={}) -> List[List[float]]:        
+        embeddings = self._encode(texts,extract_params)
         return embeddings
 
-    def embed_query(self, text: str) -> List[float]:    
-        embedding = self._encode([text])
+    def embed_query(self, text: str,extract_params={}) -> List[float]:    
+        embedding = self._encode([text],extract_params)
         return embedding[0]
         
 
@@ -49,7 +49,7 @@ class ByzerLLMEmbeddings(Embeddings):
         if use_feature_extraction:
             self.pipeline = pipeline("feature-extraction", model = model, tokenizer = tokenizer,device=0)
         
-    def _encode(self,texts: List[str]):
+    def _encode(self,texts: List[str],extract_params={}):
         if self.pipeline:
             return [self.pipeline(text)[0][-1] for text in texts]
         else:
@@ -59,12 +59,12 @@ class ByzerLLMEmbeddings(Embeddings):
             embeddings = [emb.tolist() for emb in embeddings]
             return embeddings
         
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:        
-        embeddings = self._encode(texts)
+    def embed_documents(self, texts: List[str],extract_params={}) -> List[List[float]]:        
+        embeddings = self._encode(texts,extract_params)
         return embeddings
 
-    def embed_query(self, text: str) -> List[float]:    
-        embedding = self._encode([text])
+    def embed_query(self, text: str, extract_params={}) -> List[float]:    
+        embedding = self._encode([text],extract_params)
         return embedding[0]
 
     # copied from https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2#usage-huggingface-transformers

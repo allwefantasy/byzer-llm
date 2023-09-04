@@ -24,7 +24,17 @@ class ByzerLLMGenerator:
         if query.get("embedding",False):
             if not self.embedding:
                 raise Exception("This model do not support text emedding service")
-            return self.embedding.embed_query(ins)
+            new_params = {}
+            for k,v in query.items():
+                if k.startswith("gen."):
+                    new_params[k[len("gen."):]] = v
+                if k.startswith("generation."):
+                    new_params[k[len("generation."):]] = v 
+            
+            if hasattr(self.embedding.model,"embed_query"):
+                return self.embedding.model.embed_query(ins,extract_params=new_params)
+            
+            return self.embedding.embed_query(ins,extract_params=new_params)
         
         if not self.model:
             raise Exception("This model do not support text generation service")
