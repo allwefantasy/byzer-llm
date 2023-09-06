@@ -70,7 +70,7 @@ For example:
         import byzerllm.utils.inference as TGI
         return TGI.init_model(model_dir,infer_params)                
     
-    if infer_mode in ["ray/deepspeed","ray/devicemap"]:   
+    if infer_mode in ["aviary/deepspeed","aviary/devicemap"]:   
         num_workers = int(sys_conf.get("num_gpus",1))   
         udfName = infer_params["udfName"]
         mode = infer_mode.split("/")[1]
@@ -95,7 +95,7 @@ For example:
         llm.stream_chat = types.MethodType(vllm_chat, llm) 
         return (llm,None)  
 
-    if  infer_mode == "deepspeed":
+    if  infer_mode == "ray/deepspeed":
         from .backend_ds import DeepSpeedInference,ParallelConfig        
         num_gpus = int(sys_conf.get("num_gpus",1))
         model = DeepSpeedInference(ParallelConfig(num_workers=num_gpus,model_dir=model_dir))    
