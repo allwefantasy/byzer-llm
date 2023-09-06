@@ -10,11 +10,11 @@ from .builder import OnceWay,MergeWay
 from .client import ByzerLLMClient,LocalEmbeddings
 
 class VectorDB:
-    def __init__(self,db_dir:str,client:ByzerLLMClient) -> None:
+    def __init__(self,db_dir:str,client:ByzerLLMClient,extra_params={}) -> None:
         self.db_dir = db_dir 
         self.db = None  
         self.client = client 
-        self.embeddings = LocalEmbeddings(self.client)     
+        self.embeddings = LocalEmbeddings(self.client,extra_params.get("prompt_prefix",None))     
     
     def _is_visible(self,p: Path) -> bool:
         parts = p.parts
@@ -24,17 +24,17 @@ class VectorDB:
         return True
 
     
-    def save(self,path,params:BuilderParams):                        
+    def save(self,path,params:BuilderParams,extra_params={}):                        
         if params.batch_size == 0:
             b = OnceWay(self.db_dir,self.embeddings)
-            b.build(path,params)
+            b.build(path,params,extra_params)
         else:
             b = MergeWay(self.db_dir,self.embeddings)
-            b.build(path,params)    
+            b.build(path,params,extra_params)    
             
 
-    def build_from(self,path,params:BuilderParams):
-        return self.save(path,params) 
+    def build_from(self,path,params:BuilderParams,extra_params={}):
+        return self.save(path,params,extra_params) 
 
 
     def merge_from(self,target_path:str):

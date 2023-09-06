@@ -15,7 +15,7 @@ class OnceWay:
         self.db_dir = db_dir
         self.embeddings = embeddings
 
-    def build(self,path:str,params:BuilderParams):
+    def build(self,path:str,params:BuilderParams,extra_params={}):
         p = Path(path)
         docs = []
         items = list(p.rglob("**/*.json"))                             
@@ -28,10 +28,10 @@ class OnceWay:
                     docs.append(Document(page_content=doc["page_content"],
                                          metadata={"source": doc["source"], "page_content": doc["page_content"]}))
                     
-
+        
         if  len(docs) > 0:
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=params.chunk_size, chunk_overlap=params.chunk_overlap)
-            split_docs = text_splitter.split_documents(docs) 
+            split_docs = text_splitter.split_documents(docs)             
             print(f"Build vector db in {self.db_dir}. total docs: {len(docs)} total split docs: {len(split_docs)}")
             db = FAISS.from_documents(split_docs, self.embeddings)                                    
             db.save_local(self.db_dir)
@@ -43,7 +43,7 @@ class MergeWay:
         self.db_dir = db_dir
         self.embeddings = embeddings
 
-    def build(self,path:str,params:BuilderParams):
+    def build(self,path:str,params:BuilderParams,extra_params={}):
         p = Path(path)
         docs = []
         items = list(p.rglob("**/*.json"))

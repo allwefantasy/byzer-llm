@@ -53,15 +53,23 @@ class ByzerLLMClient:
 
 
 class LocalEmbeddings(Embeddings):
-    def __init__(self,client:ByzerLLMClient):
+    def __init__(self,client:ByzerLLMClient,prompt_prefix=None):
         self.client = client
+        self.prompt_prefix = prompt_prefix
                 
         
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:        
-        embeddings = [self.client.emb(text) for text in texts]
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        embeddings = []        
+        for text in texts:
+            if self.prompt_prefix:
+                text = self.prompt_prefix + text
+            embedding = self.client.emb(text)
+            embeddings.append(embedding)        
         return embeddings
 
-    def embed_query(self, text: str) -> List[float]:    
+    def embed_query(self, text: str) -> List[float]: 
+        if self.prompt_prefix:
+            text = self.prompt_prefix + text   
         embedding = self.client.emb(text)
         return embedding
 

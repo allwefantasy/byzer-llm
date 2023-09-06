@@ -104,7 +104,7 @@ class RayByzerLLMQAWorker:
         self.data_ref = data_ref        
         self.client = client         
     
-    def build(self,params:BuilderParams):
+    def build(self,params:BuilderParams,extra_params={}):
         from pyjava.api.mlsql import RayContext
         from pyjava.storage import streaming_tar
         import uuid
@@ -121,8 +121,8 @@ class RayByzerLLMQAWorker:
         
         
         db_dir = os.path.join(params.local_path_prefix,str(uuid.uuid4()))
-        db = VectorDB(db_dir,self.client)
-        db.build_from(data_path,params)
+        db = VectorDB(db_dir,self.client,extra_params=extra_params)
+        db.build_from(data_path,params,extra_params=extra_params)
         
         refs = []
         for item in  streaming_tar.build_rows_from_file(db_dir):
@@ -152,7 +152,7 @@ class RayByzerLLMQA:
         for data_ref in data_refs:            
             worker = RayByzerLLMQAWorker.remote(data_ref,self.client)
             workers.append(worker)
-            build_func = worker.build.remote(params)
+            build_func = worker.build.remote(params,builder_params)
             data.append(build_func)
 
         ## gather all db file and merge into one
