@@ -139,7 +139,7 @@ class RayByzerLLMQA:
         self.db_dir = ""
         self.client = client        
     
-    def save(self,data_refs,params=BuilderParams()):        
+    def save(self,data_refs,params=BuilderParams(),builder_params={}):        
         from pyjava.storage import streaming_tar     
 
         self.db_dir = os.path.join(params.local_path_prefix,"qa",str(uuid.uuid4()))
