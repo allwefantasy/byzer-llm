@@ -232,6 +232,7 @@ if [[ $DRIVER_INSTALLED == false ]];then
         # here we install cuda also, but it will not be used since will use the cuda installed by conda
         # sudo dnf install -y cuda 
         sudo dnf install -y nvidia-driver
+        sudo dnf module install -y nvidia-driver
     fi
 fi
 
