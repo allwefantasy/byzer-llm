@@ -14,7 +14,7 @@ class VectorDB:
         self.db_dir = db_dir 
         self.db = None  
         self.client = client 
-        self.embeddings = LocalEmbeddings(self.client,extra_params.get("prompt_prefix",None))     
+        self.embeddings = LocalEmbeddings(self.client,extra_params.get("promptPrefix",None))     
     
     def _is_visible(self,p: Path) -> bool:
         parts = p.parts
