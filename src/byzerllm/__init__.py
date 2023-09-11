@@ -6,6 +6,7 @@ from pyjava.storage import streaming_tar
 import os
 
 import ray
+import inspect
 
 from typing import Dict,Generator
 from dataclasses import dataclass
@@ -78,5 +79,11 @@ def parse_params(params:Dict[str,str],prefix:str):
                 new_v = json.loads(v)            
             new_params[new_k] = new_v
     return new_params 
+
+import inspect
+
+
+def check_param_exists(func,name):
+    return name in inspect.signature(func).parameters
        
     
