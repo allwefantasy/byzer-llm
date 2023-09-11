@@ -1,10 +1,18 @@
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from pyjava.api.mlsql import DataServer
+from pyjava.storage import streaming_tar as STar
 import torch
+from typing import Any,Any,Dict, List,Tuple,Generator
+from .. import BlockRow
 
-def merge_lora_to_base_model(model_name_or_path:str,
-                             adapter_name_or_path:str,
-                             save_path:str):
+def merge_lora_to_base_model(data_refs:List[DataServer],
+              train_params:Dict[str,str],
+              conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
+    
+    model_name_or_path = train_params["model_name_or_path"]
+    adapter_name_or_path = train_params["adapter_name_or_path"]                             
+    save_path = train_params["save_path"]                         
     
     tokenizer = AutoTokenizer.from_pretrained(
         model_name_or_path,
@@ -22,3 +30,4 @@ def merge_lora_to_base_model(model_name_or_path:str,
 
     tokenizer.save_pretrained(save_path)
     model.save_pretrained(save_path)
+    return STar.build_rows_from_file(save_path)    
