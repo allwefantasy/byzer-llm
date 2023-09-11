@@ -39,8 +39,6 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
 
 
 def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}):     
-    quatization = infer_params.get("quatization","false") == "true"
-                              
     pretrained_model_dir = os.path.join(model_dir,"pretrained_model")
     adaptor_model_dir = model_dir
     is_adaptor_model = os.path.exists(pretrained_model_dir)
@@ -53,7 +51,18 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     tokenizer.pad_token_id=0
     tokenizer.bos_token_id = 1
 
-    if quatization:
+    quatization = infer_params.get("quatization", "false")
+    llm_int8_threshold = infer_params.get("llm_int8_threshold", 6.0)
+    print(f"quatization:{quatization}", flush=True)
+
+    if quatization in ("nf4", "llm_int8", "true"):
+        llm_int8_config = BitsAndBytesConfig(
+            load_in_8bit=True,
+            llm_int8_threshold=llm_int8_threshold,
+            llm_int8_skip_modules=None,
+            llm_int8_enable_fp32_cpu_offload=False,
+            llm_int8_has_fp16_weight=False,
+        )
         nf4_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
@@ -62,9 +71,9 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         )
         model = AutoModelForCausalLM.from_pretrained(
             pretrained_model_dir,
-            trust_remote_code=True,            
+            trust_remote_code=True,
             device_map="auto",
-            quantization_config=nf4_config,
+            quantization_config=nf4_config if quatization == "nf4" else llm_int8_config,
         )
 
     else:
