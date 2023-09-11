@@ -92,12 +92,19 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     tokenizer.padding_side="right"
     tokenizer.pad_token_id=0
     tokenizer.bos_token_id = 1
-    
-    quatization = infer_params.get("quatization","false") == "true"
 
+    quatization = infer_params.get("quatization", "false")
+    llm_int8_threshold = infer_params.get("llm_int8_threshold", 6.0)
     print(f"longContextMode:{longContextMode} quatization:{quatization}",flush=True)
 
-    if quatization:
+    if quatization in ("nf4", "llm_int8", "true"):
+        llm_int8_config = BitsAndBytesConfig(
+            load_in_8bit=True,
+            llm_int8_threshold=llm_int8_threshold,
+            llm_int8_skip_modules=None,
+            llm_int8_enable_fp32_cpu_offload=False,
+            llm_int8_has_fp16_weight=False,
+        )
         nf4_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
@@ -106,9 +113,9 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         )
         model = AutoModelForCausalLM.from_pretrained(
             pretrained_model_dir,
-            trust_remote_code=True,            
+            trust_remote_code=True,
             device_map="auto",
-            quantization_config=nf4_config,
+            quantization_config=nf4_config if quatization == "nf4" else llm_int8_config,
         )
 
     else:
