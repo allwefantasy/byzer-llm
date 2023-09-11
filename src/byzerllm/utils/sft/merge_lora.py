@@ -10,10 +10,10 @@ def merge_lora_to_base_model(data_refs:List[DataServer],
               train_params:Dict[str,str],
               conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
     
-    model_name_or_path = train_params["model_name_or_path"]
-    adapter_name_or_path = train_params["adapter_name_or_path"]                             
-    save_path = train_params["save_path"]                         
-    
+    model_name_or_path = train_params.get("modelNameOrPath",train_params.get("model_name_or_path",""))
+    adapter_name_or_path = train_params.get("adapterNameOrPath",train_params.get("adapter_name_or_path",""))
+    save_path = train_params.get("savePath",train_params.get("save_path",""))
+        
     tokenizer = AutoTokenizer.from_pretrained(
         model_name_or_path,
         trust_remote_code=True
