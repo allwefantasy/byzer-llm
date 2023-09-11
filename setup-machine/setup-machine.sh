@@ -157,6 +157,8 @@ else
     fi
 fi
 
+# install gcc-c++
+
 
 echo "Setup basic user byzerllm "
 
