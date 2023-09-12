@@ -52,19 +52,17 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     tokenizer.bos_token_id = 1
 
     quatization = infer_params.get("quatization", "false")
-    llm_int8_threshold = infer_params.get("llm_int8_threshold", 6.0)
-    print(f"quatization:{quatization}", flush=True)
 
-    if quatization in ("nf4", "llm_int8", "true"):
-        llm_int8_config = BitsAndBytesConfig(
-            load_in_8bit=True,
+    if quatization in ["4", "8"]:
+        print(f"enable {quatization} quatization.", flush=True)
+        llm_int8_threshold = infer_params.get("llm_int8_threshold", 6.0)
+        quantization_config = BitsAndBytesConfig(
+            load_in_8bit=quatization == "8",
+            load_in_4bit=quatization == "4",
             llm_int8_threshold=llm_int8_threshold,
             llm_int8_skip_modules=None,
             llm_int8_enable_fp32_cpu_offload=False,
             llm_int8_has_fp16_weight=False,
-        )
-        nf4_config = BitsAndBytesConfig(
-            load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
             bnb_4bit_use_double_quant=False,
             bnb_4bit_compute_dtype=torch.bfloat16,
@@ -73,9 +71,8 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
             pretrained_model_dir,
             trust_remote_code=True,
             device_map="auto",
-            quantization_config=nf4_config if quatization == "nf4" else llm_int8_config,
+            quantization_config=quantization_config,
         )
-
     else:
         model = AutoModelForCausalLM.from_pretrained(pretrained_model_dir,trust_remote_code=True,
                                                 device_map='auto',                                                
