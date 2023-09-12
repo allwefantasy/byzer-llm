@@ -106,7 +106,7 @@ For example:
         num_gpus = int(sys_conf.get("num_gpus",1))
         print(f"infer_mode:{infer_mode} tensor_parallel_size: {num_gpus}")
         
-        use_np_weights: bool = infer_params.get("backend.use_np_weights","false") == "true"
+        # use_np_weights: bool = infer_params.get("backend.use_np_weights","false") == "true"
         # use_dummy_weights: bool = infer_params.get("backend.use_dummy_weights","false") == "true"
         dtype: str = infer_params.get("backend.dtype","auto")
         seed: int = int(infer_params.get("backend.seed",0))
@@ -125,7 +125,7 @@ For example:
                   worker_use_ray=worker_use_ray,                   
                   trust_remote_code=True,                                  
                 #   use_dummy_weights=use_dummy_weights,
-                  use_np_weights=use_np_weights,
+                #   use_np_weights=use_np_weights,
                   dtype=dtype,
                   seed=seed,
                   pipeline_parallel_size=pipeline_parallel_size,
