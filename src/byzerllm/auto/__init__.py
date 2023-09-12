@@ -123,8 +123,7 @@ For example:
         from vllm import LLM                
         llm = LLM(model=model_dir,                  
                   worker_use_ray=worker_use_ray,                   
-                  trust_remote_code=True,                
-                  disable_log_stats=False,
+                  trust_remote_code=True,                                  
                   use_dummy_weights=use_dummy_weights,
                   use_np_weights=use_np_weights,
                   dtype=dtype,
