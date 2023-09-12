@@ -102,24 +102,43 @@ For example:
         model.stream_chat = types.MethodType(ray_chat, model) 
         return (model,None) 
 
-    if infer_mode == "ray/vllm":
-        workerUseRay = infer_params.get("workerUseRay","true") == "true"
+    if infer_mode == "ray/vllm":        
         num_gpus = int(sys_conf.get("num_gpus",1))
-        print(f"infer_mode:{infer_mode} workerUseRay:{workerUseRay} tensor_parallel_size: {num_gpus}")
-
-        new_params = {}
-        for k,v in infer_params.items():
-            if k.startswith("backend."):
-                new_params[k[len("backend."):]] = v
-            if k.startswith("vllm."):
-                new_params[k[len("vllm."):]] = v 
+        print(f"infer_mode:{infer_mode} tensor_parallel_size: {num_gpus}")
+        
+        use_np_weights: bool = infer_params.get("backend.use_np_weights","false") == "true"
+        use_dummy_weights: bool = infer_params.get("backend.use_dummy_weights","false") == "true"
+        dtype: str = infer_params.get("backend.dtype","auto")
+        seed: int = int(infer_params.get("backend.seed",0))
+        worker_use_ray: bool = infer_params.get("backend.worker_use_ray","false") == "false"
+        pipeline_parallel_size: int = int(infer_params.get("backend.pipeline_parallel_size",1))
+        tensor_parallel_size: int = num_gpus
+        block_size: int = int(infer_params.get("backend.block_size",16))
+        swap_space: int = int(infer_params.get("backend.swap_space",4))  # GiB
+        gpu_memory_utilization: float = float(infer_params.get("backend.gpu_memory_utilization",0.90))
+        max_num_batched_tokens: int = int(infer_params.get("backend.max_num_batched_tokens",2560))
+        max_num_seqs: int = int(infer_params.get("backend.max_num_seqs",256))
+        disable_log_stats: bool = infer_params.get("backend.disable_log_stats","false") == "true"
 
         from vllm import LLM                
         llm = LLM(model=model_dir,
                   tensor_parallel_size=num_gpus,
-                  worker_use_ray=workerUseRay,                   
+                  worker_use_ray=worker_use_ray,                   
                   trust_remote_code=True,                
-                  disable_log_stats=False,**new_params)        
+                  disable_log_stats=False,
+                  use_dummy_weights=use_dummy_weights,
+                  use_np_weights=use_np_weights,
+                  dtype=dtype,
+                  seed=seed,
+                  pipeline_parallel_size=pipeline_parallel_size,
+                  tensor_parallel_size=tensor_parallel_size,
+                  block_size=block_size,
+                  swap_space=swap_space,
+                  gpu_memory_utilization=gpu_memory_utilization,
+                  max_num_batched_tokens=max_num_batched_tokens,
+                  max_num_seqs=max_num_seqs,
+                  disable_log_stats=disable_log_stats)        
+        
         llm.stream_chat = types.MethodType(vllm_chat, llm) 
         return (llm,None)  
 
