@@ -3,7 +3,7 @@ import ray
 import torch
 import os
 import ray
-from typing import Any,Any,Dict, List,Tuple,Generator
+from typing import Any,Any,Dict, List,Tuple,Generator,Optional,Union
 import types
 
 from pyjava.api.mlsql import DataServer
@@ -44,8 +44,31 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
     from vllm import  SamplingParams
+    
+    n: int = 1
+    best_of: Optional[int] =  kwargs["best_of"] if "best_of" in kwargs else None
+    presence_penalty: float = float(kwargs.get("presence_penalty",0.0))
+    frequency_penalty: float = float(kwargs.get("frequency_penalty",0.0))
+    top_k: int = int(kwargs.get("top_k",-1))
+    use_beam_search: bool = kwargs.get("use_beam_search","false") == "true"
+    stop: Union[None, str, List[str]] = kwargs["stop"] if "stop" in kwargs else None
+    ignore_eos: bool = kwargs.get("ignore_eos","false") == "true"
+    max_tokens: int = max_length
+    logprobs: Optional[int] = kwargs["logprobs"] if "logprobs" in kwargs else None
+
     model = self
-    sampling_params = SamplingParams(temperature=temperature, top_p=top_p, max_tokens=max_length)
+    sampling_params = SamplingParams(temperature=temperature, 
+                                     n = n,
+                                     best_of=best_of,
+                                     presence_penalty=presence_penalty,
+                                     frequency_penalty=frequency_penalty,
+                                     top_k=top_k,
+                                     use_beam_search=use_beam_search,
+                                     stop = stop,
+                                     ignore_eos=ignore_eos,
+                                     logprobs=logprobs,
+                                     top_p=top_p, 
+                                     max_tokens=max_tokens)
     outputs = model.generate([ins], sampling_params)    
     generated_text = outputs[0].outputs[0].text
     return [(generated_text,"")]
@@ -83,15 +106,20 @@ For example:
         workerUseRay = infer_params.get("workerUseRay","true") == "true"
         num_gpus = int(sys_conf.get("num_gpus",1))
         print(f"infer_mode:{infer_mode} workerUseRay:{workerUseRay} tensor_parallel_size: {num_gpus}")
+
+        new_params = {}
+        for k,v in infer_params.items():
+            if k.startswith("backend."):
+                new_params[k[len("backend."):]] = v
+            if k.startswith("vllm."):
+                new_params[k[len("vllm."):]] = v 
+
         from vllm import LLM                
         llm = LLM(model=model_dir,
                   tensor_parallel_size=num_gpus,
                   worker_use_ray=workerUseRay,                   
                   trust_remote_code=True,                
-                  disable_log_stats=False)
-        # tokenizer = llm.get_tokenizer()
-        # tokenizer.padding_side="right"
-        # tokenizer.pad_token_id=0
+                  disable_log_stats=False,**new_params)        
         llm.stream_chat = types.MethodType(vllm_chat, llm) 
         return (llm,None)  
 

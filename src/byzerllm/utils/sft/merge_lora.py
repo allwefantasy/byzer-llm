@@ -13,7 +13,8 @@ def merge_lora_to_base_model(data_refs:List[DataServer],
     model_name_or_path = train_params.get("modelNameOrPath",train_params.get("model_name_or_path",""))
     adapter_name_or_path = train_params.get("adapterNameOrPath",train_params.get("adapter_name_or_path",""))
     save_path = train_params.get("savePath",train_params.get("save_path",""))
-        
+    
+    
     tokenizer = AutoTokenizer.from_pretrained(
         model_name_or_path,
         trust_remote_code=True
