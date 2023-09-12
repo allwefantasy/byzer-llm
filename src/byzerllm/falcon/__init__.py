@@ -53,20 +53,25 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
 
     quatization = infer_params.get("quatization", "false")
 
-    if quatization in ["4", "8"]:
-        print(f"enable {quatization} quatization.", flush=True)
-        llm_int8_threshold = infer_params.get("llm_int8_threshold", 6.0)
+    if quatization in ["4", "8", "true"]:
+        print(f"enable [{quatization}] quatization.", flush=True)
+        load_in_8bit = quatization == "8"
+        # default using int4
         quantization_config = BitsAndBytesConfig(
-            load_in_8bit=quatization == "8",
-            load_in_4bit=quatization == "4",
-            llm_int8_threshold=llm_int8_threshold,
-            llm_int8_skip_modules=None,
-            llm_int8_enable_fp32_cpu_offload=False,
-            llm_int8_has_fp16_weight=False,
+            load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
             bnb_4bit_use_double_quant=False,
             bnb_4bit_compute_dtype=torch.bfloat16,
         )
+        if load_in_8bit:
+            llm_int8_threshold = infer_params.get("llm_int8_threshold", 6.0)
+            quantization_config = BitsAndBytesConfig(
+                load_in_8bit=True,
+                llm_int8_threshold=llm_int8_threshold,
+                llm_int8_skip_modules=None,
+                llm_int8_enable_fp32_cpu_offload=False,
+                llm_int8_has_fp16_weight=False,
+            )
         model = AutoModelForCausalLM.from_pretrained(
             pretrained_model_dir,
             trust_remote_code=True,
