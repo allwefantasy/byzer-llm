@@ -121,8 +121,7 @@ For example:
         disable_log_stats: bool = infer_params.get("backend.disable_log_stats","false") == "true"
 
         from vllm import LLM                
-        llm = LLM(model=model_dir,
-                  tensor_parallel_size=num_gpus,
+        llm = LLM(model=model_dir,                  
                   worker_use_ray=worker_use_ray,                   
                   trust_remote_code=True,                
                   disable_log_stats=False,
