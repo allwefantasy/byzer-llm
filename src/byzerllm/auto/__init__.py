@@ -107,7 +107,7 @@ For example:
         print(f"infer_mode:{infer_mode} tensor_parallel_size: {num_gpus}")
         
         use_np_weights: bool = infer_params.get("backend.use_np_weights","false") == "true"
-        use_dummy_weights: bool = infer_params.get("backend.use_dummy_weights","false") == "true"
+        # use_dummy_weights: bool = infer_params.get("backend.use_dummy_weights","false") == "true"
         dtype: str = infer_params.get("backend.dtype","auto")
         seed: int = int(infer_params.get("backend.seed",0))
         worker_use_ray: bool = infer_params.get("backend.worker_use_ray","false") == "false"
@@ -124,7 +124,7 @@ For example:
         llm = LLM(model=model_dir,                  
                   worker_use_ray=worker_use_ray,                   
                   trust_remote_code=True,                                  
-                  use_dummy_weights=use_dummy_weights,
+                #   use_dummy_weights=use_dummy_weights,
                   use_np_weights=use_np_weights,
                   dtype=dtype,
                   seed=seed,
