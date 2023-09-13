@@ -15,7 +15,7 @@ class MergeLoraActor(object):
         
         model_name_or_path = train_params.get("modelNameOrPath",train_params.get("model_name_or_path",""))
         adapter_name_or_path = train_params.get("adapterNameOrPath",train_params.get("adapter_name_or_path",""))
-        save_path = train_params.get("savePath",train_params.get("save_path",""))
+        save_path = train_params.get("savePath",train_params.get("save_path",""))        
         
         
         tokenizer = AutoTokenizer.from_pretrained(
@@ -50,8 +50,8 @@ def merge_lora_to_base_model(data_refs:List[DataServer],
 
     if len(custom_resources) > 0:
         worker_conf["resources"] = dict(custom_resources)
-
-    worker = ray.remote(**worker_conf)(MergeLoraActor).remote()
+    merge_job_name = train_params["name"] if "name" in train_params else f"merge-lora-{conf['OWNER']}"
+    worker = ray.remote(name=merge_job_name, **worker_conf)(MergeLoraActor).remote()
     ray.get(worker.merge_lora_to_base_model.remote(
         data_refs,
         train_params,
