@@ -7,7 +7,8 @@ from typing import Any,Any,Dict, List,Tuple,Generator
 from byzerllm import BlockRow
 
 class MergeLoraActor(object):
-    def merge_lora_to_base_model(data_refs:List[DataServer],
+    
+    def merge_lora_to_base_model(self,data_refs:List[DataServer],
                 train_params:Dict[str,str],
                 conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
         
@@ -48,9 +49,9 @@ def merge_lora_to_base_model(data_refs:List[DataServer],
 
     worker = ray.remote(**worker_conf)(MergeLoraActor).remote()
     ray.get(worker.merge_lora_to_base_model.remote(
-        data_refs = data_refs,
-        train_params = train_params,
-        conf = conf))
+        data_refs,
+        train_params,
+        conf))
     return []
 
   
