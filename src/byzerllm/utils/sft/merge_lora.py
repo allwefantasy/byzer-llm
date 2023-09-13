@@ -4,7 +4,7 @@ from pyjava.api.mlsql import DataServer
 from pyjava.storage import streaming_tar as STar
 import torch
 from typing import Any,Any,Dict, List,Tuple,Generator
-from .. import BlockRow
+from byzerllm import BlockRow
 
 class MergeLoraActor(object):
     def merge_lora_to_base_model(data_refs:List[DataServer],
