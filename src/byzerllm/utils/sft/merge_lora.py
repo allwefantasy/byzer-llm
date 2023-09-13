@@ -5,6 +5,7 @@ from pyjava.storage import streaming_tar as STar
 import torch
 from typing import Any,Any,Dict, List,Tuple,Generator
 from byzerllm import BlockRow
+import os
 
 class MergeLoraActor(object):
     
@@ -30,6 +31,9 @@ class MergeLoraActor(object):
         )
         model = PeftModel.from_pretrained(model, adapter_name_or_path)
         model = model.merge_and_unload()
+
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
 
         tokenizer.save_pretrained(save_path)
         model.save_pretrained(save_path)
