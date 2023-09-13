@@ -11,7 +11,7 @@ class MergeLoraActor(object):
     
     def merge_lora_to_base_model(self,data_refs:List[DataServer],
                 train_params:Dict[str,str],
-                conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
+                conf: Dict[str, str]):
         
         model_name_or_path = train_params.get("modelNameOrPath",train_params.get("model_name_or_path",""))
         adapter_name_or_path = train_params.get("adapterNameOrPath",train_params.get("adapter_name_or_path",""))
@@ -37,7 +37,7 @@ class MergeLoraActor(object):
 
         tokenizer.save_pretrained(save_path)
         model.save_pretrained(save_path)
-        return STar.build_rows_from_file(save_path)  
+        # STar.build_rows_from_file(save_path)          
 
 def merge_lora_to_base_model(data_refs:List[DataServer],
               train_params:Dict[str,str],
