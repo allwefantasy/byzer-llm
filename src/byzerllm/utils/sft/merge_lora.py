@@ -46,7 +46,7 @@ def merge_lora_to_base_model(data_refs:List[DataServer],
     if len(custom_resources) > 0:
         worker_conf["resources"] = dict(custom_resources)
 
-    worker = ray.remote(**worker_conf)(MergeLoraActor)
+    worker = ray.remote(**worker_conf)(MergeLoraActor).remote()
     ray.get(worker.merge_lora_to_base_model.remote(data_refs,train_params,conf))
     return []
 
