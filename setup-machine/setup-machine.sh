@@ -17,7 +17,7 @@ BYZER_VERSION="2.3.8"
 BYZER_NOTEBOOK_VERSION="1.2.5"
 DEFUALT_MYSQL_PASSWORD=${DEFUALT_MYSQL_PASSWORD:-"mlsql"}
 TGI_SUPPORT=${TGI_SUPPORT:-"false"}
-VLLM_SUPPORT=${VLLM_SUPPORT:-"false"}
+VLLM_SUPPORT=${VLLM_SUPPORT:-"true"}
 AVIARY_SUPPORT=${AVIARY_SUPPORT:-"false"}
 NOTEBOOK_LOGO=${NOTEBOOK_LOGO:-"Byzer Notebook"}
 
@@ -342,7 +342,8 @@ fi
 
 if [[ "${VLLM_SUPPORT}" == "true" ]]; then
     echo "Setup VLLM support in Byzer-LLM"
-    pip install --no-deps "git+${GIT_VLLM}"    
+    # pip install --no-deps "git+${GIT_VLLM}"
+    pip install vllm==0.1.7
 fi
 
 if [[ "${AVIARY_SUPPORT}" == "true" ]]; then
@@ -390,7 +391,7 @@ if [[ $ROLE == "master" ]];then
     echo "Since we are in master mode, we should install Byzer Lang and Byzer Notebook"
     
     if [[ ! -f "byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz" ]]; then
-       wget "https://download.byzer.org/byzer/byzer-lang/${BYZER_VERSION}/byzer-lang-all-in-one-linux-amd64-3.3.0-2.3.8.tar.gz" -O byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz    
+       wget "https://download.byzer.org/byzer/byzer-lang/${BYZER_VERSION}/byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz" -O byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz    
     fi
 
     tar -zxvf byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz    
