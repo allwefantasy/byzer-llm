@@ -25,6 +25,9 @@ CUDA_DNN_SUPPORT=${CUDA_DNN_SUPPORT:-"false"}
 PYPI_MIRROR=${PYPI_MIRROR:-"aliyun"}
 GIT_MIRROR=${GIT_MIRROR:-"gitee"}
 
+BYZER_LLM_EXTENSION_JAR="byzer-llm-3.3_2.12-0.1.1.jar"
+BYZER_LLM_EXTENSION_APP="tech.mlsql.plugins.llm.LLMApp"
+
 #valid conda channel
 CONDA_MIRROR=${CONDA_MIRROR:-"tuna"}
 support_conda_mirrors=("tuna" "anaconda")
@@ -499,7 +502,7 @@ spark.local.dir=/home/byzerllm/byzerllm_stroage
 
 EOF
 
-wget https://download.byzer.org/byzer-extensions/nightly-build/byzer-llm-3.3_2.12-0.1.0-SNAPSHOT.jar -O $BYZER_LANG_HOME/plugin/byzer-llm-3.3_2.12-0.1.0-SNAPSHOT.jar
+wget https://download.byzer.org/byzer-extensions/nightly-build/${BYZER_LLM_EXTENSION_JAR} -O $BYZER_LANG_HOME/plugin/${BYZER_LLM_EXTENSION_JAR}
 
 # echo "Modify the byzer notebook config file"
 
