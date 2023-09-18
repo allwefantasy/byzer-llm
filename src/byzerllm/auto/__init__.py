@@ -83,10 +83,7 @@ def block_vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         max_length:int=4096, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
-    from vllm import  SamplingParams
-    from vllm.utils import random_uuid
-    request_id = random_uuid()
-    
+    from vllm import  SamplingParams        
     n: int = 1
     best_of: Optional[int] =  kwargs["best_of"] if "best_of" in kwargs else None
     presence_penalty: float = float(kwargs.get("presence_penalty",0.0))
@@ -112,7 +109,7 @@ def block_vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
                                      top_p=top_p, 
                                      max_tokens=max_tokens)
     
-    outputs = model.generate([ins], sampling_params,request_id)    
+    outputs = model.generate([ins], sampling_params)    
 
     output = outputs[0].outputs[0]
     generated_text = output.text
@@ -128,18 +125,7 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         max_length:int=4096, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
-    model = self
-    # import asyncio
-    # try:
-    #     loop = asyncio.get_event_loop()
-    # except RuntimeError as e:
-    #     if str(e).startswith('There is no current event loop in thread'):
-    #         loop = asyncio.new_event_loop()
-    #         asyncio.set_event_loop(loop)
-    #     else:
-    #         raise e    
-    # s = loop.run_until_complete(async_vllm_chat(model,tokenizer,ins,his,max_length,top_p,temperature,**kwargs))
-    # return [(s,"")]     
+    model = self        
     return block_vllm_chat(model,model,tokenizer,ins,his,max_length,top_p,temperature,**kwargs)   
 
 def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}): 
@@ -208,7 +194,7 @@ For example:
             disable_log_stats=disable_log_stats
         )
         llm = AsyncLLMEngine.from_engine_args(engine_args)                       
-        llm.stream_chat = types.MethodType(vllm_chat, llm) 
+        # llm.stream_chat = types.MethodType(vllm_chat, llm) 
         llm.async_stream_chat = types.MethodType(async_vllm_chat, llm) 
         return (llm,None)  
 
