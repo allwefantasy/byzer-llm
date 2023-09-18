@@ -84,7 +84,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     input_tokens_count = len(final_output.prompt_token_ids)
     generated_tokens_count = len(text_outputs[0].token_ids) 
     
-    print(f"total_tokens_count:{input_tokens_count + generated_tokens_count} request_id:{text_outputs[0].request_id}  input_tokens_count:{input_tokens_count} generated_tokens_count:{generated_tokens_count}",flush=True)
+    print(f"total_tokens_count:{input_tokens_count + generated_tokens_count} request_id:{final_output.request_id}  input_tokens_count:{input_tokens_count} generated_tokens_count:{generated_tokens_count}",flush=True)
     return [(generated_text,"")]   
 
 def block_vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
