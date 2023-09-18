@@ -3,7 +3,7 @@ import torch
 
 
 class SFTDataCollator(object):
-    def __init__(self, tokenizer, max_seq_length):
+    def __init__(self, tokenizer, max_seq_length, **kwargs):
         self.tokenizer = tokenizer
         self.max_seq_length = max_seq_length
         self.pad_token_id = tokenizer.pad_token_id

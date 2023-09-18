@@ -25,6 +25,8 @@ class SFTDataset(Dataset):
         self.user_role_prefix = f"{self.user_role}:"
         self.assistant_role_prefix = f"{self.assistant_role}:"
 
+        self.dataset_tokens_count = 0
+
     def __len__(self):
         return len(self.data_list)
 
@@ -69,6 +71,9 @@ class SFTDataset(Dataset):
         target_mask = target_mask[:self.max_seq_length]
         attention_mask = [1] * len(input_ids)
         assert len(input_ids) == len(target_mask) == len(attention_mask)
+
+        self.dataset_tokens_count += len(input_ids)
+
         inputs = {
             'input_ids': input_ids,
             'attention_mask': attention_mask,

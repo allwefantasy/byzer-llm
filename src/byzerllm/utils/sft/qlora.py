@@ -182,7 +182,7 @@ def init_components(args, training_args,extra_params):
     loss_func = TargetLMLoss(ignore_index=tokenizer.pad_token_id)
     
     train_dataset = SFTDataset(args.train_file, tokenizer, args.max_seq_length, **extra_params)
-    data_collator = SFTDataCollator(tokenizer, args.max_seq_length)
+    data_collator = SFTDataCollator(tokenizer, args.max_seq_length, **extra_params)
 
     # 初始化Trainer
     trainer = LoRATrainer(
@@ -197,13 +197,19 @@ def init_components(args, training_args,extra_params):
 
 
 def train(lora_config:str, args:List[str],extra_params={})->str:
+
+    sft_name = extra_params["sft_name"]   
     # 进行一些配置和检查
     parsed_args, training_args = setup_everything(lora_config, args)
     # 加载各种组件
     trainer = init_components(parsed_args, training_args,extra_params)
     # 开始训练
-    print("*** starting training ***")
+    print(f"*** {sft_name} starting training ***")
     train_result = trainer.train()
+
+    # 打印 token 总数
+    print(f"{sft_name} total tokens: {trainer.train_dataset.dataset_tokens_count}",flush=True)
+
     # 保存最好的checkpoint
     final_save_path = join(training_args.output_dir, 'final')
     trainer.save_model(final_save_path)  # Saves the tokenizer too
