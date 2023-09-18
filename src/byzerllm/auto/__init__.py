@@ -39,11 +39,53 @@ def ray_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     ),request=None))
     return [(response.generated_text,"")]
 
-def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
+async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
     from vllm import  SamplingParams
+    from vllm.utils import random_uuid
+    request_id = random_uuid()
+    
+    n: int = 1
+    best_of: Optional[int] =  kwargs["best_of"] if "best_of" in kwargs else None
+    presence_penalty: float = float(kwargs.get("presence_penalty",0.0))
+    frequency_penalty: float = float(kwargs.get("frequency_penalty",0.0))
+    top_k: int = int(kwargs.get("top_k",-1))
+    use_beam_search: bool = kwargs.get("use_beam_search","false") == "true"
+    stop: Union[None, str, List[str]] = kwargs["stop"] if "stop" in kwargs else None
+    ignore_eos: bool = kwargs.get("ignore_eos","false") == "true"
+    max_tokens: int = max_length
+    logprobs: Optional[int] = kwargs["logprobs"] if "logprobs" in kwargs else None
+    
+    sampling_params = SamplingParams(temperature=temperature, 
+                                     n = n,
+                                     best_of=best_of,
+                                     presence_penalty=presence_penalty,
+                                     frequency_penalty=frequency_penalty,
+                                     top_k=top_k,
+                                     use_beam_search=use_beam_search,
+                                     stop = stop,
+                                     ignore_eos=ignore_eos,
+                                     logprobs=logprobs,
+                                     top_p=top_p, 
+                                     max_tokens=max_tokens)
+    
+    results_generator = model.generate([ins], sampling_params,request_id) 
+    final_output = None
+    async for request_output in results_generator:        
+        final_output = request_output
+    assert final_output is not None    
+    text_outputs = [output.text for output in final_output.outputs]
+    return text_outputs[0]
+
+def block_vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
+        max_length:int=4096, 
+        top_p:float=0.95,
+        temperature:float=0.1,**kwargs):
+    from vllm import  SamplingParams
+    from vllm.utils import random_uuid
+    request_id = random_uuid()
     
     n: int = 1
     best_of: Optional[int] =  kwargs["best_of"] if "best_of" in kwargs else None
@@ -69,7 +111,9 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
                                      logprobs=logprobs,
                                      top_p=top_p, 
                                      max_tokens=max_tokens)
-    outputs = model.generate([ins], sampling_params)    
+    
+    outputs = model.generate([ins], sampling_params,request_id)    
+
     output = outputs[0].outputs[0]
     generated_text = output.text
         
@@ -77,8 +121,16 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     generated_tokens_count = len(output.token_ids) 
     print(f"total_tokens_count:{input_tokens_count + generated_tokens_count} request_id:{outputs[0].request_id} output_num:{len(outputs)}/{len(outputs[0].outputs)}  input_tokens_count:{input_tokens_count} generated_tokens_count:{generated_tokens_count}",flush=True)
 
-    return [(generated_text,"")]
+    return [(generated_text,"")]    
 
+def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
+        max_length:int=4096, 
+        top_p:float=0.95,
+        temperature:float=0.1,**kwargs):
+    import asyncio
+    loop = asyncio.get_event_loop()
+    s = loop.run_until_complete(async_vllm_chat,self,tokenizer,ins,his,max_length,top_p,temperature,**kwargs)
+    return [(s,"")]    
 
 def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}): 
     infer_mode = sys_conf.get("infer_backend","transformers")
@@ -126,8 +178,8 @@ For example:
         max_num_seqs: int = int(infer_params.get("backend.max_num_seqs",256))
         disable_log_stats: bool = infer_params.get("backend.disable_log_stats","false") == "true"
 
-        from vllm import LLM                
-        llm = LLM(model=model_dir,                  
+        from vllm.engine.async_llm_engine import AsyncLLMEngine               
+        llm = AsyncLLMEngine(model=model_dir,                  
                   worker_use_ray=worker_use_ray,                   
                   trust_remote_code=True,                                  
                 #   use_dummy_weights=use_dummy_weights,
