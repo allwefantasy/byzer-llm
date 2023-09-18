@@ -136,7 +136,8 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
             asyncio.set_event_loop(loop)
         else:
             raise
-    s = loop.run_until_complete(async_vllm_chat,self,tokenizer,ins,his,max_length,top_p,temperature,**kwargs)
+    model = self    
+    s = loop.run_until_complete(async_vllm_chat(model,tokenizer,ins,his,max_length,top_p,temperature,**kwargs))
     return [(s,"")]    
 
 def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}): 
