@@ -209,6 +209,7 @@ For example:
         )
         llm = AsyncLLMEngine.from_engine_args(engine_args)                       
         llm.stream_chat = types.MethodType(vllm_chat, llm) 
+        llm.async_stream_chat = types.MethodType(async_vllm_chat, llm) 
         return (llm,None)  
 
     if  infer_mode == "ray/deepspeed":
