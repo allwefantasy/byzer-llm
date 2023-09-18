@@ -179,9 +179,12 @@ For example:
         disable_log_stats: bool = infer_params.get("backend.disable_log_stats","false") == "true"
 
         from vllm.engine.async_llm_engine import AsyncLLMEngine               
-        llm = AsyncLLMEngine(model=model_dir,                  
-                  worker_use_ray=worker_use_ray, 
-                  engine_use_ray=False,                                  
+        llm = AsyncLLMEngine(                  
+                  worker_use_ray, 
+                  False,                                  
+                  model_dir,
+                  log_requests= True,
+                  start_engine_loop = True,
                   trust_remote_code=True,                                  
                 #   use_dummy_weights=use_dummy_weights,
                 #   use_np_weights=use_np_weights,
