@@ -70,7 +70,13 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
                                      top_p=top_p, 
                                      max_tokens=max_tokens)
     outputs = model.generate([ins], sampling_params)    
-    generated_text = outputs[0].outputs[0].text
+    output = outputs[0].outputs[0]
+    generated_text = output.text
+        
+    input_tokens_count = len(outputs[0].prompt_token_ids)
+    generated_tokens_count = len(output.token_ids) 
+    print(f"total_tokens_count:{input_tokens_count + generated_tokens_count} output_num:{len(outputs)}  input_tokens_count:{input_tokens_count} generated_tokens_count:{generated_tokens_count}",flush=True)
+
     return [(generated_text,"")]
 
 
