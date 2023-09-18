@@ -75,7 +75,7 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         
     input_tokens_count = len(outputs[0].prompt_token_ids)
     generated_tokens_count = len(output.token_ids) 
-    print(f"total_tokens_count:{input_tokens_count + generated_tokens_count} output_num:{len(outputs)}  input_tokens_count:{input_tokens_count} generated_tokens_count:{generated_tokens_count}",flush=True)
+    print(f"total_tokens_count:{input_tokens_count + generated_tokens_count} request_id:{outputs[0].request_id} output_num:{len(outputs)}/{len(outputs[0].outputs)}  input_tokens_count:{input_tokens_count} generated_tokens_count:{generated_tokens_count}",flush=True)
 
     return [(generated_text,"")]
 
