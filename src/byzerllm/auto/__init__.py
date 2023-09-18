@@ -127,18 +127,20 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         max_length:int=4096, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
-    import asyncio
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError as e:
-        if str(e).startswith('There is no current event loop in thread'):
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-        else:
-            raise
-    model = self    
-    s = loop.run_until_complete(async_vllm_chat(model,tokenizer,ins,his,max_length,top_p,temperature,**kwargs))
-    return [(s,"")]    
+    # import asyncio
+    # try:
+    #     loop = asyncio.get_event_loop()
+    # except RuntimeError as e:
+    #     if str(e).startswith('There is no current event loop in thread'):
+    #         loop = asyncio.new_event_loop()
+    #         asyncio.set_event_loop(loop)
+    #     else:
+    #         raise
+    # model = self    
+    # s = loop.run_until_complete(async_vllm_chat(model,tokenizer,ins,his,max_length,top_p,temperature,**kwargs))
+    # return [(s,"")] 
+    model = self
+    return block_vllm_chat(model,model,tokenizer,ins,his,max_length,top_p,temperature,**kwargs)   
 
 def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}): 
     infer_mode = sys_conf.get("infer_backend","transformers")
