@@ -128,7 +128,14 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
     import asyncio
-    loop = asyncio.get_event_loop()
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError as e:
+        if str(e).startswith('There is no current event loop in thread'):
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        else:
+            raise
     s = loop.run_until_complete(async_vllm_chat,self,tokenizer,ins,his,max_length,top_p,temperature,**kwargs)
     return [(s,"")]    
 
