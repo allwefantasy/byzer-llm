@@ -77,7 +77,8 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         final_output = request_output
     assert final_output is not None    
     text_outputs = [output.text for output in final_output.outputs]
-    return text_outputs[0]
+    generated_text = text_outputs[0]
+    return [(generated_text,"")]   
 
 def block_vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
