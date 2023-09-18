@@ -121,12 +121,14 @@ def block_vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     generated_tokens_count = len(output.token_ids) 
     print(f"total_tokens_count:{input_tokens_count + generated_tokens_count} request_id:{outputs[0].request_id} output_num:{len(outputs)}/{len(outputs[0].outputs)}  input_tokens_count:{input_tokens_count} generated_tokens_count:{generated_tokens_count}",flush=True)
 
-    return [(generated_text,"")]    
+    return [(generated_text,"")]   
+
 
 def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
+    model = self
     # import asyncio
     # try:
     #     loop = asyncio.get_event_loop()
@@ -135,11 +137,9 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     #         loop = asyncio.new_event_loop()
     #         asyncio.set_event_loop(loop)
     #     else:
-    #         raise
-    # model = self    
+    #         raise e    
     # s = loop.run_until_complete(async_vllm_chat(model,tokenizer,ins,his,max_length,top_p,temperature,**kwargs))
-    # return [(s,"")] 
-    model = self
+    # return [(s,"")]     
     return block_vllm_chat(model,model,tokenizer,ins,his,max_length,top_p,temperature,**kwargs)   
 
 def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}): 

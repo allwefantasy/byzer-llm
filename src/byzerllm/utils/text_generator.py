@@ -58,7 +58,7 @@ class ByzerLLMGenerator:
                 new_params[k[len("gen."):]] = v
             if k.startswith("generation."):
                 new_params[k[len("generation."):]] = v     
-            
+                        
         response = self.model.stream_chat(self.tokenizer, 
         ins, his, 
         max_length=int(query.get("max_length",1024)), 
