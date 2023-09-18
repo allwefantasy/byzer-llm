@@ -180,7 +180,8 @@ For example:
 
         from vllm.engine.async_llm_engine import AsyncLLMEngine               
         llm = AsyncLLMEngine(model=model_dir,                  
-                  worker_use_ray=worker_use_ray,                   
+                  worker_use_ray=worker_use_ray, 
+                  engine_use_ray=False,                                  
                   trust_remote_code=True,                                  
                 #   use_dummy_weights=use_dummy_weights,
                 #   use_np_weights=use_np_weights,
