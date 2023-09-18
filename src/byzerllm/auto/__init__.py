@@ -181,7 +181,7 @@ For example:
         from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs     
         engine_args = AsyncEngineArgs(
             engine_use_ray=False,
-            disable_log_requests=False
+            disable_log_requests=False,
             model=model_dir,
             tokenizer=None,tokenizer_mode="auto",
             trust_remote_code=True,    
