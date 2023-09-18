@@ -109,12 +109,18 @@ class ByzerLLMGenerator:
                     new_params[k[len("gen."):]] = v
                 if k.startswith("generation."):
                     new_params[k[len("generation."):]] = v     
-
-            response = await self.model.async_stream_chat(self.tokenizer, 
-            ins, his, 
-            max_length=int(query.get("max_length",1024)), 
-            top_p=float(query.get("top_p",0.7)),
-            temperature=float(query.get("temperature",0.9)),**new_params)
+            if hasattr(self.model, "async_stream_chat"):
+                response = await self.model.async_stream_chat(self.tokenizer, 
+                ins, his, 
+                max_length=int(query.get("max_length",1024)), 
+                top_p=float(query.get("top_p",0.7)),
+                temperature=float(query.get("temperature",0.9)),**new_params)
+            else:
+                response = self.model.stream_chat(self.tokenizer, 
+                ins, his, 
+                max_length=int(query.get("max_length",1024)), 
+                top_p=float(query.get("top_p",0.7)),
+                temperature=float(query.get("temperature",0.9)),**new_params)    
             
             last = ""
             for t,_ in response:                                               
@@ -122,21 +128,7 @@ class ByzerLLMGenerator:
             return last        
 
 
-def simple_predict_func(model,v):
-    (model,tokenizer) = model
-    llm = ByzerLLMGenerator(model,tokenizer)
-    data = [json.loads(item) for item in v]
-    
-    results=[]
-    for item in data:        
-        v = llm.predict(item)
-        results.append({
-            "predict":v,
-            "input":item})
-
-    return {"value":[json.dumps(results,ensure_ascii=False)]}
-
-async def async_simple_predict_func(model,v):
+async def simple_predict_func(model,v):
     (model,tokenizer) = model
     llm = ByzerLLMGenerator(model,tokenizer)
     data = [json.loads(item) for item in v]
