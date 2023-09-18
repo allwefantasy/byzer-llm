@@ -204,11 +204,11 @@ def train(lora_config:str, args:List[str],extra_params={})->str:
     # 加载各种组件
     trainer = init_components(parsed_args, training_args,extra_params)
     # 开始训练
-    print(f"*** {sft_name} starting training ***")
+    print(f"*** [{sft_name}] starting training ***")
     train_result = trainer.train()
 
     # 打印 token 总数
-    print(f"{sft_name} total tokens: {trainer.train_dataset.dataset_tokens_count}",flush=True)
+    print(f"[{sft_name}] total tokens: {trainer.train_dataset.dataset_tokens_count}",flush=True)
 
     # 保存最好的checkpoint
     final_save_path = join(training_args.output_dir, 'final')

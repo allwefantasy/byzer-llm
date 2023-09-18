@@ -131,8 +131,9 @@ class SFT:
             "model_type": self.train_params.get("model_type","casual_lm"),"sft_name":sft_name
         })
         # copy the pretrained model to output dir
-        print_flush(f'[{sft_name}] Copy {self.sft_config["model_name_or_path"]} to {os.path.join(final_path,"pretrained_model")}')        
-        shutil.copytree(self.sft_config["model_name_or_path"],os.path.join(final_path,"pretrained_model"))
+        if self.train_params.get("skipCopyPretrainedModel","false") == "false":
+            print_flush(f'[{sft_name}] Copy pretrained model: {self.sft_config["model_name_or_path"]} to {os.path.join(final_path,"pretrained_model")}')        
+            shutil.copytree(self.sft_config["model_name_or_path"],os.path.join(final_path,"pretrained_model"))
         
         # if detached, do not transfer the model to delta lake
         detached = self.train_params.get("detached","false") == "true"
