@@ -178,27 +178,26 @@ For example:
         max_num_seqs: int = int(infer_params.get("backend.max_num_seqs",256))
         disable_log_stats: bool = infer_params.get("backend.disable_log_stats","false") == "true"
 
-        from vllm.engine.async_llm_engine import AsyncLLMEngine               
-        llm = AsyncLLMEngine(                  
-                  worker_use_ray, 
-                  False,                                  
-                  model_dir,
-                  log_requests= True,
-                  start_engine_loop = True,
-                  trust_remote_code=True,                                  
-                #   use_dummy_weights=use_dummy_weights,
-                #   use_np_weights=use_np_weights,
-                  dtype=dtype,
-                  seed=seed,
-                  pipeline_parallel_size=pipeline_parallel_size,
-                  tensor_parallel_size=tensor_parallel_size,
-                  block_size=block_size,
-                  swap_space=swap_space,
-                  gpu_memory_utilization=gpu_memory_utilization,
-                  max_num_batched_tokens=max_num_batched_tokens,
-                  max_num_seqs=max_num_seqs,
-                  disable_log_stats=disable_log_stats)        
-        
+        from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs     
+        engine_args = AsyncEngineArgs(
+            engine_use_ray=False,
+            disable_log_requests=False
+            model=model_dir,
+            tokenizer=None,tokenizer_mode="auto",
+            trust_remote_code=True,    
+            worker_use_ray=worker_use_ray,                                        
+            dtype=dtype,
+            seed=seed,
+            pipeline_parallel_size=pipeline_parallel_size,
+            tensor_parallel_size=tensor_parallel_size,
+            block_size=block_size,
+            swap_space=swap_space,
+            gpu_memory_utilization=gpu_memory_utilization,
+            max_num_batched_tokens=max_num_batched_tokens,
+            max_num_seqs=max_num_seqs,
+            disable_log_stats=disable_log_stats
+        )
+        llm = AsyncLLMEngine.from_engine_args(engine_args)                       
         llm.stream_chat = types.MethodType(vllm_chat, llm) 
         return (llm,None)  
 
