@@ -30,5 +30,19 @@ def convert_deepspeed_checkpoint_to_transformers(model_dir:str,
     
     tokenizer = AutoTokenizer.from_pretrained(model_dir)
     tokenizer.save_pretrained(output_dir)
+    
+def convert(train_params,sys_conf):
+    model_dir = train_params("model_dir")
+    checkpoint_dir = train_params("checkpoint_dir")
+    output_dir = train_params("output_dir")
+    tag = train_params("tag")
+    convert_deepspeed_checkpoint_to_transformers(
+        model_dir=model_dir,
+        checkpoint_dir=checkpoint_dir,
+        output_dir=output_dir,
+        tag = tag
+    )
+
+
 
 
