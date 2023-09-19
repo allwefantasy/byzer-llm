@@ -25,7 +25,7 @@ CUDA_DNN_SUPPORT=${CUDA_DNN_SUPPORT:-"false"}
 PYPI_MIRROR=${PYPI_MIRROR:-"aliyun"}
 GIT_MIRROR=${GIT_MIRROR:-"gitee"}
 
-BYZER_LLM_EXTENSION_JAR="byzer-llm-3.3_2.12-0.1.1.jar"
+BYZER_LLM_EXTENSION_JAR="byzer-llm-3.3_2.12-0.1.2.jar"
 BYZER_LLM_EXTENSION_APP="tech.mlsql.plugins.llm.LLMApp"
 
 #valid conda channel
