@@ -80,6 +80,7 @@ class TrainArgs:
     checkpoint_saving_path: str = "/home/byzerllm/data/checkpoints"
     max_length: int = 4096
     data_dir: str = "/home/byzerllm/data/raw_data"
+    data_mode: str = "auto"
      
 
 @dataclasses.dataclass
@@ -260,7 +261,14 @@ class Worker:
         self.ds_config = self.parallel_config.ds_config
         self.get_model = self.parallel_config.get_model
         self.distributed_init_method = distributed_init_method 
-        self.data_dir = os.path.join(self.parallel_config.train_args.data_dir,f"data-{self.rank}")       
+        self.data_dir = os.path.join(self.parallel_config.train_args.data_dir,f"data-{self.rank}") 
+        
+        # if the data is not from data_refs(from Byzer) , it may
+        # means that the data is prepared in every node before run the training.
+        # we just respect the data_dir provied by the user.                
+        if not self.parallel_config.data_refs:                  
+            self.data_dir = self.parallel_config.train_args.data_dir
+
         self.model = None
         self.tokenizer = None
         self.tensorboard_pid = None        
@@ -379,7 +387,7 @@ class Worker:
                         f.write(item["text"]+"\n")
                     else:
                         raise Exception("Unknow data format")                             
-                    count += 1  
+                    count += 1         
 
         
         tokenizer_path = self.parallel_config.train_args.tokenizer_path        
