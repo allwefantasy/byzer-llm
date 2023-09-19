@@ -22,7 +22,7 @@ def convert_deepspeed_checkpoint_to_transformers(model_dir:str,
         os.makedirs(temp_dir)
 
     temp_pytorch_model_file = os.path.join(output_dir,"temp",WEIGHTS_NAME)
-    zero_to_fp32.convert_zero_checkpoint_to_fp32_state_dict(checkpoint_dir, temp_pytorch_model_file, tag=None)
+    zero_to_fp32.convert_zero_checkpoint_to_fp32_state_dict(checkpoint_dir, temp_pytorch_model_file, tag=tag)
 
     model = AutoModelForCausalLM.from_pretrained(model_dir)
     model.load_state_dict(torch.load(temp_pytorch_model_file))
