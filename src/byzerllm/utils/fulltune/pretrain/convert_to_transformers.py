@@ -34,9 +34,9 @@ class DeepSpeedConvert(object):
         tokenizer.save_pretrained(output_dir)
 
 def convert(train_params,sys_conf):    
-    model_dir = train_params("model_dir")
-    checkpoint_dir = train_params("checkpoint_dir")
-    output_dir = train_params("output_dir")
+    model_dir = train_params("modelNameOrPath")
+    checkpoint_dir = train_params("checkpointDir")
+    output_dir = train_params("savePath")
     tag = train_params("tag")
     
     custom_resources = [(key.split("resource.")[1], float(sys_conf[key])) for key in
