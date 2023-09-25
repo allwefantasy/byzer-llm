@@ -45,5 +45,6 @@ async def _transfer_from_ob(udf_name, model_refs,target_dir):
 def transfer_from_ob(udf_name,model_refs,model_dir):
     print_flush(f"[{udf_name}] model_refs:{len(model_refs)} model_dir:{model_dir}")
     time1 = time.time()
-    asyncio.run(_transfer_from_ob(udf_name,model_refs,model_dir))
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(_transfer_from_ob(udf_name,model_refs,model_dir))            
     print_flush(f"[{udf_name}] UDFWorker pull model from object store cost {time.time() - time1} seconds")
