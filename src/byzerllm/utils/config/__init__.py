@@ -19,4 +19,4 @@ class MLSQLConifg(object):
 
 
 def create_mlsql_config(name,json_obj):
-    return MLSQLConifg.options(name=MLSQL_CONFIG,lifetime="detached").remote(json_obj)
+    return MLSQLConifg.options(name=MLSQL_CONFIG,lifetime="detached").remote(name,json_obj)
