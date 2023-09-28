@@ -231,6 +231,7 @@ fi
 if [[ $DRIVER_INSTALLED == false ]];then
     echo "Now install the NVIDIA driver"
     if [ "$OS" = "ubuntu" ]; then
+        sudo apt-get update
         sudo apt install -y  nvidia-driver-535
     elif [ "$OS" = "centos" ]; then
         sudo dnf config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo
