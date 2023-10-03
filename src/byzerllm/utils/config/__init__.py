@@ -33,4 +33,4 @@ def get_mlsql_config_item(key,defaultValue):
     return config.getitem(key,defaultValue)
         
 def get_mlsql_config_pushgateway_address():
-    return get_mlsql_config_item("config.spark.mlsql.pushgateway.address",None)
+    return get_mlsql_config_item("spark.mlsql.pushgateway.address",None)
