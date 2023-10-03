@@ -1,6 +1,7 @@
 from prometheus_client import CollectorRegistry, Gauge,Counter, push_to_gateway
 from byzerllm.utils.config import get_mlsql_config_pushgateway_address,get_mlsql_config
 from typing import Union,Dict
+import ray
 
 class Metric:
 
