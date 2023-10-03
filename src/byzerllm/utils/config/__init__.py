@@ -30,7 +30,7 @@ def get_mlsql_config():
 
 def get_mlsql_config_item(key,defaultValue):
     config = get_mlsql_config()
-    return config.getitem(key,defaultValue)
+    return ray.get(config.getitem.remote(key,defaultValue))
         
 def get_mlsql_config_pushgateway_address():
     return get_mlsql_config_item("spark.mlsql.pushgateway.address",None)
