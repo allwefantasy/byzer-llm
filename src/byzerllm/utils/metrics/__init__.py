@@ -11,7 +11,7 @@ class Metric:
         self.metric_enabled = False
         self.pushgateway_address = None
         if config is not None:
-            self.pushgateway_address = ray.get(config.getitem.remote("config.spark.mlsql.pushgateway.address",None))
+            self.pushgateway_address = ray.get(config.getitem.remote("spark.mlsql.pushgateway.address",None))
             self.metric_enabled = True
 
         self.gauges = {}
