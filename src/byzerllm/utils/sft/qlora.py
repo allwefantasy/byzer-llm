@@ -1,6 +1,7 @@
 from typing import List,Dict
 import json
 from transformers import AutoTokenizer, BitsAndBytesConfig
+from byzerllm.utils.metrics import Metric
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from transformers import (
     set_seed,
@@ -209,6 +210,9 @@ def train(lora_config:str, args:List[str],extra_params={})->str:
 
     # 打印 token 总数
     print(f"[{sft_name}] total tokens: {trainer.train_dataset.dataset_tokens_count}",flush=True)
+    token_metrics = Metric()
+    token_metrics.inc(f"sft_{sft_name}_tokens_num",trainer.train_dataset.dataset_tokens_count)
+    token_metrics.push()
 
     # 保存最好的checkpoint
     final_save_path = join(training_args.output_dir, 'final')

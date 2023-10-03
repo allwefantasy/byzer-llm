@@ -7,7 +7,11 @@ from typing import Any,Any,Dict, List,Tuple,Generator,Optional,Union
 import types
 
 from pyjava.api.mlsql import DataServer
+from byzerllm.utils.metrics import Metric
 from .. import BlockRow
+
+
+INFERENCE_NAME = "auto"
 
 def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=1024, 
@@ -85,6 +89,10 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     generated_tokens_count = len(text_outputs[0].token_ids) 
     
     print(f"total_tokens_count:{input_tokens_count + generated_tokens_count} request_id:{final_output.request_id}  input_tokens_count:{input_tokens_count} generated_tokens_count:{generated_tokens_count}",flush=True)
+    token_metrics = Metric()
+    token_metrics.inc(f"infer_{INFERENCE_NAME}_input_tokens_num",input_tokens_count)
+    token_metrics.inc(f"infer_{INFERENCE_NAME}_output_tokens_num", generated_tokens_count)
+    token_metrics.push()
     return [(generated_text,"")]   
 
 def block_vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
@@ -167,6 +175,8 @@ For example:
     if infer_mode == "ray/vllm":        
         num_gpus = int(sys_conf.get("num_gpus",1))
         print(f"infer_mode:{infer_mode} tensor_parallel_size: {num_gpus}")
+        global INFERENCE_NAME
+        INFERENCE_NAME = infer_params.get("udfName","auto")
         
         # use_np_weights: bool = infer_params.get("backend.use_np_weights","false") == "true"
         # use_dummy_weights: bool = infer_params.get("backend.use_dummy_weights","false") == "true"

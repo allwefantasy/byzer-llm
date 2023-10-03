@@ -8,8 +8,8 @@ class MLSQLConifg(object):
         self._config = json_obj
         self.instance_name = instance_name
 
-    def getitem(self, key):
-        return self._config[key]
+    def getitem(self, key,defaulValue):
+        return self._config.get(key,defaulValue)
 
     def setitem(self, key, value):
         self._config[key] = value   
@@ -20,3 +20,17 @@ class MLSQLConifg(object):
 
 def create_mlsql_config(name,json_obj):
     return MLSQLConifg.options(name=MLSQL_CONFIG,lifetime="detached").remote(name,json_obj)
+
+def get_mlsql_config():
+    try:
+        config = ray.get_actor(MLSQL_CONFIG)
+    except:
+        config = None    
+    return config
+
+def get_mlsql_config_item(key,defaultValue):
+    config = get_mlsql_config()
+    return config.getitem(key,defaultValue)
+        
+def get_mlsql_config_pushgateway_address():
+    return get_mlsql_config_item("config.spark.mlsql.pushgateway.address",None)
