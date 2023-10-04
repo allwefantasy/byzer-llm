@@ -1,4 +1,4 @@
-from prometheus_client import CollectorRegistry, Gauge,Counter, push_to_gateway
+from prometheus_client import CollectorRegistry, Gauge,Counter, pushadd_to_gateway
 from byzerllm.utils.config import get_mlsql_config_pushgateway_address,get_mlsql_config
 from typing import Union,Dict
 import ray
@@ -28,7 +28,7 @@ class Metric:
         if not self.metric_enabled:
             return
         if self.pushgateway_address is not None:
-            push_to_gateway(self.pushgateway_address, job='pushgateway', registry=self.registry)      
+            pushadd_to_gateway(self.pushgateway_address, job='pushgateway', registry=self.registry)      
         
     
 
