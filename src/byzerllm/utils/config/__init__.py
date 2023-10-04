@@ -19,6 +19,9 @@ class MLSQLConifg(object):
 
 
 def create_mlsql_config(name,json_obj):
+    config = get_mlsql_config()
+    if config is not None:
+        ray.kill(config)
     return MLSQLConifg.options(name=MLSQL_CONFIG,lifetime="detached").remote(name,json_obj)
 
 def get_mlsql_config():
