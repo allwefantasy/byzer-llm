@@ -20,6 +20,10 @@ class EnvSettings:
     path:str
 
 @dataclasses.dataclass
+class JVMSettings:
+     options: list[str]
+
+@dataclasses.dataclass
 class SearchQuery:
        keyword: Optional[str] 
        fields: list[str]
