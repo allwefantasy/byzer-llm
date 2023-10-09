@@ -24,5 +24,5 @@ class SearchQuery:
        keyword: Optional[str] = None 
        fields: list[str]
        vector: list[float]
-       vector_field: Optional[str] = None
+       vectorField: Optional[str] = None
        limit: int=10
