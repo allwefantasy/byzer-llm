@@ -18,3 +18,11 @@ class TableSettings:
 class EnvSettings: 
     javaHome:str
     path:str
+
+@dataclasses.dataclass
+class SearchQuery:
+       keyword: Optional[str] = None 
+       fields: list[str]
+       vector: list[float]
+       vector_field: Optional[str] = None
+       limit: int=10
