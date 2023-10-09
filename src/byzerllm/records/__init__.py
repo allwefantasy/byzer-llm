@@ -21,8 +21,8 @@ class EnvSettings:
 
 @dataclasses.dataclass
 class SearchQuery:
-       keyword: Optional[str] = None 
+       keyword: Optional[str] 
        fields: list[str]
        vector: list[float]
-       vectorField: Optional[str] = None
+       vectorField: Optional[str]
        limit: int=10
