@@ -1,10 +1,9 @@
-import dataclasses
 from typing import Optional
 
-@dataclasses.dataclass
 class ClusterSettings:
-    name:str
-    location:str
+    def __init__(self, name:str, location:str):
+        self.name = name
+        self.location = location    
 
 class TableSettings:
     def __init__(self, database:str, table:Optional[str], schema:str, location:Optional[str], num_shards:int):
