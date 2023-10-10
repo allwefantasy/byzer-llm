@@ -15,6 +15,16 @@ class ByzerRetrieval:
         self.clusters = {}
 
     def launch_gateway(self)-> ray.actor.ActorHandle:
+        
+        try:
+           self.retrieval_gateway = ray.get_actor("RetrievalGateway")
+        except ValueError:
+            pass   
+
+        if self.retrieval_gateway:
+            self.launched = True
+            return self.retrieval_gateway
+
         if self.launched:
             return ray.get_actor("RetrievalGateway")
         
