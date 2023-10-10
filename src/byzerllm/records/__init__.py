@@ -2,9 +2,10 @@ from typing import Optional
 import json
 
 class ClusterSettings:
-    def __init__(self, name:str, location:str):
+    def __init__(self, name:str, location:str, numNodes:int):
         self.name = name
-        self.location = location    
+        self.location = location 
+        self.numNodes = numNodes   
 
     def json(self):
         return json.dumps(self.__dict__,ensure_ascii=False)        
