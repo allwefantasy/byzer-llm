@@ -84,7 +84,11 @@ class ByzerRetrieval:
         
         data_ids = ref_utils.get_object_ids(object_refs)
         locations = ref_utils.get_locations(object_refs)
-        return ray.get(cluster.buildFromRayObjectStore.remote(database,table,data_ids,locations)) 
+        return ray.get(cluster.buildFromRayObjectStore.remote(database,table,data_ids,locations))
+
+    def commit(self,cluster_name:str, database:str, table:str)-> bool:
+        cluster = self.cluster(cluster_name)
+        return ray.get(cluster.commit.remote(database,table))
     
     def search_keyword(self,cluster_name:str, 
                        database:str, 
