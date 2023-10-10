@@ -30,18 +30,16 @@ class ByzerRetrieval:
         return ray.get_actor("RetrievalGateway")
     
 
-    def start_cluster(self, cluster_settings:ClusterSettings, 
-                      table_settings:TableSettings,
+    def start_cluster(self, cluster_settings:ClusterSettings,                       
                       env_settings:EnvSettings, 
                       jvm_settings:JVMSettings)-> bool:
         if not self.launched:
             raise Exception("Please launch gateway first")
         
         obj_ref1 = self.retrieval_gateway.buildCluster.remote(
-                    cluster_settings.json(),
-                    table_settings.json(),
-                    env_settings.dumps(env_settings,default=lambda o: o.__dict__),
-                    jvm_settings.dumps(jvm_settings,default=lambda o: o.__dict__))
+                    cluster_settings.json(),                    
+                    env_settings.json(),
+                    jvm_settings.json())
         
         return ray.get(obj_ref1) 
     
