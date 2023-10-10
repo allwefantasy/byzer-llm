@@ -46,6 +46,14 @@ class ByzerRetrieval:
         if not self.launched:
             raise Exception("Please launch gateway first")
         
+        if cluster_settings.name in self.clusters:
+            raise Exception(f"Cluster {cluster_settings.name} already exists")
+        
+        try:
+            ray.get_actor(cluster_settings.name)
+        except ValueError:
+            raise Exception(f"Cluster {cluster_settings.name} already exists")   
+        
         obj_ref1 = self.retrieval_gateway.buildCluster.remote(
                     cluster_settings.json(),                    
                     env_settings.json(),
