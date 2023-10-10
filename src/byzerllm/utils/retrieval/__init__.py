@@ -51,8 +51,9 @@ class ByzerRetrieval:
         
         try:
             ray.get_actor(cluster_settings.name)
-        except Exception:
             raise Exception(f"Cluster {cluster_settings.name} already exists")   
+        except ValueError:
+            pass
         
         obj_ref1 = self.retrieval_gateway.buildCluster.remote(
                     cluster_settings.json(),                    
