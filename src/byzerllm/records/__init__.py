@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional,List
 import json
 
 class ClusterSettings:
@@ -28,7 +28,24 @@ class EnvSettings:
         self.path = path   
 
     def json(self):
-        return json.dumps(self.__dict__,ensure_ascii=False)         
+        return json.dumps(self.__dict__,ensure_ascii=False)  
+
+
+class ResourceRequirement:
+    def __init__(self, name:float, resourceQuantity:float):
+        self.name = name
+        self.resourceQuantity = resourceQuantity   
+
+    def json(self):
+        return json.dumps(self.__dict__,ensure_ascii=False)
+
+
+class ResourceRequirementSettings:
+    def __init__(self, resourceRequirements: List[ResourceRequirement]):
+        self.resourceRequirements = resourceRequirements
+
+    def json(self):
+        return json.dumps(self.__dict__,ensure_ascii=False)           
 
 
 class JVMSettings:
