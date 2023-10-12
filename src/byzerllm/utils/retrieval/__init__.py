@@ -77,6 +77,10 @@ class ByzerRetrieval:
         cluster = ray.get(cluster_ref)
         self.clusters[name] = cluster
         return cluster
+    
+    def cluster_info(self,name:str) -> Dict[str,Any]:
+        cluster = self.cluster(name)
+        return json.loads(ray.get(cluster.clusterInfo.remote()))
 
     def create_table(self,cluster_name:str, tableSettings:TableSettings)-> bool:
         cluster = self.cluster(cluster_name)
