@@ -1,7 +1,7 @@
 
 import ray 
 from ray.types import ObjectRef
-from byzerllm.records import ClusterSettings, EnvSettings, JVMSettings, TableSettings,SearchQuery
+from byzerllm.records import ClusterSettings, EnvSettings, JVMSettings, TableSettings,SearchQuery,ResourceRequirementSettings
 from typing import List,Dict,Any
 import byzerllm.utils.object_store_ref_util as ref_utils
 import json
@@ -42,7 +42,8 @@ class ByzerRetrieval:
 
     def start_cluster(self, cluster_settings:ClusterSettings,                       
                       env_settings:EnvSettings, 
-                      jvm_settings:JVMSettings)-> bool:
+                      jvm_settings:JVMSettings,
+                      resource_requirement_settings:ResourceRequirementSettings = ResourceRequirementSettings([])) -> bool:                      
         if not self.launched:
             raise Exception("Please launch gateway first")
         
@@ -58,7 +59,9 @@ class ByzerRetrieval:
         obj_ref1 = self.retrieval_gateway.buildCluster.remote(
                     cluster_settings.json(),                    
                     env_settings.json(),
-                    jvm_settings.json())
+                    jvm_settings.json(),
+                    resource_requirement_settings.json()
+                    )
         
         return ray.get(obj_ref1) 
     

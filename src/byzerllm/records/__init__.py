@@ -45,7 +45,7 @@ class ResourceRequirementSettings:
         self.resourceRequirements = resourceRequirements
 
     def json(self):
-        return json.dumps(self.__dict__,ensure_ascii=False)           
+        return json.dumps({"resourceRequirements":[item.__dict__ for item in self.resourceRequirements]},ensure_ascii=False)           
 
 
 class JVMSettings:
