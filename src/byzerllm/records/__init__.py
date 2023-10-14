@@ -8,7 +8,11 @@ class ClusterSettings:
         self.numNodes = numNodes   
 
     def json(self):
-        return json.dumps(self.__dict__,ensure_ascii=False)        
+        return json.dumps(self.__dict__,ensure_ascii=False) 
+
+    @staticmethod 
+    def from_json(json_str:str):
+        return ClusterSettings(**json.loads(json_str))       
 
 class TableSettings:
     def __init__(self, database:str, table:Optional[str], schema:str, location:Optional[str], num_shards:int):
@@ -19,7 +23,11 @@ class TableSettings:
         self.num_shards = num_shards
 
     def json(self):
-        return json.dumps(self.__dict__,ensure_ascii=False)    
+        return json.dumps(self.__dict__,ensure_ascii=False)
+
+    @staticmethod 
+    def from_json(json_str:str):
+        return TableSettings(**json.loads(json_str))    
 
 
 class EnvSettings:
@@ -28,7 +36,11 @@ class EnvSettings:
         self.path = path   
 
     def json(self):
-        return json.dumps(self.__dict__,ensure_ascii=False)  
+        return json.dumps(self.__dict__,ensure_ascii=False) 
+
+    @staticmethod
+    def from_json(json_str:str):
+        return EnvSettings(**json.loads(json_str)) 
 
 
 class ResourceRequirement:
@@ -38,6 +50,11 @@ class ResourceRequirement:
 
     def json(self):
         return json.dumps(self.__dict__,ensure_ascii=False)
+    
+    @staticmethod
+    def from_json(json_str:str):
+        return ResourceRequirement(**json.loads(json_str))
+    
 
 
 class ResourceRequirementSettings:
@@ -46,6 +63,11 @@ class ResourceRequirementSettings:
 
     def json(self):
         return json.dumps({"resourceRequirements":[item.__dict__ for item in self.resourceRequirements]},ensure_ascii=False)           
+    
+    @staticmethod
+    def from_json(json_str:str):
+        s = json.loads(json_str)
+        return ResourceRequirementSettings([ResourceRequirement(**s["resourceRequirements"]) ])
 
 
 class JVMSettings:
@@ -53,7 +75,11 @@ class JVMSettings:
         self.options = options   
 
     def json(self):
-        return json.dumps(self.__dict__,ensure_ascii=False)         
+        return json.dumps(self.__dict__,ensure_ascii=False) 
+
+    @staticmethod
+    def from_json(json_str:str):
+        return JVMSettings(**json.loads(json_str))        
 
 
 class SearchQuery:
@@ -65,6 +91,10 @@ class SearchQuery:
         self.limit = limit
 
     def json(self):
-        return json.dumps(self.__dict__,ensure_ascii=False)    
+        return json.dumps(self.__dict__,ensure_ascii=False) 
+
+    @staticmethod
+    def from_json(json_str:str):
+        return SearchQuery(**json.loads(json_str))   
         
     
