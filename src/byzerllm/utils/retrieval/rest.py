@@ -94,7 +94,7 @@ class SimpleRest:
         }
     
     @app.get("/cluster/get/{name}")                                        
-    def cluster_info(self,name:str) -> str:
+    def cluster_info(self,name:str):
         return self.retrieval.cluster_info(name)
     
     @app.post("/cluster/restore")                                        
