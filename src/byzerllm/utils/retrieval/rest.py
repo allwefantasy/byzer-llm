@@ -55,7 +55,14 @@ class TableSettingsParam(BaseModel):
     num_shards:int
 
     def table_settings(self):
-        return TableSettings(**self.dict())
+        v = self.dict()        
+        return TableSettings(**v)
+    
+    def dict(self):
+        t = self.__dict__
+        t["schema"]=t["my_schema"]
+        del t["my_schema"]
+        return t
 
 class SearchQueryParam(BaseModel):
     keyword:Optional[str]
@@ -72,7 +79,7 @@ class SearchQueryParam(BaseModel):
      
 app = FastAPI()
 
-@serve.deployment(route_prefix="/")
+@serve.deployment()
 @serve.ingress(app)
 class SimpleRest:
     
@@ -85,7 +92,7 @@ class SimpleRest:
     def cluster(self,   cluster_settings:ClusterSettingsParam,                       
                         env_settings:EnvSettingsParam, 
                         jvm_settings:JVMSettingsParam,
-                        resource_requirement_settings:ResourceRequirementParam) -> str:        
+                        resource_requirement_settings:ResourceRequirementSettingsParam):        
         return {
             "status":self.retrieval.start_cluster(cluster_settings.cluster_settings(),
                                             env_settings.env_settings(),
@@ -156,8 +163,9 @@ class SimpleRest:
 
 def deploy_retrieval_rest_server(**kargs):
     # route_prefix="/retrievel",host="0.0.0.0",
+    new_kargs = {**kargs}
     if "route_prefix" not in kargs:
-        kargs["route_prefix"] = "/retrieval"
+        new_kargs["route_prefix"] = "/retrieval"
     if "host" not in kargs:
-        kargs["host"] = "127.0.0.1"    
-    serve.run(SimpleRest.bind(),**kargs)
+        new_kargs["host"] = "127.0.0.1"    
+    serve.run(SimpleRest.bind(), **new_kargs)
