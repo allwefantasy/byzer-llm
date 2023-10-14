@@ -1,11 +1,12 @@
 from fastapi import FastAPI
 import ray
 from ray import serve
+from pydantic import BaseModel
 from typing import List,Dict,Any
 import json
 from . import ByzerRetrieval,ClusterSettings, EnvSettings, JVMSettings, TableSettings,SearchQuery,ResourceRequirementSettings
 
-
+     
 app = FastAPI()
 
 @serve.deployment(route_prefix="/")
@@ -91,5 +92,5 @@ class SimpleRest:
         },ensure_ascii=False)
 
 
-def deploy():
+def deploy_retrieval_rest_server():
     serve.run(SimpleRest.bind(),route_prefix="/retrievel")
