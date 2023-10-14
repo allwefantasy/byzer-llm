@@ -81,6 +81,9 @@ class ByzerRetrieval:
     def cluster_info(self,name:str) -> Dict[str,Any]:
         cluster = self.cluster(name)
         return json.loads(ray.get(cluster.clusterInfo.remote()))
+    
+    def restore_from_cluster_info(self,cluster_info:Dict[str,Any]) -> bool:        
+        return ray.get(self.retrieval_gateway.restoreFromClusterInfo.remote(json.dumps(cluster_info,ensure_ascii=False)))
 
     def create_table(self,cluster_name:str, tableSettings:TableSettings)-> bool:
         cluster = self.cluster(cluster_name)
@@ -96,6 +99,18 @@ class ByzerRetrieval:
     def commit(self,cluster_name:str, database:str, table:str)-> bool:
         cluster = self.cluster(cluster_name)
         return ray.get(cluster.commit.remote(database,table))
+    
+    def truncate(self,cluster_name:str, database:str, table:str)-> bool:
+        cluster = self.cluster(cluster_name)
+        return ray.get(cluster.truncate.remote(database,table))
+    
+    def close(self,cluster_name:str, database:str, table:str)-> bool:
+        cluster = self.cluster(cluster_name)
+        return ray.get(cluster.close.remote(database,table))
+    
+    def closeAndDeleteFile(self,cluster_name:str, database:str, table:str)-> bool:
+        cluster = self.cluster(cluster_name)
+        return ray.get(cluster.closeAndDeleteFile.remote(database,table))
     
     def search_keyword(self,cluster_name:str, 
                        database:str, 
@@ -119,7 +134,13 @@ class ByzerRetrieval:
         v = cluster.search.remote(database,table,search.json())
         return json.loads(ray.get(v))
     
-        
+    def search(self,cluster_name:str, 
+                       database:str, 
+                       table:str, 
+                       search_query: SearchQuery) -> List[Dict[str,Any]]:        
+        cluster = self.cluster(cluster_name)
+        v = cluster.search.remote(database,table,search_query.json())
+        return json.loads(ray.get(v))    
 
 
     
