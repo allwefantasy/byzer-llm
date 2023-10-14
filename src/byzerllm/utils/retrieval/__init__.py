@@ -38,7 +38,7 @@ class ByzerRetrieval:
 
     def gateway(slef) -> ray.actor.ActorHandle:
         return ray.get_actor("RetrievalGateway")
-    
+                 
 
     def start_cluster(self, cluster_settings:ClusterSettings,                       
                       env_settings:EnvSettings, 
@@ -140,7 +140,7 @@ class ByzerRetrieval:
                        search_query: SearchQuery) -> List[Dict[str,Any]]:        
         cluster = self.cluster(cluster_name)
         v = cluster.search.remote(database,table,search_query.json())
-        return json.loads(ray.get(v))    
+        return json.loads(ray.get(v))  
 
 
     
