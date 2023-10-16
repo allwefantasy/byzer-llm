@@ -25,7 +25,8 @@ transformers_stream_generator==0.0.4
 optimum
 fastapi
 uvicorn
-
+retrying
+zhipuai
 
 # dependencies only for sparkdesk
 websockets
