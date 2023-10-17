@@ -26,7 +26,11 @@ def search_func(model,v):
 
         fields = []
         if "query.fields" in item:
-            fields = item["query.fields"].split(",")
+            fields_str = item["query.fields"]
+            if fields_str.startswith("["):
+                fields = json.loads(fields_str)
+            else:
+                fields = fields_str.split(",")
 
         keyword = None
         if "query.keyword"  in item:
