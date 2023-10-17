@@ -18,7 +18,11 @@ def search_func(model,v):
         table = item["table"]
         vector = []
         if "query.vector" in item:
-            vector = [float(i) for i in item["query.vector"].split(",")]
+            vector_str = item["query.vector"] 
+            if vector_str.startswith("["):
+                vector = json.loads(vector_str)
+            else:
+                vector = [float(i) for i in vector_str.split(",")]
 
         fields = []
         if "query.fields" in item:
