@@ -21,7 +21,8 @@ class CustomSaasAPI:
             model=self.model,
             prompt=messages,
             top_p=float(self.topP),
-            temperature=float(self.temperature)
+            temperature=float(self.temperature),
+	    return_type="text"	
         )
         if response["code"] == 200:
             content = response["data"]["choices"][0]["content"].replace(' .', '.').strip('"').strip()
