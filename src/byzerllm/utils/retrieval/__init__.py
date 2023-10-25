@@ -157,8 +157,8 @@ class ByzerRetrieval:
                        fields:List[str], 
                        limit:int=10) -> List[Dict[str,Any]]:
         
-        if self.check_table_exists(cluster_name,database,table):
-            raise Exception(f"Table {database}.{table} already exists in cluster {cluster_name}")
+        if not self.check_table_exists(cluster_name,database,table):
+            raise Exception(f"Table {database}.{table} not  exists in cluster {cluster_name}")
 
         search = SearchQuery(keyword=keyword,fields=fields,vector=[],vectorField=None,limit=limit)
         cluster = self.cluster(cluster_name)
@@ -172,8 +172,8 @@ class ByzerRetrieval:
                        vector_field:str,                        
                        limit:int=10) -> List[Dict[str,Any]]:
         
-        if self.check_table_exists(cluster_name,database,table):
-            raise Exception(f"Table {database}.{table} already exists in cluster {cluster_name}")
+        if not self.check_table_exists(cluster_name,database,table):
+            raise Exception(f"Table {database}.{table} not exists in cluster {cluster_name}")
 
         search = SearchQuery(keyword=None,fields=[],vector=vector,vectorField=vector_field,limit=limit)
         cluster = self.cluster(cluster_name)
@@ -185,8 +185,8 @@ class ByzerRetrieval:
                        table:str, 
                        search_query: SearchQuery) -> List[Dict[str,Any]]:
 
-        if self.check_table_exists(cluster_name,database,table):
-            raise Exception(f"Table {database}.{table} already exists in cluster {cluster_name}")
+        if not self.check_table_exists(cluster_name,database,table):
+            raise Exception(f"Table {database}.{table} not exists in cluster {cluster_name}")
 
         cluster = self.cluster(cluster_name)
         v = cluster.search.remote(database,table,search_query.json())
