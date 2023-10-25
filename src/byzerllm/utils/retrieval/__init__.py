@@ -109,8 +109,8 @@ class ByzerRetrieval:
 
     def build(self, cluster_name:str, database:str, table:str, object_refs:List[ObjectRef[str]])-> bool:
         
-        if self.check_table_exists(cluster_name,database,table):
-            raise Exception(f"Table {database}.{table} already exists in cluster {cluster_name}")
+        if not self.check_table_exists(cluster_name,database,table):
+            raise Exception(f"Table {database}.{table} not exists in cluster {cluster_name}")
         
         cluster = self.cluster(cluster_name)
         
