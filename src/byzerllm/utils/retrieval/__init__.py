@@ -120,16 +120,16 @@ class ByzerRetrieval:
 
     def commit(self,cluster_name:str, database:str, table:str)-> bool:
         
-        if self.check_table_exists(cluster_name,database,table):
-            raise Exception(f"Table {database}.{table} already exists in cluster {cluster_name}")
+        if not self.check_table_exists(cluster_name,database,table):
+            raise Exception(f"Table {database}.{table} not exists in cluster {cluster_name}")
         
         cluster = self.cluster(cluster_name)
         return ray.get(cluster.commit.remote(database,table))
     
     def truncate(self,cluster_name:str, database:str, table:str)-> bool:
 
-        if self.check_table_exists(cluster_name,database,table):
-            raise Exception(f"Table {database}.{table} already exists in cluster {cluster_name}")
+        if not self.check_table_exists(cluster_name,database,table):
+            raise Exception(f"Table {database}.{table} not exists in cluster {cluster_name}")
 
         cluster = self.cluster(cluster_name)
         return ray.get(cluster.truncate.remote(database,table))
