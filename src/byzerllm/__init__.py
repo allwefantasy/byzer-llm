@@ -85,5 +85,13 @@ import inspect
 
 def check_param_exists(func,name):
     return name in inspect.signature(func).parameters
+
+
+# add a log funcition to log the string to a specified file
+def log_to_file(msg:str,file_path:str):
+    with open(file_path,"a") as f:
+        f.write(msg)
+        f.write("\n")
+        
        
     

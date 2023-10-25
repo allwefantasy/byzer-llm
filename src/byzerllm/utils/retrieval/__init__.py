@@ -2,7 +2,7 @@
 import ray 
 from ray.types import ObjectRef
 from byzerllm.records import ClusterSettings, EnvSettings, JVMSettings, TableSettings,SearchQuery,ResourceRequirementSettings
-from typing import List,Dict,Any
+from typing import List,Dict,Any,Optional
 import byzerllm.utils.object_store_ref_util as ref_utils
 import json
 
@@ -82,14 +82,36 @@ class ByzerRetrieval:
         cluster = self.cluster(name)
         return json.loads(ray.get(cluster.clusterInfo.remote()))
     
+    def get_table_settings(self,cluster_name:str, database:str, table:str) -> Optional[TableSettings]:               
+        cluster_info = self.cluster_info(cluster_name)
+        target_table_settings = None
+        for table_settings_dict in cluster_info["tableSettingsList"]:
+            table_settings = TableSettings(**table_settings_dict)
+            if table_settings.database == database and table_settings.table == table:
+                target_table_settings = table_settings
+                break        
+        return target_table_settings
+    
+    def check_table_exists(self,cluster_name:str, database:str, table:str) -> bool:
+        return self.get_table_settings(cluster_name,database,table) is not None
+        
+    
     def restore_from_cluster_info(self,cluster_info:Dict[str,Any]) -> bool:        
         return ray.get(self.retrieval_gateway.restoreFromClusterInfo.remote(json.dumps(cluster_info,ensure_ascii=False)))
 
     def create_table(self,cluster_name:str, tableSettings:TableSettings)-> bool:
+        
+        if self.check_table_exists(cluster_name,tableSettings.database,tableSettings.table):
+            raise Exception(f"Table {tableSettings.database}.{tableSettings.table} already exists in cluster {cluster_name}")
+
         cluster = self.cluster(cluster_name)
         return ray.get(cluster.createTable.remote(tableSettings.json()))    
 
     def build(self, cluster_name:str, database:str, table:str, object_refs:List[ObjectRef[str]])-> bool:
+        
+        if self.check_table_exists(cluster_name,database,table):
+            raise Exception(f"Table {database}.{table} already exists in cluster {cluster_name}")
+        
         cluster = self.cluster(cluster_name)
         
         data_ids = ref_utils.get_object_ids(object_refs)
@@ -97,18 +119,34 @@ class ByzerRetrieval:
         return ray.get(cluster.buildFromRayObjectStore.remote(database,table,data_ids,locations))
 
     def commit(self,cluster_name:str, database:str, table:str)-> bool:
+        
+        if self.check_table_exists(cluster_name,database,table):
+            raise Exception(f"Table {database}.{table} already exists in cluster {cluster_name}")
+        
         cluster = self.cluster(cluster_name)
         return ray.get(cluster.commit.remote(database,table))
     
     def truncate(self,cluster_name:str, database:str, table:str)-> bool:
+
+        if self.check_table_exists(cluster_name,database,table):
+            raise Exception(f"Table {database}.{table} already exists in cluster {cluster_name}")
+
         cluster = self.cluster(cluster_name)
         return ray.get(cluster.truncate.remote(database,table))
     
     def close(self,cluster_name:str, database:str, table:str)-> bool:
+
+        if not self.check_table_exists(cluster_name,database,table):
+            raise Exception(f"Table {database}.{table} not exists in cluster {cluster_name}")
+
         cluster = self.cluster(cluster_name)
         return ray.get(cluster.close.remote(database,table))
     
     def closeAndDeleteFile(self,cluster_name:str, database:str, table:str)-> bool:
+
+        if not self.check_table_exists(cluster_name,database,table):
+            raise Exception(f"Table {database}.{table} not exists in cluster {cluster_name}")
+
         cluster = self.cluster(cluster_name)
         return ray.get(cluster.closeAndDeleteFile.remote(database,table))
     
@@ -118,6 +156,10 @@ class ByzerRetrieval:
                        keyword:str, 
                        fields:List[str], 
                        limit:int=10) -> List[Dict[str,Any]]:
+        
+        if self.check_table_exists(cluster_name,database,table):
+            raise Exception(f"Table {database}.{table} already exists in cluster {cluster_name}")
+
         search = SearchQuery(keyword=keyword,fields=fields,vector=[],vectorField=None,limit=limit)
         cluster = self.cluster(cluster_name)
         v = cluster.search.remote(database,table,search.json())
@@ -129,6 +171,10 @@ class ByzerRetrieval:
                        vector:List[float], 
                        vector_field:str,                        
                        limit:int=10) -> List[Dict[str,Any]]:
+        
+        if self.check_table_exists(cluster_name,database,table):
+            raise Exception(f"Table {database}.{table} already exists in cluster {cluster_name}")
+
         search = SearchQuery(keyword=None,fields=[],vector=vector,vectorField=vector_field,limit=limit)
         cluster = self.cluster(cluster_name)
         v = cluster.search.remote(database,table,search.json())
@@ -137,7 +183,11 @@ class ByzerRetrieval:
     def search(self,cluster_name:str, 
                        database:str, 
                        table:str, 
-                       search_query: SearchQuery) -> List[Dict[str,Any]]:        
+                       search_query: SearchQuery) -> List[Dict[str,Any]]:
+
+        if self.check_table_exists(cluster_name,database,table):
+            raise Exception(f"Table {database}.{table} already exists in cluster {cluster_name}")
+
         cluster = self.cluster(cluster_name)
         v = cluster.search.remote(database,table,search_query.json())
         return json.loads(ray.get(v))  
