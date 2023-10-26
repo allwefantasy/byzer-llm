@@ -40,6 +40,7 @@ class LLMRequest:
     temperature: float = 0.9
     extra_params: LLMRequestExtra = LLMRequestExtra()
 
+      
 class ByzerLLM:
     def __init__(self,url:Optional[str]=None,**kwargs):
         self.url = url       
@@ -78,6 +79,28 @@ class ByzerLLM:
             ** extract_params} for x in request.instruction]         
         res = self._query(model,v) 
         return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
+    
+    def apply_sql_func(self,sql:str,data:List[Dict[str,Any]]):
+        res = self._rest_byzer_engine(sql,json.dumps(data,ensure_ascii=False))
+        return res
+                   
+    def _rest_byzer_engine(self, sql:str,table:List[Dict[str,Any]],owner:str="admin"):
+        import requests
+        import json
+        data = {
+                'sessionPerUser': 'true',
+                'sessionPerRequest': 'true',
+                'owner': owner,
+                'dataType': 'row',
+                'sql': sql,
+                'data': json.dumps(table,ensure_ascii=False)
+            }
+        response = requests.post("http://127.0.0.1:9003/model/predict", data=data)
+        
+        if response.status_code != 200:
+            raise Exception(f"{self.url} status:{response.status_code} content: {response.text} request: json/{json.dumps(data,ensure_ascii=False)}")
+        res = json.loads(response.text)        
+        return res[0]
 
     def _query(self, model:str, input_value:List[Dict[str,Any]]):
         udf_master = ray.get_actor(model)

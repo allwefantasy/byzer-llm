@@ -2,7 +2,7 @@
 import ray 
 from ray.types import ObjectRef
 from byzerllm.records import ClusterSettings, EnvSettings, JVMSettings, TableSettings,SearchQuery,ResourceRequirementSettings
-from typing import List,Dict,Any,Optional
+from typing import List,Dict,Any,Optional,Union
 import byzerllm.utils.object_store_ref_util as ref_utils
 import json
 
@@ -174,9 +174,10 @@ class ByzerRetrieval:
         v = cluster.search.remote(f"[{search.json()}]")
         return json.loads(ray.get(v))
     
-    def search(self,cluster_name:str,search_query: List[SearchQuery]) -> List[Dict[str,Any]]:        
-        
+    def search(self,cluster_name:str,search_query: Union[List[SearchQuery],SearchQuery]) -> List[Dict[str,Any]]:        
         cluster = self.cluster(cluster_name)
+        if isinstance(search_query,SearchQuery):
+            search_query = [search_query]
         v = cluster.search.remote(f"[{','.join([x.json() for x in search_query])}]")
         return json.loads(ray.get(v))  
 
