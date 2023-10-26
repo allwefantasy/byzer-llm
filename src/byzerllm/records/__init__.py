@@ -15,12 +15,13 @@ class ClusterSettings:
         return ClusterSettings(**json.loads(json_str))       
 
 class TableSettings:
-    def __init__(self, database:str, table:Optional[str], schema:str, location:Optional[str], num_shards:int):
+    def __init__(self, database:str, table:Optional[str], schema:str, location:Optional[str], num_shards:int,status:str="open"):
         self.database = database
         self.table = table
         self.schema = schema
         self.location = location
-        self.num_shards = num_shards
+        self.num_shards = num_shards,
+        self.status = status
 
     def json(self):
         return json.dumps(self.__dict__,ensure_ascii=False)
