@@ -84,7 +84,7 @@ class ByzerLLM:
         res = self._rest_byzer_engine(sql,json.dumps(data,ensure_ascii=False))
         return res
                    
-    def _rest_byzer_engine(self, sql:str,table:List[Dict[str,Any]],owner:str="admin"):
+    def _rest_byzer_engine(self, sql:str,table:List[Dict[str,Any]],owner:str="admin",url:str="http://127.0.0.1:9003/model/predict"):
         import requests
         import json
         data = {
@@ -95,7 +95,7 @@ class ByzerLLM:
                 'sql': sql,
                 'data': json.dumps(table,ensure_ascii=False)
             }
-        response = requests.post("http://127.0.0.1:9003/model/predict", data=data)
+        response = requests.post(url, data=data)
         
         if response.status_code != 200:
             raise Exception(f"{self.url} status:{response.status_code} content: {response.text} request: json/{json.dumps(data,ensure_ascii=False)}")
