@@ -82,7 +82,7 @@ class ByzerLLM:
 
         if isinstance(request.instruction,str):
             v = [{
-            "instruction":self._generate_ins(request.instruction),
+            "instruction":self._generate_ins(request.instruction,request),
             "max_length":request.max_length,
             "top_p":request.top_p,
             "temperature":request.temperature,            
