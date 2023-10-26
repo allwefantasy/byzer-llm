@@ -155,10 +155,7 @@ class ByzerRetrieval:
                        table:str, 
                        keyword:str, 
                        fields:List[str], 
-                       limit:int=10) -> List[Dict[str,Any]]:
-        
-        if not self.check_table_exists(cluster_name,database,table):
-            raise Exception(f"Table {database}.{table} not  exists in cluster {cluster_name}")
+                       limit:int=10) -> List[Dict[str,Any]]:                
 
         search = SearchQuery(keyword=keyword,fields=fields,vector=[],vectorField=None,limit=limit)
         cluster = self.cluster(cluster_name)
@@ -171,10 +168,7 @@ class ByzerRetrieval:
                        vector:List[float], 
                        vector_field:str,                        
                        limit:int=10) -> List[Dict[str,Any]]:
-        
-        if not self.check_table_exists(cluster_name,database,table):
-            raise Exception(f"Table {database}.{table} not exists in cluster {cluster_name}")
-
+                
         search = SearchQuery(keyword=None,fields=[],vector=vector,vectorField=vector_field,limit=limit)
         cluster = self.cluster(cluster_name)
         v = cluster.search.remote(database,table,search.json())
@@ -183,10 +177,7 @@ class ByzerRetrieval:
     def search(self,cluster_name:str, 
                        database:str, 
                        table:str, 
-                       search_query: SearchQuery) -> List[Dict[str,Any]]:
-
-        if not self.check_table_exists(cluster_name,database,table):
-            raise Exception(f"Table {database}.{table} not exists in cluster {cluster_name}")
+                       search_query: SearchQuery) -> List[Dict[str,Any]]:        
 
         cluster = self.cluster(cluster_name)
         v = cluster.search.remote(database,table,search_query.json())

@@ -83,7 +83,12 @@ class JVMSettings:
 
 
 class SearchQuery:
-    def __init__(self, keyword:Optional[str], fields:list[str], vector:list[float], vectorField:Optional[str], limit:int=10):
+    def __init__(self,database:Optional[str],
+                 table:Optional[str], 
+                 keyword:Optional[str], fields:list[str], 
+                 vector:list[float], vectorField:Optional[str], limit:int=10):
+        self.database = database
+        self.table = table
         self.keyword = keyword
         self.fields = fields
         self.vector = vector
