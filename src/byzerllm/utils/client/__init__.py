@@ -72,10 +72,17 @@ class ByzerLLM:
       
         return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
     
+    def _generate_ins(self,ins:str,request:LLMRequest):
+         if request.extra_params.user_role:
+            return f'{request.extra_params.user_role}:{ins}\n{request.extra_params.assistant_role}:'
+         return ins
+
     def chat(self,model,request:LLMRequest,extract_params:Dict[str,Any]={})->List[str]:
+
+
         if isinstance(request.instruction,str):
             v = [{
-            "instruction":request.instruction,
+            "instruction":self._generate_ins(request.instruction),
             "max_length":request.max_length,
             "top_p":request.top_p,
             "temperature":request.temperature,            
@@ -83,7 +90,7 @@ class ByzerLLM:
             ** extract_params}] 
         else: 
             v = [{
-            "instruction":x, 
+            "instruction":self._generate_ins(x,request), 
             "max_length":request.max_length,
             "top_p":request.top_p,
             "temperature":request.temperature,           
