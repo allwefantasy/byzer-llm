@@ -20,7 +20,7 @@ class TableSettings:
         self.table = table
         self.schema = schema
         self.location = location
-        self.num_shards = num_shards,
+        self.num_shards = num_shards
         self.status = status
 
     def json(self):
