@@ -80,11 +80,11 @@ class ByzerLLM:
         res = self._query(model,v) 
         return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
     
-    def apply_sql_func(self,sql:str,data:List[Dict[str,Any]]):
+    def apply_sql_func(self,sql:str,data:List[Dict[str,Any]],owner:str="admin",url:str="http://127.0.0.1:9003/model/predict"):
         res = self._rest_byzer_engine(sql,json.dumps(data,ensure_ascii=False))
         return res
                    
-    def _rest_byzer_engine(self, sql:str,table:List[Dict[str,Any]],owner:str="admin",url:str="http://127.0.0.1:9003/model/predict"):
+    def _rest_byzer_engine(self, sql:str,table:List[Dict[str,Any]],owner:str,url:str):
         import requests
         import json
         data = {
