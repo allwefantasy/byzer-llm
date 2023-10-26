@@ -83,8 +83,8 @@ class JVMSettings:
 
 
 class SearchQuery:
-    def __init__(self,database:Optional[str],
-                 table:Optional[str], 
+    def __init__(self,database:str,
+                 table:str, 
                  keyword:Optional[str], fields:list[str], 
                  vector:list[float], vectorField:Optional[str], limit:int=10):
         self.database = database

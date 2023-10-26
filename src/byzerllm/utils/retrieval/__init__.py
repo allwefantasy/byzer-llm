@@ -157,9 +157,9 @@ class ByzerRetrieval:
                        fields:List[str], 
                        limit:int=10) -> List[Dict[str,Any]]:                
 
-        search = SearchQuery(keyword=keyword,fields=fields,vector=[],vectorField=None,limit=limit)
+        search = SearchQuery(database=database,table=table,keyword=keyword,fields=fields,vector=[],vectorField=None,limit=limit)
         cluster = self.cluster(cluster_name)
-        v = cluster.search.remote(database,table,search.json())
+        v = cluster.search.remote(f"[{search.json()}]")
         return json.loads(ray.get(v))
     
     def search_vector(self,cluster_name:str, 
@@ -169,18 +169,15 @@ class ByzerRetrieval:
                        vector_field:str,                        
                        limit:int=10) -> List[Dict[str,Any]]:
                 
-        search = SearchQuery(keyword=None,fields=[],vector=vector,vectorField=vector_field,limit=limit)
+        search = SearchQuery(database=database,table=table,keyword=None,fields=[],vector=vector,vectorField=vector_field,limit=limit)
         cluster = self.cluster(cluster_name)
-        v = cluster.search.remote(database,table,search.json())
+        v = cluster.search.remote(f"[{search.json()}]")
         return json.loads(ray.get(v))
     
-    def search(self,cluster_name:str, 
-                       database:str, 
-                       table:str, 
-                       search_query: SearchQuery) -> List[Dict[str,Any]]:        
-
+    def search(self,cluster_name:str,search_query: List[SearchQuery]) -> List[Dict[str,Any]]:        
+        
         cluster = self.cluster(cluster_name)
-        v = cluster.search.remote(database,table,search_query.json())
+        v = cluster.search.remote(f"[{','.join([x.json() for x in search_query])}]")
         return json.loads(ray.get(v))  
 
 
