@@ -54,12 +54,18 @@ class ByzerLLM:
             v = [{
             "instruction":request.instruction,
             "embedding":True,
+            "max_length":request.max_length,
+            "top_p":request.top_p,
+            "temperature":request.temperature,
             ** request.extra_params.__dict__,
             ** extract_params}] 
         else: 
             v = [{
             "instruction":x,
             "embedding":True,
+            "max_length":request.max_length,
+            "top_p":request.top_p,
+            "temperature":request.temperature,
             ** request.extra_params.__dict__,
             ** extract_params} for x in request.instruction]    
         res = self._query(model,v) 
@@ -69,12 +75,18 @@ class ByzerLLM:
     def chat(self,model,request:LLMRequest,extract_params:Dict[str,Any]={})->List[str]:
         if isinstance(request.instruction,str):
             v = [{
-            "instruction":request.instruction,            
+            "instruction":request.instruction,
+            "max_length":request.max_length,
+            "top_p":request.top_p,
+            "temperature":request.temperature,            
             ** request.extra_params.__dict__,
             ** extract_params}] 
         else: 
             v = [{
-            "instruction":request.instruction,            
+            "instruction":request.instruction, 
+            "max_length":request.max_length,
+            "top_p":request.top_p,
+            "temperature":request.temperature,           
             ** request.extra_params.__dict__,
             ** extract_params} for x in request.instruction]         
         res = self._query(model,v) 
