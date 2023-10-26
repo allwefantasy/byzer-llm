@@ -83,7 +83,7 @@ class ByzerLLM:
             ** extract_params}] 
         else: 
             v = [{
-            "instruction":request.instruction, 
+            "instruction":x, 
             "max_length":request.max_length,
             "top_p":request.top_p,
             "temperature":request.temperature,           
