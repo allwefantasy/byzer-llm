@@ -81,7 +81,7 @@ class ByzerLLM:
         return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
     
     def apply_sql_func(self,sql:str,data:List[Dict[str,Any]],owner:str="admin",url:str="http://127.0.0.1:9003/model/predict"):
-        res = self._rest_byzer_engine(sql,json.dumps(data,ensure_ascii=False))
+        res = self._rest_byzer_engine(sql,data,owner,url)
         return res
                    
     def _rest_byzer_engine(self, sql:str,table:List[Dict[str,Any]],owner:str,url:str):
