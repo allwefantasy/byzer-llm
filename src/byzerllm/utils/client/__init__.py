@@ -45,7 +45,7 @@ class LLMRequest:
 class ByzerLLM:
     def __init__(self,url:Optional[str]=None,**kwargs):
         self.url = url       
-        self.sys_conf = {}
+        self.sys_conf = {"pythonMode":"ray"}
         
         self.sql_model = "context" in globals()
 
