@@ -118,7 +118,7 @@ class ByzerLLM:
             model = infer_module.init_model(model_path,infer_params,conf)
             return model
         
-        UDFBuilder.build(self.ray_context,infer_module,getattr(predict_module,predict_func))
+        UDFBuilder.build(self.ray_context,init_model,getattr(predict_module,predict_func))
 
 
     def emb(self, model, request:LLMRequest ,extract_params:Dict[str,Any]={})->List[List[float]]:
