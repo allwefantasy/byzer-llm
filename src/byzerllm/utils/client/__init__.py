@@ -45,8 +45,14 @@ class LLMRequest:
 class ByzerLLM:
     def __init__(self,url:Optional[str]=None,**kwargs):
         self.url = url       
-        self.sys_conf = {"pythonMode":"ray"}
-        
+        self.default_sys_conf = {"pythonMode":"ray",
+                         "maxConcurrency":1,
+                         "num_gpus":1,
+                         "masterMaxConcurrency":1000,
+                         "workerMaxConcurrency":1,
+                         "infer_backend":"transformers"
+                         }
+        self.sys_conf = self.default_sys_conf.copy()
         self.sql_model = "context" in globals()
 
         if url is not None and self.sql_model:            
@@ -60,6 +66,10 @@ class ByzerLLM:
             self.context.have_fetched = True
             self.ray_context = self.context.rayContext
     
+    def setup_reset(self):
+        self.sys_conf = self.default_sys_conf.copy()
+        self.context.conf = self.sys_conf
+
     def setup(self,name:str, value:Any)->'ByzerLLM':
         self.sys_conf[name]=value
         # update the context conf
