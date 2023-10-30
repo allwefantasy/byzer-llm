@@ -77,7 +77,7 @@ class ByzerLLM:
         if pretrained_model_type.startswith("saas/"):
             model_type = pretrained_model_type.split("/")[-1]
             import importlib            
-            infer_module = importlib.import_module(f'from byzerllm.saas.{model_type} import CustomSaasAPI')
+            infer_module = importlib.import_module(f'byzerllm.saas.{model_type}',"CustomSaasAPI")
             from byzerllm.utils.text_generator import simple_predict_func
             def init_model(model_refs: List[ClientObjectRef], conf: Dict[str, str]) -> Any:
                 from byzerllm import consume_model
@@ -110,15 +110,15 @@ class ByzerLLM:
             predict_func = "chatglm_predict_func"
 
         import importlib            
-        infer_module = importlib.import_module(f'byzerllm.{model_type} as infer')
-        predict_module = importlib.import_module(f"from byzerllm.utils.text_generator import {predict_func}")
+        infer_module = importlib.import_module(f'byzerllm.{model_type}')
+        predict_module = importlib.import_module(f"byzerllm.utils.text_generator")
         
         def init_model(model_refs: List[ClientObjectRef], conf: Dict[str, str]) -> Any:
             common_init_model(model_refs,conf,model_path, is_load_from_local=True)
-            model = infer.init_model(model_path,infer_params,conf)
+            model = infer_module.init_model(model_path,infer_params,conf)
             return model
         
-        UDFBuilder.build(self.ray_context,infer_module,predict_module)
+        UDFBuilder.build(self.ray_context,infer_module,getattr(predict_module,predict_func))
 
 
     def emb(self, model, request:LLMRequest ,extract_params:Dict[str,Any]={})->List[List[float]]:
