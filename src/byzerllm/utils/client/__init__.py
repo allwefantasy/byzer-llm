@@ -6,6 +6,7 @@ import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import json
 import dataclasses
+import importlib  
 
 # create a enum for the role
 class Role:
@@ -75,6 +76,27 @@ class ByzerLLM:
         # update the context conf
         self.context.conf = self.sys_conf
         return self
+    
+    def raw_sft(self,train_params:Dict[str,Any]):                   
+        model_type = train_params["pretrainedModelType"] .split("/")[-1]      
+        train_module = importlib.import_module(f'byzerllm.{model_type}')
+        sft_train = getattr(train_module,"sft_train")
+        sft_train([],train_params,self.sys_conf)
+            
+
+    def raw_pretrain(self,train_params:Dict[str,Any]):                  
+        model_type = train_params["pretrainedModelType"][-1]      
+        train_module = importlib.import_module(f'byzerllm.{model_type}')
+        sfft_train = getattr(train_module,"sfft_train")
+        sfft_train([],train_params,self.sys_conf)
+
+    def raw_merge_lora(self,train_params:Dict[str,Any]):                
+        from byzerllm.utils.sft.merge_lora import merge_lora_to_base_model    
+        merge_lora_to_base_model([],train_params,self.sys_conf) 
+
+    def raw_deepspeed_to_huggingface(self,train_params:Dict[str,Any]):
+        from byzerllm.utils.fulltune.pretrain.convert_to_transformers import convert
+        convert(train_params,self.conf())    
 
     def deploy(self,model_path:str,
                pretrained_model_type:str,
@@ -85,8 +107,7 @@ class ByzerLLM:
         model_type = pretrained_model_type
         
         if pretrained_model_type.startswith("saas/"):
-            model_type = pretrained_model_type.split("/")[-1]
-            import importlib            
+            model_type = pretrained_model_type.split("/")[-1]                       
             infer_module = importlib.import_module(f'byzerllm.saas.{model_type}',"CustomSaasAPI")
             from byzerllm.utils.text_generator import simple_predict_func
             def init_model(model_refs: List[ClientObjectRef], conf: Dict[str, str]) -> Any:
@@ -119,7 +140,6 @@ class ByzerLLM:
         if model_type == "chatglm2":
             predict_func = "chatglm_predict_func"
 
-        import importlib            
         infer_module = importlib.import_module(f'byzerllm.{model_type}')
         predict_module = importlib.import_module(f"byzerllm.utils.text_generator")
         
