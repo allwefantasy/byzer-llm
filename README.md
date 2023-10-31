@@ -31,8 +31,11 @@ llm.deploy(model_path="/home/byzerllm/models/m3e-base",
 llm.emb("emb",LLMRequest(instruction="hello world"))[0].output
 ```
 
+The above code will deploy a embedding model and then use the model to infer the input text. 
+
 ## Versions
 
+- 0.1.12: Support Python API (alpha)
 - 0.1.5: Support python wrapper for [byzer-retrieval](https://github.com/allwefantasy/byzer-retrieval)
 
 
