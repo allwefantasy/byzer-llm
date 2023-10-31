@@ -42,7 +42,11 @@ class LLMRequest:
     temperature: float = 0.9
     extra_params: LLMRequestExtra = LLMRequestExtra()
 
-      
+class InferBackend:
+    Transformers = "transformers"
+    VLLM = "vllm"
+    DeepSpeed = "deepspeed"
+
 class ByzerLLM:
     def __init__(self,url:Optional[str]=None,**kwargs):
         self.url = url       
@@ -75,6 +79,18 @@ class ByzerLLM:
         self.sys_conf[name]=value
         # update the context conf
         self.context.conf = self.sys_conf
+        return self
+    
+    def setup_infer_backend(self,backend:str)->'ByzerLLM':
+        self.sys_conf["infer_backend"] = backend
+        return self
+    
+    def setup_gpus_per_worker(self,num_gpus:int)->'ByzerLLM':
+        self.sys_conf["num_gpus"] = num_gpus
+        return self
+
+    def setup_num_workers(self,num_workers:int)->'ByzerLLM':
+        self.sys_conf["masterMaxConcurrency"] = num_workers
         return self
     
     def raw_sft(self,train_params:Dict[str,Any]):                   
