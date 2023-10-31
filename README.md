@@ -16,6 +16,7 @@ The second one is that Byzer-LLM is totally based on Ray. This means you can dep
 ```bash
 pip install -r requirements.txt
 pip install -U byzerllm
+ray start --head
 ```
 
 ## Usage (Python)
