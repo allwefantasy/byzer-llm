@@ -112,7 +112,15 @@ class ByzerLLM:
 
     def raw_deepspeed_to_huggingface(self,train_params:Dict[str,Any]):
         from byzerllm.utils.fulltune.pretrain.convert_to_transformers import convert
-        convert(train_params,self.conf())    
+        convert(train_params,self.conf()) 
+
+    def undeploy(self,udf_name:str):                  
+        try:
+            model = ray.get_actor(udf_name)
+            ray.kill(model)        
+        except ValueError:
+            pass
+               
 
     def deploy(self,model_path:str,
                pretrained_model_type:str,
