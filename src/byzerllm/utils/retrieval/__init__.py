@@ -38,6 +38,16 @@ class ByzerRetrieval:
 
     def gateway(slef) -> ray.actor.ActorHandle:
         return ray.get_actor("RetrievalGateway")
+
+
+    def shutdown(self,cluster_name:str):
+        if not self.launched:
+            raise Exception("Please launch gateway first")
+        
+        if cluster_name in self.clusters:
+            cluster = self.clusters[cluster_name]
+            ray.get(cluster.shutdown.remote())
+            del self.clusters[cluster_name]    
                  
 
     def start_cluster(self, cluster_settings:ClusterSettings,                       
@@ -117,6 +127,24 @@ class ByzerRetrieval:
         data_ids = ref_utils.get_object_ids(object_refs)
         locations = ref_utils.get_locations(object_refs)
         return ray.get(cluster.buildFromRayObjectStore.remote(database,table,data_ids,locations))
+    
+    def build_from_dicts(self, cluster_name:str, database:str, table:str, data:List[Dict[str,Any]])-> bool:
+        data_refs = []
+
+        for item in data:
+            itemref = ray.put(json.dumps(item ,ensure_ascii=False))
+            data_refs.append(itemref)
+        
+        return self.build(cluster_name,database,table,data_refs)
+    
+    def shutdown(self,cluster_name:str):
+        if not self.launched:
+            raise Exception("Please launch gateway first")
+        
+        cluster = self.cluster(cluster_name)
+        ray.get(cluster.shutdown.remote(cluster_name))
+        del self.clusters[cluster_name]
+            
 
     def commit(self,cluster_name:str, database:str, table:str)-> bool:
         

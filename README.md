@@ -94,7 +94,7 @@ ray.init(address="auto",namespace="default",
                  )            
 ```
 
-The second step is to deploy create ByzerLLM/ByzerRetrieval client:
+The second step is to create ByzerLLM/ByzerRetrieval:
 
 ```python
 from byzerllm.utils.retrieval import ByzerRetrieval
