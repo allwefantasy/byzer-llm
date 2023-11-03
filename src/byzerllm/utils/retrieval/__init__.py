@@ -40,16 +40,6 @@ class ByzerRetrieval:
         return ray.get_actor("RetrievalGateway")
 
 
-    def shutdown(self,cluster_name:str):
-        if not self.launched:
-            raise Exception("Please launch gateway first")
-        
-        if cluster_name in self.clusters:
-            cluster = self.clusters[cluster_name]
-            ray.get(cluster.shutdown.remote())
-            del self.clusters[cluster_name]    
-                 
-
     def start_cluster(self, cluster_settings:ClusterSettings,                       
                       env_settings:EnvSettings, 
                       jvm_settings:JVMSettings,
