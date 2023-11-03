@@ -133,6 +133,7 @@ class ByzerRetrieval:
                 
         ray.get(self.retrieval_gateway.shutdown.remote(cluster_name))
         del self.clusters[cluster_name]
+        ray.kill(ray.get_actor(cluster_name))
             
 
     def commit(self,cluster_name:str, database:str, table:str)-> bool:
