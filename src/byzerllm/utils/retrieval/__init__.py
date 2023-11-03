@@ -140,9 +140,8 @@ class ByzerRetrieval:
     def shutdown(self,cluster_name:str):
         if not self.launched:
             raise Exception("Please launch gateway first")
-        
-        cluster = self.cluster(cluster_name)
-        ray.get(cluster.shutdown.remote(cluster_name))
+                
+        ray.get(self.retrieval_gateway.shutdown.remote(cluster_name))
         del self.clusters[cluster_name]
             
 
