@@ -1,10 +1,98 @@
 
 import ray 
 from ray.types import ObjectRef
-from byzerllm.records import ClusterSettings, EnvSettings, JVMSettings, TableSettings,SearchQuery,ResourceRequirementSettings
+from byzerllm.records import ClusterSettings, EnvSettings, JVMSettings, TableSettings,SearchQuery,ResourceRequirementSettings,ResourceRequirement
 from typing import List,Dict,Any,Optional,Union
 import byzerllm.utils.object_store_ref_util as ref_utils
 import json
+
+class ClusterBuilder:
+
+    def __init__(self,br:'ByzerRetrieval') -> None:
+        self.name = None
+        self.location = None
+        self.numNodes = 1
+        self.nodeMemory = "2g"
+        self.nodeCPU = 1
+        self.enableZGC = True
+        self.javaHome = None
+        self.path = None
+
+        self.cluster_settings = None
+        self.env_settings = None
+        self.jvm_settings = None
+        self.resource_requirement_settings = None
+
+        self.br = br
+
+    def name(self,name:str):
+        self.name = name
+        return self
+    
+    def location(self,location:str):
+        self.location = location
+        return self
+    
+    def num_nodes(self,numNodes:int):
+        self.numNodes = numNodes
+        return self
+    
+    def node_memory(self,nodeMemory:str):
+        self.nodeMemory = nodeMemory
+        return self
+    
+    def node_cpu(self,nodeCPU:int):
+        self.nodeCPU = nodeCPU
+        return self
+    
+    def enable_zgc(self):
+        self.enableZGC = True
+        return self
+    
+    def java_home(self,javaHome:str):
+        self.javaHome = javaHome
+        return self
+    
+    def path(self,path:str):
+        self.path = path
+        return self
+        
+
+    def build(self):     
+
+        if self.name is None:
+            raise Exception("name is required")
+        
+        if self.location is None:
+            raise Exception("location is required")
+        
+        self.cluster_settings = ClusterSettings(self.name,self.location,self.numNodes)
+
+        if self.javaHome is None:
+            raise Exception("javaHome is required")
+        
+        if self.path is None:
+            raise Exception("path is required")        
+
+        self.env_settings = EnvSettings(javaHome=self.javaHome,path=self.path)
+
+        jvmOptions = []
+        resourceOptions = []
+        if self.enableZGC:
+            jvmOptions.append("-XX:+UseZGC")
+
+        if self.nodeMemory:
+            jvmOptions.append(f"-Xmx{self.nodeMemory}")
+
+        if self.nodeCPU:
+           resourceOptions.append(ResourceRequirement("CPU",self.nodeCPU))
+
+        self.jvm_settings = JVMSettings(jvmOptions)
+        self.resource_requirement_settings = ResourceRequirementSettings(resourceOptions)        
+    
+    def start(self)-> bool:     
+        self.build()
+        return self.br.start_cluster(self.cluster_settings,self.env_settings,self.jvm_settings,self.resource_requirement_settings)
 
 
 class ByzerRetrieval:
@@ -39,6 +127,9 @@ class ByzerRetrieval:
     def gateway(slef) -> ray.actor.ActorHandle:
         return ray.get_actor("RetrievalGateway")
 
+    def cluster_builder(self) -> ClusterSettings:
+        br = self
+        return ClusterBuilder(br)
 
     def start_cluster(self, cluster_settings:ClusterSettings,                       
                       env_settings:EnvSettings, 

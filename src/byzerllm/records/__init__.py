@@ -8,7 +8,7 @@ class ClusterSettings:
         self.numNodes = numNodes   
 
     def json(self):
-        return json.dumps(self.__dict__,ensure_ascii=False) 
+        return json.dumps(self.__dict__,ensure_ascii=False)        
 
     @staticmethod 
     def from_json(json_str:str):
@@ -45,7 +45,7 @@ class EnvSettings:
 
 
 class ResourceRequirement:
-    def __init__(self, name:float, resourceQuantity:float):
+    def __init__(self, name:str, resourceQuantity:float):
         self.name = name
         self.resourceQuantity = resourceQuantity   
 
