@@ -230,13 +230,13 @@ class ByzerRetrieval:
         return [x.database for x in table_settings_list]
         
     
-    def shutdown(self,cluster_name:str):
+    def shutdown_cluster(self,cluster_name:str)->bool:
         if not self.launched:
             raise Exception("Please launch gateway first")
                 
-        ray.get(self.retrieval_gateway.shutdown.remote(cluster_name))
-        del self.clusters[cluster_name]
-        ray.kill(ray.get_actor(cluster_name))
+        v = ray.get(self.retrieval_gateway.shutdownCluster.remote(cluster_name))
+        del self.clusters[cluster_name]        
+        return v
             
 
     def commit(self,cluster_name:str, database:str, table:str)-> bool:
