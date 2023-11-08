@@ -12,6 +12,7 @@ The first one is that Byzer-LLM supports Byzer-SQL which is a SQL dialect that c
 The second one is that Byzer-LLM is totally based on Ray. This means you can deploy multiple LLM models on a single machine or a cluster. This is very useful for large scale LLM deployment. And Byzer-LLM also supports vLLM/DeepSpeed/Transformers as the inference backend transparently.
 
 ## Versions
+- 0.1.14： add get_tables/get_databases API for byzer-retrieval
 - 0.1.13: support shutdown cluster for byzer-retrieval
 - 0.1.12: Support Python API (alpha)
 - 0.1.5: Support python wrapper for [byzer-retrieval](https://github.com/allwefantasy/byzer-retrieval)
