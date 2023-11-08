@@ -127,7 +127,7 @@ class ByzerRetrieval:
     def gateway(slef) -> ray.actor.ActorHandle:
         return ray.get_actor("RetrievalGateway")
 
-    def cluster_builder(self) -> ClusterSettings:
+    def cluster_builder(self) -> ClusterBuilder:
         br = self
         return ClusterBuilder(br)
 
