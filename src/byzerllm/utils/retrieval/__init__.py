@@ -25,35 +25,35 @@ class ClusterBuilder:
 
         self.br = br
 
-    def name(self,name:str):
+    def set_name(self,name:str):
         self.name = name
         return self
     
-    def location(self,location:str):
+    def set_location(self,location:str):
         self.location = location
         return self
     
-    def num_nodes(self,numNodes:int):
+    def set_num_nodes(self,numNodes:int):
         self.numNodes = numNodes
         return self
     
-    def node_memory(self,nodeMemory:str):
+    def set_node_memory(self,nodeMemory:str):
         self.nodeMemory = nodeMemory
         return self
     
-    def node_cpu(self,nodeCPU:int):
+    def set_node_cpu(self,nodeCPU:int):
         self.nodeCPU = nodeCPU
         return self
     
-    def enable_zgc(self):
+    def set_enable_zgc(self):
         self.enableZGC = True
         return self
     
-    def java_home(self,javaHome:str):
+    def set_java_home(self,javaHome:str):
         self.javaHome = javaHome
         return self
     
-    def path(self,path:str):
+    def set_path(self,path:str):
         self.path = path
         return self
         
