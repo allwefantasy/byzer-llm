@@ -90,7 +90,7 @@ class ClusterBuilder:
         self.jvm_settings = JVMSettings(jvmOptions)
         self.resource_requirement_settings = ResourceRequirementSettings(resourceOptions)        
     
-    def start(self)-> bool:     
+    def start_cluster(self)-> bool:     
         self.build()
         return self.br.start_cluster(self.cluster_settings,self.env_settings,self.jvm_settings,self.resource_requirement_settings)
 
@@ -217,6 +217,18 @@ class ByzerRetrieval:
             data_refs.append(itemref)
         
         return self.build(cluster_name,database,table,data_refs)
+    
+    def get_tables(self,cluster_name:str) -> List[TableSettings]:
+        cluster_info = self.cluster_info(cluster_name)
+        target_table_settings = []
+        for table_settings_dict in cluster_info["tableSettingsList"]:
+            target_table_settings.append(TableSettings(**table_settings_dict))
+        return target_table_settings
+    
+    def get_databases(self,cluster_name:str) -> List[str]:
+        table_settings_list = self.get_tables(cluster_name)
+        return [x.database for x in table_settings_list]
+        
     
     def shutdown(self,cluster_name:str):
         if not self.launched:
