@@ -44,8 +44,8 @@ class LLMRequest:
 
 class InferBackend:
     Transformers = "transformers"
-    VLLM = "vllm"
-    DeepSpeed = "deepspeed"
+    VLLM = "ray/vllm"
+    DeepSpeed = "ray/deepspeed"
 
 class ByzerLLM:
     def __init__(self,url:Optional[str]=None,**kwargs):
@@ -156,6 +156,7 @@ class ByzerLLM:
                 return {"value":[json.dumps(results,ensure_ascii=False,indent=4)]}
             UDFBuilder.build(self.ray_context,init_model,predict_func)
             return                
+        
         
         if pretrained_model_type.startswith("custom/"):
             model_type = pretrained_model_type.split("/")[-1]
