@@ -16,7 +16,6 @@ OS="ubuntu"
 BYZER_VERSION="2.3.8"
 BYZER_NOTEBOOK_VERSION="1.2.5"
 DEFUALT_MYSQL_PASSWORD=${DEFUALT_MYSQL_PASSWORD:-"mlsql"}
-TGI_SUPPORT=${TGI_SUPPORT:-"false"}
 VLLM_SUPPORT=${VLLM_SUPPORT:-"true"}
 AVIARY_SUPPORT=${AVIARY_SUPPORT:-"false"}
 NOTEBOOK_LOGO=${NOTEBOOK_LOGO:-"Byzer Notebook"}
@@ -25,7 +24,7 @@ CUDA_DNN_SUPPORT=${CUDA_DNN_SUPPORT:-"false"}
 PYPI_MIRROR=${PYPI_MIRROR:-"aliyun"}
 GIT_MIRROR=${GIT_MIRROR:-"gitee"}
 
-BYZER_LLM_EXTENSION_JAR="byzer-llm-3.3_2.12-0.1.3.jar"
+BYZER_LLM_EXTENSION_JAR="byzer-llm-3.3_2.12-0.1.7.jar"
 BYZER_LLM_EXTENSION_APP="tech.mlsql.plugins.llm.LLMApp"
 
 #valid conda channel
@@ -39,20 +38,16 @@ else
 fi
 
 GIT_BYZER_LLM="https://gitee.com/allwefantasy/byzer-llm.git"
-GIT_VLLM="https://gitee.com/allwefantasy/ori-vllm.git"
 GIT_AVIARY="https://gitee.com/allwefantasy/aviary.git"
 GIT_OPTIMUM="https://gitee.com/allwefantasy/optimum.git"
 GIT_AVIARY_DEEPSPEED="https://gitee.com/allwefantasy/DeepSpeed.git@aviary"
-GIT_TGI="https://gitee.com/mirrors/text-generation-inference.git"
 GIT_PEFT="https://gitee.com/allwefantasy/peft.git"
 
 if [[ "${GIT_MIRROR}" == "github" ]]; then
-    GIT_BYZER_LLM="https://github.com/allwefantasy/byzer-llm.git"
-    GIT_VLLM="https://github.com/vllm-project/vllm.git"
+    GIT_BYZER_LLM="https://github.com/allwefantasy/byzer-llm.git"    
     GIT_AVIARY="https://github.com/ray-project/aviary.git"
     GIT_OPTIMUM="https://github.com/huggingface/optimum.git"
     GIT_AVIARY_DEEPSPEED="https://github.com/Yard1/DeepSpeed.git@aviary"
-    GIT_TGI="https://github.com/huggingface/text-generation-inference.git"
     GIT_PEFT="https://github.com/huggingface/peft.git"
 fi
 
@@ -303,51 +298,11 @@ cd ..
 
 # in some cuda version, the 9.0 is not supported, if that case, try to remove 9.0 from TORCH_CUDA_ARCH_LIST_VALUE
 TORCH_CUDA_ARCH_LIST_VALUE="8.0 8.6 9.0"
-if [[ "${TGI_SUPPORT}" == "true" ]]; then
-    echo "Setup TGI support in Byzer-LLM"
-    export RUSTUP_DIST_SERVER=https://mirrors.ustc.edu.cn/rust-static
-    export RUSTUP_UPDATE_ROOT=https://mirrors.ustc.edu.cn/rust-static/rustup
-    wget "https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init" && chmod +x rustup-init && ./rustup-init -y && rm rustup-init && source "$HOME/.cargo/env"
-    # source "$HOME/.cargo/env" && PROTOC_ZIP=protoc-21.12-linux-x86_64.zip && curl -OL https://github.com/protocolbuffers/protobuf/releases/download/v21.12/$PROTOC_ZIP && sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc && sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*' && rm -f $PROTOC_ZIP    
-    source "$HOME/.cargo/env" && PROTOC_ZIP=protoc-21.12-linux-x86_64.zip && curl -OL https://gitee.com/allwefantasy/byzer-llm/releases/download/dependency-protoc/$PROTOC_ZIP && sudo unzip -o $PROTOC_ZIP -d /usr/local bin/protoc && sudo unzip -o $PROTOC_ZIP -d /usr/local 'include/*' && rm -f $PROTOC_ZIP    
-    source "$HOME/.cargo/env" && pip install tensorboard ninja text-generation
-    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST_VALUE} && git clone ${GIT_TGI} && cd text-generation-inference && git checkout 5e6ddfd6a4fecc394255d7109f87c420c98b4e15 && BUILD_EXTENSIONS=True make install
-    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST_VALUE} && cd text-generation-inference/server && BUILD_EXTENSIONS=True make install-flash-attention
-    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST_VALUE} && cd text-generation-inference/server && BUILD_EXTENSIONS=True make install-flash-attention-v2
-    source "$HOME/.cargo/env" && export FORCE_CUDA=1 && TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST_VALUE} && cd text-generation-inference/server && make install-vllm   
-    # if pip show custom-kernels >/dev/null 2>&1; then
-    #     echo "Package custom-kernels is already installed"
-    # else
-    #     echo "Package custom-kernels is not installed"
-    #     echo "Try to install custom-kernels"
-    #     git clone https://gitee.com/mirrors/text-generation-inference
-    #     cd  text-generation-inference/server/custom_kernels
-    #     pip install .
-    # fi 
-
-    # cd ~/byzer-llm
-    
-    # if pip show flash-attn >/dev/null 2>&1; then
-    #     echo "Package flash-attn is already installed"
-    # else
-    #     echo "Package flash-attn is not installed"
-    #     echo "Install tgi flash attention dependency, it may take a while"
-    #     make install-flash-attention
-    # fi 
-
-    # if pip show vllm >/dev/null 2>&1; then
-    #     echo "Package vllm is already installed"
-    # else
-    #     echo "Package vllm is not installed"
-    #     echo "Install TGI vllm dependency it may take a while "
-    #     make install-vllm
-    # fi 
-fi  
 
 if [[ "${VLLM_SUPPORT}" == "true" ]]; then
     echo "Setup VLLM support in Byzer-LLM"
     # pip install --no-deps "git+${GIT_VLLM}"
-    pip install vllm==0.1.7
+    pip install vllm==0.2.1.post1
 fi
 
 if [[ "${AVIARY_SUPPORT}" == "true" ]]; then
