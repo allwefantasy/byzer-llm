@@ -3,7 +3,7 @@
 Byzer-LLM is a LLM full lifecycle solution that includes pretrain, fintune, deployment and serving based on Ray.
 
 The key differences between Byzer-LLM and other LLM solutions have two.
-The first one is that Byzer-LLM supports Byzer-SQL which is a SQL dialect that can be used to manage the LLM lifecycle as the other solutions only support Python API.
+The first one is that Byzer-LLM supports Byzer-SQL which is a SQL dialect that can be used to manage the LLM lifecycle while the other solutions only support Python API.
 
 1. Python (alpha)
 2. [Byzer-SQL](https://github.com/byzer-org/byzer-lang) (stable)
