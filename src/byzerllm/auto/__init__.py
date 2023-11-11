@@ -188,7 +188,7 @@ For example:
         block_size: int = int(infer_params.get("backend.block_size",16))
         swap_space: int = int(infer_params.get("backend.swap_space",4))  # GiB
         gpu_memory_utilization: float = float(infer_params.get("backend.gpu_memory_utilization",0.90))
-        max_num_batched_tokens: int = int(infer_params.get("backend.max_num_batched_tokens",2560))
+        max_num_batched_tokens: int = int(infer_params.get("backend.max_num_batched_tokens",32768))
         max_num_seqs: int = int(infer_params.get("backend.max_num_seqs",256))
         disable_log_stats: bool = infer_params.get("backend.disable_log_stats","false") == "true"
 

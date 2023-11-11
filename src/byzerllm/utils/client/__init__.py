@@ -204,8 +204,10 @@ class ByzerLLM:
             return f'{request.extra_params.system_msg}\n\n{request.extra_params.user_role}:{ins}\n{request.extra_params.assistant_role}:'
          return ins
 
-    def chat(self,model,request:LLMRequest,extract_params:Dict[str,Any]={})->List[LLMResponse]:
+    def chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
 
+        if isinstance(request,str): 
+            request = LLMRequest(instruction=request)
 
         if isinstance(request.instruction,str):
             v = [{
