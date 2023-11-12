@@ -143,6 +143,13 @@ class ByzerLLM:
             ray.kill(model)        
         except ValueError:
             pass
+
+    def is_model_exist(self,udf_name:str)->bool:
+        try:
+            ray.get_actor(udf_name)
+            return True
+        except Exception as inst:
+            return False    
                
 
     def deploy(self,model_path:str,
