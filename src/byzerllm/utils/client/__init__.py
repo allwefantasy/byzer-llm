@@ -371,7 +371,7 @@ The current implementation of the function is as follows:
         max_try_times = 3        
         for i in range(max_try_times):
             if status != 0:        
-                improve_response,_ = self.improve_code(code=code,objective="The code throws exception like this: {}.\n Try to fix this problem.\n".format(msg))            
+                improve_response,_ = self.improve_code(code=code,objective="The code throws exception like this: {}.\n Try to fix this problem.\n".format(response))            
                 lang,code = code_utils.extract_code(improve_response)[0]
                 print(f"Try {i} times. The code execution failed,  the error message is: {response}. improved the code:\n{code}")                
                 status,response = self.eval_code(code)
