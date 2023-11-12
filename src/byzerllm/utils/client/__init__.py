@@ -321,12 +321,13 @@ class CodeSandbox:
                 use_docker=False,
                 lang="python"        
                 ) 
-    def eval_code(self, code: str) -> Tuple[int,Any]:
+    def eval_code(self, code: str,target_names:List[str]=[]) -> Tuple[int,Any]:
         import traceback
         try:
             variables = {}
             exec(code,variables)
-            return 0,variables
+            response = [variables[item] for item in target_names]
+            return 0,response
         except Exception as e:
             return 1,traceback.format_exc()
 
@@ -461,14 +462,14 @@ assertions:'''
         status,response,image = ray.get(self.sandbox.execute.remote(code))
         return status,response,image
     
-    def eval_code(self, code)->Tuple[int, str, str]:
+    def eval_code(self, code,target_names:List[str]=[])->Tuple[int, str, str]:
         if self.sandbox is None:
             self.sandbox = ray.remote(CodeSandbox).options(
                 name="CodeSandbox",                
                 num_cpus=self.num_cpus,
                 num_gpus=self.num_gpus
             ).remote()
-        status,response = ray.get(self.sandbox.eval_code.remote(code))
+        status,response = ray.get(self.sandbox.eval_code.remote(code,target_names))
         return status,response
             
 
