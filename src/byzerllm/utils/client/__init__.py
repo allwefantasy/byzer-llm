@@ -314,13 +314,20 @@ class CodeSandbox:
 
     def execute(self,code)->Tuple[int, str, str]:
         return code_utils.execute_code(
-            code = code,
-            timeout=30*60,
-            filename=None,
-            work_dir=None,
-            use_docker=False,
-            lang="python"        
-            )    
+                code = code,
+                timeout=30*60,
+                filename=None,
+                work_dir=None,
+                use_docker=False,
+                lang="python"        
+                ) 
+    def eval_code(self, code: str) -> Tuple[int,Any]:
+        import traceback
+        try:
+            r = eval(code)
+            return 0,r
+        except Exception as e:
+            return 1,traceback.format_exc()
 
 class ByzerLLMCoder:
     def __init__(self,llm:ByzerLLM,num_gpus=0, num_cpus=1) -> None:
@@ -358,6 +365,20 @@ The current implementation of the function is as follows:
 {file_string}'''
         response = self.llm.chat(None, request=LLMRequest(instruction=new_prompt,**config))            
         return response[0].output, -1
+    
+    def try_until_resolved(self,code:str,max_try_times:int=3)->Tuple[int, str, str]:
+        status,msg,image = self.execute_code(code)
+        max_try_times = 3
+        code = code[0][1]
+        for i in range(max_try_times):
+            if status != 0:        
+                response,_ = self.improve_code(code=code,objective="The code throws exception like this: {}.\n Try to fix this problem.\n".format(msg))            
+                lang,code = code_utils.extract_code(response)[0]
+                print(f"Try {i} times. The code execution failed,  the error message is: {msg}. improved the code:\n{code}")                
+                status,msg,image = self.execute_code(code)
+            else:
+                break    
+        return status,msg,image        
     
     def improve_code(self,code:str=None,files:List[str]=None, objective:str=None,suggest_only=True, **config):
         """Improve the function to achieve the objective."""        
@@ -439,6 +460,16 @@ assertions:'''
             ).remote()
         status,response,image = ray.get(self.sandbox.execute.remote(code))
         return status,response,image
+    
+    def eval_code(self, code)->Tuple[int, str, str]:
+        if self.sandbox is None:
+            self.sandbox = ray.remote(CodeSandbox).options(
+                name="CodeSandbox",                
+                num_cpus=self.num_cpus,
+                num_gpus=self.num_gpus
+            ).remote()
+        status,response = ray.get(self.sandbox.eval_code.remote(code))
+        return status,response
             
 
 
