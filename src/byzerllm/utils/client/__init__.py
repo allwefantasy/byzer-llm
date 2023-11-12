@@ -359,21 +359,28 @@ The current implementation of the function is as follows:
         response = self.llm.chat(None, request=LLMRequest(instruction=new_prompt,**config))            
         return response[0].output, -1
     
-    def improve_code(self,files, objective,suggest_only=True, **config):
+    def improve_code(self,code:str=None,files:List[str]=None, objective,suggest_only=True, **config):
         """Improve the function to achieve the objective."""        
         # read the entire file into a str
-        code = ""
-        for file_name in files:
-            # read the entire file into a string
-            with open(file_name, "r") as f:
-                file_string = f.read()
-            code += f"""{file_name}:
+        if code is None and files is None:
+            raise Exception("code or files must be provided")
+        
+        final_code = ""
+        if code is not None:
+            final_code = code
+
+        if files is not None:    
+            for file_name in files:
+                # read the entire file into a string
+                with open(file_name, "r") as f:
+                    file_string = f.read()
+                final_code += f"""{file_name}:
 {file_string}
 
 """     
         followup = "" if suggest_only else " followed by the improved code"    
         new_prompt = f'''Analyze the code in the following files and return a list of suggestions for improvement{followup}, to achieve the objective of '{objective}'.
-{code}'''
+{final_code}'''
         response = self.llm.chat(None, request=LLMRequest(instruction=new_prompt,**config))            
         return response[0].output, -1 
     
