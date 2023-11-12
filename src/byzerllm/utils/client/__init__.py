@@ -1,12 +1,13 @@
 from pyjava.udf import UDFMaster
 from pyjava import PythonContext,RayContext
-from typing import Dict,Any,List,Optional,Union
+from typing import Dict,Any,List,Optional,Union,Tuple,Callable
 from pyjava.udf import UDFBuilder
 import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import json
 import dataclasses
 import importlib  
+from . import code_utils
 
 # create a enum for the role
 class Role:
@@ -230,7 +231,7 @@ class ByzerLLM:
         res = self._query(model,v) 
       
         return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
-    
+            
     def _generate_ins(self,ins:str,request:LLMRequest):
          if request.extra_params.user_role:
             return f'{request.extra_params.system_msg}\n\n{request.extra_params.user_role}:{ins}\n{request.extra_params.assistant_role}:'
@@ -298,5 +299,135 @@ class ByzerLLM:
         except Exception as inst:
             raise inst
         finally:
-            ray.get(udf_master.give_back.remote(index))        
+            ray.get(udf_master.give_back.remote(index)) 
+
+class CodeSandbox:
+    def __init__(self) -> None:
+        pass        
+
+    def execute(self,code)->Tuple[int, str, str]:
+        return code_utils.execute_code(
+            code = code,
+            timeout=30*60,
+            filename=None,
+            work_dir=None,
+            use_docker=False,
+            lang="python"        
+            )    
+
+class ByzerLLMCoder:
+    def __init__(self,llm:ByzerLLM,num_gpus=0, num_cpus=1) -> None:
+        self.llm = llm
+        self.sandbox = None
+        self.num_gpus = num_gpus
+        self.num_cpus = num_cpus
+
+    def generate_code(self, prompt:Union[str,LLMRequest],pattern: str = code_utils.CODE_BLOCK_PATTERN, **config) -> Tuple[str, float]:
+        """Generate code.
+
+        Args:
+            prompt (str): The prompt for generating code.
+            pattern (Optional, str): The regular expression pattern for finding the code block.
+                The default pattern is for finding a code block in a markdown file.
+            config (Optional, dict): The configuration for the API call.
+
+        Returns:
+            str: The generated code.
+            float: The cost of the generation.
+        """
+        if isinstance(prompt,str):
+            prompt = LLMRequest(instruction=prompt)
+        
+        response = self.llm.chat(None,request=prompt,extract_params=config)
+        return code_utils.extract_code(response[0].output, pattern), -1 
+
+    def improve_function(self,file_name, func_name, objective, **config):
+        """Improve the function to achieve the objective."""        
+        # read the entire file into a str
+        with open(file_name, "r") as f:
+            file_string = f.read()
+        new_prompt = f'''Improve the function '{func_name}' to achieve the objective '{objective}'.
+The current implementation of the function is as follows:
+{file_string}'''
+        response = self.llm.chat(None, request=LLMRequest(instruction=new_prompt,**config))            
+        return response[0].output, -1
+    
+    def improve_code(self,files, objective,suggest_only=True, **config):
+        """Improve the function to achieve the objective."""        
+        # read the entire file into a str
+        code = ""
+        for file_name in files:
+            # read the entire file into a string
+            with open(file_name, "r") as f:
+                file_string = f.read()
+            code += f"""{file_name}:
+{file_string}
+
+"""     
+        followup = "" if suggest_only else " followed by the improved code"    
+        new_prompt = f'''Analyze the code in the following files and return a list of suggestions for improvement{followup}, to achieve the objective of '{objective}'.
+{code}'''
+        response = self.llm.chat(None, request=LLMRequest(instruction=new_prompt,**config))            
+        return response[0].output, -1 
+    
+    def generate_assertions(self,definition: str, **config):
+        prompt = f'''Given the signature and docstring, write the exactly same number of assertion(s) for the provided example(s) in the docstring, without assertion messages.
+
+func signature:
+{definition}
+assertions:'''
+        response = self.llm.chat(None, request=LLMRequest(instruction=prompt,**config))            
+        assertions = response[0].output
+        return assertions, -1
+    
+    def implement(self,
+                    definition: str,
+                    config: Dict[str,Any] = None,
+                    assertions: Optional[Union[str, Callable[[str], Tuple[str, float]]]] = generate_assertions,
+                ) -> Tuple[str, float]:
+        """Implement a function from a definition.
+
+        Args:
+            definition (str): The function definition, including the signature and docstr.
+            config (dict): The configuration for the API call.
+            assertions (Optional, str or Callable): The assertion code which serves as a filter of the responses, or an assertion generator.
+
+        Returns:
+            str: The implementation.
+            float: The cost of the implementation.
+            int: The index of the configuration which generates the implementation.
+        """
+        # cost = 0
+        
+        # if callable(assertions):
+        #     assertions, cost = assertions(definition)
+        # assertion_filter = code_utils.PassAssertionFilter(assertions)
+        response = self.llm.chat(None,request=LLMRequest(instruction=f'# Python 3{definition}',**config))
+        # cost += assertion_filter.cost + 0
+        return response[0].output
+
+        # for i, config in enumerate(configs):
+        #     response = oai.Completion.create({"definition": definition}, **config)
+        #     cost += oai.Completion.cost(response)
+        #     responses = oai.Completion.extract_text(response)
+        #     metrics = eval_function_completions(responses, definition, assertions=assertions)
+        #     assertions = metrics["assertions"]
+        #     cost += metrics["gen_cost"]
+        #     if metrics["succeed_assertions"] or i == len(configs) - 1:
+        #         return responses[metrics["index_selected"]], cost, i
+
+    def execute_code(self, code)->Tuple[int, str, str]:
+        if self.sandbox is None:
+            self.sandbox = ray.remote(CodeSandbox).options(
+                name="CodeSandbox",                
+                num_cpus=self.num_cpus,
+                num_gpus=self.num_gpus
+            ).remote()
+        status,response,image = ray.get(self.sandbox.execute.remote(code))
+        return status,response,image
+            
+
+
+
+
             
