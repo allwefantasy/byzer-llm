@@ -324,8 +324,9 @@ class CodeSandbox:
     def eval_code(self, code: str) -> Tuple[int,Any]:
         import traceback
         try:
-            r = eval(code)
-            return 0,r
+            variables = {}
+            exec(code,variables)
+            return 0,variables
         except Exception as e:
             return 1,traceback.format_exc()
 
