@@ -366,14 +366,14 @@ The current implementation of the function is as follows:
         response = self.llm.chat(None, request=LLMRequest(instruction=new_prompt,**config))            
         return response[0].output, -1
     
-    def try_improve_code_until_resolved(self,code:str,max_try_times:int=3)->Tuple[int, str, str]:
+    def try_execute_code_until_resolved(self,code:str,max_try_times:int=3)->Tuple[int, str, str]:
         status,response,image = self.eval_code(code)
         max_try_times = 3        
         for i in range(max_try_times):
             if status != 0:        
-                response,_ = self.improve_code(code=code,objective="The code throws exception like this: {}.\n Try to fix this problem.\n".format(msg))            
-                lang,code = code_utils.extract_code(response)[0]
-                print(f"Try {i} times. The code execution failed,  the error message is: {msg}. improved the code:\n{code}")                
+                improve_response,_ = self.improve_code(code=code,objective="The code throws exception like this: {}.\n Try to fix this problem.\n".format(msg))            
+                lang,code = code_utils.extract_code(improve_response)[0]
+                print(f"Try {i} times. The code execution failed,  the error message is: {response}. improved the code:\n{code}")                
                 status,response,image = self.eval_code(code)
             else:
                 break    
