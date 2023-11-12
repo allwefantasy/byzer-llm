@@ -42,6 +42,22 @@ class LLMRequest:
     temperature: float = 0.9
     extra_params: LLMRequestExtra = LLMRequestExtra()
 
+@dataclasses.dataclass
+class FintuneRequestExtra:
+    max_seq_length: int = 1024
+    num_train_epochs: int = 1
+    logging_steps: int = 100
+    save_steps: int = 100
+    extra_params: Dict[str,Any] = dataclasses.field(default_factory=dict)
+
+@dataclasses.dataclass
+class  FintuneRequest:
+    model_path: str
+    pretrained_model_type: str
+    input_data_path: str
+    extra_params: FintuneRequestExtra = FintuneRequestExtra()
+
+
 class InferBackend:
     Transformers = "transformers"
     VLLM = "ray/vllm"
@@ -60,6 +76,8 @@ class ByzerLLM:
         self.sys_conf = self.default_sys_conf.copy()
         self.sql_model = "context" in globals()
 
+        self.default_model_name = None
+
         if url is not None and self.sql_model:            
             v = globals()
             self.context = v["context"]
@@ -74,6 +92,10 @@ class ByzerLLM:
     def setup_reset(self):
         self.sys_conf = self.default_sys_conf.copy()
         self.context.conf = self.sys_conf
+
+    def setup_default_model_name(self,model_name:str)->'ByzerLLM':
+        self.default_model_name = model_name
+        return self    
 
     def setup(self,name:str, value:Any)->'ByzerLLM':
         self.sys_conf[name]=value
@@ -177,6 +199,16 @@ class ByzerLLM:
 
 
     def emb(self, model, request:LLMRequest ,extract_params:Dict[str,Any]={})->List[List[float]]:
+        
+        if not model and not self.default_model_name:
+            raise Exception("model name is required")
+        
+        if not model:
+            model = self.default_model_name
+
+        if isinstance(request,list):
+            request = LLMRequest(instruction=request)
+
         if isinstance(request.instruction,str):
             v = [{
             "instruction":request.instruction,
@@ -205,7 +237,12 @@ class ByzerLLM:
          return ins
 
     def chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
-
+        if not model and not self.default_model_name:
+            raise Exception("model name is required")
+        
+        if not model:
+            model = self.default_model_name
+        
         if isinstance(request,str): 
             request = LLMRequest(instruction=request)
 
