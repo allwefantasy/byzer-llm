@@ -359,7 +359,7 @@ The current implementation of the function is as follows:
         response = self.llm.chat(None, request=LLMRequest(instruction=new_prompt,**config))            
         return response[0].output, -1
     
-    def improve_code(self,code:str=None,files:List[str]=None, objective,suggest_only=True, **config):
+    def improve_code(self,code:str=None,files:List[str]=None, objective:str=None,suggest_only=True, **config):
         """Improve the function to achieve the objective."""        
         # read the entire file into a str
         if code is None and files is None:
