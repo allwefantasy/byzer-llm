@@ -407,7 +407,7 @@ The current implementation of the function is as follows:
 
           
         
-    def analyze(self,prompt:str,max_try_times=10):
+    def analyze(self,prompt:str,max_try_times=10)->Tuple[Union[Dict[str,Any],str],str,str]:
         # the first step is to preview the file which uploaded by the user
         if not self.loaded_successfully:
             preview_file_prompt=f'''I have a file where the path is {self.file_path}, I want to use pandas to read it.The packages all are installed, you can use it directly.
@@ -519,7 +519,7 @@ The response is:
 {response}
 ```        
 ''')
-        return response
+        return response,code,prompt
         
         
         
