@@ -439,7 +439,42 @@ The preview of the file is:
 ```
 Use pandas to analyze it. 
 Please try to generate python code to analyze the file and answer the following questions:\n'''
-        status, response = self.try_execute_code_until_resolved(prompt=analyze_prompt+prompt,
+        
+        should_generate_code_response = self.llm.chat(None,request=f'''Since you are not good at compuation, 
+you should try to check the following quesion is whether need to generate python code to answer.
+
+The question is:
+                                            
+```text
+{prompt}
+```
+
+if you need to generate python code to answer, please output the following json format:
+
+```json
+{"need_code":true}
+```
+
+otherwise, output the following json format:
+
+```json 
+{"need_code":false}
+```
+''')[0].output
+        need_code = True
+        lang,response = code_utils.extract_code(should_generate_code_response)[0]
+        if lang == "json":
+            need_code = json.loads(response)["need_code"]            
+
+        if not need_code:
+            return self.llm.chat(None,request=f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
+The preview of the file is:
+```text
+{preivew_csv}
+```
+Please try to answer the following questions:\n''')[0].output
+        
+        status, response, code = self.try_execute_code_until_resolved(prompt=analyze_prompt+prompt,
                                                          target_names=[],
                                                          max_try_times=max_try_times)
         if status != 0:
