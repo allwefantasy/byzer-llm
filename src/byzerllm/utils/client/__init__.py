@@ -355,9 +355,10 @@ class CodeSandbox:
             return 1,traceback.format_exc()
 
 class ByzerLLMCoder:
-    def __init__(self,llm:ByzerLLM,num_gpus=0, num_cpus=1) -> None:
+    def __init__(self,llm:ByzerLLM,file_path:str= None, num_gpus=0, num_cpus=1) -> None:
         self.llm = llm
         self.sandbox = None
+        self.file_path = file_path
         self.num_gpus = num_gpus
         self.num_cpus = num_cpus
 
@@ -398,9 +399,75 @@ The current implementation of the function is as follows:
                 missing_variables.append(name)
         if missing_variables:
             return False,f"Try to make sure the globals() contains: {missing_variables}"
-        return True,""        
+        return True,""  
+
+          
         
-    
+    def analyze(self,prompt:str,max_try_times=10):
+        # the first step is to preview the file which uploaded by the user
+        preview_file_prompt='''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, I want to use pandas to read it. The Python code should finish
+the following tasks:
+1. try to read the file according the suffix of file in Try block
+2. if read success, then set variable loaded_successfully to True, otherwise set it to False.
+3. if loaded_successfully is True, then assigh the loaded data with head() to file_preview, otherwise assign error message to file_preview
+4. finally return loaded_successfully, file_preview                    
+'''
+        status, response,code = self.try_execute_code_until_resolved(prompt=preview_file_prompt,
+                                                         target_names=["loaded_successfully","file_preview"],
+                                                         max_try_times=max_try_times)
+        if status != 0 or response["loaded_successfully"]:
+            raise Exception(f'''
+Failed to load the file {self.file_path}. 
+The code is:
+
+```python
+{code}
+```
+
+The response is:
+
+```text
+{response}
+```        
+''')
+        preivew_csv = response["file_preview"].to_csv(index=False)
+        analyze_prompt = f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
+The preview of the file is:
+```text
+{preivew_csv}
+```
+Use pandas to analyze it. 
+Please try to generate python code to analyze the file and answer the following questions:\n'''
+        status, response = self.try_execute_code_until_resolved(prompt=analyze_prompt+prompt,
+                                                         target_names=[],
+                                                         max_try_times=max_try_times)
+        if status != 0:
+            raise Exception(f'''
+Failed to analyze {self.file_path}.
+
+The prompt is:
+
+```text
+{prompt}
+```
+
+The code is:
+
+```python
+{code}
+```
+
+The response is:
+
+```text
+{response}
+```        
+''')
+        return response
+        
+        
+        
+
     def try_execute_code_until_resolved(self,prompt:str,target_names:List[str]=[], max_try_times:int=3)->Tuple[int, str, str]:
         codes,cost =self.generate_code(prompt)
         code = codes[0][1]
@@ -426,7 +493,7 @@ The current implementation of the function is as follows:
                     print(f"Try {i} times. The code execution failed,  the error message is: {msg}. improved the code:\n{code}")                
                     status,response = self.eval_code(code,target_names)            
 
-        return status,response   
+        return status,response,code   
 
     def get_target_names(self,prompt:str)->List[str]:
         self.llm.chat(None,request=LLMRequest(instruction=f'''Try to extract variables described in the following content:
