@@ -125,6 +125,8 @@ class ByzerLLM:
     
     def setup_infer_backend(self,backend:str)->'ByzerLLM':
         self.sys_conf["infer_backend"] = backend
+        if backend == InferBackend.VLLM:            
+            self.sys_conf["masterMaxConcurrency"] = 1000
         return self
     
     def setup_gpus_per_worker(self,num_gpus:int)->'ByzerLLM':
@@ -132,7 +134,7 @@ class ByzerLLM:
         return self
 
     def setup_num_workers(self,num_workers:int)->'ByzerLLM':
-        self.sys_conf["masterMaxConcurrency"] = num_workers
+        self.sys_conf["maxConcurrency"] = num_workers
         return self
     
     def raw_sft(self,train_params:Dict[str,Any]):                   
