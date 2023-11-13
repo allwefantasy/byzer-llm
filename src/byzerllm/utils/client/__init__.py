@@ -466,10 +466,13 @@ otherwise, output the following json format:
 ```
 ''')[0].output
         need_code = True
-        lang,response = code_utils.extract_code(should_generate_code_response)[0]
-        if lang == "json":
-            need_code = json.loads(response)["need_code"]            
-
+        responses = code_utils.extract_code(should_generate_code_response)
+        for lang,code in responses:
+            if lang == "json":
+                try:
+                    need_code = json.loads(code)["need_code"]
+                except Exception as inst:
+                    pass                   
         if not need_code:
             return self.llm.chat(None,request=f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
 The preview of the file is:
