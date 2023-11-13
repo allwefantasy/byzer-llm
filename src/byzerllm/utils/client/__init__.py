@@ -315,7 +315,7 @@ class CodeSandbox:
     def __init__(self) -> None:
         pass        
 
-    def execute(self,code)->Tuple[int, str, str]:
+    def exec(self,code)->Tuple[int, str, str]:
         return code_utils.execute_code(
                 code = code,
                 timeout=30*60,
@@ -325,13 +325,14 @@ class CodeSandbox:
                 lang="python"        
                 ) 
     
-    def exec_capture_output(code: str) -> Tuple[int,Any]:
+    def exec_capture_output(self,code: str) -> Tuple[int,Any]:
         buffer = io.StringIO()
         sys.stdout = buffer
         sys.stderr = buffer
 
         try:
-            exec(code)
+            variables = {}
+            exec(code,variables)
         except Exception:
             return 1,traceback.format_exc()
 
@@ -425,7 +426,19 @@ The current implementation of the function is as follows:
                     print(f"Try {i} times. The code execution failed,  the error message is: {msg}. improved the code:\n{code}")                
                     status,response = self.eval_code(code,target_names)            
 
-        return status,response        
+        return status,response   
+
+    def get_target_names(self,prompt:str)->List[str]:
+        self.llm.chat(None,request=LLMRequest(instruction=f'''Try to extract variables described in the following content:
+```text                                     
+{prompt}                                                                                            
+```
+
+and then output the variables in the following format:
+
+```json
+["a","b","c"]
+```'''))     
     
     def improve_code(self,code:str=None,files:List[str]=None, objective:str=None,suggest_only=True, **config):
         """Improve the function to achieve the objective."""        
@@ -517,7 +530,7 @@ assertions:'''
             ).remote()
 
         if target_names:
-            status,response = ray.get(self.sandbox.eval_code.remote(code,target_names))
+            status,response = ray.get(self.sandbox.exec.remote(code,target_names))
         else:
             status,response = ray.get(self.sandbox.exec_capture_output.remote(code))
 
