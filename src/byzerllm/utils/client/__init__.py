@@ -14,6 +14,10 @@ import dataclasses
 import importlib  
 from . import code_utils
 from ..retrieval import ByzerRetrieval
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 # create a enum for the role
 class Role:
@@ -388,6 +392,8 @@ class ByzerDataAnalysis:
             new_base_name = self.sandbox_suffix + ext
             dir_name = os.path.dirname(file_path)
             new_file_path = os.path.join(dir_name, new_base_name)
+
+            logger.info(f"use_shared_disk: {self.use_shared_disk} file_path: {self.file_path} new_file_path: {new_file_path}")
             self.file_ref = ray.put(open(self.file_path).read())
             self.file_path = new_file_path
 
