@@ -409,7 +409,7 @@ The current implementation of the function is as follows:
     def analyze(self,prompt:str,max_try_times=10):
         # the first step is to preview the file which uploaded by the user
         if not self.loaded_successfully:
-            preview_file_prompt=f'''I have a file where the path is {self.file_path}, I want to use pandas to read it. 
+            preview_file_prompt=f'''I have a file where the path is {self.file_path}, I want to use pandas to read it.The packages all are installed, you can use it directly.
 Try to help me to generate python code which should match the following requirements:
 1. try to read the file according the suffix of file name in Try block
 2. if read success, set variable loaded_successfully to True, otherwise set it to False.
@@ -438,6 +438,7 @@ The response is:
         
         preview_csv = self.file_preview.to_csv(index=False)        
         analyze_prompt = f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
+The packages all are installed, you can use it directly.
 The preview of the file is:
 ```text
 {preview_csv}
