@@ -5,7 +5,7 @@ def is_visualization(data_analysis,prompt:str)->bool:
     v = data_analysis.llm.chat(None, request=f'''
 Please check the following question is whether about data visualization:
 
-                               ```text
+```text
 {prompt}                               
 ```   
 
@@ -20,7 +20,7 @@ otherwise, output the following json format:
 ```json 
 {{"is_visualization":false}}
 ```
-''')
+''')[0].output
     is_visualization = True
     responses = code_utils.extract_code(v)
     for lang,code in responses:
