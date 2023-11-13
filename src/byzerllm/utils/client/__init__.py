@@ -557,7 +557,7 @@ variables:
             if status != 0:       
                 improve_response,_ = self.improve_code(code=code,objective=f"The origin requirements: {prompt}\nThe code throws exception like this: {response}.\n Try to fix this problem.\n")            
                 lang,code = code_utils.extract_code(improve_response)[0]
-                print(f"Try {i} times. The code execution failed,  the error message is: {response}. improved the code:\n{code}")                
+                print(f"Try {i} times. The code execution failed,  the error message is: {output}. improved the code:\n{code}")                
                 status,output,response = self.eval_code(code,target_names)                                
             else:
                 if not target_names or skip_check_target_names:
