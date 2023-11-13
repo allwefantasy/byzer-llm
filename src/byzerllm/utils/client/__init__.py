@@ -439,7 +439,11 @@ The response is:
         
         preview_csv = self.file_preview.to_csv(index=False)        
         analyze_prompt = f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
-The packages all are installed, you can use it directly.
+Please DO NOT consider the package installation, the packages all are installed, you can use it directly.
+
+When the question require you to do visualization, please use package ploly to do it, convert the image to base64 format, 
+and assign the base64 string to the variable named image_base64. Make sure the image_base64 defined in the global scope
+
 The preview of the file is:
 ```text
 {preview_csv}
@@ -489,8 +493,10 @@ The preview of the file is:
 Please try to answer the following questions:\n''')[0].output
         
         status, response, code = self.try_execute_code_until_resolved(prompt=analyze_prompt+prompt,
-                                                         target_names=[],
-                                                         max_try_times=max_try_times)
+                                                         target_names=["image_base64"],
+                                                         max_try_times=max_try_times,
+                                                         skip_check_target_names=True
+                                                         )
         if status != 0:
             raise Exception(f'''
 Failed to analyze {self.file_path}.
@@ -518,7 +524,7 @@ The response is:
         
         
 
-    def try_execute_code_until_resolved(self,prompt:str,target_names:List[str]=[], max_try_times:int=3)->Tuple[int, str, str]:
+    def try_execute_code_until_resolved(self,prompt:str,target_names:List[str]=[], max_try_times:int=3,skip_check_target_names:bool=False)->Tuple[int, str, str]:
         codes,cost =self.generate_code(prompt)
         code = codes[0][1]
 
@@ -531,7 +537,7 @@ The response is:
                 print(f"Try {i} times. The code execution failed,  the error message is: {response}. improved the code:\n{code}")                
                 status,response = self.eval_code(code,target_names)                                
             else:
-                if not target_names:
+                if not target_names or skip_check_target_names:
                     break
 
                 success,msg = self.default_check_eval_repsonse(response,target_names)
