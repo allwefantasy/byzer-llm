@@ -558,7 +558,13 @@ variables:
 
         for i in range(max_try_times):
             if status != 0:       
-                improve_response,_ = self.improve_code(code=code,objective=f"The origin requirements: {prompt}\nThe code throws exception like this: {output}.\n Try to fix this problem.\n")            
+                improve_response,_ = self.improve_code(code=code,
+                                                       objective=f'''Try to fix this problem:
+```
+{output}
+```
+The origin requirements: {prompt}
+''')            
                 lang,code = code_utils.extract_code(improve_response)[0]
                 print(f"Try {i} times. The code execution failed,  the error message is: {output}. improved the code:\n{code}")                
                 status,output,response = self.eval_code(code,target_names)                                
