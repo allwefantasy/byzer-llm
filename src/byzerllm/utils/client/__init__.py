@@ -13,6 +13,7 @@ import uuid
 import dataclasses
 import importlib  
 from . import code_utils
+from . import utils
 from ..retrieval import ByzerRetrieval
 import logging
 
@@ -73,6 +74,14 @@ class InferBackend:
     Transformers = "transformers"
     VLLM = "ray/vllm"
     DeepSpeed = "ray/deepspeed"
+
+@dataclasses.dataclass
+class ExecuteCodeResponse:
+      status: int
+      output: str
+      variables: Dict[str,Any]=dataclasses.field(default_factory=dict)
+      code: str
+      prompt: str
 
 class ByzerLLM:
     def __init__(self,url:Optional[str]=None,**kwargs):
@@ -340,7 +349,7 @@ class CodeSandbox:
                 lang="python"        
                 ) 
     
-    def exec_capture_output(self,code: str) -> Tuple[int,Any]:
+    def exec_capture_output(self,code: str,target_names:List[str]=[]) -> Tuple[int,str,Any]:
         buffer = io.StringIO()
         sys.stdout = buffer
         sys.stderr = buffer
@@ -348,26 +357,18 @@ class CodeSandbox:
         try:
             variables = {}
             exec(code,variables)
+            response = {}
+            for name in target_names:
+                if name in variables:
+                    response[name] = variables[name]
         except Exception:
             return 1,traceback.format_exc()
 
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
 
-        return 0,buffer.getvalue()
-
-    def exec(self, code: str,target_names:List[str]=[]) -> Tuple[int,Any]:        
-        try:
-            variables = {}
-            exec(code,variables)
-            response = {}
-            for name in target_names:
-                if name in variables:
-                    response[name] = variables[name]
-                
-            return 0,response
-        except Exception as e:
-            return 1,traceback.format_exc()
+        return 0,buffer.getvalue(),response
+    
 
 class ByzerDataAnalysis:
     def __init__(self,llm:ByzerLLM,
@@ -441,7 +442,7 @@ The current implementation of the function is as follows:
 
           
         
-    def analyze(self,prompt:str,max_try_times=10)->Tuple[Union[Dict[str,Any],str],str,str]:
+    def analyze(self,prompt:str,max_try_times=10)->Tuple[ExecuteCodeResponse,str,str]:
         # the first step is to preview the file which uploaded by the user
         if not self.loaded_successfully:
             preview_file_prompt=f'''I have a file where the path is {self.file_path}, I want to use pandas to read it.The packages all are installed, you can use it directly.
@@ -450,15 +451,15 @@ Try to help me to generate python code which should match the following requirem
 2. if read success, set variable loaded_successfully to True, otherwise set it to False.
 3. if loaded_successfully is True, then assigh the loaded data with head() to file_preview, otherwise assign error message to file_preview
 4. make sure the loaded_successfully, file_preview are defined in the global scope'''
-            status, response,code = self.try_execute_code_until_resolved(prompt=preview_file_prompt,
+            response = self.try_execute_code_until_resolved(prompt=preview_file_prompt,
                                                             target_names=["loaded_successfully","file_preview"],
                                                             max_try_times=max_try_times)
-            if status != 0 or not response["loaded_successfully"]:
+            if response.status != 0 or not response.variables["loaded_successfully"]:
                 raise Exception(f'''Failed to load the file {self.file_path}. 
 The code is:
 
 ```python
-{code}
+{response.code}
 ```
 
 The response is:
@@ -472,10 +473,10 @@ The response is:
                 self.loaded_successfully = True
         
         preview_csv = self.file_preview.to_csv(index=False)        
-        analyze_prompt = f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
+        analyze_prompt = f'''I have a file the path is {self.file_path}, 
 Please DO NOT consider the package installation, the packages all are installed, you can use it directly.
 
-When the question require you to do visualization, please use package ploly to do it, convert the image to base64 format, 
+When the question require you to do visualization, please use package Plotly to do it, convert the image to base64 format, 
 and assign the base64 string to the variable named image_base64. Make sure the image_base64 defined in the global scope
 
 The preview of the file is:
@@ -483,95 +484,77 @@ The preview of the file is:
 {preview_csv}
 ```
 Use pandas to analyze it. 
-Please try to generate python code to analyze the file and answer the following questions:\n'''
+Please try to generate python code to analyze the file and answer the following questions:
+'''
         
-        should_generate_code_response = self.llm.chat(None,request=f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
-The preview of the file is:
-```text
-{preview_csv}
-```
-you should try to check the following quesion is whether need to generate python code to answer.
-
-The question is:
-                                            
-```text
-{prompt}
-```
-
-if you need to generate python code to answer, please output the following json format:
-
-```json
-{{"need_code":true}}
-```
-
-otherwise, output the following json format:
-
-```json 
-{{"need_code":false}}
-```
-''')[0].output
-        need_code = True
-        responses = code_utils.extract_code(should_generate_code_response)
-        for lang,code in responses:
-            if lang == "json":
-                try:
-                    need_code = json.loads(code)["need_code"]
-                except Exception as inst:
-                    pass                   
+        need_code = utils.should_generate_code_to_response(self,prompt)
         if not need_code:
-            no_code_prompt=f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
+            no_code_prompt=f'''I have a file the path is {self.file_path}, 
 The preview of the file is:
 ```text
 {preview_csv}
 ```
-Please try to answer the following questions:\n{prompt}'''
-
-            return self.llm.chat(None,request=no_code_prompt)[0].output,"",no_code_prompt
+Please try to answer the following questions:
+{prompt}'''
+            # self.llm.chat(None,request=no_code_prompt)[0].output,"",no_code_prompt
+            return ExecuteCodeResponse(
+                status=0,output=self.llm.chat(None,request=no_code_prompt)[0].output,
+                variables={},code="",prompt=no_code_prompt
+            )
         
-        status, response, code = self.try_execute_code_until_resolved(prompt=analyze_prompt+prompt,
+        response = self.try_execute_code_until_resolved(prompt=analyze_prompt+prompt,
                                                          target_names=["image_base64"],
                                                          max_try_times=max_try_times,
                                                          skip_check_target_names=True
                                                          )
-        if status != 0:
+        if response.status != 0:
             raise Exception(f'''
 Failed to analyze {self.file_path}.
 
 The prompt is:
 
 ```text
-{prompt}
+{response.prompt}
 ```
 
 The code is:
 
 ```python
-{code}
+{response.code}
 ```
 
-The response is:
+The output is:
 
 ```text
-{response}
-```        
+{response.output}
+```
+
+variables:
+
+```text
+{list(response.variables.keys())}
+```
 ''')
-        return response,code,analyze_prompt+prompt
+        return response
         
         
         
 
-    def try_execute_code_until_resolved(self,prompt:str,target_names:List[str]=[], max_try_times:int=3,skip_check_target_names:bool=False)->Tuple[int, str, str]:
+    def try_execute_code_until_resolved(self,prompt:str,
+                                        target_names:List[str]=[], 
+                                        max_try_times:int=3,
+                                        skip_check_target_names:bool=False)->ExecuteCodeResponse:
         codes,cost =self.generate_code(prompt)
         code = codes[0][1]
 
-        status,response = self.eval_code(code,target_names,skip_check_target_names)        
+        status,output,response = self.eval_code(code,target_names)        
 
         for i in range(max_try_times):
             if status != 0:       
                 improve_response,_ = self.improve_code(code=code,objective=f"The origin requirements: {prompt}\nThe code throws exception like this: {response}.\n Try to fix this problem.\n")            
                 lang,code = code_utils.extract_code(improve_response)[0]
                 print(f"Try {i} times. The code execution failed,  the error message is: {response}. improved the code:\n{code}")                
-                status,response = self.eval_code(code,target_names,skip_check_target_names)                                
+                status,output,response = self.eval_code(code,target_names)                                
             else:
                 if not target_names or skip_check_target_names:
                     break
@@ -583,9 +566,15 @@ The response is:
                     improve_response,_ = self.improve_code(code=code,objective=f"The origin requirements: {prompt}\nAfter execute the code, {msg}.\n Try to fix this problem.\n")
                     lang,code = code_utils.extract_code(improve_response)[0]
                     print(f"Try {i} times. The code execution failed,  the error message is: {msg}. improved the code:\n{code}")                
-                    status,response = self.eval_code(code,target_names,skip_check_target_names)            
-
-        return status,response,code   
+                    status,output,response = self.eval_code(code,target_names)            
+        # status,response,code   
+        return ExecuteCodeResponse(
+            status=status,
+            output=output,
+            variables=response,
+            code=code,
+            prompt=prompt,
+        )
 
     def get_target_names(self,prompt:str)->List[str]:
         self.llm.chat(None,request=LLMRequest(instruction=f'''Try to extract variables described in the following content:
@@ -680,7 +669,7 @@ assertions:'''
         status,response,image = ray.get(self.sandbox.execute.remote(code))
         return status,response,image
     
-    def eval_code(self, code,target_names:List[str]=[],skip_check_target_names:bool=False)->Tuple[int, str, str]:        
+    def eval_code(self, code,target_names:List[str]=[])->Tuple[int, str, str]:        
         if self.sandbox is None:
             self.sandbox = ray.remote(CodeSandbox).options(
                 name=f"CodeSandbox-{self.sandbox_suffix}",                
@@ -688,12 +677,9 @@ assertions:'''
                 num_gpus=self.num_gpus
             ).remote(self.file_path,self.file_ref)
 
-        if target_names and not skip_check_target_names:
-            status,response = ray.get(self.sandbox.exec.remote(code,target_names))
-        else:
-            status,response = ray.get(self.sandbox.exec_capture_output.remote(code))
+        status,output,response = ray.get(self.sandbox.exec_capture_output.remote(code,target_names))            
 
-        return status,response
+        return status,output,response
             
 
 
