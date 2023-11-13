@@ -400,12 +400,15 @@ The current implementation of the function is as follows:
         return True,""        
         
     
-    def try_execute_code_until_resolved(self,code:str,target_names:List[str]=[], max_try_times:int=3)->Tuple[int, str, str]:
+    def try_execute_code_until_resolved(self,prompt:str,target_names:List[str]=[], max_try_times:int=3)->Tuple[int, str, str]:
+        codes,cost =self.generate_code(prompt)
+        code = codes[0][1]
+
         status,response = self.eval_code(code,target_names)        
-        max_try_times = 3        
+
         for i in range(max_try_times):
             if status != 0:       
-                improve_response,_ = self.improve_code(code=code,objective="The code throws exception like this: {}.\n Try to fix this problem.\n".format(response))            
+                improve_response,_ = self.improve_code(code=code,objective=f"The origin requirements: {prompt}\nThe code throws exception like this: {response}.\n Try to fix this problem.\n")            
                 lang,code = code_utils.extract_code(improve_response)[0]
                 print(f"Try {i} times. The code execution failed,  the error message is: {response}. improved the code:\n{code}")                
                 status,response = self.eval_code(code,target_names)                                
@@ -417,7 +420,7 @@ The current implementation of the function is as follows:
                 if success:
                     break    
                 else:
-                    improve_response,_ = self.improve_code(code=code,objective=f"After execute the code, {msg}.\n Try to fix this problem.\n")
+                    improve_response,_ = self.improve_code(code=code,objective=f"The origin requirements: {prompt}\nAfter execute the code, {msg}.\n Try to fix this problem.\n")
                     lang,code = code_utils.extract_code(improve_response)[0]
                     print(f"Try {i} times. The code execution failed,  the error message is: {msg}. improved the code:\n{code}")                
                     status,response = self.eval_code(code,target_names)            
