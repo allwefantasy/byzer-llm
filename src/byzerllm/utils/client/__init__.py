@@ -469,7 +469,7 @@ The response is:
 ```        
 ''')
             else:                        
-                self.file_preview = response["file_preview"]    
+                self.file_preview = response.variables["file_preview"]    
                 self.loaded_successfully = True
         
         preview_csv = self.file_preview.to_csv(index=False)        
