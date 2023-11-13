@@ -519,12 +519,14 @@ otherwise, output the following json format:
                 except Exception as inst:
                     pass                   
         if not need_code:
-            return self.llm.chat(None,request=f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
+            no_code_prompt=f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
 The preview of the file is:
 ```text
 {preview_csv}
 ```
-Please try to answer the following questions:\n''')[0].output,"",prompt
+Please try to answer the following questions:\n{prompt}'''
+
+            return self.llm.chat(None,request=no_code_prompt)[0].output,"",no_code_prompt
         
         status, response, code = self.try_execute_code_until_resolved(prompt=analyze_prompt+prompt,
                                                          target_names=["image_base64"],
@@ -553,7 +555,7 @@ The response is:
 {response}
 ```        
 ''')
-        return response,code,prompt
+        return response,code,analyze_prompt+prompt
         
         
         
