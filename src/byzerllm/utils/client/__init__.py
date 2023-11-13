@@ -359,7 +359,9 @@ class ByzerLLMCoder:
         self.llm = llm
         self.sandbox = None
         self.file_path = file_path
-        self.load_preview_success = False
+        self.file_preview = None
+        self.loaded_successfully=False
+        
         self.num_gpus = num_gpus
         self.num_cpus = num_cpus
 
@@ -406,7 +408,7 @@ The current implementation of the function is as follows:
         
     def analyze(self,prompt:str,max_try_times=10):
         # the first step is to preview the file which uploaded by the user
-        if not self.load_preview_success:
+        if not self.loaded_successfully:
             preview_file_prompt=f'''I have a file where the path is {self.file_path}, I want to use pandas to read it. 
 Try to help me to generate python code which should match the following requirements:
 1. try to read the file according the suffix of file name in Try block
@@ -429,13 +431,14 @@ The response is:
 ```text
 {response}
 ```        
-''')
-        preivew_csv = response["file_preview"].to_csv(index=False)
-        self.load_preview_success = True
+''')        
+        preview_csv = response["file_preview"].to_csv(index=False)
+        self.file_preview = response["file_preview"]    
+        self.loaded_successfully = True
         analyze_prompt = f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
 The preview of the file is:
 ```text
-{preivew_csv}
+{preview_csv}
 ```
 Use pandas to analyze it. 
 Please try to generate python code to analyze the file and answer the following questions:\n'''
@@ -443,7 +446,7 @@ Please try to generate python code to analyze the file and answer the following 
         should_generate_code_response = self.llm.chat(None,request=f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
 The preview of the file is:
 ```text
-{preivew_csv}
+{preview_csv}
 ```
 you should try to check the following quesion is whether need to generate python code to answer.
 
@@ -477,7 +480,7 @@ otherwise, output the following json format:
             return self.llm.chat(None,request=f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
 The preview of the file is:
 ```text
-{preivew_csv}
+{preview_csv}
 ```
 Please try to answer the following questions:\n''')[0].output
         
