@@ -477,8 +477,9 @@ The response is:
         analyze_prompt = f'''I have a file the path is {self.file_path}, 
 Please DO NOT consider the package installation, the packages all are installed, you can use it directly.
 
-When the question require you to do visualization, please use package Plotly to do it, save the image as a temp file, load the file and use 
-base64 to encode, assign the base64 string to the variable named image_base64. Make sure the image_base64 defined in the global scope
+When the question require you to do visualization, please use package Plotly or matplotlib to do this.
+Try to use base64 to encode the image, assign the base64 string to the variable named image_base64. 
+Make sure the image_base64 defined in the global scope.
 
 The preview of the file is:
 ```text
