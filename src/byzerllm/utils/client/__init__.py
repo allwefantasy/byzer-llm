@@ -536,14 +536,13 @@ variables:
 ```text
 {list(response.variables.keys())}
 ```
-''')
-        if is_visualization:
-            image_base64 = response.variables["image_base64"]
-            response.output = image_base64            
+''')                  
         return response
-        
-        
-        
+    
+
+    def is_visualization_response(self,reseponse:ExecuteCodeResponse)->bool:
+        return "image_base64" in reseponse.variables
+                        
 
     def try_execute_code_until_resolved(self,prompt:str,
                                         target_names:List[str]=[], 
