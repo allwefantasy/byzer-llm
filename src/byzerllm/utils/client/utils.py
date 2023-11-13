@@ -1,6 +1,36 @@
 from . import code_utils
 import json
 
+def is_visualization(data_analysis,prompt:str)->bool:
+    v = data_analysis.llm.chat(None, request=f'''
+Please check the following question is whether about data visualization:
+
+                               ```text
+{prompt}                               
+```   
+
+If the question is about data visualization, please output the following json format:
+
+```json
+{{"is_visualization":true}}
+```
+
+otherwise, output the following json format:
+
+```json 
+{{"is_visualization":false}}
+```
+''')
+    is_visualization = True
+    responses = code_utils.extract_code(v)
+    for lang,code in responses:
+        if lang == "json":
+            try:
+                is_visualization = json.loads(code)["is_visualization"]
+            except Exception as inst:
+                pass 
+    return is_visualization 
+
 def should_generate_code_to_response(data_analysis,prompt:str):    
     preview_csv = data_analysis.file_preview.to_csv(index=False)        
     v = data_analysis.llm.chat(None,request=f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 

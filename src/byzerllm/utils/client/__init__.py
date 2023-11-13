@@ -505,7 +505,7 @@ Please try to answer the following questions:
         response = self.try_execute_code_until_resolved(prompt=analyze_prompt+prompt,
                                                          target_names=["image_base64"],
                                                          max_try_times=max_try_times,
-                                                         skip_check_target_names=True
+                                                         skip_check_target_names=utils.is_visualization(self,prompt)
                                                          )
         if response.status != 0:
             raise Exception(f'''
