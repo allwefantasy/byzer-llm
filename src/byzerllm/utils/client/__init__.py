@@ -319,13 +319,16 @@ class ByzerLLM:
             ray.get(udf_master.give_back.remote(index)) 
 
 class CodeSandbox:
-    def __init__(self,file_path:str,file_ref:ClientObjectRef) -> None:
+    def __init__(self,file_path:str,file_ref) -> None:
         self.file_ref = file_ref
         self.file_path = file_path
         if self.file_ref:
-            obj = ray.get(self.file_ref)
+            if isinstance(self.file_ref, str):
+                content = self.file_ref
+            else:
+                content = ray.get(self.file_ref)
             with open(self.file_path, "w") as f:
-                f.write(obj)         
+                f.write(content)         
 
     def execute_code(self,code)->Tuple[int, str, str]:
         return code_utils.execute_code(
