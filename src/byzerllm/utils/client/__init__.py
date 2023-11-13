@@ -78,10 +78,10 @@ class InferBackend:
 @dataclasses.dataclass
 class ExecuteCodeResponse:
       status: int
-      output: str
-      variables: Dict[str,Any]=dataclasses.field(default_factory=dict)
+      output: str      
       code: str
       prompt: str
+      variables: Dict[str,Any]=dataclasses.field(default_factory=dict)
 
 class ByzerLLM:
     def __init__(self,url:Optional[str]=None,**kwargs):
