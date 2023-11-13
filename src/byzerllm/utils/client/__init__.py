@@ -431,10 +431,12 @@ The response is:
 ```text
 {response}
 ```        
-''')        
-        preview_csv = response["file_preview"].to_csv(index=False)
-        self.file_preview = response["file_preview"]    
-        self.loaded_successfully = True
+''')
+            else:                        
+                self.file_preview = response["file_preview"]    
+                self.loaded_successfully = True
+        
+        preview_csv = self.file_preview.to_csv(index=False)        
         analyze_prompt = f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
 The preview of the file is:
 ```text
