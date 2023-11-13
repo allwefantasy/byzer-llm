@@ -315,7 +315,7 @@ class CodeSandbox:
     def __init__(self) -> None:
         pass        
 
-    def exec(self,code)->Tuple[int, str, str]:
+    def execute_code(self,code)->Tuple[int, str, str]:
         return code_utils.execute_code(
                 code = code,
                 timeout=30*60,
@@ -341,7 +341,7 @@ class CodeSandbox:
 
         return 0,buffer.getvalue()
 
-    def eval_code(self, code: str,target_names:List[str]=[]) -> Tuple[int,Any]:        
+    def exec(self, code: str,target_names:List[str]=[]) -> Tuple[int,Any]:        
         try:
             variables = {}
             exec(code,variables)
