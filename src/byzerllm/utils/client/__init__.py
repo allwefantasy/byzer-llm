@@ -367,18 +367,38 @@ The current implementation of the function is as follows:
 {file_string}'''
         response = self.llm.chat(None, request=LLMRequest(instruction=new_prompt,**config))            
         return response[0].output, -1
+
+    def default_check_eval_repsonse(self,response:Dict[str,Any],target_names:List[str]=[])->Tuple[bool,str]:
+        missing_variables = []
+        for name in target_names:
+            if name not in response:
+                missing_variables.append(name)
+        if missing_variables:
+            return False,f"the response missing the variables: {missing_variables}"
+        return True,""        
+        
     
-    def try_execute_code_until_resolved(self,code:str,max_try_times:int=3)->Tuple[int, str, str]:
-        status,response = self.eval_code(code)
+    def try_execute_code_until_resolved(self,code:str,target_names:List[str]=[], max_try_times:int=3)->Tuple[int, str, str]:
+        status,response = self.eval_code(code,target_names)        
         max_try_times = 3        
         for i in range(max_try_times):
-            if status != 0:        
+            if status != 0:       
                 improve_response,_ = self.improve_code(code=code,objective="The code throws exception like this: {}.\n Try to fix this problem.\n".format(response))            
                 lang,code = code_utils.extract_code(improve_response)[0]
                 print(f"Try {i} times. The code execution failed,  the error message is: {response}. improved the code:\n{code}")                
-                status,response = self.eval_code(code)
+                status,response = self.eval_code(code,target_names)
+                
+                
             else:
-                break    
+                success,msg = self.default_check_eval_repsonse(response,target_names)
+                if success:
+                    break    
+                else:
+                    improve_response,_ = self.improve_code(code=code,objective=f"After execute the code, {msg}.\n Try to fix this problem.\n")
+                    lang,code = code_utils.extract_code(improve_response)[0]
+                    print(f"Try {i} times. The code execution failed,  the error message is: {msg}. improved the code:\n{code}")                
+                    status,response = self.eval_code(code,target_names)            
+
         return status,response        
     
     def improve_code(self,code:str=None,files:List[str]=None, objective:str=None,suggest_only=True, **config):
