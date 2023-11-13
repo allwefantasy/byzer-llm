@@ -440,7 +440,11 @@ The preview of the file is:
 Use pandas to analyze it. 
 Please try to generate python code to analyze the file and answer the following questions:\n'''
         
-        should_generate_code_response = self.llm.chat(None,request=f'''Since you are not good at compuation, 
+        should_generate_code_response = self.llm.chat(None,request=f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
+The preview of the file is:
+```text
+{preivew_csv}
+```
 you should try to check the following quesion is whether need to generate python code to answer.
 
 The question is:
@@ -452,13 +456,13 @@ The question is:
 if you need to generate python code to answer, please output the following json format:
 
 ```json
-{"need_code":true}
+{{"need_code":true}}
 ```
 
 otherwise, output the following json format:
 
 ```json 
-{"need_code":false}
+{{"need_code":false}}
 ```
 ''')[0].output
         need_code = True
