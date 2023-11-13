@@ -437,7 +437,8 @@ The current implementation of the function is as follows:
             if name not in response:
                 missing_variables.append(name)
         if missing_variables:
-            return False,f"Try to make sure the globals() contains: {missing_variables}"
+            s = ",".join(missing_variables)
+            return False,f"Try to make sure {s} are defined in the global scope"
         return True,""  
 
           
