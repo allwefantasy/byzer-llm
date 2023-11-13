@@ -473,21 +473,7 @@ The response is:
                 self.file_preview = response.variables["file_preview"]    
                 self.loaded_successfully = True
         
-        preview_csv = self.file_preview.to_csv(index=False)        
-        analyze_prompt = f'''I have a file the path is {self.file_path}, 
-Please DO NOT consider the package installation, the packages all are installed, you can use it directly.
-
-When the question require you to do visualization, please use package Plotly or matplotlib to do this.
-Try to use base64 to encode the image, assign the base64 string to the variable named image_base64. 
-Make sure the image_base64 defined in the global scope.
-
-The preview of the file is:
-```text
-{preview_csv}
-```
-Use pandas to analyze it. 
-Please try to generate python code to analyze the file and answer the following questions:
-'''
+        preview_csv = self.file_preview.to_csv(index=False)                
         
         need_code = utils.should_generate_code_to_response(self,prompt)
         if not need_code:
@@ -505,6 +491,22 @@ Please try to answer the following questions:
             )
         
         is_visualization = utils.is_visualization(self,prompt)
+        visualization_prompt = "" if not is_visualization else '''When the question require you to do visualization, please use package Plotly or matplotlib to do this.
+Try to use base64 to encode the image, assign the base64 string to the variable named image_base64. 
+Make sure the image_base64 defined in the global scope.'''
+
+        analyze_prompt = f'''I have a file the path is {self.file_path}, 
+Please DO NOT consider the package installation, the packages all are installed, you can use it directly.
+
+{visualization_prompt}
+
+The preview of the file is:
+```text
+{preview_csv}
+```
+Use pandas to analyze it. 
+Please try to generate python code to analyze the file and answer the following questions:
+'''
         response = self.try_execute_code_until_resolved(prompt=analyze_prompt+prompt,
                                                          target_names=["image_base64"],
                                                          max_try_times=max_try_times,
