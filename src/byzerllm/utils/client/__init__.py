@@ -502,10 +502,11 @@ Please try to answer the following questions:
                 variables={},code="",prompt=no_code_prompt
             )
         
+        is_visualization = utils.is_visualization(self,prompt)
         response = self.try_execute_code_until_resolved(prompt=analyze_prompt+prompt,
                                                          target_names=["image_base64"],
                                                          max_try_times=max_try_times,
-                                                         skip_check_target_names=utils.is_visualization(self,prompt)
+                                                         skip_check_target_names= not is_visualization
                                                          )
         if response.status != 0:
             raise Exception(f'''
