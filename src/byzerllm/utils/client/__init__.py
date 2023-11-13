@@ -445,7 +445,7 @@ The current implementation of the function is as follows:
 
           
         
-    def analyze(self,prompt:str,max_try_times=10)->Tuple[ExecuteCodeResponse,str,str]:
+    def analyze(self,prompt:str,max_try_times=10)-> ExecuteCodeResponse:
                             
         if not self.loaded_successfully:
             preview_file_prompt=f'''I have a file where the path is {self.file_path}, I want to use pandas to read it.The packages all are installed, you can use it directly.
