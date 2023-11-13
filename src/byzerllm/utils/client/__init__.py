@@ -405,7 +405,7 @@ The current implementation of the function is as follows:
         
     def analyze(self,prompt:str,max_try_times=10):
         # the first step is to preview the file which uploaded by the user
-        preview_file_prompt='''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, I want to use pandas to read it. The Python code should finish
+        preview_file_prompt=f'''I have a file the path is {self.file_path}, I want to use pandas to read it. The Python code should finish
 the following tasks:
 1. try to read the file according the suffix of file in Try block
 2. if read success, then set variable loaded_successfully to True, otherwise set it to False.
