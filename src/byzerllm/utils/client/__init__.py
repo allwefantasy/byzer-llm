@@ -536,6 +536,9 @@ variables:
 {list(response.variables.keys())}
 ```
 ''')
+        if is_visualization:
+            image_base64 = response.variables["image_base64"]
+            response.output = image_base64            
         return response
         
         
