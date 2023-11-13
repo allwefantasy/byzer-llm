@@ -524,7 +524,7 @@ The preview of the file is:
 ```text
 {preview_csv}
 ```
-Please try to answer the following questions:\n''')[0].output
+Please try to answer the following questions:\n''')[0].output,"",prompt
         
         status, response, code = self.try_execute_code_until_resolved(prompt=analyze_prompt+prompt,
                                                          target_names=["image_base64"],
