@@ -362,7 +362,7 @@ class CodeSandbox:
                 if name in variables:
                     response[name] = variables[name]
         except Exception:
-            return 1,traceback.format_exc()
+            return 1,traceback.format_exc(),{}
 
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
