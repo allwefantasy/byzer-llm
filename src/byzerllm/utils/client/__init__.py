@@ -3,6 +3,9 @@ from pyjava import PythonContext,RayContext
 from typing import Dict,Any,List,Optional,Union,Tuple,Callable
 from pyjava.udf import UDFBuilder
 import ray
+import sys
+import traceback
+import io
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import json
 import dataclasses
@@ -321,12 +324,27 @@ class CodeSandbox:
                 use_docker=False,
                 lang="python"        
                 ) 
-    def eval_code(self, code: str,target_names:List[str]=[]) -> Tuple[int,Any]:
-        import traceback
+    
+    def exec_capture_output(code: str) -> Tuple[int,Any]:
+        buffer = io.StringIO()
+        sys.stdout = buffer
+        sys.stderr = buffer
+
+        try:
+            exec(code)
+        except Exception:
+            return 1,traceback.format_exc()
+
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
+
+        return 0,buffer.getvalue()
+
+    def eval_code(self, code: str,target_names:List[str]=[]) -> Tuple[int,Any]:        
         try:
             variables = {}
             exec(code,variables)
-            response = [variables[item] for item in target_names]
+            response = {item: variables[item] for item in target_names}
             return 0,response
         except Exception as e:
             return 1,traceback.format_exc()
@@ -386,10 +404,11 @@ The current implementation of the function is as follows:
                 improve_response,_ = self.improve_code(code=code,objective="The code throws exception like this: {}.\n Try to fix this problem.\n".format(response))            
                 lang,code = code_utils.extract_code(improve_response)[0]
                 print(f"Try {i} times. The code execution failed,  the error message is: {response}. improved the code:\n{code}")                
-                status,response = self.eval_code(code,target_names)
-                
-                
+                status,response = self.eval_code(code,target_names)                                
             else:
+                if not target_names:
+                    break
+
                 success,msg = self.default_check_eval_repsonse(response,target_names)
                 if success:
                     break    
@@ -489,7 +508,12 @@ assertions:'''
                 num_cpus=self.num_cpus,
                 num_gpus=self.num_gpus
             ).remote()
-        status,response = ray.get(self.sandbox.eval_code.remote(code,target_names))
+
+        if target_names:
+            status,response = ray.get(self.sandbox.eval_code.remote(code,target_names))
+        else:
+            status,response = ray.get(self.sandbox.exec_capture_output.remote(code))
+
         return status,response
             
 
