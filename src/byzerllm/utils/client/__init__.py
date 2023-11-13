@@ -412,7 +412,7 @@ The current implementation of the function is as follows:
             preview_file_prompt=f'''I have a file where the path is {self.file_path}, I want to use pandas to read it. 
 Try to help me to generate python code which should match the following requirements:
 1. try to read the file according the suffix of file name in Try block
-2. if load success, set variable loaded_successfully to True, otherwise set it to False.
+2. if read success, set variable loaded_successfully to True, otherwise set it to False.
 3. if loaded_successfully is True, then assigh the loaded data with head() to file_preview, otherwise assign error message to file_preview
 4. make sure the loaded_successfully, file_preview are defined in the global scope'''
             status, response,code = self.try_execute_code_until_resolved(prompt=preview_file_prompt,
