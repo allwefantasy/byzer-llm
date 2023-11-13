@@ -6,12 +6,14 @@ import ray
 import sys
 import traceback
 import io
+import os
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import json
 import uuid
 import dataclasses
 import importlib  
 from . import code_utils
+from ..retrieval import ByzerRetrieval
 
 # create a enum for the role
 class Role:
@@ -313,8 +315,13 @@ class ByzerLLM:
             ray.get(udf_master.give_back.remote(index)) 
 
 class CodeSandbox:
-    def __init__(self) -> None:
-        pass        
+    def __init__(self,file_path:str,file_ref:ClientObjectRef) -> None:
+        self.file_ref = file_ref
+        self.file_path = file_path
+        if self.file_ref:
+            obj = ray.get(self.file_ref)
+            with open(self.file_path, "w") as f:
+                f.write(obj)         
 
     def execute_code(self,code)->Tuple[int, str, str]:
         return code_utils.execute_code(
@@ -355,16 +362,34 @@ class CodeSandbox:
         except Exception as e:
             return 1,traceback.format_exc()
 
-class ByzerLLMCoder:
-    def __init__(self,llm:ByzerLLM,file_path:str= None, num_gpus=0, num_cpus=1) -> None:
+class ByzerDataAnalysis:
+    def __init__(self,llm:ByzerLLM,
+                 retrieval:ByzerRetrieval=None,
+                 file_path:str= None, 
+                 use_shared_disk:bool=False,
+                 num_gpus=0, num_cpus=1) -> None:
         self.llm = llm
+        self.retrieval = retrieval
+        self.use_shared_disk = use_shared_disk
         self.sandbox = None
         self.file_path = file_path
+        self.file_ref = None
         self.file_preview = None
         self.loaded_successfully=False
         
         self.num_gpus = num_gpus
         self.num_cpus = num_cpus
+
+        self.sandbox_suffix = str(uuid.uuid4())                
+        
+        if self.file_path and not self.use_shared_disk:
+            base_name = os.path.basename(file_path)
+            name, ext = os.path.splitext(base_name)
+            new_base_name = self.sandbox_suffix + ext
+            dir_name = os.path.dirname(file_path)
+            new_file_path = os.path.join(dir_name, new_base_name)
+            self.file_ref = ray.put(open(self.file_path).read())
+            self.file_path = new_file_path
 
     def generate_code(self, prompt:Union[str,LLMRequest],pattern: str = code_utils.CODE_BLOCK_PATTERN, **config) -> Tuple[str, float]:
         """Generate code.
@@ -644,14 +669,13 @@ assertions:'''
         status,response,image = ray.get(self.sandbox.execute.remote(code))
         return status,response,image
     
-    def eval_code(self, code,target_names:List[str]=[])->Tuple[int, str, str]:
-        suffix = str(uuid.uuid4())
+    def eval_code(self, code,target_names:List[str]=[])->Tuple[int, str, str]:        
         if self.sandbox is None:
             self.sandbox = ray.remote(CodeSandbox).options(
-                name=f"CodeSandbox-{suffix}",
+                name=f"CodeSandbox-{self.sandbox_suffix}",                
                 num_cpus=self.num_cpus,
                 num_gpus=self.num_gpus
-            ).remote()
+            ).remote(self.file_path,self.file_ref)
 
         if target_names:
             status,response = ray.get(self.sandbox.exec.remote(code,target_names))
