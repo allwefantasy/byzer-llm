@@ -397,7 +397,7 @@ The current implementation of the function is as follows:
             if name not in response:
                 missing_variables.append(name)
         if missing_variables:
-            return False,f"the response missing the variables: {missing_variables}"
+            return False,f"Try to make sure the globals() contains: {missing_variables}"
         return True,""        
         
     
