@@ -637,9 +637,10 @@ assertions:'''
         return status,response,image
     
     def eval_code(self, code,target_names:List[str]=[])->Tuple[int, str, str]:
+        uuid = str(uuid.uuid4())
         if self.sandbox is None:
             self.sandbox = ray.remote(CodeSandbox).options(
-                name="CodeSandbox",                
+                name=f"CodeSandbox-{uuid}",
                 num_cpus=self.num_cpus,
                 num_gpus=self.num_gpus
             ).remote()
