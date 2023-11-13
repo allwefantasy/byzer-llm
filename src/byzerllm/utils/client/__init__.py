@@ -359,6 +359,7 @@ class ByzerLLMCoder:
         self.llm = llm
         self.sandbox = None
         self.file_path = file_path
+        self.load_preview_success = False
         self.num_gpus = num_gpus
         self.num_cpus = num_cpus
 
@@ -405,19 +406,17 @@ The current implementation of the function is as follows:
         
     def analyze(self,prompt:str,max_try_times=10):
         # the first step is to preview the file which uploaded by the user
-        preview_file_prompt=f'''I have a file the path is {self.file_path}, I want to use pandas to read it. The Python code should finish
-the following tasks:
+        if not self.load_preview_success:
+            preview_file_prompt=f'''I have a file the path is {self.file_path}, I want to use pandas to read it. The Python code should match the following requirements:
 1. try to read the file according the suffix of file in Try block
 2. if read success, then set variable loaded_successfully to True, otherwise set it to False.
 3. if loaded_successfully is True, then assigh the loaded data with head() to file_preview, otherwise assign error message to file_preview
-4. finally return loaded_successfully, file_preview                    
-'''
-        status, response,code = self.try_execute_code_until_resolved(prompt=preview_file_prompt,
-                                                         target_names=["loaded_successfully","file_preview"],
-                                                         max_try_times=max_try_times)
-        if status != 0 or response["loaded_successfully"]:
-            raise Exception(f'''
-Failed to load the file {self.file_path}. 
+4. make sure the loaded_successfully, file_preview  in globals()'''
+            status, response,code = self.try_execute_code_until_resolved(prompt=preview_file_prompt,
+                                                            target_names=["loaded_successfully","file_preview"],
+                                                            max_try_times=max_try_times)
+            if status != 0 or response["loaded_successfully"]:
+                raise Exception(f'''Failed to load the file {self.file_path}. 
 The code is:
 
 ```python
@@ -431,6 +430,7 @@ The response is:
 ```        
 ''')
         preivew_csv = response["file_preview"].to_csv(index=False)
+        self.load_preview_success = True
         analyze_prompt = f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
 The preview of the file is:
 ```text
