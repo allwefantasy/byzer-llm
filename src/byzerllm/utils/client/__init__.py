@@ -8,6 +8,7 @@ import traceback
 import io
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import json
+import uuid
 import dataclasses
 import importlib  
 from . import code_utils
@@ -638,10 +639,10 @@ assertions:'''
         return status,response,image
     
     def eval_code(self, code,target_names:List[str]=[])->Tuple[int, str, str]:
-        uuid = str(uuid.uuid4())
+        suffix = str(uuid.uuid4())
         if self.sandbox is None:
             self.sandbox = ray.remote(CodeSandbox).options(
-                name=f"CodeSandbox-{uuid}",
+                name=f"CodeSandbox-{suffix}",
                 num_cpus=self.num_cpus,
                 num_gpus=self.num_gpus
             ).remote()
