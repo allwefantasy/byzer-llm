@@ -564,14 +564,14 @@ The response is:
         codes,cost =self.generate_code(prompt)
         code = codes[0][1]
 
-        status,response = self.eval_code(code,target_names)        
+        status,response = self.eval_code(code,target_names,skip_check_target_names)        
 
         for i in range(max_try_times):
             if status != 0:       
                 improve_response,_ = self.improve_code(code=code,objective=f"The origin requirements: {prompt}\nThe code throws exception like this: {response}.\n Try to fix this problem.\n")            
                 lang,code = code_utils.extract_code(improve_response)[0]
                 print(f"Try {i} times. The code execution failed,  the error message is: {response}. improved the code:\n{code}")                
-                status,response = self.eval_code(code,target_names)                                
+                status,response = self.eval_code(code,target_names,skip_check_target_names)                                
             else:
                 if not target_names or skip_check_target_names:
                     break
@@ -583,7 +583,7 @@ The response is:
                     improve_response,_ = self.improve_code(code=code,objective=f"The origin requirements: {prompt}\nAfter execute the code, {msg}.\n Try to fix this problem.\n")
                     lang,code = code_utils.extract_code(improve_response)[0]
                     print(f"Try {i} times. The code execution failed,  the error message is: {msg}. improved the code:\n{code}")                
-                    status,response = self.eval_code(code,target_names)            
+                    status,response = self.eval_code(code,target_names,skip_check_target_names)            
 
         return status,response,code   
 
@@ -680,7 +680,7 @@ assertions:'''
         status,response,image = ray.get(self.sandbox.execute.remote(code))
         return status,response,image
     
-    def eval_code(self, code,target_names:List[str]=[])->Tuple[int, str, str]:        
+    def eval_code(self, code,target_names:List[str]=[],skip_check_target_names:bool=False)->Tuple[int, str, str]:        
         if self.sandbox is None:
             self.sandbox = ray.remote(CodeSandbox).options(
                 name=f"CodeSandbox-{self.sandbox_suffix}",                
@@ -688,7 +688,7 @@ assertions:'''
                 num_gpus=self.num_gpus
             ).remote(self.file_path,self.file_ref)
 
-        if target_names:
+        if target_names and not skip_check_target_names:
             status,response = ray.get(self.sandbox.exec.remote(code,target_names))
         else:
             status,response = ray.get(self.sandbox.exec_capture_output.remote(code))
