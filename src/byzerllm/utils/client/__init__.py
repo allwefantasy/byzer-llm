@@ -344,7 +344,11 @@ class CodeSandbox:
         try:
             variables = {}
             exec(code,variables)
-            response = {item: variables[item] for item in target_names}
+            response = {}
+            for name in target_names:
+                if name in variables:
+                    response[name] = variables[name]
+                
             return 0,response
         except Exception as e:
             return 1,traceback.format_exc()
