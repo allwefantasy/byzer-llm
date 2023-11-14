@@ -14,8 +14,9 @@ import dataclasses
 import importlib  
 from . import code_utils
 from . import utils
-from ..retrieval import ByzerRetrieval
+from ..retrieval import ByzerRetrieval,TableSettings,SearchQuery
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -377,6 +378,8 @@ class ByzerDataAnalysis:
                  retrieval:ByzerRetrieval=None,
                  file_path:str= None, 
                  use_shared_disk:bool=False,
+                 retrieval_cluster:str="data_analysis",
+                 retrieval_db:str="data_analysis",                 
                  num_gpus=0, num_cpus=1) -> None:
         self.llm = llm
         self.retrieval = retrieval
@@ -386,6 +389,9 @@ class ByzerDataAnalysis:
         self.file_ref = None
         self.file_preview = None
         self.loaded_successfully=False
+
+        self.retrieval_cluster = retrieval_cluster
+        self.retrieval_db = retrieval_db
         
         self.num_gpus = num_gpus
         self.num_cpus = num_cpus
@@ -443,7 +449,144 @@ The current implementation of the function is as follows:
             return False,f"Try to make sure {s} are defined in the global scope"
         return True,""  
 
-          
+    def search_tokenize(self,s:str):
+        return self.llm.apply_sql_func("select mkString(' ',parse(value)) as value",[
+        {"value":s}])["value"]
+    
+    def emb(self,s:str, emb_model:str="emb"):
+        return self.llm.emb(emb_model,LLMRequest(instruction=s))[0].output
+
+    def save_conversation(self,chat_name:str, role:str,content:str):
+        if not self.retrieval:
+            raise Exception("retrieval is not setup")
+        
+        if not self.retrieval.check_table_exists(self.retrieval_cluster,self.retrieval_db,"user_memory"):
+           self.retrieval.create_table(self.retrieval_cluster,tableSettings=TableSettings(
+                database=self.retrieval_db,
+                table="user_memory",schema='''st(
+field(_id,string),
+field(chat_name,string),
+field(role,string),
+field(content,string,analyze),
+field(raw_content,string),
+field(auth_tag,string,analyze),
+field(created_time,long),
+field(chat_name_vector,array(float)),
+field(content_vector,array(float))
+)
+''',
+                location="",num_shards=""                
+           ))
+
+        data = [{"_id":str(uuid.uuid4()),
+                "chat_name":chat_name,
+                "role":role,
+                "content":self.search_tokenize(content),
+                "raw_content":content,
+                "auth_tag":"",
+                "created_time":int(time.time()*1000),
+                "chat_name_vector":self.emb(chat_name),
+                "content_vector":self.emb(content)}]    
+
+        self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"user_memory",data)
+
+    def save_text_content(self,title:str,content:str,url:str,auth_tag:str=""):
+
+        if not self.retrieval:
+            raise Exception("retrieval is not setup")
+                
+
+        if not self.retrieval.check_table_exists(self.retrieval_cluster,self.retrieval_db,"text_content"):
+           self.retrieval.create_table(self.retrieval_cluster,tableSettings=TableSettings(
+                database=self.retrieval_db,
+                table="text_content",schema='''st(
+field(_id,string),
+field(title,string,analyze),
+field(content,string,analyze),
+field(url,string),
+field(raw_content,string),
+field(auth_tag,string,analyze),
+field(title_vector,array(float)),
+field(content_vector,array(float))
+)''',
+                location="",num_shards=1                
+           ))
+           self.retrieval.create_table(self.retrieval_cluster,tableSettings=TableSettings(
+                database=self.retrieval_db,
+                table="text_content_chunk",schema='''st(
+field(_id,string),
+field(doc_id,string),
+field(chunk,string,analyze),
+field(raw_chunk,string),
+field(chunk_vector,array(float))
+)''',
+                location="",num_shards=1                
+           ))
+
+        text_content = [{"_id":str(uuid.uuid4()),
+            "title":self.search_tokenize(title),
+            "content":self.search_tokenize(content),
+            "raw_content":content,
+            "url":url,
+            "auth_tag":self.search_tokenize(auth_tag),
+            "title_vector":self.emb(title),
+            "content_vector":self.emb(content)
+            }]
+        self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content",text_content)
+        
+        content_chunks= self.llm.apply_sql_func('''select llm_split(value,array(",","。","\n"),1600) as value ''',[{"value":content}])["value"]
+        
+        text_content_chunks = [{"_id":str(uuid.uuid4()),
+            "doc_id":text_content[0]["_id"],
+            "chunk":self.search_tokenize(item["value"]),
+            "raw_chunk":item["value"],
+            "chunk_vector":self.emb(item["value"])
+            } for item in content_chunks]
+        
+        self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content_chunk",text_content_chunks)
+
+
+    def search_content(self,q:str,limit:int=4,return_json:bool=True):   
+        docs = self.retrieval.search(self.retrieval_cluster,
+                            [SearchQuery(self.retrieval_db,"text_content_chunk",
+                                        keyword=self.search_tokenize(q),fields=["chunk"],
+                                        vector=self.emb(q),vectorField="chunk_vector",
+                                        limit=limit)])
+
+        if return_json:
+            context = json.dumps([{"content":x["raw_chunk"]} for x in docs],ensure_ascii=False,indent=4)    
+            return context 
+        else:
+            return docs
+        
+    def get_doc(self,doc_id:str):
+        docs = self.retrieval.search(self.retrieval_cluster,
+                            [SearchQuery(self.retrieval_db,"text_content",
+                                        keyword=doc_id,fields=["_id"],
+                                        limit=1)])
+        return docs[0] if docs else None
+    
+    def get_doc_by_url(self,url:str):
+        docs = self.retrieval.search(self.retrieval_cluster,
+                            [SearchQuery(self.retrieval_db,"text_content",
+                                        keyword=url,fields=["url"],
+                                        limit=1)])
+        return docs[0] if docs else None
+                
+        
+    def search_memory(self,chat_name:str, q:str,limit:int=4,return_json:bool=True):
+        docs = self.retrieval.search(self.retrieval_cluster,
+                        [SearchQuery(self.retrieval_db,"user_memory",
+                                    keyword=chat_name,fields=["chat_name"],
+                                    vector=self.emb(q),vectorField="content_vector",
+                                    limit=1000)])
+        docs = [doc for doc in docs if doc["role"] == "user" and doc["chat_name"] == chat_name]
+        if return_json:
+            context = json.dumps([{"content":x["raw_chunk"]} for x in docs[0:limit]],ensure_ascii=False,indent=4)    
+            return context 
+        else:
+            return docs[0:limit]   
+            
         
     def analyze(self,prompt:str,max_try_times=10)-> ExecuteCodeResponse:
                             
