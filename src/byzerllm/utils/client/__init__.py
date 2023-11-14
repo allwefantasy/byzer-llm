@@ -606,13 +606,17 @@ field(chunk_vector,array(float))
         else:
             return docs[0:limit]
             
-    def analyze(self,prompt:str,max_try_times=10)-> ExecuteCodeResponse:
+    def analyze(self,prompt:str,max_try_times=10, **config)-> ExecuteCodeResponse:
         if self.data_analysis_mode == DataAnalysisMode.data_analysis:
-            return self.data_analyze(prompt,max_try_times)
+            return self.data_analyze(prompt,max_try_times,**config)
         elif self.data_analysis_mode == DataAnalysisMode.text_analysis:
-            return self.text_analyze(prompt,max_try_times)
+            return self.text_analyze(prompt,max_try_times,**config)
         
-    def text_analyze(self,prompt:str,max_try_times=10)-> ExecuteCodeResponse:
+    def text_analyze(self,prompt:str,max_try_times=10,**config)-> ExecuteCodeResponse:
+        recall_limit = 4
+        if "recall_limit" in config or "limit" in config:
+            recall_limit = config["recall_limit"] if "recall_limit" in config else config["limit"]
+
         if utils.is_summary(self,prompt): 
             doc = self.get_doc_by_url(self.file_path)
             raw_content = doc["raw_content"]
@@ -622,7 +626,7 @@ field(chunk_vector,array(float))
                 for i in range(math.ceil(multipe)):
                     start = i * self.max_input_length
                     end = (i+1) * self.max_input_length
-
+                    print(f'''start: {start} end: {end} answer_chunk: {answer_chunk}''',flush=True)
                     if raw_content[start:end] == "":
                         break
                     
@@ -655,7 +659,7 @@ Finally, please try to match the following requirements:
 
             return ExecuteCodeResponse(0,answer_chunk,"",p,{}) 
         
-        content = self.search_content_chunks(q=prompt,limit=10,return_json=True)
+        content = self.search_content_chunks(q=prompt,limit=recall_limit,return_json=True)
         p1 = f'''
 We have the following json format data:
 
@@ -669,7 +673,7 @@ the question is:
         v1 = self.llm.chat(None,request=p1)[0].output
         return ExecuteCodeResponse(0,v1,"",p1,{})
 
-    def data_analyze(self,prompt:str,max_try_times=10)-> ExecuteCodeResponse:
+    def data_analyze(self,prompt:str,max_try_times=10,**config)-> ExecuteCodeResponse:
 
         # I want you to act as a data scientist and code for me. I have a dataset of [describe dataset]. 
         # Please write code for data visualisation and exploration.  
