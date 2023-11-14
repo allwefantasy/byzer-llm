@@ -20,7 +20,7 @@ otherwise, output the following json format:
 ```json 
 {{"is_summary":false}}
 ```
-''')
+''')[0].output
     is_summary = True
     responses = code_utils.extract_code(v)
     for lang,code in responses:

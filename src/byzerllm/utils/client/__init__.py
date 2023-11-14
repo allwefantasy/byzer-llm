@@ -17,6 +17,7 @@ from . import utils
 from ..retrieval import ByzerRetrieval,TableSettings,SearchQuery
 import logging
 import time
+import math
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -383,11 +384,13 @@ class ByzerDataAnalysis:
                  use_shared_disk:bool=False,
                  retrieval_cluster:str="data_analysis",
                  retrieval_db:str="data_analysis", 
-                 data_analysis_mode:DataAnalysisMode=DataAnalysisMode.data_analysis,                
+                 data_analysis_mode:DataAnalysisMode=DataAnalysisMode.data_analysis,  
+                 max_input_length=1024*24,              
                  num_gpus=0, num_cpus=1) -> None:
         self.llm = llm
         self.retrieval = retrieval
         self.data_analysis_mode = data_analysis_mode
+        self.max_input_length = max_input_length
         self.use_shared_disk = use_shared_disk
         self.sandbox = None
         self.file_path = file_path
@@ -612,10 +615,22 @@ field(chunk_vector,array(float))
     def text_analyze(self,prompt:str,max_try_times=10)-> ExecuteCodeResponse:
         if utils.is_summary(self,prompt): 
             doc = self.get_doc_by_url(self.file_path)
-            p = f'''
+            raw_content = doc["raw_content"]
+            multipe = len(raw_content) / self.max_input_length
+            answer_chunk = ""
+            if  multipe > 1:
+                for i in range(math.ceil(multipe)):
+                    start = i * self.max_input_length
+                    end = (i+1) * self.max_input_length
+
+                    if raw_content[start:end] == "":
+                        break
+                    
+                    p = f'''                
 please try to summarize the following text:
 
-{doc["raw_content"]}
+{answer_chunk}
+{raw_content[start:end]}
 
 Finally, please try to match the following requirements:
 
@@ -623,8 +638,8 @@ Finally, please try to match the following requirements:
 {prompt}
 ```
 '''
-            v = self.llm.chat(None,request=p)[0].output 
-            return ExecuteCodeResponse(0,v,"",p,{}) 
+                answer_chunk = self.llm.chat(None,request=p)[0].output 
+            return ExecuteCodeResponse(0,answer_chunk,"",p,{}) 
         
         content = self.search_content_chunks(q=prompt,limit=10,return_json=True)
         p1 = f'''
