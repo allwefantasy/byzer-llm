@@ -371,7 +371,10 @@ class CodeSandbox:
         sys.stderr = sys.__stderr__
 
         return 0,buffer.getvalue(),response
-    
+
+class DataAnalysisMode:
+    data_analysis = "data_analysis"
+    text_analysis = "text_analysis"       
 
 class ByzerDataAnalysis:
     def __init__(self,llm:ByzerLLM,
@@ -379,10 +382,12 @@ class ByzerDataAnalysis:
                  file_path:str= None, 
                  use_shared_disk:bool=False,
                  retrieval_cluster:str="data_analysis",
-                 retrieval_db:str="data_analysis",                 
+                 retrieval_db:str="data_analysis", 
+                 data_analysis_mode:DataAnalysisMode=DataAnalysisMode.data_analysis,                
                  num_gpus=0, num_cpus=1) -> None:
         self.llm = llm
         self.retrieval = retrieval
+        self.data_analysis_mode = data_analysis_mode
         self.use_shared_disk = use_shared_disk
         self.sandbox = None
         self.file_path = file_path
@@ -398,7 +403,7 @@ class ByzerDataAnalysis:
 
         self.sandbox_suffix = str(uuid.uuid4())                
         
-        if self.file_path and not self.use_shared_disk:
+        if self.file_path and not self.use_shared_disk  and self.data_analysis_mode == DataAnalysisMode.data_analysis:
             base_name = os.path.basename(file_path)
             name, ext = os.path.splitext(base_name)
             new_base_name = self.sandbox_suffix + ext
@@ -408,6 +413,11 @@ class ByzerDataAnalysis:
             logger.info(f"use_shared_disk: {self.use_shared_disk} file_path: {self.file_path} new_file_path: {new_file_path}")
             self.file_ref = ray.put(open(self.file_path).read())
             self.file_path = new_file_path
+
+        if self.file_path and self.data_analysis_mode == DataAnalysisMode.text_analysis:
+            content = open(self.file_path).read()
+            self.save_text_content(title="",content=content,url=self.file_path)
+
 
     def generate_code(self, prompt:Union[str,LLMRequest],pattern: str = code_utils.CODE_BLOCK_PATTERN, **config) -> Tuple[str, float]:
         """Generate code.
@@ -546,7 +556,10 @@ field(chunk_vector,array(float))
         
         self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content_chunk",text_content_chunks)
 
-
+    def set_data_analysis_mode(self,mode:DataAnalysisMode):
+        self.data_analysis_mode = mode
+        return self
+    
     def search_content_chunks(self,q:str,limit:int=4,return_json:bool=True):   
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content_chunk",
@@ -588,11 +601,50 @@ field(chunk_vector,array(float))
             context = json.dumps([{"content":x["raw_chunk"]} for x in docs[0:limit]],ensure_ascii=False,indent=4)    
             return context 
         else:
-            return docs[0:limit]   
+            return docs[0:limit]
             
-        
     def analyze(self,prompt:str,max_try_times=10)-> ExecuteCodeResponse:
-                            
+        if self.data_analysis_mode == DataAnalysisMode.data_analysis:
+            return self.data_analyze(prompt,max_try_times)
+        elif self.data_analysis_mode == DataAnalysisMode.text_analysis:
+            return self.text_analyze(prompt,max_try_times)
+        
+    def text_analyze(self,prompt:str,max_try_times=10)-> ExecuteCodeResponse:
+        if utils.is_summary(self,prompt): 
+            doc = self.get_doc_by_url(self.file_path)
+            p = f'''
+please try to summarize the following text:
+
+{doc["raw_content"]}
+
+Finally, please try to match the following requirements:
+
+```
+{prompt}
+```
+'''
+            v = self.llm.chat(None,request=p)[0].output 
+            return ExecuteCodeResponse(0,v,"",p,{}) 
+        
+        content = self.search_content_chunks(q=prompt,limit=10,return_json=True)
+        p1 = f'''
+We have the following json format data:
+
+{content}
+
+Try to answer quession according the json format data we provided above.
+the question is:
+
+{prompt}
+'''
+        v1 = self.llm.chat(None,request=p1)[0].output
+        return ExecuteCodeResponse(0,v1,"",p1,{})
+
+    def data_analyze(self,prompt:str,max_try_times=10)-> ExecuteCodeResponse:
+
+        # I want you to act as a data scientist and code for me. I have a dataset of [describe dataset]. 
+        # Please write code for data visualisation and exploration.  
+        # I want you to act as an academic. Please summarise the paper [...] in simple terms in one paragraph.        
         if not self.loaded_successfully:
             preview_file_prompt=f'''I have a file where the path is {self.file_path}, I want to use pandas to read it.The packages all are installed, you can use it directly.
 Try to help me to generate python code which should match the following requirements:

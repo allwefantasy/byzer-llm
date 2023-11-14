@@ -1,6 +1,37 @@
 from . import code_utils
 import json
 
+def is_summary_prompt(data_analysis,prompt:str)->bool:
+    v = data_analysis.llm.chat(None, request=f'''
+Please check the following question is whether about summary:
+
+```
+{prompt}                               
+```                               
+
+If the question is about summary, please output the following json format:
+
+```json
+{{"is_summary":true}}
+```
+
+otherwise, output the following json format:
+
+```json 
+{{"is_summary":false}}
+```
+''')
+    is_summary = True
+    responses = code_utils.extract_code(v)
+    for lang,code in responses:
+        if lang == "json":
+            try:
+                is_summary = json.loads(code)["is_summary"]
+            except Exception as inst:
+                pass 
+    return is_summary
+    
+
 def is_visualization(data_analysis,prompt:str)->bool:
     v = data_analysis.llm.chat(None, request=f'''
 Please check the following question is whether about data visualization:
