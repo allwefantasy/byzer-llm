@@ -5,6 +5,7 @@ import time
 import json
 from transformers import PreTrainedTokenizer,StoppingCriteria
 import torch
+import hashlib
 
 T = TypeVar("T")
 
@@ -141,6 +142,14 @@ class StopSequencesCriteria(StoppingCriteria):
       return False
 
 def load_json_str(json_str:str):        
-    return json.loads(json_str)    
+    return json.loads(json_str) 
+
+
+def generate_file_md5(file_path: str) -> str:
+    md5_hash = hashlib.md5()
+    with open(file_path, 'rb') as f:
+        for chunk in iter(lambda: f.read(4096), b''):
+            md5_hash.update(chunk)
+    return md5_hash.hexdigest()   
 
 

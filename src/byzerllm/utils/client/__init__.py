@@ -375,7 +375,8 @@ class CodeSandbox:
 
 class DataAnalysisMode:
     data_analysis = "data_analysis"
-    text_analysis = "text_analysis"       
+    text_analysis = "text_analysis" 
+    auto_analysis = "auto_analysis"      
 
 class ByzerDataAnalysis:
     def __init__(self,llm:ByzerLLM,
