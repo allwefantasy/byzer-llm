@@ -173,6 +173,13 @@ class ByzerRetrieval:
         cluster = self.cluster(name)
         return json.loads(ray.get(cluster.clusterInfo.remote()))
     
+    def is_cluster_exists(self,name:str) -> bool:
+        try:
+            ray.get_actor(name)
+            return True
+        except ValueError:
+            return False
+    
     def get_table_settings(self,cluster_name:str, database:str, table:str) -> Optional[TableSettings]:               
         cluster_info = self.cluster_info(cluster_name)
         target_table_settings = None
