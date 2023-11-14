@@ -547,7 +547,7 @@ field(chunk_vector,array(float))
         self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content_chunk",text_content_chunks)
 
 
-    def search_content(self,q:str,limit:int=4,return_json:bool=True):   
+    def search_content_chunks(self,q:str,limit:int=4,return_json:bool=True):   
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content_chunk",
                                         keyword=self.search_tokenize(q),fields=["chunk"],
@@ -564,6 +564,7 @@ field(chunk_vector,array(float))
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content",
                                         keyword=doc_id,fields=["_id"],
+                                        vector=[],vectorField=None,
                                         limit=1)])
         return docs[0] if docs else None
     
@@ -571,6 +572,7 @@ field(chunk_vector,array(float))
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content",
                                         keyword=url,fields=["url"],
+                                        vector=[],vectorField=None,
                                         limit=1)])
         return docs[0] if docs else None
                 
