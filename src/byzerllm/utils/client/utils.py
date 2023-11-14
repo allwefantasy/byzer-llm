@@ -1,7 +1,7 @@
 from . import code_utils
 import json
 
-def is_summary_prompt(data_analysis,prompt:str)->bool:
+def is_summary(data_analysis,prompt:str)->bool:
     v = data_analysis.llm.chat(None, request=f'''
 Please check the following question is whether about summary:
 
