@@ -509,8 +509,9 @@ field(auth_tag,string,analyze),
 field(title_vector,array(float)),
 field(content_vector,array(float))
 )''',
-                location="",num_shards=1                
+                location=f"/tmp/{self.retrieval_cluster}",num_shards=1                
            ))
+
            self.retrieval.create_table(self.retrieval_cluster,tableSettings=TableSettings(
                 database=self.retrieval_db,
                 table="text_content_chunk",schema='''st(
@@ -520,7 +521,7 @@ field(chunk,string,analyze),
 field(raw_chunk,string),
 field(chunk_vector,array(float))
 )''',
-                location="",num_shards=1                
+                location=f"/tmp/{self.retrieval_cluster}",num_shards=1                
            ))
 
         text_content = [{"_id":str(uuid.uuid4()),
@@ -538,9 +539,9 @@ field(chunk_vector,array(float))
         
         text_content_chunks = [{"_id":str(uuid.uuid4()),
             "doc_id":text_content[0]["_id"],
-            "chunk":self.search_tokenize(item["value"]),
-            "raw_chunk":item["value"],
-            "chunk_vector":self.emb(item["value"])
+            "chunk":self.search_tokenize(item["content"]),
+            "raw_chunk":item["content"],
+            "chunk_vector":self.emb(item["content"])
             } for item in content_chunks]
         
         self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content_chunk",text_content_chunks)
