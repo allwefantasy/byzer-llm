@@ -639,6 +639,20 @@ Finally, please try to match the following requirements:
 ```
 '''
                 answer_chunk = self.llm.chat(None,request=p)[0].output 
+            else:
+                p = f'''                
+please try to summarize the following text:
+
+{raw_content}
+
+Finally, please try to match the following requirements:
+
+```
+{prompt}
+```
+'''
+                answer_chunk = self.llm.chat(None,request=p)[0].output 
+
             return ExecuteCodeResponse(0,answer_chunk,"",p,{}) 
         
         content = self.search_content_chunks(q=prompt,limit=10,return_json=True)
