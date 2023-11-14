@@ -416,7 +416,7 @@ class ByzerDataAnalysis:
 
         if self.file_path and self.data_analysis_mode == DataAnalysisMode.text_analysis:
             content = open(self.file_path).read()
-            self.save_text_content(title="",content=content,url=self.file_path)
+            self.save_text_content(title="noops",content=content,url=self.file_path)
 
 
     def generate_code(self, prompt:Union[str,LLMRequest],pattern: str = code_utils.CODE_BLOCK_PATTERN, **config) -> Tuple[str, float]:
