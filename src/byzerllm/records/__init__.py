@@ -1,4 +1,4 @@
-from typing import Optional,List
+from typing import Optional,List,Dict,Any,Union
 import json
 
 class ClusterSettings:
@@ -84,12 +84,19 @@ class JVMSettings:
 
 
 class SearchQuery:
+    '''
+    filters: List[Dict[str,Any]] = {"and":[{"field":"name","value":"张三"}]}
+    filters: List[Dict[str,Any]] = {"or":[{"field":"name","value":"张三"},{"field":"name","value":"李四"}]}
+    filters: List[Dict[str,Any]] = {"or":[{"field":"name","value":"张三"},{"and":[{"field":"name","value":"李四"},{"field":"age","min":10,"max":20}]}]}}]}    
+    '''
     def __init__(self,database:str,
                  table:str, 
+                 filters:List[Dict[str,Any]],
                  keyword:Optional[str], fields:list[str], 
                  vector:list[float], vectorField:Optional[str], limit:int=10):
         self.database = database
         self.table = table
+        self.filters = filters
         self.keyword = keyword
         self.fields = fields
         self.vector = vector
@@ -101,6 +108,127 @@ class SearchQuery:
 
     @staticmethod
     def from_json(json_str:str):
-        return SearchQuery(**json.loads(json_str))   
+        return SearchQuery(**json.loads(json_str)) 
+
+
+# class EqualFilter:
+#     def __init__(self, field:str, value:Any):
+#         self.field = field
+#         self.value = value
+
+#     def json(self):
+#         return json.dumps(self.__dict__,ensure_ascii=False) 
+
+#     @staticmethod
+#     def from_json(json_str:str):
+#         return EqualFilter(**json.loads(json_str))
+
+# class RangeFilter:
+#     def __init__(self, field:str, min:Any, max:Any):
+#         self.field = field
+#         self.min = min
+#         self.max = max
+
+#     def json(self):
+#         return json.dumps(self.__dict__,ensure_ascii=False) 
+
+#     @staticmethod
+#     def from_json(json_str:str):
+#         return RangeFilter(**json.loads(json_str))
+
+# class OrRelation:
+#     def __init__(self, filters:Union[EqualFilter,RangeFilter],parent:Union["OrRelation","AndRelation","QueryBuilder"]):
+#         self.filters = filters
+
+#     def json(self):
+#         return json.dumps(self.__dict__,ensure_ascii=False) 
+
+#     @staticmethod
+#     def from_json(json_str:str):
+#         return OrRelation(**json.loads(json_str)) 
+    
+#     def and_relation(self):
+#         return AndRelation(self)        
+    
+#     def equal_filter(self,field:str,value:Any):
+#         self.filters.append(EqualFilter(field,value))
+#         return self
+    
+#     def range_filter(self,field:str,min:Any,max:Any):
+#         self.filters.append(RangeFilter(field,min,max))
+#         return self
+    
+#     def end(self):
+#         return self.parent
+    
+#     def or_relation(self):
+#         return OrRelation(self)
+
+# class AndRelation:
+#     def __init__(self, filters:Union[EqualFilter,RangeFilter],parent:Union[OrRelation,"AndRelation","QueryBuilder"]):
+#         self.filters = filters
+#         self.parent = parent        
+
+#     def json(self):
+#         return json.dumps(self.__dict__,ensure_ascii=False) 
+
+#     @staticmethod
+#     def from_json(json_str:str):
+#         return AndRelation(**json.loads(json_str))
+    
+#     def equal_filter(self,field:str,value:Any):
+#         self.filters.append(EqualFilter(field,value))
+#         return self
+    
+#     def range_filter(self,field:str,min:Any,max:Any):
+#         self.filters.append(RangeFilter(field,min,max))
+#         return self
+    
+#     def end(self):
+#         return self.parent
+    
+#     def or_relation(self):
+#         return OrRelation(self)
+            
+
+# class FilterBuilder:
+#     def __init__(self,query_builder:"QueryBuilder"):
+#         self._filter = []
+#         self.query_builder = query_builder
+
+#     def end(self):
+#         return self.query_builder
+    
+#     def or_relation(self):
+#         return OrRelation(self)
+    
+
+
+# class QueryBuilder:
+#     def __init__(self):
+#         self._database = ""
+#         self._table = ""
+#         self._filter = []
+#         self._keyword = ""
+#         self._fields = []
+#         self._vector = []
+#         self._vectorField = ""
+#         self._limit = 10
+#         self.filter_builder = FilterBuilder(self)
+
+#     def database(self,database:str):
+#         self._database = database
+#         return self
+
+#     def table(self,table:str):
+#         self._table = table
+#         return self
+
+#     def filter(self):
+#         return self.filter_builder
+
+
+      
+
         
     
