@@ -581,6 +581,7 @@ field(chunk_vector,array(float))
     def get_doc(self,doc_id:str):
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content",
+                                         filters={},
                                         keyword=doc_id,fields=["_id"],
                                         vector=[],vectorField=None,
                                         limit=1)])
@@ -589,6 +590,7 @@ field(chunk_vector,array(float))
     def get_doc_by_url(self,url:str):
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content",
+                                         filters={},
                                         keyword=url,fields=["url"],
                                         vector=[],vectorField=None,
                                         limit=1)])
