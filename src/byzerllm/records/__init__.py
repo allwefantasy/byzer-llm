@@ -90,13 +90,14 @@ class SearchQuery:
     filters: List[Dict[str,Any]] = {"or":[{"field":"name","value":"张三"},{"and":[{"field":"name","value":"李四"},{"field":"age","min":10,"max":20}]}]}}]}    
     '''
     def __init__(self,database:str,
-                 table:str, 
-                 filters:Dict[str,Any],
+                 table:str,                  
                  keyword:Optional[str], fields:list[str], 
-                 vector:list[float], vectorField:Optional[str], limit:int=10):
+                 vector:list[float], vectorField:Optional[str], filters:Dict[str,Any]={},
+                 sorts: List[Dict[str,str]]=[],limit:int=10):
         self.database = database
         self.table = table
         self.filters = filters
+        self.sorts = sorts
         self.keyword = keyword
         self.fields = fields
         self.vector = vector
