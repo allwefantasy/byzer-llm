@@ -281,11 +281,12 @@ class ByzerRetrieval:
     def search_keyword(self,cluster_name:str, 
                        database:str, 
                        table:str, 
+                       filters: Dict[str,Any],
                        keyword:str, 
                        fields:List[str], 
                        limit:int=10) -> List[Dict[str,Any]]:                
 
-        search = SearchQuery(database=database,table=table,keyword=keyword,fields=fields,vector=[],vectorField=None,limit=limit)
+        search = SearchQuery(database=database,table=table,filters=filters,keyword=keyword,fields=fields,vector=[],vectorField=None,limit=limit)
         cluster = self.cluster(cluster_name)
         v = cluster.search.remote(f"[{search.json()}]")
         return json.loads(ray.get(v))
@@ -293,11 +294,12 @@ class ByzerRetrieval:
     def search_vector(self,cluster_name:str, 
                        database:str, 
                        table:str, 
+                       filters: Dict[str,Any],
                        vector:List[float], 
                        vector_field:str,                        
                        limit:int=10) -> List[Dict[str,Any]]:
                 
-        search = SearchQuery(database=database,table=table,keyword=None,fields=[],vector=vector,vectorField=vector_field,limit=limit)
+        search = SearchQuery(database=database,table=table,filters=filters,keyword=None,fields=[],vector=vector,vectorField=vector_field,limit=limit)
         cluster = self.cluster(cluster_name)
         v = cluster.search.remote(f"[{search.json()}]")
         return json.loads(ray.get(v))

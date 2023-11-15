@@ -567,6 +567,7 @@ field(chunk_vector,array(float))
     def search_content_chunks(self,q:str,limit:int=4,return_json:bool=True):   
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content_chunk",
+                                         filters={},
                                         keyword=self.search_tokenize(q),fields=["chunk"],
                                         vector=self.emb(q),vectorField="chunk_vector",
                                         limit=limit)])
@@ -597,6 +598,7 @@ field(chunk_vector,array(float))
     def search_memory(self,chat_name:str, q:str,limit:int=4,return_json:bool=True):
         docs = self.retrieval.search(self.retrieval_cluster,
                         [SearchQuery(self.retrieval_db,"user_memory",
+                                     filters={},
                                     keyword=chat_name,fields=["chat_name"],
                                     vector=self.emb(q),vectorField="content_vector",
                                     limit=1000)])
