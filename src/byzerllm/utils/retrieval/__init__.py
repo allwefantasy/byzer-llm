@@ -310,6 +310,13 @@ class ByzerRetrieval:
             search_query = [search_query]
         v = cluster.search.remote(f"[{','.join([x.json() for x in search_query])}]")
         return json.loads(ray.get(v))  
+    
+    def filter(self,cluster_name:str,search_query: Union[List[SearchQuery],SearchQuery]) -> List[Dict[str,Any]]:        
+        cluster = self.cluster(cluster_name)
+        if isinstance(search_query,SearchQuery):
+            search_query = [search_query]
+        v = cluster.filter.remote(f"[{','.join([x.json() for x in search_query])}]")
+        return json.loads(ray.get(v))
 
 
     
