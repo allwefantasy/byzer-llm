@@ -674,7 +674,7 @@ field(chunk_vector,array(float))
         if "recall_limit" in config or "limit" in config:
             recall_limit = config["recall_limit"] if "recall_limit" in config else config["limit"]
 
-        if utils.is_summary(self,prompt): 
+        if utils.is_summary(self,prompt,self.role_mapping): 
             doc = self.get_doc_by_url(self.file_path)
             raw_content = doc["raw_content"]
             multipe = len(raw_content) / self.max_input_length
