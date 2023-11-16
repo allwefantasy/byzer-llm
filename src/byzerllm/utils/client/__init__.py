@@ -168,30 +168,21 @@ class ByzerLLM:
         except ValueError:
             pass
 
-    def generate_instruction_from_history(ins:str,his:List[Dict[str,str]],role_mapping:Dict[str,str]={        
+    def generate_instruction_from_history(conversations:List[Dict[str,str]],role_mapping:Dict[str,str]={        
         "user_role":"User",        
         "assistant_role":"Assistant",
     }):
-
+        
         new_his = []    
-        for item in his:
+        for item in conversations:
             if item["role"] == "system":
                 new_his.append(item["content"])
                 continue        
-            new_his.append(f"{role_mapping[item['role']]}:{item['content']}")            
-
-        # here we should make sure the user build the conversation string manually also
-        # works. This means if the user do not provide  the history, then
-        # we should treat ins as conversation string which the user build manually
-        if len(new_his) > 0 and ins != "":
-            new_his.append(f"{role_mapping['user_role']}:{ins}")
-            new_his.append(f"{role_mapping['assistant_role']}:")
-
-        if len(new_his) > 0 and ins == "":
-            new_his.append(f"{role_mapping['assistant_role']}:")            
+            k = item['role']+"_role"            
+            new_his.append(f"{role_mapping[k]}:{item['content']}")            
         
-        if len(new_his) == 0:
-            new_his.append(ins)    
+        if new_his[-1]["role"] == "user":            
+            new_his.append(f"{role_mapping['assistant_role']}:")
 
         fin_ins = "\n".join(new_his)
         return fin_ins     
@@ -294,7 +285,12 @@ class ByzerLLM:
     def _generate_ins(self,ins:str,request:LLMRequest):
          final_ins = f'{request.extra_params.system_msg}\n{request.extra_params.user_role}:{ins}\n{request.extra_params.assistant_role}:' if request.extra_params.user_role else ins
          if request and request.extra_params.history:
-             final_ins = self.generate_instruction_from_history(ins,[{"role":"system","content":"request.extra_params.system_msg"}]+[{"role":item.role,"content":item.content} for item in request.extra_params.history],{
+             final_ins = self.generate_instruction_from_history(
+                 [{"role":"system","content":"request.extra_params.system_msg"}]+[{"role":item.role,"content":item.content} for item in request.extra_params.history]+[{
+                        "role":"user",
+                        "content":ins
+                 }],
+                 {
                     "user_role":request.extra_params.user_role,
                     "assistant_role":request.extra_params.assistant_role,
                     "system_msg":request.extra_params.system_msg
