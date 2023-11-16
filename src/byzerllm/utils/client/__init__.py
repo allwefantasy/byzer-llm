@@ -856,8 +856,7 @@ Please try to generate python code to analyze the file and answer the following 
             chat_history = [LLMHistoryItem(item["role"],item["raw_content"]) for item in chat_history]                
         
         # final_prompt = self.llm.generate_instruction_from_history(analyze_prompt+prompt,chat_history,self.role_mapping)
-        final_prompt = self.llm._generate_ins(analyze_prompt+prompt,
-                                              LLMRequest(instruction=analyze_prompt+prompt,
+        final_prompt = self.llm._generate_ins(LLMRequest(instruction=analyze_prompt+prompt,
                                                          extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)));    
         response = self.try_execute_code_until_resolved(prompt=final_prompt,
                                                          target_names=["image_base64"],
