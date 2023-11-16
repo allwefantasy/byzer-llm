@@ -18,6 +18,7 @@ from ..retrieval import ByzerRetrieval,TableSettings,SearchQuery
 import logging
 import time
 import math
+from byzerllm.utils import generate_instruction_from_history
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -263,8 +264,12 @@ class ByzerLLM:
         return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
             
     def _generate_ins(self,ins:str,request:LLMRequest):
-         if request.extra_params.user_role:
-            return f'{request.extra_params.system_msg}\n\n{request.extra_params.user_role}:{ins}\n{request.extra_params.assistant_role}:'
+         if request.extra_params.history:
+             generate_instruction_from_history(ins,[{"role":item.role,"content":item.content} for item in request.extra_params.history],{
+                    "user":request.extra_params.user_role,
+                    "assistant":request.extra_params.assistant_role,
+                    "system":request.extra_params.system_msg
+             })                      
          return ins
 
     def chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
