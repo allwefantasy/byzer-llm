@@ -1,8 +1,10 @@
 from . import code_utils
 import json
+from typing import Any, TypeVar, Dict,Union,List
+from byzerllm.utils.client import LLMRequest,LLMRequestExtra
 
-def is_summary(data_analysis,prompt:str)->bool:
-    v = data_analysis.llm.chat(None, request=f'''
+def is_summary(data_analysis,prompt:str,role_mapping:Dict[str,str])->bool:
+    p = f'''
 Please check the following question is whether about summary:
 
 ```
@@ -20,7 +22,8 @@ otherwise, output the following json format:
 ```json 
 {{"is_summary":false}}
 ```
-''')[0].output
+'''
+    v = data_analysis.llm.chat(None, request=LLMRequest(instruction=p,extra_params=LLMRequestExtra(**role_mapping)))[0].output
     is_summary = True
     responses = code_utils.extract_code(v)
     for lang,code in responses:
@@ -32,8 +35,8 @@ otherwise, output the following json format:
     return is_summary
     
 
-def is_visualization(data_analysis,prompt:str)->bool:
-    v = data_analysis.llm.chat(None, request=f'''
+def is_visualization(data_analysis,prompt:str,role_mapping:Dict[str,str])->bool:
+    p = f'''
 Please check the following question is whether about data visualization:
 
 ```text
@@ -51,7 +54,9 @@ otherwise, output the following json format:
 ```json 
 {{"is_visualization":false}}
 ```
-''')[0].output
+'''
+    
+    v = data_analysis.llm.chat(None, request=LLMRequest(instruction=p,extra_params=LLMRequestExtra(**role_mapping)))[0].output
     is_visualization = True
     responses = code_utils.extract_code(v)
     for lang,code in responses:
@@ -62,9 +67,9 @@ otherwise, output the following json format:
                 pass 
     return is_visualization 
 
-def should_generate_code_to_response(data_analysis,prompt:str):    
-    preview_csv = data_analysis.file_preview.to_csv(index=False)        
-    v = data_analysis.llm.chat(None,request=f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
+def should_generate_code_to_response(data_analysis,prompt:str,role_mapping:Dict[str,str]):    
+    preview_csv = data_analysis.file_preview.to_csv(index=False) 
+    p = f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
 The preview of the file is:
 ```text
 {preview_csv}
@@ -88,7 +93,8 @@ otherwise, output the following json format:
 ```json 
 {{"need_code":false}}
 ```
-''')[0].output
+'''       
+    v = data_analysis.llm.chat(None,request=LLMRequest(instruction=p,extra_params=LLMRequestExtra(**role_mapping)))[0].output
     need_code = True
     responses = code_utils.extract_code(v)
     for lang,code in responses:

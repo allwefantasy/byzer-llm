@@ -264,14 +264,20 @@ class ByzerLLM:
         return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
             
     def _generate_ins(self,ins:str,request:LLMRequest):
-         final_ins = f'{request.extra_params.user_role}:{ins}\n{request.extra_params.assistant_role}:'
-         if request.extra_params.history:
+         final_ins = f'{request.extra_params.user_role}:{ins}\n{request.extra_params.assistant_role}:' if request.extra_params.user_role else ins
+         if request and request.extra_params.history:
              final_ins = generate_instruction_from_history(ins,[{"role":item.role,"content":item.content} for item in request.extra_params.history],{
                     "user":request.extra_params.user_role,
                     "assistant":request.extra_params.assistant_role,
                     "system":request.extra_params.system_msg
              })                      
          return final_ins
+    
+    def raw_chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
+        if isinstance(request,str): 
+            request = LLMRequest(instruction=request,extra_params=LLMRequestExtra(user_role=None))
+        request.extra_params.user_role = None    
+        return self.chat(model,request,extract_params)
 
     def chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
         if not model and not self.default_model_name:
@@ -387,12 +393,18 @@ class DataAnalysisMode:
 class ByzerDataAnalysis:
     def __init__(self,llm:ByzerLLM,
                  retrieval:ByzerRetrieval=None,
+                 chat_name:str=None,
                  owner:str=None,
                  file_path:str= None, 
                  use_shared_disk:bool=False,
                  retrieval_cluster:str="data_analysis",
                  retrieval_db:str="data_analysis", 
-                 data_analysis_mode:DataAnalysisMode=DataAnalysisMode.data_analysis,  
+                 data_analysis_mode:DataAnalysisMode=DataAnalysisMode.data_analysis, 
+                 role_mapping = {
+                    "user_role":"User",
+                    "assistant_role": "Assistant",
+                    "system_role":"System"
+                    }, 
                  max_input_length=1024*24,              
                  num_gpus=0, num_cpus=1) -> None:
         self.llm = llm
@@ -406,14 +418,18 @@ class ByzerDataAnalysis:
         self.file_preview = None
         self.loaded_successfully=False
 
+        self.role_mapping = role_mapping
+
         self.retrieval_cluster = retrieval_cluster
         self.retrieval_db = retrieval_db
 
         self.sandbox_suffix = str(uuid.uuid4())                
 
         self.owner = owner
+        self.chat_name = chat_name
+        
         if self.owner is None:
-            self.owner = self.sandbox_suffix
+            self.owner = self.sandbox_suffix            
         
         self.num_gpus = num_gpus
         self.num_cpus = num_cpus
@@ -448,11 +464,8 @@ class ByzerDataAnalysis:
         Returns:
             str: The generated code.
             float: The cost of the generation.
-        """
-        if isinstance(prompt,str):
-            prompt = LLMRequest(instruction=prompt)
-        
-        response = self.llm.chat(None,request=prompt,extract_params=config)
+        """                
+        response = self.llm.raw_chat(None,request=prompt,extract_params=config)
         return code_utils.extract_code(response[0].output, pattern), -1 
 
     def improve_function(self,file_name, func_name, objective, **config):
@@ -463,7 +476,7 @@ class ByzerDataAnalysis:
         new_prompt = f'''Improve the function '{func_name}' to achieve the objective '{objective}'.
 The current implementation of the function is as follows:
 {file_string}'''
-        response = self.llm.chat(None, request=LLMRequest(instruction=new_prompt,**config))            
+        response = self.llm.raw_chat(None, request=LLMRequest(instruction=new_prompt,**config))            
         return response[0].output, -1
 
     def default_check_eval_repsonse(self,response:Dict[str,Any],target_names:List[str]=[])->Tuple[bool,str]:
@@ -483,7 +496,7 @@ The current implementation of the function is as follows:
     def emb(self,s:str, emb_model:str="emb"):
         return self.llm.emb(emb_model,LLMRequest(instruction=s))[0].output
 
-    def save_conversation(self,owner:str, chat_name:str, role:str,content:str):
+    def save_conversation(self,owner:str,role:str,content:str):
         if not self.retrieval:
             raise Exception("retrieval is not setup")                
         
@@ -506,15 +519,18 @@ field(content_vector,array(float))
                 location="",num_shards=""                
            ))
 
+        if self.chat_name is None:
+            self.chat_name = content[0:10]   
+
         data = [{"_id":str(uuid.uuid4()),
-                "chat_name":chat_name,
+                "chat_name":self.chat_name,
                 "role":role,
                 "owner":owner,
                 "content":self.search_tokenize(content),
                 "raw_content":content,
                 "auth_tag":"",
                 "created_time":int(time.time()*1000),
-                "chat_name_vector":self.emb(chat_name),
+                "chat_name_vector":self.emb(self.chat_name),
                 "content_vector":self.emb(content)}]    
 
         self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"user_memory",data)
@@ -682,8 +698,10 @@ Finally, please try to match the following requirements:
 ```
 {prompt}
 ```
-'''
-                    answer_chunk = self.llm.chat(None,request=p)[0].output 
+'''                    
+                    answer_chunk = self.llm.chat(None,request=
+                                                 LLMRequest(instruction=p,extra_params=LLMRequestExtra(**self.role_mapping))
+                                                 )[0].output 
             else:
                 p = f'''                
 please try to summarize the following text:
@@ -696,8 +714,9 @@ Finally, please try to match the following requirements:
 {prompt}
 ```
 '''
-                answer_chunk = self.llm.chat(None,request=p)[0].output 
-
+                answer_chunk = self.llm.chat(None,request=LLMRequest(instruction=p,extra_params=LLMRequestExtra(**self.role_mapping)))[0].output 
+            self.save_conversation(self.owner,Role.User,prompt)
+            self.save_conversation(self.owner,Role.Assistant,answer_chunk)     
             return ExecuteCodeResponse(0,answer_chunk,"",p,{}) 
         
         content = self.search_content_chunks(q=prompt,limit=recall_limit,return_json=True)
@@ -711,7 +730,9 @@ the question is:
 
 {prompt}
 '''
-        v1 = self.llm.chat(None,request=p1)[0].output
+        v1 = self.llm.chat(None,request=LLMRequest(instruction=p1,extra_params=LLMRequestExtra(**self.role_mapping)))[0].output
+        self.save_conversation(self.owner,Role.User,prompt)
+        self.save_conversation(self.owner,Role.Assistant,v1) 
         return ExecuteCodeResponse(0,v1,"",p1,{})
 
     def data_analyze(self,prompt:str,max_try_times=10,**config)-> ExecuteCodeResponse:
@@ -749,7 +770,7 @@ The response is:
         
         preview_csv = self.file_preview.to_csv(index=False)                
         
-        need_code = utils.should_generate_code_to_response(self,prompt)
+        need_code = utils.should_generate_code_to_response(self,prompt,self.role_mapping)
         if not need_code:
             no_code_prompt=f'''I have a file the path is {self.file_path}, 
 The preview of the file is:
@@ -759,12 +780,22 @@ The preview of the file is:
 Please try to answer the following questions:
 {prompt}'''
             # self.llm.chat(None,request=no_code_prompt)[0].output,"",no_code_prompt
+            
+            chat_history = self.get_conversations(self.owner,self.chat_name)
+            if chat_history:
+                chat_history = [{LLMHistoryItem(item["role"],item["raw_content"])} for item in chat_history]                
+
+            r = self.llm.chat(None,request=LLMRequest(instruction=no_code_prompt,extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)))[0].output
+            
+            self.save_conversation(self.owner,Role.User,prompt)
+            self.save_conversation(self.owner,Role.Assistant,r)
+
             return ExecuteCodeResponse(
-                status=0,output=self.llm.chat(None,request=no_code_prompt)[0].output,
+                status=0,output=r,
                 variables={},code="",prompt=no_code_prompt
             )
         
-        is_visualization = utils.is_visualization(self,prompt)
+        is_visualization = utils.is_visualization(self,prompt,self.role_mapping)
         visualization_prompt = "" if not is_visualization else '''When the question require you to do visualization, please use package Plotly or matplotlib to do this.
 Try to use base64 to encode the image, assign the base64 string to the variable named image_base64. 
 Make sure the image_base64 defined in the global scope.'''
@@ -781,7 +812,13 @@ The preview of the file is:
 Use pandas to analyze it. 
 Please try to generate python code to analyze the file and answer the following questions:
 '''
-        response = self.try_execute_code_until_resolved(prompt=analyze_prompt+prompt,
+        chat_history = self.get_conversations(self.owner,self.chat_name)
+        if chat_history:
+            chat_history = [{"role":item["role"],"content":item["raw_content"]} for item in chat_history]                
+        
+        final_prompt = generate_instruction_from_history(analyze_prompt+prompt,chat_history,self.role_mapping)
+            
+        response = self.try_execute_code_until_resolved(prompt=final_prompt,
                                                          target_names=["image_base64"],
                                                          max_try_times=max_try_times,
                                                          skip_check_target_names= not is_visualization
@@ -813,7 +850,9 @@ variables:
 ```text
 {list(response.variables.keys())}
 ```
-''')                  
+''')   
+        self.save_conversation(self.owner,Role.User,prompt)
+        self.save_conversation(self.owner,Role.Assistant,response.output)               
         return response
     
 
