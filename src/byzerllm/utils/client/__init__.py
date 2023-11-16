@@ -286,7 +286,7 @@ class ByzerLLM:
          final_ins = f'{request.extra_params.system_msg}\n{request.extra_params.user_role}:{ins}\n{request.extra_params.assistant_role}:' if request.extra_params.user_role else ins
          if request and request.extra_params.history:
              final_ins = self.generate_instruction_from_history(
-                 [{"role":"system","content":"request.extra_params.system_msg"}]+[{"role":item.role,"content":item.content} for item in request.extra_params.history]+[{
+                 [{"role":"system","content":request.extra_params.system_msg}]+[{"role":item.role,"content":item.content} for item in request.extra_params.history]+[{
                         "role":"user",
                         "content":ins
                  }],
@@ -841,7 +841,7 @@ Please try to generate python code to analyze the file and answer the following 
 '''
         chat_history = self.get_conversations(self.owner,self.chat_name)
         if chat_history:
-            chat_history = [{"role":item["role"],"content":item["raw_content"]} for item in chat_history]                
+            chat_history = [LLMHistoryItem(item["role"],item["raw_content"]) for item in chat_history]                
         
         # final_prompt = self.llm.generate_instruction_from_history(analyze_prompt+prompt,chat_history,self.role_mapping)
         final_prompt = self.llm._generate_ins(analyze_prompt+prompt,
