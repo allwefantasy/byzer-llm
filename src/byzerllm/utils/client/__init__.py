@@ -513,6 +513,17 @@ field(content_vector,array(float))
 
         self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"user_memory",data)
 
+    def get_conversations(self,owner:str, chat_name:str)->List[Dict[str,Any]]:
+        docs = self.retrieval.filter(self.retrieval_cluster,
+                        [SearchQuery(self.retrieval_db,"user_memory",
+                                     filters={"and":[self._owner_filter(),{"field":"chat_name","value":chat_name}]},
+                                     sorts=[{"created_time":"desc"}],
+                                    keyword=None,fields=["chat_name"],
+                                    vector=[],vectorField=None,
+                                    limit=1000)])
+        return docs
+
+
     def save_text_content(self,owner:str,title:str,content:str,url:str,auth_tag:str=""):
 
         if not self.retrieval:
@@ -577,10 +588,15 @@ field(chunk_vector,array(float))
         self.data_analysis_mode = mode
         return self
     
+    def _owner_filter(self):
+        return {"field":"owner","value":self.owner}
+    
+
+            
     def search_content_chunks(self,q:str,limit:int=4,return_json:bool=True):   
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content_chunk",
-                                         filters={},
+                                         filters={"and":[self._owner_filter()]},
                                         keyword=self.search_tokenize(q),fields=["chunk"],
                                         vector=self.emb(q),vectorField="chunk_vector",
                                         limit=limit)])
@@ -594,7 +610,7 @@ field(chunk_vector,array(float))
     def get_doc(self,doc_id:str):
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content",
-                                         filters={},
+                                         filters={"and":[self._owner_filter()]},
                                         keyword=doc_id,fields=["_id"],
                                         vector=[],vectorField=None,
                                         limit=1)])
@@ -603,7 +619,7 @@ field(chunk_vector,array(float))
     def get_doc_by_url(self,url:str):
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content",
-                                         filters={},
+                                         filters={"and":[self._owner_filter()]},
                                         keyword=url,fields=["url"],
                                         vector=[],vectorField=None,
                                         limit=1)])
@@ -613,7 +629,7 @@ field(chunk_vector,array(float))
     def search_memory(self,chat_name:str, q:str,limit:int=4,return_json:bool=True):
         docs = self.retrieval.search(self.retrieval_cluster,
                         [SearchQuery(self.retrieval_db,"user_memory",
-                                     filters={},
+                                     filters={"and":[self._owner_filter()]},
                                     keyword=chat_name,fields=["chat_name"],
                                     vector=self.emb(q),vectorField="content_vector",
                                     limit=1000)])
@@ -623,6 +639,7 @@ field(chunk_vector,array(float))
             return context 
         else:
             return docs[0:limit]
+        
             
     def analyze(self,prompt:str,max_try_times=10, **config)-> ExecuteCodeResponse:
         if self.data_analysis_mode == DataAnalysisMode.data_analysis:
