@@ -18,7 +18,7 @@ from ..retrieval import ByzerRetrieval,TableSettings,SearchQuery
 import logging
 import time
 import math
-from byzerllm.utils import generate_instruction_from_history
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -168,6 +168,34 @@ class ByzerLLM:
         except ValueError:
             pass
 
+    def generate_instruction_from_history(ins:str,his:List[Dict[str,str]],role_mapping:Dict[str,str]={        
+        "user_role":"User",        
+        "assistant_role":"Assistant",
+    }):
+
+        new_his = []    
+        for item in his:
+            if item["role"] == "system":
+                new_his.append(item["content"])
+                continue        
+            new_his.append(f"{role_mapping[item['role']]}:{item['content']}")            
+
+        # here we should make sure the user build the conversation string manually also
+        # works. This means if the user do not provide  the history, then
+        # we should treat ins as conversation string which the user build manually
+        if len(new_his) > 0 and ins != "":
+            new_his.append(f"{role_mapping['user_role']}:{ins}")
+            new_his.append(f"{role_mapping['assistant_role']}:")
+
+        if len(new_his) > 0 and ins == "":
+            new_his.append(f"{role_mapping['assistant_role']}:")            
+        
+        if len(new_his) == 0:
+            new_his.append(ins)    
+
+        fin_ins = "\n".join(new_his)
+        return fin_ins     
+
     def is_model_exist(self,udf_name:str)->bool:
         try:
             ray.get_actor(udf_name)
@@ -266,10 +294,10 @@ class ByzerLLM:
     def _generate_ins(self,ins:str,request:LLMRequest):
          final_ins = f'{request.extra_params.system_msg}\n{request.extra_params.user_role}:{ins}\n{request.extra_params.assistant_role}:' if request.extra_params.user_role else ins
          if request and request.extra_params.history:
-             final_ins = generate_instruction_from_history(ins,[{"role":"system","content":"request.extra_params.system_msg"}]+[{"role":item.role,"content":item.content} for item in request.extra_params.history],{
-                    "user":request.extra_params.user_role,
-                    "assistant":request.extra_params.assistant_role,
-                    "system":request.extra_params.system_msg
+             final_ins = self.generate_instruction_from_history(ins,[{"role":"system","content":"request.extra_params.system_msg"}]+[{"role":item.role,"content":item.content} for item in request.extra_params.history],{
+                    "user_role":request.extra_params.user_role,
+                    "assistant_role":request.extra_params.assistant_role,
+                    "system_msg":request.extra_params.system_msg
              })                      
          return final_ins
     
@@ -751,6 +779,8 @@ Try to help me to generate python code which should match the following requirem
             response = self.try_execute_code_until_resolved(prompt=preview_file_prompt,
                                                             target_names=["loaded_successfully","file_preview"],
                                                             max_try_times=max_try_times)
+            
+
             if response.status != 0 or not response.variables["loaded_successfully"]:
                 raise Exception(f'''Failed to load the file {self.file_path}. 
 The code is:
@@ -817,8 +847,10 @@ Please try to generate python code to analyze the file and answer the following 
         if chat_history:
             chat_history = [{"role":item["role"],"content":item["raw_content"]} for item in chat_history]                
         
-        final_prompt = generate_instruction_from_history(analyze_prompt+prompt,chat_history,self.role_mapping)
-            
+        # final_prompt = self.llm.generate_instruction_from_history(analyze_prompt+prompt,chat_history,self.role_mapping)
+        final_prompt = self.llm._generate_ins(analyze_prompt+prompt,
+                                              LLMRequest(instruction=analyze_prompt+prompt,
+                                                         extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)));    
         response = self.try_execute_code_until_resolved(prompt=final_prompt,
                                                          target_names=["image_base64"],
                                                          max_try_times=max_try_times,
