@@ -783,6 +783,7 @@ Try to help me to generate python code which should match the following requirem
 2. if read success, set variable loaded_successfully to True, otherwise set it to False.
 3. if loaded_successfully is True, then assigh the loaded data with head() to file_preview, otherwise assign error message to file_preview
 4. make sure the loaded_successfully, file_preview are defined in the global scope'''
+            preview_file_prompt = self.llm._generate_ins(LLMRequest(instruction=preview_file_prompt,extra_params=LLMRequestExtra(**self.role_mapping)))
             response = self.try_execute_code_until_resolved(prompt=preview_file_prompt,
                                                             target_names=["loaded_successfully","file_preview"],
                                                             max_try_times=max_try_times)
