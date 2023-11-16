@@ -570,16 +570,21 @@ field(content_vector,array(float))
 
         self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"user_memory",data)
 
-    def get_conversations(self,owner:str, chat_name:str)->List[Dict[str,Any]]:
+    def get_conversations(self,owner:str, chat_name:str,limit=1000)->List[Dict[str,Any]]:
         docs = self.retrieval.filter(self.retrieval_cluster,
                         [SearchQuery(self.retrieval_db,"user_memory",
                                      filters={"and":[self._owner_filter(),{"field":"chat_name","value":chat_name}]},
                                      sorts=[{"created_time":"desc"}],
                                     keyword=None,fields=["chat_name"],
                                     vector=[],vectorField=None,
-                                    limit=1000)])
+                                    limit=limit)])
         sorted_docs = sorted(docs,key=lambda x:x["created_time"],reverse=False)
         return sorted_docs
+    
+    def get_conversations_as_history(self,limit=1000)->List[LLMHistoryItem]:
+        chat_history = self.get_conversations(self.owner,self.chat_name,limit=limit)        
+        chat_history = [LLMHistoryItem(item["role"],item["raw_content"]) for item in chat_history]
+        return chat_history    
 
 
     def save_text_content(self,owner:str,title:str,content:str,url:str,auth_tag:str=""):
@@ -710,6 +715,10 @@ field(chunk_vector,array(float))
         if "recall_limit" in config or "limit" in config:
             recall_limit = config["recall_limit"] if "recall_limit" in config else config["limit"]
 
+        memory_limit = 100
+        if "memory_limit" in config:
+            memory_limit = config["memory_limit"]    
+
         if utils.is_summary(self,prompt,self.role_mapping): 
             doc = self.get_doc_by_url(self.file_path)
             raw_content = doc["raw_content"]
@@ -766,13 +775,17 @@ the question is:
 
 {prompt}
 '''
-        v1 = self.llm.chat(None,request=LLMRequest(instruction=p1,extra_params=LLMRequestExtra(**self.role_mapping)))[0].output
+        chat_history = self.get_conversations_as_history(limit=memory_limit) 
+        v1 = self.llm.chat(None,request=LLMRequest(instruction=p1,extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)))[0].output
         self.save_conversation(self.owner,Role.User,prompt)
         self.save_conversation(self.owner,Role.Assistant,v1) 
         return ExecuteCodeResponse(0,v1,"",p1,{})
 
     def data_analyze(self,prompt:str,max_try_times=10,**config)-> ExecuteCodeResponse:
 
+        memory_limit = 100
+        if "memory_limit" in config:
+            memory_limit = config["memory_limit"] 
         # I want you to act as a data scientist and code for me. I have a dataset of [describe dataset]. 
         # Please write code for data visualisation and exploration.  
         # I want you to act as an academic. Please summarise the paper [...] in simple terms in one paragraph.        
@@ -820,9 +833,7 @@ Please try to answer the following questions:
 {prompt}'''
             # self.llm.chat(None,request=no_code_prompt)[0].output,"",no_code_prompt
             
-            chat_history = self.get_conversations(self.owner,self.chat_name)
-            if chat_history:
-                chat_history = [LLMHistoryItem(item["role"],item["raw_content"]) for item in chat_history]                
+            chat_history = self.get_conversations_as_history(limit=memory_limit)            
 
             r = self.llm.chat(None,request=LLMRequest(instruction=no_code_prompt,extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)))[0].output
             
@@ -851,9 +862,7 @@ The preview of the file is:
 Use pandas to analyze it. 
 Please try to generate python code to analyze the file and answer the following questions:
 '''
-        chat_history = self.get_conversations(self.owner,self.chat_name)
-        if chat_history:
-            chat_history = [LLMHistoryItem(item["role"],item["raw_content"]) for item in chat_history]                
+        chat_history = self.get_conversations_as_history(limit=memory_limit)                 
         
         # final_prompt = self.llm.generate_instruction_from_history(analyze_prompt+prompt,chat_history,self.role_mapping)
         final_prompt = self.llm._generate_ins(LLMRequest(instruction=analyze_prompt+prompt,
