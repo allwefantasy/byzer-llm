@@ -492,7 +492,7 @@ field(owner,string),
 field(content,string,analyze),
 field(raw_content,string),
 field(auth_tag,string,analyze),
-field(created_time,long),
+field(created_time,long,sort),
 field(chat_name_vector,array(float)),
 field(content_vector,array(float))
 )
