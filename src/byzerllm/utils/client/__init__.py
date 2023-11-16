@@ -822,7 +822,7 @@ Please try to answer the following questions:
             
             chat_history = self.get_conversations(self.owner,self.chat_name)
             if chat_history:
-                chat_history = [{LLMHistoryItem(item["role"],item["raw_content"])} for item in chat_history]                
+                chat_history = [LLMHistoryItem(item["role"],item["raw_content"]) for item in chat_history]                
 
             r = self.llm.chat(None,request=LLMRequest(instruction=no_code_prompt,extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)))[0].output
             
