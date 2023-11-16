@@ -381,6 +381,7 @@ class DataAnalysisMode:
 class ByzerDataAnalysis:
     def __init__(self,llm:ByzerLLM,
                  retrieval:ByzerRetrieval=None,
+                 owner:str=None,
                  file_path:str= None, 
                  use_shared_disk:bool=False,
                  retrieval_cluster:str="data_analysis",
@@ -401,11 +402,17 @@ class ByzerDataAnalysis:
 
         self.retrieval_cluster = retrieval_cluster
         self.retrieval_db = retrieval_db
+
+        self.sandbox_suffix = str(uuid.uuid4())                
+
+        self.owner = owner
+        if self.owner is None:
+            self.owner = self.sandbox_suffix
         
         self.num_gpus = num_gpus
         self.num_cpus = num_cpus
 
-        self.sandbox_suffix = str(uuid.uuid4())                
+        
         
         if self.file_path and not self.use_shared_disk  and self.data_analysis_mode == DataAnalysisMode.data_analysis:
             base_name = os.path.basename(file_path)
@@ -420,7 +427,7 @@ class ByzerDataAnalysis:
 
         if self.file_path and self.data_analysis_mode == DataAnalysisMode.text_analysis:
             content = open(self.file_path).read()
-            self.save_text_content(title="noops",content=content,url=self.file_path)
+            self.save_text_content(title="noops",owner=self.owner,content=content,url=self.file_path)
 
 
     def generate_code(self, prompt:Union[str,LLMRequest],pattern: str = code_utils.CODE_BLOCK_PATTERN, **config) -> Tuple[str, float]:
@@ -470,9 +477,9 @@ The current implementation of the function is as follows:
     def emb(self,s:str, emb_model:str="emb"):
         return self.llm.emb(emb_model,LLMRequest(instruction=s))[0].output
 
-    def save_conversation(self,chat_name:str, role:str,content:str):
+    def save_conversation(self,owner:str, chat_name:str, role:str,content:str):
         if not self.retrieval:
-            raise Exception("retrieval is not setup")
+            raise Exception("retrieval is not setup")                
         
         if not self.retrieval.check_table_exists(self.retrieval_cluster,self.retrieval_db,"user_memory"):
            self.retrieval.create_table(self.retrieval_cluster,tableSettings=TableSettings(
@@ -481,6 +488,7 @@ The current implementation of the function is as follows:
 field(_id,string),
 field(chat_name,string),
 field(role,string),
+field(owner,string),
 field(content,string,analyze),
 field(raw_content,string),
 field(auth_tag,string,analyze),
@@ -495,6 +503,7 @@ field(content_vector,array(float))
         data = [{"_id":str(uuid.uuid4()),
                 "chat_name":chat_name,
                 "role":role,
+                "owner":owner,
                 "content":self.search_tokenize(content),
                 "raw_content":content,
                 "auth_tag":"",
@@ -504,7 +513,7 @@ field(content_vector,array(float))
 
         self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"user_memory",data)
 
-    def save_text_content(self,title:str,content:str,url:str,auth_tag:str=""):
+    def save_text_content(self,owner:str,title:str,content:str,url:str,auth_tag:str=""):
 
         if not self.retrieval:
             raise Exception("retrieval is not setup")
@@ -515,6 +524,7 @@ field(content_vector,array(float))
                 database=self.retrieval_db,
                 table="text_content",schema='''st(
 field(_id,string),
+field(owner,string),
 field(title,string,analyze),
 field(content,string,analyze),
 field(url,string),
@@ -531,6 +541,7 @@ field(content_vector,array(float))
                 table="text_content_chunk",schema='''st(
 field(_id,string),
 field(doc_id,string),
+field(owner,string),
 field(chunk,string,analyze),
 field(raw_chunk,string),
 field(chunk_vector,array(float))
@@ -541,6 +552,7 @@ field(chunk_vector,array(float))
         text_content = [{"_id":str(uuid.uuid4()),
             "title":self.search_tokenize(title),
             "content":self.search_tokenize(content),
+            "owner":owner,
             "raw_content":content,
             "url":url,
             "auth_tag":self.search_tokenize(auth_tag),
@@ -553,6 +565,7 @@ field(chunk_vector,array(float))
         
         text_content_chunks = [{"_id":str(uuid.uuid4()),
             "doc_id":text_content[0]["_id"],
+            "owner":owner,
             "chunk":self.search_tokenize(item["content"]),
             "raw_chunk":item["content"],
             "chunk_vector":self.emb(item["content"])
