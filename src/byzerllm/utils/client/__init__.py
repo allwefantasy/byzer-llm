@@ -168,7 +168,7 @@ class ByzerLLM:
         except ValueError:
             pass
 
-    def generate_instruction_from_history(conversations:List[Dict[str,str]],role_mapping:Dict[str,str]={        
+    def generate_instruction_from_history(self,conversations:List[Dict[str,str]],role_mapping:Dict[str,str]={        
         "user_role":"User",        
         "assistant_role":"Assistant",
     }):
