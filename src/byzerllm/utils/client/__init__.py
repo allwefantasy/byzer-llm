@@ -282,19 +282,24 @@ class ByzerLLM:
       
         return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
             
-    def _generate_ins(self,ins:str,request:LLMRequest):
-         final_ins = f'{request.extra_params.system_msg}\n{request.extra_params.user_role}:{ins}\n{request.extra_params.assistant_role}:' if request.extra_params.user_role else ins
-         if request and request.extra_params.history:
-             final_ins = self.generate_instruction_from_history(
-                 [{"role":"system","content":request.extra_params.system_msg}]+[{"role":item.role,"content":item.content} for item in request.extra_params.history]+[{
+    def _generate_ins(self,request:LLMRequest):
+         if not request.extra_params.user_role:
+             return request.instruction
+         
+         conversations = [{"role":"system","content":request.extra_params.system_msg}]
+         conversations += [{"role":item.role,"content":item.content} for item in request.extra_params.history]
+         conversations += [{
                         "role":"user",
-                        "content":ins
-                 }],
+                        "content":request.instruction
+                 }]
+         
+         final_ins = self.generate_instruction_from_history(conversations,                 
                  {
                     "user_role":request.extra_params.user_role,
                     "assistant_role":request.extra_params.assistant_role,
                     "system_msg":request.extra_params.system_msg
              })                      
+             
          return final_ins
     
     def raw_chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
@@ -315,20 +320,26 @@ class ByzerLLM:
 
         if isinstance(request.instruction,str):
             v = [{
-            "instruction":self._generate_ins(request.instruction,request),
+            "instruction":self._generate_ins(request),
             "max_length":request.max_length,
             "top_p":request.top_p,
             "temperature":request.temperature,            
             ** request.extra_params.__dict__,
             ** extract_params}] 
         else: 
-            v = [{
-            "instruction":self._generate_ins(x,request), 
-            "max_length":request.max_length,
-            "top_p":request.top_p,
-            "temperature":request.temperature,           
-            ** request.extra_params.__dict__,
-            ** extract_params} for x in request.instruction]         
+            v = []
+            for x in request.instruction:
+                new_request = LLMRequest(instruction=x,extra_params=request.extra_params,
+                                         embedding=request.embedding,max_length=request.max_length,top_p=request.top_p,
+                                         temperature=request.temperature
+                                         )
+                v.append({
+                "instruction":self._generate_ins(new_request), 
+                "max_length":request.max_length,
+                "top_p":request.top_p,
+                "temperature":request.temperature,           
+                ** request.extra_params.__dict__,
+                ** extract_params})
         res = self._query(model,v) 
         return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
     
