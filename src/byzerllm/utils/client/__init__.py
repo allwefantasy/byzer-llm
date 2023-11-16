@@ -181,7 +181,7 @@ class ByzerLLM:
             k = item['role']+"_role"            
             new_his.append(f"{role_mapping[k]}:{item['content']}")            
         
-        if new_his[-1]["role"] == "user":            
+        if conversations[-1]["role"] == "user":            
             new_his.append(f"{role_mapping['assistant_role']}:")
 
         fin_ins = "\n".join(new_his)
