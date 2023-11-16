@@ -403,7 +403,7 @@ class ByzerDataAnalysis:
                  role_mapping = {
                     "user_role":"User",
                     "assistant_role": "Assistant",
-                    "system_role":"System"
+                    "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly."
                     }, 
                  max_input_length=1024*24,              
                  num_gpus=0, num_cpus=1) -> None:
