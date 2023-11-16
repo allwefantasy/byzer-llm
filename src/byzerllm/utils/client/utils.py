@@ -1,9 +1,9 @@
 from . import code_utils
 import json
 from typing import Any, TypeVar, Dict,Union,List
-from byzerllm.utils.client import LLMRequest,LLMRequestExtra
 
 def is_summary(data_analysis,prompt:str,role_mapping:Dict[str,str])->bool:
+    from byzerllm.utils.client import LLMRequest,LLMRequestExtra
     p = f'''
 Please check the following question is whether about summary:
 
@@ -36,6 +36,7 @@ otherwise, output the following json format:
     
 
 def is_visualization(data_analysis,prompt:str,role_mapping:Dict[str,str])->bool:
+    from byzerllm.utils.client import LLMRequest,LLMRequestExtra
     p = f'''
 Please check the following question is whether about data visualization:
 
@@ -67,7 +68,8 @@ otherwise, output the following json format:
                 pass 
     return is_visualization 
 
-def should_generate_code_to_response(data_analysis,prompt:str,role_mapping:Dict[str,str]):    
+def should_generate_code_to_response(data_analysis,prompt:str,role_mapping:Dict[str,str]):  
+    from byzerllm.utils.client import LLMRequest,LLMRequestExtra  
     preview_csv = data_analysis.file_preview.to_csv(index=False) 
     p = f'''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
 The preview of the file is:
