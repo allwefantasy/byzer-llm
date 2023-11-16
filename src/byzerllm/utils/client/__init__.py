@@ -543,7 +543,8 @@ field(content_vector,array(float))
                                     keyword=None,fields=["chat_name"],
                                     vector=[],vectorField=None,
                                     limit=1000)])
-        return docs
+        sorted_docs = sorted(docs,key=lambda x:x["created_time"],reverse=False)
+        return sorted_docs
 
 
     def save_text_content(self,owner:str,title:str,content:str,url:str,auth_tag:str=""):
