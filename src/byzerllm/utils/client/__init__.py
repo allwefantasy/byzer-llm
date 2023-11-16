@@ -264,13 +264,14 @@ class ByzerLLM:
         return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
             
     def _generate_ins(self,ins:str,request:LLMRequest):
+         final_ins = f'{request.extra_params.user_role}:{ins}\n{request.extra_params.assistant_role}:'
          if request.extra_params.history:
-             generate_instruction_from_history(ins,[{"role":item.role,"content":item.content} for item in request.extra_params.history],{
+             final_ins = generate_instruction_from_history(ins,[{"role":item.role,"content":item.content} for item in request.extra_params.history],{
                     "user":request.extra_params.user_role,
                     "assistant":request.extra_params.assistant_role,
                     "system":request.extra_params.system_msg
              })                      
-         return ins
+         return final_ins
 
     def chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
         if not model and not self.default_model_name:
