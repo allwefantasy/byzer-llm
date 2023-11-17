@@ -823,17 +823,30 @@ the question is:
         # Please write code for data visualisation and exploration.  
         # I want you to act as an academic. Please summarise the paper [...] in simple terms in one paragraph.        
         if not self.loaded_successfully:            
-            preview_file_prompt=f'''I have a file where the path is {self.file_path}, I want to use pandas to read it.The packages all are installed, you can use it directly.
+            raw_preview_file_prompt=f'''I have a file where the path is {self.file_path}, I want to use pandas to read it.The packages all are installed, you can use it directly.
 Try to help me to generate python code which should match the following requirements:
 1. try to read the file according the suffix of file name in Try block
 2. if read success, set variable loaded_successfully to True, otherwise set it to False.
 3. if loaded_successfully is True, then assigh the loaded data with head() to file_preview, otherwise assign error message to file_preview
 4. make sure the loaded_successfully, file_preview are defined in the global scope'''
-            preview_file_prompt = self.llm._generate_ins(LLMRequest(instruction=preview_file_prompt,max_length=self.max_length,
+            
+            preview_file_prompt = self.llm._generate_ins(LLMRequest(instruction=raw_preview_file_prompt,max_length=self.max_length,
                                                                    temperature=self.tempraure,extra_params=LLMRequestExtra(**self.role_mapping)))
             response = self.try_execute_code_until_resolved(prompt=preview_file_prompt,
+                                                            raw_prompt=raw_preview_file_prompt,
                                                             target_names={"loaded_successfully":True,"file_preview":None},
                                                             max_try_times=max_try_times)
+            
+            if self.verbose:
+                print(f'''
+=============== Preview Data File {self.file_path} ===============
+------prompt------                  
+{preview_file_prompt}
+
+------response------
+Success: {response.status == 0 and  response.variables["loaded_successfully"] == True}                                   
+
+''',flush=True)
                         
             if response.status != 0 or not response.variables["loaded_successfully"]:
                 raise Exception(f'''Failed to load the file {self.file_path}. 
@@ -920,6 +933,7 @@ Please try to generate python code to analyze the file and answer the following 
 
 ''',flush=True)
         response = self.try_execute_code_until_resolved(prompt=final_prompt,
+                                                        raw_prompt=analyze_prompt+prompt,
                                                          target_names={"image_base64":None},
                                                          max_try_times=max_try_times,
                                                          skip_check_target_names= not is_visualization
@@ -962,6 +976,7 @@ variables:
                         
 
     def try_execute_code_until_resolved(self,prompt:str,
+                                        raw_prompt:str=None,
                                         target_names:Dict[str,Any]={}, 
                                         max_try_times:int=3,
                                         skip_check_target_names:bool=False)->ExecuteCodeResponse:
@@ -979,7 +994,7 @@ variables:
 ```
 {output}
 ```
-The origin requirements: {prompt}
+The origin requirements: {raw_prompt}
 '''
                 ## multi-lines finish
 
@@ -1017,7 +1032,7 @@ The origin requirements: {prompt}
                 else:
 
                     old_code = code
-                    improve_prompt = f"The origin requirements: {prompt}\nAfter execute the code, {msg}.\n Try to fix this problem.\n"
+                    improve_prompt = f"The origin requirements: {raw_prompt}\nAfter execute the code, {msg}.\n Try to fix this problem.\n"
                     improve_response,_ = self.improve_code(code=code,objective=improve_prompt)                    
                     lang,code = code_utils.extract_code(improve_response)[0]
                     
