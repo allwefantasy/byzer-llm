@@ -414,7 +414,7 @@ class CodeSandbox:
                 lang="python"        
                 ) 
     
-    def exec_capture_output(self,code: str,target_names:Dict[Any]={}) -> Tuple[int,str,Any]:
+    def exec_capture_output(self,code: str,target_names:Dict[str,Any]={}) -> Tuple[int,str,Any]:
         buffer = io.StringIO()
         sys.stdout = buffer
         sys.stderr = buffer
