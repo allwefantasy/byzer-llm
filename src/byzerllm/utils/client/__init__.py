@@ -52,10 +52,15 @@ class LLMRequestExtra:
 class LLMRequest:
     instruction: Union[str,List[str]]
     embedding: bool = False
-    max_length: int = 1024
+    max_length: int = 4096
     top_p: float = 0.7
     temperature: float = 0.9
     extra_params: LLMRequestExtra = LLMRequestExtra()
+    
+    @staticmethod
+    def build(cls, instruction:str,max_length:int=4096,temperature:float=0.1,role_mapping:Dict[str,str]={}):
+        return cls(instruction=instruction,max_length=max_length,temperature=temperature,extra_params=LLMRequestExtra(**role_mapping))
+        
 
 @dataclasses.dataclass
 class FintuneRequestExtra:
@@ -304,7 +309,7 @@ class ByzerLLM:
     
     def raw_chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
         if isinstance(request,str): 
-            request = LLMRequest(instruction=request,extra_params=LLMRequestExtra(user_role=None))
+            request = LLMRequest(instruction=request, extra_params=LLMRequestExtra(user_role=None))
         request.extra_params.user_role = None    
         return self.chat(model,request,extract_params)
 
@@ -440,6 +445,8 @@ class ByzerDataAnalysis:
                     "assistant_role": "Assistant",
                     "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly."
                     }, 
+                 max_length:int=8024,   
+                 tempraure:float=0.1,
                  max_input_length=1024*24,              
                  num_gpus=0, num_cpus=1) -> None:
         self.llm = llm
@@ -452,6 +459,9 @@ class ByzerDataAnalysis:
         self.file_ref = None
         self.file_preview = None
         self.loaded_successfully=False
+
+        self.max_length = max_length
+        self.tempraure = tempraure
 
         self.role_mapping = role_mapping
 
@@ -500,7 +510,10 @@ class ByzerDataAnalysis:
             str: The generated code.
             float: The cost of the generation.
         """                
-        response = self.llm.raw_chat(None,request=prompt,extract_params=config)
+        response = self.llm.raw_chat(None,request=LLMRequest.build(instruction=prompt,
+                                                                   max_length=self.max_length,
+                                                                   temperature=self.tempraure,
+                                                                   role_mapping=self.role_mapping),extract_params=config)
         return code_utils.extract_code(response[0].output, pattern), -1 
 
     def improve_function(self,file_name, func_name, objective, **config):
@@ -745,7 +758,10 @@ Finally, please try to match the following requirements:
 ```
 '''                    
                     answer_chunk = self.llm.chat(None,request=
-                                                 LLMRequest(instruction=p,extra_params=LLMRequestExtra(**self.role_mapping))
+                                                 LLMRequest.build(instruction=p,
+                                                                   max_length=self.max_length,
+                                                                   temperature=self.tempraure,
+                                                                   role_mapping=self.role_mapping)
                                                  )[0].output 
             else:
                 p = f'''                
@@ -759,7 +775,10 @@ Finally, please try to match the following requirements:
 {prompt}
 ```
 '''
-                answer_chunk = self.llm.chat(None,request=LLMRequest(instruction=p,extra_params=LLMRequestExtra(**self.role_mapping)))[0].output 
+                answer_chunk = self.llm.chat(None,request=LLMRequest.build(instruction=p,
+                                                                   max_length=self.max_length,
+                                                                   temperature=self.tempraure,
+                                                                   role_mapping=self.role_mapping))[0].output 
             self.save_conversation(self.owner,Role.User,prompt)
             self.save_conversation(self.owner,Role.Assistant,answer_chunk)     
             return ExecuteCodeResponse(0,answer_chunk,"",p,{}) 
@@ -776,7 +795,8 @@ the question is:
 {prompt}
 '''
         chat_history = self.get_conversations_as_history(limit=memory_limit) 
-        v1 = self.llm.chat(None,request=LLMRequest(instruction=p1,extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)))[0].output
+        v1 = self.llm.chat(None,request=LLMRequest(instruction=p1,max_length=self.max_length,
+                                                                   temperature=self.tempraure,extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)))[0].output
         self.save_conversation(self.owner,Role.User,prompt)
         self.save_conversation(self.owner,Role.Assistant,v1) 
         return ExecuteCodeResponse(0,v1,"",p1,{})
@@ -796,7 +816,8 @@ Try to help me to generate python code which should match the following requirem
 2. if read success, set variable loaded_successfully to True, otherwise set it to False.
 3. if loaded_successfully is True, then assigh the loaded data with head() to file_preview, otherwise assign error message to file_preview
 4. make sure the loaded_successfully, file_preview are defined in the global scope'''
-            preview_file_prompt = self.llm._generate_ins(LLMRequest(instruction=preview_file_prompt,extra_params=LLMRequestExtra(**self.role_mapping)))
+            preview_file_prompt = self.llm._generate_ins(LLMRequest(instruction=preview_file_prompt,max_length=self.max_length,
+                                                                   temperature=self.tempraure,extra_params=LLMRequestExtra(**self.role_mapping)))
             response = self.try_execute_code_until_resolved(prompt=preview_file_prompt,
                                                             target_names=["loaded_successfully","file_preview"],
                                                             max_try_times=max_try_times)
@@ -835,7 +856,8 @@ Please try to answer the following questions:
             
             chat_history = self.get_conversations_as_history(limit=memory_limit)            
 
-            r = self.llm.chat(None,request=LLMRequest(instruction=no_code_prompt,extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)))[0].output
+            r = self.llm.chat(None,request=LLMRequest(instruction=no_code_prompt,max_length=self.max_length,
+                                                                   temperature=self.tempraure,extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)))[0].output
             
             self.save_conversation(self.owner,Role.User,prompt)
             self.save_conversation(self.owner,Role.Assistant,r)
@@ -865,7 +887,8 @@ Please try to generate python code to analyze the file and answer the following 
         chat_history = self.get_conversations_as_history(limit=memory_limit)                 
         
         # final_prompt = self.llm.generate_instruction_from_history(analyze_prompt+prompt,chat_history,self.role_mapping)
-        final_prompt = self.llm._generate_ins(LLMRequest(instruction=analyze_prompt+prompt,
+        final_prompt = self.llm._generate_ins(LLMRequest(instruction=analyze_prompt+prompt,max_length=self.max_length,
+                                                                   temperature=self.tempraure,
                                                          extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)));    
         response = self.try_execute_code_until_resolved(prompt=final_prompt,
                                                          target_names=["image_base64"],
