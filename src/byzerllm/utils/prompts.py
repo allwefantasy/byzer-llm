@@ -40,7 +40,7 @@ otherwise, output the following json format:
 ```
 '''
 
-PROMPT_SHOULD_GENERATE_CODE_TO_RESPONSE = '''I have a file the path is /home/byzerllm/projects/jupyter-workspace/test.csv, 
+PROMPT_SHOULD_GENERATE_CODE_TO_RESPONSE = '''I have a file the path is {file_path}, 
 The preview of the file is:
 ```text
 {preview_csv}
@@ -116,9 +116,9 @@ def prompt_is_visualization(prompt:str):
     prompt_template = PromptTemplate.from_template(PROMPT_IS_VISUALIZATION) 
     return prompt_template.format(prompt=prompt)
 
-def prompt_should_generate_code_to_response(prompt:str,preview_csv:str):
+def prompt_should_generate_code_to_response(file_path:str,prompt:str,preview_csv:str):
     prompt_template = PromptTemplate.from_template(PROMPT_SHOULD_GENERATE_CODE_TO_RESPONSE) 
-    return prompt_template.format(prompt=prompt,preview_csv=preview_csv)
+    return prompt_template.format(file_path=file_path,prompt=prompt,preview_csv=preview_csv)
 
 def prompt_preview_file(file_path:str):
     prompt_template = PromptTemplate.from_template(PROMPT_PREVIEW_FILE) 
