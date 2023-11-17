@@ -456,7 +456,8 @@ class ByzerDataAnalysis:
                     }, 
                  max_length:int=8024,   
                  tempraure:float=0.1,
-                 max_input_length=1024*24,              
+                 max_input_length=1024*24,
+                 verbose:bool=False,              
                  num_gpus=0, num_cpus=1) -> None:
         self.llm = llm
         self.retrieval = retrieval
@@ -471,6 +472,7 @@ class ByzerDataAnalysis:
 
         self.max_length = max_length
         self.tempraure = tempraure
+        self.verbose = verbose
 
         self.role_mapping = role_mapping
 
@@ -820,7 +822,7 @@ the question is:
         # I want you to act as a data scientist and code for me. I have a dataset of [describe dataset]. 
         # Please write code for data visualisation and exploration.  
         # I want you to act as an academic. Please summarise the paper [...] in simple terms in one paragraph.        
-        if not self.loaded_successfully:
+        if not self.loaded_successfully:            
             preview_file_prompt=f'''I have a file where the path is {self.file_path}, I want to use pandas to read it.The packages all are installed, you can use it directly.
 Try to help me to generate python code which should match the following requirements:
 1. try to read the file according the suffix of file name in Try block
@@ -830,10 +832,9 @@ Try to help me to generate python code which should match the following requirem
             preview_file_prompt = self.llm._generate_ins(LLMRequest(instruction=preview_file_prompt,max_length=self.max_length,
                                                                    temperature=self.tempraure,extra_params=LLMRequestExtra(**self.role_mapping)))
             response = self.try_execute_code_until_resolved(prompt=preview_file_prompt,
-                                                            target_names=["loaded_successfully","file_preview"],
+                                                            target_names={"loaded_successfully":True,"file_preview":None},
                                                             max_try_times=max_try_times)
-            
-
+                        
             if response.status != 0 or not response.variables["loaded_successfully"]:
                 raise Exception(f'''Failed to load the file {self.file_path}. 
 The code is:
@@ -953,16 +954,41 @@ variables:
         status,output,response = self.eval_code(code,target_names)        
 
         for i in range(max_try_times):
-            if status != 0:       
-                improve_response,_ = self.improve_code(code=code,
-                                                       objective=f'''Try to fix this problem:
+            if status != 0: 
+                old_code = code 
+
+                ## multi-lines start     
+                improve_prompt = f'''Try to fix the following problems:
 ```
 {output}
 ```
 The origin requirements: {prompt}
-''')            
+'''
+                ## multi-lines finish
+
+                improve_response,_ = self.improve_code(code=code,
+                                                       objective=improve_prompt)            
                 lang,code = code_utils.extract_code(improve_response)[0]
-                print(f"Try {i} times. The code execution failed,  the error message is: {output}. improved the code:\n{code}")                
+
+                ## multi-lines start
+                if self.verbose:       
+                    print(f'''
+=========== Improving Code {i} Times =============
+
+----------- Failed Reason -----------
+{output}
+
+----------- Failed Code  -------------
+{old_code}
+
+----------- Improved Code -----------
+{code}
+
+----------- prompt -----------
+{improve_prompt}
+''')   
+                ## multi-lines finish
+                                 
                 status,output,response = self.eval_code(code,target_names)                                
             else:
                 if not target_names or skip_check_target_names:
@@ -972,9 +998,32 @@ The origin requirements: {prompt}
                 if success:
                     break    
                 else:
-                    improve_response,_ = self.improve_code(code=code,objective=f"The origin requirements: {prompt}\nAfter execute the code, {msg}.\n Try to fix this problem.\n")
+
+                    old_code = code
+                    improve_prompt = f"The origin requirements: {prompt}\nAfter execute the code, {msg}.\n Try to fix this problem.\n"
+                    improve_response,_ = self.improve_code(code=code,objective=improve_prompt)                    
                     lang,code = code_utils.extract_code(improve_response)[0]
-                    print(f"Try {i} times. The code execution failed,  the error message is: {msg}. improved the code:\n{code}")                
+                    
+                    ## multi-lines start
+                    if self.verbose:       
+                        print(f'''
+=========== Improving Code {i} Times =============
+
+----------- Failed Reason -----------
+{msg}
+
+----------- Failed Code  -------------
+{old_code}
+
+----------- Improved Code -----------
+{code}
+
+----------- prompt -----------
+{improve_prompt}
+''')   
+                    ## multi-lines finish
+
+
                     status,output,response = self.eval_code(code,target_names)            
         # status,response,code   
         return ExecuteCodeResponse(
@@ -1017,7 +1066,7 @@ and then output the variables in the following format:
 
 """     
         followup = "" if suggest_only else " followed by the improved code"    
-        new_prompt = f'''Analyze the code in the following files and return a list of suggestions for improvement{followup}, to achieve the objective of '{objective}'.
+        new_prompt = f'''Analyze the code in the following files and return a list of suggestions for improvement{followup}, to achieve the objective: '{objective}'.
 {final_code}'''
         response = self.llm.chat(None, request=LLMRequest(instruction=new_prompt,**config))            
         return response[0].output, -1 
