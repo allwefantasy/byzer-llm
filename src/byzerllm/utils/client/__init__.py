@@ -882,7 +882,14 @@ Please try to answer the following questions:
         is_visualization = utils.is_visualization(self,prompt,self.role_mapping)
         visualization_prompt = "" if not is_visualization else '''When the question require you to do visualization, please use package Plotly or matplotlib to do this.
 Try to use base64 to encode the image, assign the base64 string to the variable named image_base64. 
-Make sure the image_base64 defined in the global scope.'''
+Make sure the image_base64 defined in the global scope. Here is the specific steps:
+
+1. Import Necessary Libraries: Import matplotlib, io, and base64.
+2. Create a Plot: Use matplotlib to create a plot or graph as per the user's request.
+4. Save the Plot to a Buffer: Instead of displaying the plot, save it to an in-memory buffer.
+4. Encode the Image: Convert the buffer content to a base64 string.
+5. Assign to Global Variable: Assign the base64 string to the global variable image_base64.
+'''
 
         analyze_prompt = f'''I have a file the path is {self.file_path}, 
 Please DO NOT consider the package installation, the packages all are installed, you can use it directly.
