@@ -902,16 +902,6 @@ The response is:
         is_visualization = utils.is_visualization(self,prompt,self.role_mapping)
         visualization_prompt = "" if not is_visualization else PROMPTS.PROMPT_VISUALIZATION
 
-        analyze_prompt = PROMPTS.prompt_analysis_data_with_visualization(file_path=self.file_path,
-                                                                         visualization_prompt=visualization_prompt,
-                                                                          preview_csv=preview_csv
-                                                                         )
-        chat_history = self.get_conversations_as_history(limit=memory_limit)                 
-        
-        # final_prompt = self.llm.generate_instruction_from_history(analyze_prompt+prompt,chat_history,self.role_mapping)
-        final_prompt = self.llm._generate_ins(LLMRequest(instruction=analyze_prompt+prompt,max_length=self.max_length,
-                                                                   temperature=self.tempraure,
-                                                         extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)));    
         if self.verbose:
             print(f'''
 =============== Check Is Visualization Requirement ===============
@@ -922,6 +912,18 @@ The response is:
 {is_visualization}                                   
 
 ''',flush=True)
+
+        analyze_prompt = PROMPTS.prompt_analysis_data_with_visualization(file_path=self.file_path,
+                                                                         visualization_prompt=visualization_prompt,
+                                                                          preview_csv=preview_csv
+                                                                         )
+        chat_history = self.get_conversations_as_history(limit=memory_limit)                 
+        
+        # final_prompt = self.llm.generate_instruction_from_history(analyze_prompt+prompt,chat_history,self.role_mapping)
+        final_prompt = self.llm._generate_ins(LLMRequest(instruction=analyze_prompt+prompt,max_length=self.max_length,
+                                                                   temperature=self.tempraure,
+                                                         extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)));    
+        
         response = self.try_execute_code_until_resolved(prompt=final_prompt,
                                                         raw_prompt=analyze_prompt+prompt,
                                                          target_names={"image_base64":None},
