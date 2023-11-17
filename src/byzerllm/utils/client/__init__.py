@@ -607,7 +607,7 @@ field(content_vector,array(float))
                                     keyword=None,fields=["chat_name"],
                                     vector=[],vectorField=None,
                                     limit=limit)])
-        sorted_docs = sorted(docs,key=lambda x:x["created_time"],reverse=False)
+        sorted_docs = sorted(docs[0:,limit],key=lambda x:x["created_time"],reverse=False)
         return sorted_docs
     
     def get_conversations_as_history(self,limit=1000)->List[LLMHistoryItem]:
