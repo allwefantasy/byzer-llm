@@ -902,6 +902,16 @@ Please try to generate python code to analyze the file and answer the following 
         final_prompt = self.llm._generate_ins(LLMRequest(instruction=analyze_prompt+prompt,max_length=self.max_length,
                                                                    temperature=self.tempraure,
                                                          extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)));    
+        if self.verbose:
+            print(f'''
+=============== Check Is Visualization Requirement ===============
+------prompt------                  
+{prompt}
+
+------response------
+{is_visualization}                                   
+
+''',flush=True)
         response = self.try_execute_code_until_resolved(prompt=final_prompt,
                                                          target_names={"image_base64":None},
                                                          max_try_times=max_try_times,
