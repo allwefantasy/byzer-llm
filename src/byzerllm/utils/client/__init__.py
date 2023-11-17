@@ -15,6 +15,7 @@ import importlib
 from . import code_utils
 from . import utils
 from ..retrieval import ByzerRetrieval,TableSettings,SearchQuery
+from .. import prompts as PROMPTS
 import logging
 import time
 import math
@@ -823,12 +824,7 @@ the question is:
         # Please write code for data visualisation and exploration.  
         # I want you to act as an academic. Please summarise the paper [...] in simple terms in one paragraph.        
         if not self.loaded_successfully:            
-            raw_preview_file_prompt=f'''I have a file where the path is {self.file_path}, I want to use pandas to read it.The packages all are installed, you can use it directly.
-Try to help me to generate python code which should match the following requirements:
-1. try to read the file according the suffix of file name in Try block
-2. if read success, set variable loaded_successfully to True, otherwise set it to False.
-3. if loaded_successfully is True, then assigh the loaded data with head() to file_preview, otherwise assign error message to file_preview
-4. make sure the loaded_successfully, file_preview are defined in the global scope'''
+            raw_preview_file_prompt=PROMPTS.prompt_preview_file(file_path=self.file_path)
             
             preview_file_prompt = self.llm._generate_ins(LLMRequest(instruction=raw_preview_file_prompt,max_length=self.max_length,
                                                                    temperature=self.tempraure,extra_params=LLMRequestExtra(**self.role_mapping)))
@@ -870,13 +866,7 @@ The response is:
         
         need_code = utils.should_generate_code_to_response(self,prompt,self.role_mapping)
         if not need_code:
-            no_code_prompt=f'''I have a file the path is {self.file_path}, 
-The preview of the file is:
-```text
-{preview_csv}
-```
-Please try to answer the following questions:
-{prompt}'''
+            no_code_prompt=PROMPTS.prompt_check_need_code(prompt=prompt,preview_csv=preview_csv)
             # self.llm.chat(None,request=no_code_prompt)[0].output,"",no_code_prompt
             
             chat_history = self.get_conversations_as_history(limit=memory_limit)            
@@ -893,29 +883,12 @@ Please try to answer the following questions:
             )
         
         is_visualization = utils.is_visualization(self,prompt,self.role_mapping)
-        visualization_prompt = "" if not is_visualization else '''When the question require you to do visualization, please use package Plotly or matplotlib to do this.
-Try to use base64 to encode the image, assign the base64 string to the variable named image_base64. 
-Make sure the image_base64 defined in the global scope. Here is the specific steps:
+        visualization_prompt = "" if not is_visualization else PROMPTS.PROMPT_VISUALIZATION
 
-1. Import Necessary Libraries
-2. Create a Plot: Use matplotlib to create a plot or graph as per the user's request.
-4. Save the Plot to a Buffer: Instead of displaying the plot, save it to an in-memory buffer.
-4. Encode the Image: Convert the buffer content to a base64 string.
-5. Assign to Global Variable: Assign the base64 string to the global variable image_base64.
-'''
-
-        analyze_prompt = f'''I have a file the path is {self.file_path}, 
-Please DO NOT consider the package installation, the packages all are installed, you can use it directly.
-
-{visualization_prompt}
-
-The preview of the file is:
-```text
-{preview_csv}
-```
-Use pandas to analyze it. 
-Please try to generate python code to analyze the file and answer the following questions:
-'''
+        analyze_prompt = PROMPTS.prompt_analysis_data_with_visualization(file_path=self.file_path,
+                                                                         visualization_prompt=visualization_prompt,
+                                                                          preview_csv=preview_csv
+                                                                         )
         chat_history = self.get_conversations_as_history(limit=memory_limit)                 
         
         # final_prompt = self.llm.generate_instruction_from_history(analyze_prompt+prompt,chat_history,self.role_mapping)

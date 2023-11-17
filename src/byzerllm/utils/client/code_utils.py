@@ -5,6 +5,7 @@ import re
 import subprocess
 import sys
 import time
+import json
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from hashlib import md5
 from typing import Callable, Dict, List, Optional, Tuple, Union
@@ -27,6 +28,17 @@ PATH_SEPARATOR = WIN32 and "\\" or "/"
 
 logger = logging.getLogger(__name__)
 
+
+def get_value_from_llm_str(v:str,k:str, default_value)->Union[str,int,float,bool,None]:
+    responses = extract_code(v)
+    value = default_value
+    for lang,code in responses:
+        if lang == "json":
+            try:
+                value = json.loads(code)[k]
+            except Exception as inst:
+                pass 
+    return value
 
 def content_str(content: Union[str, List]) -> str:
     if type(content) is str:
