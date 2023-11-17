@@ -324,27 +324,36 @@ class ByzerLLM:
             request = LLMRequest(instruction=request)
 
         if isinstance(request.instruction,str):
+            params = {**request.extra_params.__dict__,**extract_params}
+            if "history" in params:
+                del params["history"]
+
             v = [{
             "instruction":self._generate_ins(request),
             "max_length":request.max_length,
             "top_p":request.top_p,
             "temperature":request.temperature,            
-            ** request.extra_params.__dict__,
-            ** extract_params}] 
+             ** params}] 
         else: 
             v = []
             for x in request.instruction:
+                
                 new_request = LLMRequest(instruction=x,extra_params=request.extra_params,
                                          embedding=request.embedding,max_length=request.max_length,top_p=request.top_p,
                                          temperature=request.temperature
                                          )
+                
+                params = {**new_request.extra_params.__dict__,**extract_params}
+                if "history" in params:
+                    del params["history"]
+
                 v.append({
                 "instruction":self._generate_ins(new_request), 
                 "max_length":request.max_length,
                 "top_p":request.top_p,
                 "temperature":request.temperature,           
-                ** request.extra_params.__dict__,
-                ** extract_params})
+                ** params
+                })
         res = self._query(model,v) 
         return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
     
