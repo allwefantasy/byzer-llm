@@ -57,7 +57,7 @@ class LLMRequest:
     temperature: float = 0.9
     extra_params: LLMRequestExtra = LLMRequestExtra()
     
-    @staticmethod
+    @classmethod
     def build(cls, instruction:str,max_length:int=4096,temperature:float=0.1,role_mapping:Dict[str,str]={}):
         return cls(instruction=instruction,max_length=max_length,temperature=temperature,extra_params=LLMRequestExtra(**role_mapping))
         
