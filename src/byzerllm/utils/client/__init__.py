@@ -544,7 +544,7 @@ The current implementation of the function is as follows:
         for name,value in target_names.items():
             if name not in response:
                 missing_variables.append(f'Make sure {name} is defined in the top level scope')
-            elif response[name] is not None and response["name"] != value:
+            elif value is not None and response[name] != value:
                 missing_variables.append(f'Make sure {name} is set to the correct value. Expected: {value}, Actual: {response[name]}') 
         if not missing_variables:        
             return True ,""        
