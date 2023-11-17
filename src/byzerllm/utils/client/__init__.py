@@ -405,7 +405,7 @@ class CodeSandbox:
                 lang="python"        
                 ) 
     
-    def exec_capture_output(self,code: str,target_names:List[str]=[]) -> Tuple[int,str,Any]:
+    def exec_capture_output(self,code: str,target_names:Dict[Any]={}) -> Tuple[int,str,Any]:
         buffer = io.StringIO()
         sys.stdout = buffer
         sys.stderr = buffer
@@ -414,7 +414,7 @@ class CodeSandbox:
             variables = {}
             exec(code,variables)
             response = {}
-            for name in target_names:
+            for name,v in target_names.items():
                 if name in variables:
                     response[name] = variables[name]
         except Exception:
@@ -527,15 +527,17 @@ The current implementation of the function is as follows:
         response = self.llm.raw_chat(None, request=LLMRequest(instruction=new_prompt,**config))            
         return response[0].output, -1
 
-    def default_check_eval_repsonse(self,response:Dict[str,Any],target_names:List[str]=[])->Tuple[bool,str]:
+    def default_check_eval_repsonse(self,response:Dict[str,Any],target_names:Dict[str,Any]={})->Tuple[bool,str]:
         missing_variables = []
-        for name in target_names:
+        
+        for name,value in target_names.items():
             if name not in response:
-                missing_variables.append(name)
-        if missing_variables:
-            s = ",".join(missing_variables)
-            return False,f"Try to make sure {s} are defined in the global scope"
-        return True,""  
+                missing_variables.append(f'Make sure {name} is defined in the top level scope')
+            elif response[name] is not None and response["name"] != value:
+                missing_variables.append(f'Make sure {name} is set to the correct value. Expected: {value}, Actual: {response[name]}') 
+        if not missing_variables:        
+            return True ,""        
+        return False,"Here are the code problems:\n"+"\n".join(missing_variables) if missing_variables else ""
 
     def search_tokenize(self,s:str):
         return self.llm.apply_sql_func("select mkString(' ',parse(value)) as value",[
@@ -933,7 +935,7 @@ variables:
                         
 
     def try_execute_code_until_resolved(self,prompt:str,
-                                        target_names:List[str]=[], 
+                                        target_names:Dict[str,Any]={}, 
                                         max_try_times:int=3,
                                         skip_check_target_names:bool=False)->ExecuteCodeResponse:
         codes,cost =self.generate_code(prompt)
@@ -1067,7 +1069,7 @@ assertions:'''
         status,response,image = ray.get(self.sandbox.execute.remote(code))
         return status,response,image
     
-    def eval_code(self, code,target_names:List[str]=[])->Tuple[int, str, str]:        
+    def eval_code(self, code,target_names:Dict[str,Any]={})->Tuple[int, str, str]:        
         if self.sandbox is None:
             self.sandbox = ray.remote(CodeSandbox).options(
                 name=f"CodeSandbox-{self.sandbox_suffix}",                
