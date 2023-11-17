@@ -787,7 +787,15 @@ answer_chunk: {answer_chunk}
                 answer_chunk = self.llm.chat(None,request=LLMRequest.build(instruction=p,
                                                                    max_length=self.max_length,
                                                                    temperature=self.tempraure,
-                                                                   role_mapping=self.role_mapping))[0].output 
+                                                                   role_mapping=self.role_mapping))[0].output
+                if self.verbose:
+                    print(f'''
+=============== Summary Text =================
+------prompt------
+{p}
+------response------
+{answer_chunk}
+''',flush=True) 
             if self.keep_conversation:    
                 self.save_conversation(self.owner,Role.User,prompt)
                 self.save_conversation(self.owner,Role.Assistant,answer_chunk)     
