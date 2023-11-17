@@ -74,7 +74,7 @@ Try to help me to generate python code which should match the following requirem
 4. make sure the loaded_successfully, file_preview are defined in the global scope
 '''
 
-PROMPT_CHECK_NEED_CODE='''I have a file the path is {self.file_path}, 
+PROMPT_CHECK_NEED_CODE='''I have a file the path is {file_path}, 
 The preview of the file is:
 
 ```text
@@ -124,9 +124,9 @@ def prompt_preview_file(file_path:str):
     prompt_template = PromptTemplate.from_template(PROMPT_PREVIEW_FILE) 
     return prompt_template.format(file_path=file_path)
 
-def prompt_check_need_code(prompt:str,preview_csv:str):
+def prompt_check_need_code(file_path:str,prompt:str,preview_csv:str):
     prompt_template = PromptTemplate.from_template(PROMPT_CHECK_NEED_CODE) 
-    return prompt_template.format(prompt=prompt,preview_csv=preview_csv)
+    return prompt_template.format(file_path=file_path,prompt=prompt,preview_csv=preview_csv)
 
 def prompt_analysis_data_with_visualization(file_path:str,visualization_prompt:str,preview_csv:str):
     prompt_template = PromptTemplate.from_template(PROMPT_ANALYSIS_DATA_WITH_VISUALIZATION) 
