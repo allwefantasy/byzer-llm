@@ -3,7 +3,9 @@ from langchain import PromptTemplate
 PROMPT_ANALYZE_TEXT='''
 We have the following json format data:
 
+```json
 {content}
+```
 
 Try to answer quession according the json format data we provided above.
 the question is:
@@ -14,8 +16,10 @@ the question is:
 PROMPT_SUMARIOZATION ='''                
 please try to summarize the following text:
 
+```
 {answer_chunk}
 {chunk}
+```
 
 Finally, please try to match the following requirements:
 
@@ -66,6 +70,7 @@ otherwise, output the following json format:
 
 PROMPT_SHOULD_GENERATE_CODE_TO_RESPONSE = '''I have a file the path is {file_path}, 
 The preview of the file is:
+
 ```text
 {preview_csv}
 ```
