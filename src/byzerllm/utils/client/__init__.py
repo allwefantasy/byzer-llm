@@ -746,9 +746,18 @@ field(chunk_vector,array(float))
 
         memory_limit = 100
         if "memory_limit" in config:
-            memory_limit = config["memory_limit"]    
+            memory_limit = config["memory_limit"]  
+        is_summary = utils.is_summary(self,prompt,self.role_mapping)
+        if self.verbose:
+            print(f'''
+=============== Check Is Summary Requirement =================
+------prompt------
+{prompt}
+------response------
+is_summary: {is_summary}
+''',flush=True)
 
-        if utils.is_summary(self,prompt,self.role_mapping): 
+        if is_summary: 
             doc = self.get_doc_by_url(self.file_path)
             raw_content = doc["raw_content"]
             multipe = len(raw_content) / self.max_input_length
@@ -757,22 +766,16 @@ field(chunk_vector,array(float))
                 for i in range(math.ceil(multipe)):
                     start = i * self.max_input_length
                     end = (i+1) * self.max_input_length
-                    print(f'''start: {start} end: {end} answer_chunk: {answer_chunk}''',flush=True)
+                    if self.verbose:
+                        print(f'''
+=============== Summary Text =================
+start: {start} end: {end} 
+answer_chunk: {answer_chunk}
+''',flush=True)
                     if raw_content[start:end] == "":
                         break
-                    
-                    p = f'''                
-please try to summarize the following text:
-
-{answer_chunk}
-{raw_content[start:end]}
-
-Finally, please try to match the following requirements:
-
-```
-{prompt}
-```
-'''                    
+                                                        
+                    p = PROMPTS.prompt_sumarization(answer_chunk,raw_content[start:end],prompt)   
                     answer_chunk = self.llm.chat(None,request=
                                                  LLMRequest.build(instruction=p,
                                                                    max_length=self.max_length,
@@ -780,17 +783,7 @@ Finally, please try to match the following requirements:
                                                                    role_mapping=self.role_mapping)
                                                  )[0].output 
             else:
-                p = f'''                
-please try to summarize the following text:
-
-{raw_content}
-
-Finally, please try to match the following requirements:
-
-```
-{prompt}
-```
-'''
+                p = PROMPTS.prompt_sumarization("",raw_content,prompt)
                 answer_chunk = self.llm.chat(None,request=LLMRequest.build(instruction=p,
                                                                    max_length=self.max_length,
                                                                    temperature=self.tempraure,
@@ -801,19 +794,21 @@ Finally, please try to match the following requirements:
             return ExecuteCodeResponse(0,answer_chunk,"",p,{}) 
         
         content = self.search_content_chunks(q=prompt,limit=recall_limit,return_json=True)
-        p1 = f'''
-We have the following json format data:
-
-{content}
-
-Try to answer quession according the json format data we provided above.
-the question is:
-
-{prompt}
-'''
+        p1 = PROMPTS.prompt_analyze_text(content,prompt)
         chat_history = self.get_conversations_as_history(limit=memory_limit) 
         v1 = self.llm.chat(None,request=LLMRequest(instruction=p1,max_length=self.max_length,
                                                                    temperature=self.tempraure,extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)))[0].output
+        p1_len = len(p1)
+        if self.verbose:
+            print(f'''
+=============== Analyze Text =================
+------prompt------
+len:{p1_len}
+{p1}
+------response------
+{v1}
+''',flush=True)
+            
         if self.keep_conversation:
             self.save_conversation(self.owner,Role.User,prompt)
             self.save_conversation(self.owner,Role.Assistant,v1) 

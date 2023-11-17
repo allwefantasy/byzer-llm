@@ -1,5 +1,29 @@
 from langchain import PromptTemplate
 
+PROMPT_ANALYZE_TEXT='''
+We have the following json format data:
+
+{content}
+
+Try to answer quession according the json format data we provided above.
+the question is:
+
+{prompt}
+'''
+
+PROMPT_SUMARIOZATION ='''                
+please try to summarize the following text:
+
+{answer_chunk}
+{chunk}
+
+Finally, please try to match the following requirements:
+
+```
+{prompt}
+```
+''' 
+
 PROMPT_IS_SUMARY = '''
 Please check the following question is whether about summary:
 
@@ -138,6 +162,16 @@ def prompt_no_need_code(file_path:str,prompt:str,preview_csv:str):
 def prompt_analysis_data_with_visualization(file_path:str,visualization_prompt:str,preview_csv:str):
     prompt_template = PromptTemplate.from_template(PROMPT_ANALYSIS_DATA_WITH_VISUALIZATION) 
     return prompt_template.format(file_path=file_path,visualization_prompt=visualization_prompt,preview_csv=preview_csv)
+
+def prompt_sumarization(answer_chunk:str,chunk:str,prompt:str):
+    prompt_template = PromptTemplate.from_template(PROMPT_SUMARIOZATION) 
+    return prompt_template.format(answer_chunk=answer_chunk,chunk=chunk,prompt=prompt)
+
+def prompt_analyze_text(content:str,prompt:str):
+    prompt_template = PromptTemplate.from_template(PROMPT_ANALYZE_TEXT) 
+    return prompt_template.format(content=content,prompt=prompt)
+
+
 
 
 
