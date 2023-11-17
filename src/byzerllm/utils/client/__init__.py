@@ -457,7 +457,7 @@ class ByzerDataAnalysis:
                     }, 
                  max_length:int=8024,   
                  tempraure:float=0.1,
-                 max_input_length=1024*24,
+                 max_input_length=1024*3,
                  verbose:bool=False, 
                  keep_conversation:bool=True,             
                  num_gpus=0, num_cpus=1) -> None:
