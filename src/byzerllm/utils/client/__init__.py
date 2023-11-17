@@ -903,7 +903,7 @@ Please try to generate python code to analyze the file and answer the following 
                                                                    temperature=self.tempraure,
                                                          extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)));    
         response = self.try_execute_code_until_resolved(prompt=final_prompt,
-                                                         target_names=["image_base64"],
+                                                         target_names={"image_base64":None},
                                                          max_try_times=max_try_times,
                                                          skip_check_target_names= not is_visualization
                                                          )
