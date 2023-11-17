@@ -458,7 +458,8 @@ class ByzerDataAnalysis:
                  max_length:int=8024,   
                  tempraure:float=0.1,
                  max_input_length=1024*24,
-                 verbose:bool=False,              
+                 verbose:bool=False, 
+                 keep_conversation:bool=True,             
                  num_gpus=0, num_cpus=1) -> None:
         self.llm = llm
         self.retrieval = retrieval
@@ -474,6 +475,7 @@ class ByzerDataAnalysis:
         self.max_length = max_length
         self.tempraure = tempraure
         self.verbose = verbose
+        self.keep_conversation = keep_conversation
 
         self.role_mapping = role_mapping
 
@@ -793,8 +795,9 @@ Finally, please try to match the following requirements:
                                                                    max_length=self.max_length,
                                                                    temperature=self.tempraure,
                                                                    role_mapping=self.role_mapping))[0].output 
-            self.save_conversation(self.owner,Role.User,prompt)
-            self.save_conversation(self.owner,Role.Assistant,answer_chunk)     
+            if self.keep_conversation:    
+                self.save_conversation(self.owner,Role.User,prompt)
+                self.save_conversation(self.owner,Role.Assistant,answer_chunk)     
             return ExecuteCodeResponse(0,answer_chunk,"",p,{}) 
         
         content = self.search_content_chunks(q=prompt,limit=recall_limit,return_json=True)
@@ -811,8 +814,9 @@ the question is:
         chat_history = self.get_conversations_as_history(limit=memory_limit) 
         v1 = self.llm.chat(None,request=LLMRequest(instruction=p1,max_length=self.max_length,
                                                                    temperature=self.tempraure,extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)))[0].output
-        self.save_conversation(self.owner,Role.User,prompt)
-        self.save_conversation(self.owner,Role.Assistant,v1) 
+        if self.keep_conversation:
+            self.save_conversation(self.owner,Role.User,prompt)
+            self.save_conversation(self.owner,Role.Assistant,v1) 
         return ExecuteCodeResponse(0,v1,"",p1,{})
 
     def data_analyze(self,prompt:str,max_try_times=10,**config)-> ExecuteCodeResponse:
@@ -874,8 +878,9 @@ The response is:
             r = self.llm.chat(None,request=LLMRequest(instruction=no_code_prompt,max_length=self.max_length,
                                                                    temperature=self.tempraure,extra_params=LLMRequestExtra(history=chat_history,**self.role_mapping)))[0].output
             
-            self.save_conversation(self.owner,Role.User,prompt)
-            self.save_conversation(self.owner,Role.Assistant,r)
+            if self.keep_conversation:
+                self.save_conversation(self.owner,Role.User,prompt)
+                self.save_conversation(self.owner,Role.Assistant,r)
 
             return ExecuteCodeResponse(
                 status=0,output=r,
@@ -939,8 +944,9 @@ variables:
 {list(response.variables.keys())}
 ```
 ''')   
-        self.save_conversation(self.owner,Role.User,prompt)
-        self.save_conversation(self.owner,Role.Assistant,response.output)               
+        if self.keep_conversation:
+            self.save_conversation(self.owner,Role.User,prompt)
+            self.save_conversation(self.owner,Role.Assistant,response.output)               
         return response
     
 
