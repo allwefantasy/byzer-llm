@@ -869,8 +869,20 @@ The response is:
         preview_csv = self.file_preview.to_csv(index=False)                
         
         need_code = utils.should_generate_code_to_response(self,prompt,self.role_mapping)
+
+        if self.verbose:
+            print(f'''
+=============== Check Need Code ===============
+------prompt------
+{prompt}
+
+------response------
+{need_code}                                   
+
+''',flush=True)
+
         if not need_code:
-            no_code_prompt=PROMPTS.prompt_check_need_code(prompt=prompt,preview_csv=preview_csv)
+            no_code_prompt=PROMPTS.prompt_check_need_code(file_path=self.file_path,sprompt=prompt,preview_csv=preview_csv)
             # self.llm.chat(None,request=no_code_prompt)[0].output,"",no_code_prompt
             
             chat_history = self.get_conversations_as_history(limit=memory_limit)            
