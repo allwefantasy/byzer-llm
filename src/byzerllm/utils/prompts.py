@@ -25,13 +25,13 @@ Finally, please try to match the following requirements:
 ''' 
 
 PROMPT_IS_SUMARY = '''
-Please check the following question is whether summarize the whole article content:
+Please check the following question is whether have the same meaning with "summarize this article"
 
 ```
 {prompt}                               
 ```                               
 
-If the question require you to summarize the whole article content, please output the following json format:
+If the question have the same meaning with "summarize this article" , please output the following json format:
 
 ```json
 {{"is_summary":true}}
