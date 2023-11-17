@@ -884,7 +884,7 @@ Please try to answer the following questions:
 Try to use base64 to encode the image, assign the base64 string to the variable named image_base64. 
 Make sure the image_base64 defined in the global scope. Here is the specific steps:
 
-1. Import Necessary Libraries: Import matplotlib, io, and base64.
+1. Import Necessary Libraries
 2. Create a Plot: Use matplotlib to create a plot or graph as per the user's request.
 4. Save the Plot to a Buffer: Instead of displaying the plot, save it to an in-memory buffer.
 4. Encode the Image: Convert the buffer content to a base64 string.
