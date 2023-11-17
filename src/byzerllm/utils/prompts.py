@@ -86,25 +86,32 @@ Please try to answer the following questions:
 
 PROMPT_VISUALIZATION = '''When the question require you to do visualization, please use package Plotly or matplotlib to do this.
 Try to use base64 to encode the image, assign the base64 string to the variable named image_base64. 
-Make sure the image_base64 defined in the global scope. Here is the specific steps:
+Make sure the image_base64 defined in the global scope. Notice that try to create figure with `plt.figure()` before you plot the image.
 
-1. Import Necessary Libraries
-2. Create a Plot: Use matplotlib to create a plot or graph as per the user's request.
-4. Save the Plot to a Buffer: Instead of displaying the plot, save it to an in-memory buffer.
-4. Encode the Image: Convert the buffer content to a base64 string.
-5. Assign to Global Variable: Assign the base64 string to the global variable image_base64.
+Here is the example code how to save the plot to a BytesIO object and encode the image to base64:
+
+```python
+# Save the plot to a BytesIO object
+buf = io.BytesIO()
+plt.savefig(buf, format='png')
+buf.seek(0)
+
+# Encode the image to base64
+image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+buf.close()
+```
 '''
 
 PROMPT_ANALYSIS_DATA_WITH_VISUALIZATION='''I have a file the path is {file_path}, 
-Please DO NOT consider the package installation, the packages all are installed, you can use it directly.
-
-{visualization_prompt}
-
 The preview of the file is:
 ```text
 {preview_csv}
 ```
 Use pandas to analyze it. 
+Please DO NOT consider the package installation, the packages all are installed, you can use it directly.
+
+{visualization_prompt}
+
 Please try to generate python code to analyze the file and answer the following questions:
 '''
 
