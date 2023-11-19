@@ -565,7 +565,7 @@ class ByzerDataAnalysis:
         self.num_cpus = num_cpus
         
         sandbox_name = f"CodeSandbox-{self.sandbox_suffix}"        
-        if self.check_sandbox_exists(sandbox_name):             
+        if not self.check_sandbox_exists(sandbox_name):             
             if self.file_path and not self.use_shared_disk  and self.data_analysis_mode == DataAnalysisMode.data_analysis:
                 base_name = os.path.basename(file_path)
                 name, ext = os.path.splitext(base_name)
@@ -581,7 +581,7 @@ class ByzerDataAnalysis:
                 content = open(self.file_path).read()
                 self.save_text_content(title="noops",owner=self.owner,content=content,url=self.file_path)
 
-            self.get_or_create_sandbox(sandbox_name,self.file_path,self.file_ref,self.num_gpus,self.num_cpus) 
+            self.get_or_create_sandbox(sandbox_name) 
         else:
             # restore value from sandbox   
             sandbox = self.get_sandbox(sandbox_name)                       
@@ -1230,12 +1230,8 @@ assertions:'''
 
     def execute_code(self, code)->Tuple[int, str, str]:
         name = f"CodeSandbox-{self.sandbox_suffix}"
-        if self.sandbox_manager is None:
-            self.sandbox_manager = self.get_sandbox_manager()
-
-        sandbox = self.sandbox_manager.get_or_create_sandbox.remote(name,
-                                                                    self.file_path,self.file_ref, 
-                                                                    self.num_gpus, self.num_cpus)            
+        
+        sandbox = self.get_sandbox(name)           
         
         status,response,image = ray.get(sandbox.execute.remote(code))
         return status,response,image
@@ -1261,19 +1257,12 @@ assertions:'''
         return self.sandbox_manager.check_sandbox_exists.remote(name) 
     
     def get_or_create_sandbox(self,name:str)->ClientActorHandle:
-        return self.sandbox_manager.get_or_create_sandbox.remote(name,
-                                                                        self.file_path,self.file_ref,
-                                                                        self.num_gpus, self.num_cpus)      
+        return self.sandbox_manager.get_or_create_sandbox.remote(name)      
             
     
     def eval_code(self, code,target_names:Dict[str,Any]={})->Tuple[int, str, str]:                
-        name = f"CodeSandbox-{self.sandbox_suffix}"
-        if self.sandbox_manager is None:
-            self.sandbox_manager = self.get_sandbox_manager()
-        
-        sandbox = self.sandbox_manager.get_or_create_sandbox.remote(name,
-                                                                    self.file_path,self.file_ref,
-                                                                    self.num_gpus, self.num_cpus)        
+        name = f"CodeSandbox-{self.sandbox_suffix}"                
+        sandbox = self.get_sandbox(name)        
 
         status,output,response = ray.get(sandbox.exec_capture_output.remote(code,target_names))            
 
