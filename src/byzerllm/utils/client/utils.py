@@ -22,7 +22,7 @@ def is_visualization(data_analysis,prompt:str,role_mapping:Dict[str,str])->bool:
 
 def should_generate_code_to_response(data_analysis,prompt:str,role_mapping:Dict[str,str]):  
     from byzerllm.utils.client import LLMRequest,LLMRequestExtra  
-    preview_csv = data_analysis.file_preview.to_csv(index=False) 
+    preview_csv = data_analysis.file_preview
     p = PROMPTS.prompt_should_generate_code_to_response(data_analysis.file_path,prompt,preview_csv)       
     v = data_analysis.llm.chat(None,request=LLMRequest(instruction=p,extra_params=LLMRequestExtra(**role_mapping)))[0].output
     need_code = code_utils.get_value_from_llm_str(v,"need_code",True)
