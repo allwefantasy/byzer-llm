@@ -1262,7 +1262,8 @@ assertions:'''
         return ray.get(self.sandbox_manager.check_sandbox_exists.remote(name) )
     
     def get_or_create_sandbox(self,name:str)->ClientActorHandle:
-        return ray.get(self.sandbox_manager.get_or_create_sandbox.remote(name)      )
+        return ray.get(self.sandbox_manager.get_or_create_sandbox.remote(name
+                                                                         ,self.file_path,self.file_ref,self.num_gpus,self.num_cpus))
             
     
     def eval_code(self, code,target_names:Dict[str,Any]={})->Tuple[int, str, str]:                
