@@ -430,6 +430,8 @@ class CodeSandbox:
         return self
 
     def get_value(self,name:str):
+        if name not in self.session_variables:
+            return None
         return self.session_variables[name]        
 
     def execute_code(self,code)->Tuple[int, str, str]:
@@ -475,6 +477,12 @@ class SandboxManager:
                 del self.lasted_updated[name]
 
     
+    def get_sanbox(self,name:str):                
+        self.check_sandbox_timeout()
+        if name in self.sandboxes:                        
+            return self.sandboxes[name]
+        return None
+
     def get_or_create_sandbox(self,name:str,
                               file_path:str,file_ref:str,
                               num_gpus:int,num_cpus:int):
@@ -527,7 +535,9 @@ class ByzerDataAnalysis:
         self.llm.max_input_length = self.max_input_length
 
         self.use_shared_disk = use_shared_disk
-        self.sandbox_manager = None
+        
+        self.sandbox_manager = self.get_sandbox_manager()
+
         self.file_path = file_path
         self.file_ref = None
         self.file_preview = None
@@ -553,23 +563,33 @@ class ByzerDataAnalysis:
         
         self.num_gpus = num_gpus
         self.num_cpus = num_cpus
-
         
+        sandbox_name = f"CodeSandbox-{self.sandbox_suffix}"
+        if self.sandbox_manager.get_sanbox(sandbox_name) is None:             
+            if self.file_path and not self.use_shared_disk  and self.data_analysis_mode == DataAnalysisMode.data_analysis:
+                base_name = os.path.basename(file_path)
+                name, ext = os.path.splitext(base_name)
+                new_base_name = self.sandbox_suffix + ext
+                dir_name = os.path.dirname(file_path)
+                new_file_path = os.path.join(dir_name, new_base_name)
+
+                logger.info(f"use_shared_disk: {self.use_shared_disk} file_path: {self.file_path} new_file_path: {new_file_path}")
+                self.file_ref = ray.put(open(self.file_path).read())
+                self.file_path = new_file_path
+
+            if self.file_path and self.data_analysis_mode == DataAnalysisMode.text_analysis:
+                content = open(self.file_path).read()
+                self.save_text_content(title="noops",owner=self.owner,content=content,url=self.file_path)
+
+            self.sandbox_manager.get_or_create_sandbox(sandbox_name,self.file_path,self.file_ref,self.num_gpus,self.num_cpus) 
+        else:
+            # restore value from sandbox
+            sandbox = self.sandbox_manager.get_sanbox(sandbox_name)              
+            self.file_preview = ray.get(sandbox.get_value.remote("file_preview"))
+            restore_loaded_successfully = ray.get(sandbox.get_value.remote("loaded_successfully"))
+            self.loaded_successfully = restore_loaded_successfully if restore_loaded_successfully else False
         
-        if self.file_path and not self.use_shared_disk  and self.data_analysis_mode == DataAnalysisMode.data_analysis:
-            base_name = os.path.basename(file_path)
-            name, ext = os.path.splitext(base_name)
-            new_base_name = self.sandbox_suffix + ext
-            dir_name = os.path.dirname(file_path)
-            new_file_path = os.path.join(dir_name, new_base_name)
 
-            logger.info(f"use_shared_disk: {self.use_shared_disk} file_path: {self.file_path} new_file_path: {new_file_path}")
-            self.file_ref = ray.put(open(self.file_path).read())
-            self.file_path = new_file_path
-
-        if self.file_path and self.data_analysis_mode == DataAnalysisMode.text_analysis:
-            content = open(self.file_path).read()
-            self.save_text_content(title="noops",owner=self.owner,content=content,url=self.file_path)
 
 
     def generate_code(self, prompt:Union[str,LLMRequest],pattern: str = code_utils.CODE_BLOCK_PATTERN, **config) -> Tuple[str, float]:
@@ -929,6 +949,10 @@ The response is:
             else:                        
                 self.file_preview = response.variables["file_preview"].to_csv(index=False)    
                 self.loaded_successfully = True
+                # keep this message in the sandbox
+                sandbox = self.get_sandbox_manager().get_sanbox(f"CodeSandbox-{self.sandbox_suffix}")
+                sandbox.set_value.remote("file_preview",self.file_preview)
+                sandbox.set_value.remote("loaded_successfully",self.loaded_successfully)
         
         preview_csv = self.file_preview
         
