@@ -842,14 +842,15 @@ is_summary: {is_summary}
 ''',flush=True)
 
         if is_summary: 
+            chunk_size = self.max_input_length/2
             doc = self.get_doc_by_url(self.file_path)
             raw_content = doc["raw_content"]
-            multipe = len(raw_content) / self.max_input_length
+            multipe = len(raw_content) / chunk_size
             answer_chunk = ""
             if  multipe > 1:
                 for i in range(math.ceil(multipe)):
-                    start = i * self.max_input_length
-                    end = (i+1) * self.max_input_length
+                    start = i * chunk_size
+                    end = (i+1) * chunk_size
                     if self.verbose:
                         print(f'''
 =============== Summary Text =================
