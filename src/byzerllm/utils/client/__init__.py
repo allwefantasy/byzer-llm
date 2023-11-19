@@ -482,6 +482,10 @@ class SandboxManager:
     def get_sandbox(self,name:str):                
         self.check_sandbox_timeout()        
         return self.sandboxes[name]
+    
+    def force_clear(self):
+        self.sandboxes = {}
+        self.lasted_updated = {}
 
     def get_or_create_sandbox(self,name:str,
                               file_path:str,file_ref:str,
@@ -564,7 +568,8 @@ class ByzerDataAnalysis:
         self.num_gpus = num_gpus
         self.num_cpus = num_cpus
         
-        sandbox_name = f"CodeSandbox-{self.sandbox_suffix}"        
+        sandbox_name = f"CodeSandbox-{self.sandbox_suffix}"
+
         if not self.check_sandbox_exists(sandbox_name):             
             if self.file_path and not self.use_shared_disk  and self.data_analysis_mode == DataAnalysisMode.data_analysis:
                 base_name = os.path.basename(file_path)
