@@ -1256,13 +1256,13 @@ assertions:'''
         return manager 
     
     def get_sandbox(self,name:str)->ClientActorHandle:
-        return self.sandbox_manager.get_sandbox.remote(name) 
+        return ray.get(self.sandbox_manager.get_sandbox.remote(name) )
 
-    def check_sandbox_exists(self,name:str)->ClientActorHandle:
-        return self.sandbox_manager.check_sandbox_exists.remote(name) 
+    def check_sandbox_exists(self,name:str)->bool:
+        return ray.get(self.sandbox_manager.check_sandbox_exists.remote(name) )
     
     def get_or_create_sandbox(self,name:str)->ClientActorHandle:
-        return self.sandbox_manager.get_or_create_sandbox.remote(name)      
+        return ray.get(self.sandbox_manager.get_or_create_sandbox.remote(name)      )
             
     
     def eval_code(self, code,target_names:Dict[str,Any]={})->Tuple[int, str, str]:                
