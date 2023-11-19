@@ -492,7 +492,7 @@ class SandboxManager:
                               num_gpus:int,num_cpus:int):
         self.lasted_updated[name] = time.time()
         self.check_sandbox_timeout()
-        if name in self.sandbox:            
+        if name in self.sandboxes:            
             return self.sandboxes[name]
         
         sandbox = ray.remote(CodeSandbox).options(
