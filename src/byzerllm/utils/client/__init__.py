@@ -527,6 +527,7 @@ class ByzerDataAnalysis:
                  max_length:int=8024,   
                  tempraure:float=0.1,
                  max_input_length=1024*3,
+                 max_output_length=1200,
                  verbose:bool=False, 
                  keep_conversation:bool=True,             
                  num_gpus=0, num_cpus=1) -> None:
@@ -535,8 +536,10 @@ class ByzerDataAnalysis:
         self.retrieval = retrieval
         self.data_analysis_mode = data_analysis_mode
         self.max_input_length = max_input_length
-        
+        self.max_output_length = max_output_length
+
         self.llm.max_input_length = self.max_input_length
+        
 
         self.use_shared_disk = use_shared_disk
         
@@ -669,6 +672,9 @@ field(content_vector,array(float))
 
         if self.chat_name is None:
             self.chat_name = content[0:10]   
+
+        if len(content) > self.max_output_length:
+            raise Exception(f"The response content length {len(content)} is larger than max_output_length {self.max_output_length}")
 
         data = [{"_id":str(uuid.uuid4()),
                 "chat_name":self.chat_name,
