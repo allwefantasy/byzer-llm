@@ -1240,7 +1240,7 @@ assertions:'''
         status,response,image = ray.get(sandbox.execute.remote(code))
         return status,response,image
     
-    def get_sandbox_manager(self)->ClientActorHandle[SandboxManager]:
+    def get_sandbox_manager(self)->ClientActorHandle:
         name = "SANDBOX_MANAGER"
         manager = None
         try:
@@ -1254,10 +1254,10 @@ assertions:'''
             ).remote()
         return manager 
     
-    def get_sandbox(self,name:str)->ClientActorHandle[CodeSandbox]:
+    def get_sandbox(self,name:str)->ClientActorHandle:
         return self.get_sandbox_manager().get_sanbox.remote(name) 
 
-    def get_or_create_sandbox(self,name:str)->ClientActorHandle[CodeSandbox]:
+    def get_or_create_sandbox(self,name:str)->ClientActorHandle:
         return self.get_sandbox_manager().get_or_create_sandbox.remote(name,
                                                                         self.file_path,self.file_ref,
                                                                         self.num_gpus, self.num_cpus)      
