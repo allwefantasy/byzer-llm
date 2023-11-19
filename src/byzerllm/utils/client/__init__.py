@@ -565,7 +565,8 @@ class ByzerDataAnalysis:
         self.num_cpus = num_cpus
         
         sandbox_name = f"CodeSandbox-{self.sandbox_suffix}"
-        if self.get_sandbox(sandbox_name) is None:             
+        sandbox = self.get_sandbox(sandbox_name)
+        if sandbox is None:             
             if self.file_path and not self.use_shared_disk  and self.data_analysis_mode == DataAnalysisMode.data_analysis:
                 base_name = os.path.basename(file_path)
                 name, ext = os.path.splitext(base_name)
@@ -583,8 +584,7 @@ class ByzerDataAnalysis:
 
             self.get_or_create_sandbox(sandbox_name,self.file_path,self.file_ref,self.num_gpus,self.num_cpus) 
         else:
-            # restore value from sandbox
-            sandbox = self.get_sandbox(sandbox_name)              
+            # restore value from sandbox                          
             self.file_preview = ray.get(sandbox.get_value.remote("file_preview"))
             restore_loaded_successfully = ray.get(sandbox.get_value.remote("loaded_successfully"))
             self.loaded_successfully = restore_loaded_successfully if restore_loaded_successfully else False
