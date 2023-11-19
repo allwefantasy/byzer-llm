@@ -150,6 +150,11 @@ def generate_file_md5(file_path: str) -> str:
     with open(file_path, 'rb') as f:
         for chunk in iter(lambda: f.read(4096), b''):
             md5_hash.update(chunk)
-    return md5_hash.hexdigest()   
+    return md5_hash.hexdigest()
+
+def generate_str_md5(s: str) -> str:
+    md5_hash = hashlib.md5()
+    md5_hash.update(s.encode("utf-8"))
+    return md5_hash.hexdigest()       
 
 

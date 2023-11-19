@@ -19,6 +19,7 @@ from .. import prompts as PROMPTS
 import logging
 import time
 import math
+from byzerllm.utils import generate_str_md5
 
 
 logger = logging.getLogger(__name__)
@@ -104,6 +105,14 @@ class ByzerLLM:
                          }
         self.sys_conf = self.default_sys_conf.copy()
         self.sql_model = "context" in globals()
+        
+        self.max_input_length = None
+        if "max_input_length" in kwargs:
+            self.max_input_length = kwargs["max_input_length"] 
+
+        self.byzer_engine_url = None
+        if "byzer_engine_url" in kwargs:
+            self.byzer_engine_url = kwargs["byzer_engine_url"]                         
 
         self.default_model_name = None
 
@@ -328,9 +337,13 @@ class ByzerLLM:
             params = {**request.extra_params.__dict__,**extract_params}
             if "history" in params:
                 del params["history"]
-
+            final_input = self._generate_ins(request) 
+            
+            if self.max_input_length and len(final_input) > self.max_input_length:
+                    raise Exception(f"input length {len(final_input)} is larger than max_input_length {self.max_input_length}")
+            
             v = [{
-            "instruction":self._generate_ins(request),
+            "instruction":final_input,
             "max_length":request.max_length,
             "top_p":request.top_p,
             "temperature":request.temperature,            
@@ -347,9 +360,13 @@ class ByzerLLM:
                 params = {**new_request.extra_params.__dict__,**extract_params}
                 if "history" in params:
                     del params["history"]
-
+                final_input = self._generate_ins(new_request)    
+                
+                if self.max_input_length and len(final_input) > self.max_input_length:
+                    raise Exception(f"input length {len(final_input)} is larger than max_input_length {self.max_input_length}")
+                
                 v.append({
-                "instruction":self._generate_ins(new_request), 
+                "instruction":final_input, 
                 "max_length":request.max_length,
                 "top_p":request.top_p,
                 "temperature":request.temperature,           
@@ -359,12 +376,14 @@ class ByzerLLM:
         return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
     
     def apply_sql_func(self,sql:str,data:List[Dict[str,Any]],owner:str="admin",url:str="http://127.0.0.1:9003/model/predict"):
+        if self.byzer_engine_url and url == "http://127.0.0.1:9003/model/predict":
+            url = self.byzer_engine_url
         res = self._rest_byzer_engine(sql,data,owner,url)
         return res
                    
     def _rest_byzer_engine(self, sql:str,table:List[Dict[str,Any]],owner:str,url:str):
         import requests
-        import json
+        import json        
         data = {
                 'sessionPerUser': 'true',
                 'sessionPerRequest': 'true',
@@ -380,7 +399,7 @@ class ByzerLLM:
         res = json.loads(response.text)        
         return res[0]
 
-    def _query(self, model:str, input_value:List[Dict[str,Any]]):
+    def _query(self, model:str, input_value:List[Dict[str,Any]]):           
         udf_master = ray.get_actor(model)
         new_input_value = [json.dumps(x,ensure_ascii=False) for x in input_value]
       
@@ -397,13 +416,21 @@ class CodeSandbox:
     def __init__(self,file_path:str,file_ref) -> None:
         self.file_ref = file_ref
         self.file_path = file_path
+        self.session_variables = {}
         if self.file_ref:
             if isinstance(self.file_ref, str):
                 content = self.file_ref
             else:
                 content = ray.get(self.file_ref)
             with open(self.file_path, "w") as f:
-                f.write(content)         
+                f.write(content)
+                
+    def set_value(self,name:str,value:str): 
+        self.session_variables[name] = value
+        return self
+
+    def get_value(self,name:str):
+        return self.session_variables[name]        
 
     def execute_code(self,code)->Tuple[int, str, str]:
         return code_utils.execute_code(
@@ -435,6 +462,36 @@ class CodeSandbox:
 
         return 0,buffer.getvalue(),response
 
+class SandboxManager:
+    def __init__(self) -> None:
+        self.sandboxes = {}
+        self.lasted_updated = {}
+    
+    ## if the sandbox is not used for 1h, we will remove it
+    def check_sandbox_timeout(self,timeout:int=60*60): 
+        for name in self.lasted_updated:
+            if time.time() - self.lasted_updated[name] > timeout:
+                del self.sandboxes[name]
+                del self.lasted_updated[name]
+
+    
+    def get_or_create_sandbox(self,name:str,
+                              file_path:str,file_ref:str,
+                              num_gpus:int,num_cpus:int):
+        self.lasted_updated[name] = time.time()
+        self.check_sandbox_timeout()
+        if name in self.sandbox:            
+            return self.sandboxes[name]
+        
+        sandbox = ray.remote(CodeSandbox).options(
+                name=name,                              
+                num_cpus=num_cpus,
+                num_gpus=num_gpus
+            ).remote(file_path,file_ref)
+        self.sandboxes[name] = sandbox
+        return sandbox
+    
+
 class DataAnalysisMode:
     data_analysis = "data_analysis"
     text_analysis = "text_analysis" 
@@ -462,11 +519,15 @@ class ByzerDataAnalysis:
                  keep_conversation:bool=True,             
                  num_gpus=0, num_cpus=1) -> None:
         self.llm = llm
+        
         self.retrieval = retrieval
         self.data_analysis_mode = data_analysis_mode
         self.max_input_length = max_input_length
+        
+        self.llm.max_input_length = self.max_input_length
+
         self.use_shared_disk = use_shared_disk
-        self.sandbox = None
+        self.sandbox_manager = None
         self.file_path = file_path
         self.file_ref = None
         self.file_preview = None
@@ -480,15 +541,15 @@ class ByzerDataAnalysis:
         self.role_mapping = role_mapping
 
         self.retrieval_cluster = retrieval_cluster
-        self.retrieval_db = retrieval_db
-
-        self.sandbox_suffix = str(uuid.uuid4())                
+        self.retrieval_db = retrieval_db        
 
         self.owner = owner
-        self.chat_name = chat_name
+        self.chat_name = chat_name                
         
         if self.owner is None:
-            self.owner = self.sandbox_suffix            
+            self.owner = str(uuid.uuid4())            
+
+        self.sandbox_suffix = generate_str_md5(self.owner+"_"+self.chat_name)    
         
         self.num_gpus = num_gpus
         self.num_cpus = num_cpus
@@ -866,10 +927,10 @@ The response is:
 ```        
 ''')
             else:                        
-                self.file_preview = response.variables["file_preview"]    
+                self.file_preview = response.variables["file_preview"].to_csv(index=False)    
                 self.loaded_successfully = True
         
-        preview_csv = self.file_preview.to_csv(index=False)                
+        preview_csv = self.file_preview
         
         need_code = utils.should_generate_code_to_response(self,prompt,self.role_mapping)
 
@@ -1146,24 +1207,42 @@ assertions:'''
         #         return responses[metrics["index_selected"]], cost, i
 
     def execute_code(self, code)->Tuple[int, str, str]:
-        if self.sandbox is None:
-            self.sandbox = ray.remote(CodeSandbox).options(
-                name="CodeSandbox",                
-                num_cpus=self.num_cpus,
-                num_gpus=self.num_gpus
-            ).remote()
-        status,response,image = ray.get(self.sandbox.execute.remote(code))
+        name = f"CodeSandbox-{self.sandbox_suffix}"
+        if self.sandbox_manager is None:
+            self.sandbox_manager = self.get_sandbox_manager()
+
+        sandbox = self.sandbox_manager.get_or_create_sandbox.remote(name,
+                                                                    self.file_path,self.file_ref, 
+                                                                    self.num_gpus, self.num_cpus)            
+        
+        status,response,image = ray.get(sandbox.execute.remote(code))
         return status,response,image
     
-    def eval_code(self, code,target_names:Dict[str,Any]={})->Tuple[int, str, str]:        
-        if self.sandbox is None:
-            self.sandbox = ray.remote(CodeSandbox).options(
-                name=f"CodeSandbox-{self.sandbox_suffix}",                
-                num_cpus=self.num_cpus,
-                num_gpus=self.num_gpus
-            ).remote(self.file_path,self.file_ref)
+    def get_sandbox_manager(self):
+        name = "SANDBOX_MANAGER"
+        manager = None
+        try:
+            manager = ray.get_actor(name)
+        except Exception:              
+            manager = ray.remote(SandboxManager).options(
+                name=name, 
+                lifetime="detached",               
+                num_cpus=1,
+                num_gpus=0
+            ).remote()
+        return manager    
+            
+    
+    def eval_code(self, code,target_names:Dict[str,Any]={})->Tuple[int, str, str]:                
+        name = f"CodeSandbox-{self.sandbox_suffix}"
+        if self.sandbox_manager is None:
+            self.sandbox_manager = self.get_sandbox_manager()
+        
+        sandbox = self.sandbox_manager.get_or_create_sandbox.remote(name,
+                                                                    self.file_path,self.file_ref,
+                                                                    self.num_gpus, self.num_cpus)        
 
-        status,output,response = ray.get(self.sandbox.exec_capture_output.remote(code,target_names))            
+        status,output,response = ray.get(sandbox.exec_capture_output.remote(code,target_names))            
 
         return status,output,response
             
