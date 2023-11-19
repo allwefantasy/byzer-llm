@@ -565,7 +565,7 @@ class ByzerDataAnalysis:
         self.num_cpus = num_cpus
         
         sandbox_name = f"CodeSandbox-{self.sandbox_suffix}"
-        if self.sandbox_manager.get_sanbox(sandbox_name) is None:             
+        if self.get_sandbox(sandbox_name) is None:             
             if self.file_path and not self.use_shared_disk  and self.data_analysis_mode == DataAnalysisMode.data_analysis:
                 base_name = os.path.basename(file_path)
                 name, ext = os.path.splitext(base_name)
@@ -581,16 +581,14 @@ class ByzerDataAnalysis:
                 content = open(self.file_path).read()
                 self.save_text_content(title="noops",owner=self.owner,content=content,url=self.file_path)
 
-            self.sandbox_manager.get_or_create_sandbox(sandbox_name,self.file_path,self.file_ref,self.num_gpus,self.num_cpus) 
+            self.get_or_create_sandbox(sandbox_name,self.file_path,self.file_ref,self.num_gpus,self.num_cpus) 
         else:
             # restore value from sandbox
-            sandbox = self.sandbox_manager.get_sanbox(sandbox_name)              
+            sandbox = self.get_sandbox(sandbox_name)              
             self.file_preview = ray.get(sandbox.get_value.remote("file_preview"))
             restore_loaded_successfully = ray.get(sandbox.get_value.remote("loaded_successfully"))
             self.loaded_successfully = restore_loaded_successfully if restore_loaded_successfully else False
-        
-
-
+            
 
     def generate_code(self, prompt:Union[str,LLMRequest],pattern: str = code_utils.CODE_BLOCK_PATTERN, **config) -> Tuple[str, float]:
         """Generate code.
@@ -950,7 +948,7 @@ The response is:
                 self.file_preview = response.variables["file_preview"].to_csv(index=False)    
                 self.loaded_successfully = True
                 # keep this message in the sandbox
-                sandbox = self.get_sandbox_manager().get_sanbox(f"CodeSandbox-{self.sandbox_suffix}")
+                sandbox = self.get_sandbox(f"CodeSandbox-{self.sandbox_suffix}")
                 sandbox.set_value.remote("file_preview",self.file_preview)
                 sandbox.set_value.remote("loaded_successfully",self.loaded_successfully)
         
@@ -1242,7 +1240,7 @@ assertions:'''
         status,response,image = ray.get(sandbox.execute.remote(code))
         return status,response,image
     
-    def get_sandbox_manager(self):
+    def get_sandbox_manager(self)->ClientActorHandle[SandboxManager]:
         name = "SANDBOX_MANAGER"
         manager = None
         try:
@@ -1254,7 +1252,15 @@ assertions:'''
                 num_cpus=1,
                 num_gpus=0
             ).remote()
-        return manager    
+        return manager 
+    
+    def get_sandbox(self,name:str)->ClientActorHandle[CodeSandbox]:
+        return self.get_sandbox_manager().get_sanbox.remote(name) 
+
+    def get_or_create_sandbox(self,name:str)->ClientActorHandle[CodeSandbox]:
+        return self.get_sandbox_manager().get_or_create_sandbox.remote(name,
+                                                                        self.file_path,self.file_ref,
+                                                                        self.num_gpus, self.num_cpus)      
             
     
     def eval_code(self, code,target_names:Dict[str,Any]={})->Tuple[int, str, str]:                
