@@ -1255,13 +1255,13 @@ assertions:'''
         return manager 
     
     def get_sandbox(self,name:str)->ClientActorHandle:
-        return self.get_sandbox_manager().get_sandbox.remote(name) 
+        return self.sandbox_manager.get_sandbox.remote(name) 
 
     def check_sandbox_exists(self,name:str)->ClientActorHandle:
-        return self.get_sandbox_manager().check_sandbox_exists.remote(name) 
+        return self.sandbox_manager.check_sandbox_exists.remote(name) 
     
     def get_or_create_sandbox(self,name:str)->ClientActorHandle:
-        return self.get_sandbox_manager().get_or_create_sandbox.remote(name,
+        return self.sandbox_manager.get_or_create_sandbox.remote(name,
                                                                         self.file_path,self.file_ref,
                                                                         self.num_gpus, self.num_cpus)      
             
