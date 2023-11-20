@@ -432,7 +432,10 @@ class CodeSandbox:
     def get_value(self,name:str):
         if name not in self.session_variables:
             return None
-        return self.session_variables[name]        
+        return self.session_variables[name]
+
+    def get_file_path(self):
+        return self.file_path        
 
     def execute_code(self,code)->Tuple[int, str, str]:
         return code_utils.execute_code(
@@ -594,6 +597,7 @@ class ByzerDataAnalysis:
             # restore value from sandbox   
             sandbox = self.get_sandbox(sandbox_name)                       
             self.file_preview = ray.get(sandbox.get_value.remote("file_preview"))
+            self.file_path = ray.get(sandbox.get_file_path.remote())
             restore_loaded_successfully = ray.get(sandbox.get_value.remote("loaded_successfully"))
             self.loaded_successfully = restore_loaded_successfully if restore_loaded_successfully else False
             
