@@ -855,7 +855,7 @@ is_summary: {is_summary}
 ''',flush=True)
 
         if is_summary: 
-            chunk_size = self.max_input_length/2
+            chunk_size = int(self.max_input_length/2)
             doc = self.get_doc_by_url(self.file_path)
             raw_content = doc["raw_content"]
             multipe = len(raw_content) / chunk_size
