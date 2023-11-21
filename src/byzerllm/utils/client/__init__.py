@@ -844,6 +844,12 @@ field(chunk_vector,array(float))
         memory_limit = 100
         if "memory_limit" in config:
             memory_limit = config["memory_limit"]  
+
+        if "chunk_size" in config:
+            chunk_size = config["chunk_size"]
+        else:
+            chunk_size = int(self.max_input_length/2)
+
         is_summary = utils.is_summary(self,prompt,self.role_mapping)
         if self.verbose:
             print(f'''
@@ -854,8 +860,7 @@ field(chunk_vector,array(float))
 is_summary: {is_summary}
 ''',flush=True)
 
-        if is_summary: 
-            chunk_size = int(self.max_input_length/2)
+        if is_summary:             
             doc = self.get_doc_by_url(self.file_path)
             raw_content = doc["raw_content"]
             multipe = len(raw_content) / chunk_size
