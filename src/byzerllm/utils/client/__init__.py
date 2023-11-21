@@ -474,10 +474,13 @@ class SandboxManager:
     
     ## if the sandbox is not used for 1h, we will remove it
     def check_sandbox_timeout(self,timeout:int=60*60): 
+        remove_names = []
         for name in self.lasted_updated:
             if time.time() - self.lasted_updated[name] > timeout:
-                del self.sandboxes[name]
-                del self.lasted_updated[name]
+                remove_names.append(name)
+        for name in remove_names:
+            del self.sandboxes[name]
+            del self.lasted_updated[name]        
 
     def check_sandbox_exists(self,name:str)->bool:
         return name in self.sandboxes
