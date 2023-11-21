@@ -866,7 +866,10 @@ is_summary: {is_summary}
             if  multipe:
                 for i in range(100):
                     start = i * chunk_size
-                    end = (i+1) * (chunk_size-len(answer_chunk))
+                    end = (i+1) * chunk_size - len(answer_chunk)
+                    if end < start or end > len(raw_content):
+                        break
+                    
                     if self.verbose:
                         print(f'''
 =============== Summary Text =================
