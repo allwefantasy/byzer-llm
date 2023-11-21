@@ -846,7 +846,7 @@ The current implementation of the function is as follows:
         if "chunk_size" in config:
             chunk_size = config["chunk_size"]
         else:
-            chunk_size = self.max_input_length - 100
+            chunk_size = self.max_input_length - 600
 
         is_summary = utils.is_summary(self,prompt,self.role_mapping)
         if self.verbose:
