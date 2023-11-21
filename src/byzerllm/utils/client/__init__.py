@@ -846,7 +846,7 @@ The current implementation of the function is as follows:
         if "chunk_size" in config:
             chunk_size = config["chunk_size"]
         else:
-            chunk_size = int(self.max_input_length/2)
+            chunk_size = self.max_input_length - 100
 
         is_summary = utils.is_summary(self,prompt,self.role_mapping)
         if self.verbose:
@@ -861,16 +861,17 @@ is_summary: {is_summary}
         if is_summary:             
             doc = self.get_doc_by_url(self.file_path)
             raw_content = doc["raw_content"]
-            multipe = len(raw_content) / chunk_size
+            multipe = len(raw_content) > chunk_size
             answer_chunk = ""
-            if  multipe > 1:
-                for i in range(math.ceil(multipe)):
+            if  multipe:
+                for i in range(100):
                     start = i * chunk_size
-                    end = (i+1) * chunk_size
+                    end = (i+1) * (chunk_size-len(answer_chunk))
                     if self.verbose:
                         print(f'''
 =============== Summary Text =================
 start: {start} end: {end} 
+len_answer_chunk: {len(answer_chunk)}
 answer_chunk: {answer_chunk}
 ''',flush=True)
                     if raw_content[start:end] == "":
