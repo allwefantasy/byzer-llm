@@ -603,6 +603,54 @@ class ByzerDataAnalysis:
             self.file_path = ray.get(sandbox.get_file_path.remote())
             restore_loaded_successfully = ray.get(sandbox.get_value.remote("loaded_successfully"))
             self.loaded_successfully = restore_loaded_successfully if restore_loaded_successfully else False
+
+        if self.retrieval and not self.retrieval.check_table_exists(self.retrieval_cluster,self.retrieval_db,"text_content"):
+           self.retrieval.create_table(self.retrieval_cluster,tableSettings=TableSettings(
+                database=self.retrieval_db,
+                table="text_content",schema='''st(
+field(_id,string),
+field(owner,string),
+field(title,string,analyze),
+field(content,string,analyze),
+field(url,string),
+field(raw_content,string),
+field(auth_tag,string,analyze),
+field(title_vector,array(float)),
+field(content_vector,array(float))
+)''',
+                location=f"/tmp/{self.retrieval_cluster}",num_shards=1                
+           ))
+
+           self.retrieval.create_table(self.retrieval_cluster,tableSettings=TableSettings(
+                database=self.retrieval_db,
+                table="text_content_chunk",schema='''st(
+field(_id,string),
+field(doc_id,string),
+field(owner,string),
+field(chunk,string,analyze),
+field(raw_chunk,string),
+field(chunk_vector,array(float))
+)''',
+                location=f"/tmp/{self.retrieval_cluster}",num_shards=1                
+           )) 
+           if not self.retrieval.check_table_exists(self.retrieval_cluster,self.retrieval_db,"user_memory"):
+                self.retrieval.create_table(self.retrieval_cluster,tableSettings=TableSettings(
+                        database=self.retrieval_db,
+                        table="user_memory",schema='''st(
+        field(_id,string),
+        field(chat_name,string),
+        field(role,string),
+        field(owner,string),
+        field(content,string,analyze),
+        field(raw_content,string),
+        field(auth_tag,string,analyze),
+        field(created_time,long,sort),
+        field(chat_name_vector,array(float)),
+        field(content_vector,array(float))
+        )
+        ''',
+                        location="",num_shards=""                
+                ))   
             
 
     def generate_code(self, prompt:Union[str,LLMRequest],pattern: str = code_utils.CODE_BLOCK_PATTERN, **config) -> Tuple[str, float]:
@@ -656,26 +704,7 @@ The current implementation of the function is as follows:
 
     def save_conversation(self,owner:str,role:str,content:str):
         if not self.retrieval:
-            raise Exception("retrieval is not setup")                
-        
-        if not self.retrieval.check_table_exists(self.retrieval_cluster,self.retrieval_db,"user_memory"):
-           self.retrieval.create_table(self.retrieval_cluster,tableSettings=TableSettings(
-                database=self.retrieval_db,
-                table="user_memory",schema='''st(
-field(_id,string),
-field(chat_name,string),
-field(role,string),
-field(owner,string),
-field(content,string,analyze),
-field(raw_content,string),
-field(auth_tag,string,analyze),
-field(created_time,long,sort),
-field(chat_name_vector,array(float)),
-field(content_vector,array(float))
-)
-''',
-                location="",num_shards=""                
-           ))
+            raise Exception("retrieval is not setup")                                
 
         if self.chat_name is None:
             self.chat_name = content[0:10]   
@@ -717,38 +746,7 @@ field(content_vector,array(float))
 
         if not self.retrieval:
             raise Exception("retrieval is not setup")
-                
-
-        if not self.retrieval.check_table_exists(self.retrieval_cluster,self.retrieval_db,"text_content"):
-           self.retrieval.create_table(self.retrieval_cluster,tableSettings=TableSettings(
-                database=self.retrieval_db,
-                table="text_content",schema='''st(
-field(_id,string),
-field(owner,string),
-field(title,string,analyze),
-field(content,string,analyze),
-field(url,string),
-field(raw_content,string),
-field(auth_tag,string,analyze),
-field(title_vector,array(float)),
-field(content_vector,array(float))
-)''',
-                location=f"/tmp/{self.retrieval_cluster}",num_shards=1                
-           ))
-
-           self.retrieval.create_table(self.retrieval_cluster,tableSettings=TableSettings(
-                database=self.retrieval_db,
-                table="text_content_chunk",schema='''st(
-field(_id,string),
-field(doc_id,string),
-field(owner,string),
-field(chunk,string,analyze),
-field(raw_chunk,string),
-field(chunk_vector,array(float))
-)''',
-                location=f"/tmp/{self.retrieval_cluster}",num_shards=1                
-           ))
-
+                        
         text_content = [{"_id":str(uuid.uuid4()),
             "title":self.search_tokenize(title),
             "content":self.search_tokenize(content),
