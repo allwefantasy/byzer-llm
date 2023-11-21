@@ -422,7 +422,7 @@ class CodeSandbox:
                 content = self.file_ref
             else:
                 content = ray.get(self.file_ref)
-            with open(self.file_path, "w") as f:
+            with open(self.file_path, "wb") as f:
                 f.write(content)
                 
     def set_value(self,name:str,value:str): 
@@ -588,7 +588,7 @@ class ByzerDataAnalysis:
                 new_file_path = os.path.join(dir_name, new_base_name)
 
                 logger.info(f"use_shared_disk: {self.use_shared_disk} file_path: {self.file_path} new_file_path: {new_file_path}")
-                self.file_ref = ray.put(open(self.file_path).read())
+                self.file_ref = ray.put(open(self.file_path,"rb").read())
                 self.file_path = new_file_path
 
             if self.file_path and self.data_analysis_mode == DataAnalysisMode.text_analysis:
