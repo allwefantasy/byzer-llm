@@ -413,15 +413,15 @@ class ByzerLLM:
             ray.get(udf_master.give_back.remote(index)) 
 
 class CodeSandbox:
-    def __init__(self,file_path:str,file_ref) -> None:
+    def __init__(self,file_path:str,file_ref) -> None:        
         self.file_ref = file_ref
         self.file_path = file_path
         self.session_variables = {}
         if self.file_ref:
-            if isinstance(self.file_ref, str):
-                content = self.file_ref
-            else:
+            if isinstance(self.file_ref,ClientObjectRef):
                 content = ray.get(self.file_ref)
+            else:
+                content = self.file_ref            
             with open(self.file_path, "wb") as f:
                 f.write(content)
                 
