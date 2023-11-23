@@ -1,10 +1,30 @@
-<div align="center">
- Byzer-LLM
-</div>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/allwefantasy/byzer-llm/main/docs/source/assets/logos/logo.png">
+  </picture>
+</p>
 
-Byzer-LLM is a LLM full lifecycle solution that includes pretrain, fintune, deployment and serving based on Ray.
+<h3 align="center">
+Easy, fast, and cheap pretrain,finetune, serving for everyone
+</h3>
 
-The key differences between Byzer-LLM and other LLM solutions have two.
+<p align="center">
+| <a href="#"><b>Documentation</b></a> | <a href="#"><b>Blog</b></a> | | <a href="#"><b>Discord</b></a> |
+
+</p>
+
+---
+
+*Latest News* 🔥
+
+- [2023/11] Release Byzer-LLM 0.1.16
+
+---
+
+Byzer-LLM is Ray based , a full lifecycle solution for LLM that includes pretrain, fintune, deployment and serving.
+
+The key differences between Byzer-LLM and other LLM solutions  are:
+
 The first one is that Byzer-LLM supports Byzer-SQL which is a SQL dialect that can be used to manage the LLM lifecycle while the other solutions only support Python API.
 
 1. Python (alpha)
@@ -13,11 +33,16 @@ The first one is that Byzer-LLM supports Byzer-SQL which is a SQL dialect that c
 
 The second one is that Byzer-LLM is totally based on Ray. This means you can deploy multiple LLM models on a single machine or a cluster. This is very useful for large scale LLM deployment. And Byzer-LLM also supports vLLM/DeepSpeed/Transformers as the inference backend transparently.
 
+---
+
 ## Versions
+- 0.1.16： Enhance the API for byzer-retrieval
 - 0.1.14： add get_tables/get_databases API for byzer-retrieval
 - 0.1.13: support shutdown cluster for byzer-retrieval
 - 0.1.12: Support Python API (alpha)
 - 0.1.5: Support python wrapper for [byzer-retrieval](https://github.com/allwefantasy/byzer-retrieval)
+
+---
 
 ## Installation
 
@@ -26,6 +51,8 @@ pip install -r requirements.txt
 pip install -U byzerllm
 ray start --head
 ```
+
+---
 
 ## Usage (Python)
 
@@ -82,6 +109,8 @@ Please remenber my name: {0}
 ```
 
 Once you deploy the model with `run command as LLM`, then you can ues the model as a SQL function. This feature is very useful for data scientists who want to use LLM in their data analysis or data engineers who want to use LLM in their data pipeline.
+
+---
 
 ## Cooperate with Byzer-Retrieval
 
