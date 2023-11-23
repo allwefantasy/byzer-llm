@@ -1,6 +1,6 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/allwefantasy/byzer-llm/main/docs/source/assets/logos/logo.png">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/allwefantasy/byzer-llm/blob/master/docs/source/assets/logos/logo.jpg">
   </picture>
 </p>
 
