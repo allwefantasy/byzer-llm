@@ -50,7 +50,7 @@ class ConversableAgent(Agent):
         )
         self.human_input_mode = human_input_mode
         self._max_consecutive_auto_reply = (
-            max_consecutive_auto_reply if max_consecutive_auto_reply is not None else self.MAX_CONSECUTIVE_AUTO_REPLY
+            max_consecutive_auto_reply if max_consecutive_auto_reply is not None else 10
         )
         self._code_execution_config = {} if code_execution_config is None else code_execution_config
         self._consecutive_auto_reply_counter = defaultdict(int)
