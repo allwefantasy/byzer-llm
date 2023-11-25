@@ -1,5 +1,6 @@
 from .conversable_agent import ConversableAgent
 from typing import Callable, Dict, Optional, Union
+from ...utils.client import ByzerLLM,ByzerRetrieval
 
 
 class UserProxyAgent(ConversableAgent):
@@ -18,6 +19,8 @@ class UserProxyAgent(ConversableAgent):
     def __init__(
         self,
         name: str,
+        llm: ByzerLLM,
+        retrieval: ByzerRetrieval,
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         max_consecutive_auto_reply: Optional[int] = None,
         human_input_mode: Optional[str] = "ALWAYS",
