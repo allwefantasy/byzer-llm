@@ -9,7 +9,6 @@ from ray.util.client.common import ClientActorHandle, ClientObjectRef
 
 from .agent import Agent
 from ...utils.client import ByzerLLM,ByzerRetrieval,code_utils
-from . import get_agent_name,run_agent_func
 
 try:
     from termcolor import colored
@@ -332,6 +331,7 @@ class ConversableAgent(Agent):
                     "Received message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
                 )
             if not silent:
+                from . import get_agent_name,run_agent_func
                 print(colored(f"{get_agent_name(sender)}: {message['content']}", "green"))
 
     def receive(
