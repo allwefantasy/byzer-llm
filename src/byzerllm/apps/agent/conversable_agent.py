@@ -278,11 +278,20 @@ class ConversableAgent(Agent):
         else:
             self._messages[agent].clear()
 
+    
+    def set_reply_at_receive(self, sender: Optional[Union[ClientActorHandle,Agent]] = None, value: bool = True):
+        self.reply_at_receive[sender] = True         
 
     def _prepare_chat(self, recipient, clear_history):
+            from . import get_agent_name,run_agent_func
             self.reset_consecutive_auto_reply_counter(recipient)
-            recipient.reset_consecutive_auto_reply_counter(self)
-            self.reply_at_receive[recipient] = recipient.reply_at_receive[self] = True
+
+            # recipient.reset_consecutive_auto_reply_counter(self)
+            run_agent_func(recipient, "reset_consecutive_auto_reply_counter", self)
+                        
+            # recipient.reply_at_receive[self] = True 
+            run_agent_func(recipient, "set_reply_at_receive", self, True)
+            self.reply_at_receive[recipient] = True
             if clear_history:
                 self.clear_history(recipient)
                 recipient.clear_history(self)
@@ -360,8 +369,7 @@ class ConversableAgent(Agent):
             no_human_input_msg = "NO HUMAN INPUT RECEIVED." if not reply else ""
             # if the human input is empty, and the message is a termination message, then we will terminate the conversation
             reply = reply if reply or not self._is_termination_msg(message) else "exit"
-        else:
-            print(colored(f"\n>>>>>>>> CHECKING TERMINATION AND HUMAN REPLY... _consecutive_auto_reply_counter {get_agent_name(sender)}:{self._consecutive_auto_reply_counter[sender]}", "red"), flush=True)
+        else:            
             if self._consecutive_auto_reply_counter[sender] >= self._max_consecutive_auto_reply_dict[sender]:
                 if self.human_input_mode == "NEVER":
                     reply = "exit"
@@ -404,8 +412,7 @@ class ConversableAgent(Agent):
             self._consecutive_auto_reply_counter[sender] = 0
             return True, reply
 
-        # increment the consecutive_auto_reply_counter
-        print(colored(f"\n>>>>>>>> INCREMENTING CONSECUTIVE AUTO REPLY COUNTER...", "red"), flush=True)
+        # increment the consecutive_auto_reply_counter        
         self._consecutive_auto_reply_counter[sender] += 1
         if self.human_input_mode != "NEVER":
             print(colored("\n>>>>>>>> USING AUTO REPLY...", "red"), flush=True)
