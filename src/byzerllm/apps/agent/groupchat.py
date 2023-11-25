@@ -1,0 +1,248 @@
+from dataclasses import dataclass
+import sys
+from typing import Dict, List, Optional, Union
+from .agent import Agent
+from .conversable_agent import ConversableAgent
+import logging
+from ray.util.client.common import ClientActorHandle, ClientObjectRef
+import ray
+from . import get_agent_name, run_agent_func
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class GroupChat:
+    """(In preview) A group chat class that contains the following data fields:
+    - agents: a list of participating agents.
+    - messages: a list of messages in the group chat.
+    - max_round: the maximum number of rounds.
+    - admin_name: the name of the admin agent if there is one. Default is "Admin".
+        KeyBoardInterrupt will make the admin agent take over.
+    - func_call_filter: whether to enforce function call filter. Default is True.
+        When set to True and when a message is a function call suggestion,
+        the next speaker will be chosen from an agent which contains the corresponding function name
+        in its `function_map`.
+    """
+
+    agents: List[Union[Agent,ClientActorHandle]]
+    messages: List[Dict]
+    max_round: int = 10
+    admin_name: str = "Admin"
+    func_call_filter: bool = True
+
+    @property
+    def agent_names(self) -> List[str]:
+        """Return the names of the agents in the group chat."""
+        _agent_names = []
+        for agent in self.agents:
+            _agent_names.append(get_agent_name(agent))
+        return _agent_names           
+
+
+    def reset(self):
+        """Reset the group chat."""
+        self.messages.clear()
+
+    def agent_by_name(self, name: str) -> Agent:
+        """Returns the agent with a given name."""
+        return self.agents[self.agent_names.index(name)]
+    
+   
+
+    def next_agent(self, agent: Union[Agent,ClientActorHandle], agents: List[Union[Agent,ClientActorHandle]]) -> Agent:
+        """Return the next agent in the list."""
+        agent_name = get_agent_name(agent)
+        if agents == self.agents:
+            return agents[(self.agent_names.index(agent_name) + 1) % len(agents)]
+        else:
+            offset = self.agent_names.index(agent_name) + 1
+            for i in range(len(self.agents)):
+                if self.agents[(offset + i) % len(self.agents)] in agents:
+                    return self.agents[(offset + i) % len(self.agents)]
+
+    def select_speaker_msg(self, agents: List[Union[Agent,ClientActorHandle]]):
+        """Return the message for selecting the next speaker."""
+        return f"""You are in a role play game. The following roles are available:
+{self._participant_roles()}.
+
+Read the following conversation.
+Then select the next role from {[self.agent_names()]} to play. Only return the role."""
+     
+    
+
+    def select_speaker(self, last_speaker: Union[Agent,ClientActorHandle], selector: Union[ConversableAgent,ClientActorHandle],):
+        """Select the next speaker."""
+        if self.func_call_filter and self.messages and "function_call" in self.messages[-1]:
+            # find agents with the right function_map which contains the function name
+            agents = [
+                agent for agent in self.agents if run_agent_func(agent,"can_execute_function",self.messages[-1]["function_call"]["name"])
+            ]
+            if len(agents) == 1:
+                # only one agent can execute the function
+                return agents[0]
+            elif not agents:
+                # find all the agents with function_map
+                agents = [agent for agent in self.agents if run_agent_func(agent,"function_map")]
+                if len(agents) == 1:
+                    return agents[0]
+                elif not agents:
+                    raise ValueError(
+                        f"No agent can execute the function {self.messages[-1]['name']}. "
+                        "Please check the function_map of the agents."
+                    )
+        else:
+            agents = self.agents
+            # Warn if GroupChat is underpopulated
+            n_agents = len(agents)
+            if n_agents < 3:
+                logger.warning(
+                    f"GroupChat is underpopulated with {n_agents} agents. Direct communication would be more efficient."
+                )
+        run_agent_func(selector,"update_system_message",self.select_speaker_msg(agents))         
+        final, name = run_agent_func(selector,"generate_llm_reply",
+            self.messages
+            + [
+                {
+                    "role": "system",
+                    "content": f"Read the above conversation. Then select the next role from {[agent.name for agent in agents]} to play. Only return the role.",
+                }
+            ]
+        )
+        if not final:
+            # i = self._random.randint(0, len(self._agent_names) - 1)  # randomly pick an id
+            return self.next_agent(last_speaker, agents)
+        try:
+            return self.agent_by_name(name)
+        except ValueError:
+            logger.warning(
+                f"GroupChat select_speaker failed to resolve the next speaker's name. Speaker selection will default to the next speaker in the list. This is because the speaker selection OAI call returned:\n{name}"
+            )
+            return self.next_agent(last_speaker, agents)
+
+    def _participant_roles(self):
+        roles = []
+        for agent in self.agents:
+            if agent.system_message.strip() == "":
+                logger.warning(
+                    f"The agent '{get_agent_name(agent)}' has an empty system_message, and may not work well with GroupChat."
+                )
+            roles.append(f"{get_agent_name(agent)}: {run_agent_func(agent,'system_message')}")
+        return "\n".join(roles)
+
+
+class GroupChatManager(ConversableAgent):
+    """(In preview) A chat manager agent that can manage a group chat of multiple agents."""
+
+    def __init__(
+        self,
+        groupchat: GroupChat,
+        name: Optional[str] = "chat_manager",
+        # unlimited consecutive auto reply by default
+        max_consecutive_auto_reply: Optional[int] = sys.maxsize,
+        human_input_mode: Optional[str] = "NEVER",
+        system_message: Optional[str] = "Group chat manager.",
+        **kwargs,
+    ):
+        super().__init__(
+            name=name,
+            max_consecutive_auto_reply=max_consecutive_auto_reply,
+            human_input_mode=human_input_mode,
+            system_message=system_message,
+            **kwargs,
+        )
+        # Order of register_reply is important.
+        # Allow sync chat if initiated using initiate_chat
+        self.register_reply([Agent, ClientActorHandle], GroupChatManager.run_chat, config=groupchat, reset_config=GroupChat.reset)
+        # Allow async chat if initiated using a_initiate_chat
+        self.register_reply([Agent, ClientActorHandle], GroupChatManager.a_run_chat, config=groupchat, reset_config=GroupChat.reset)
+
+    def run_chat(
+        self,
+        messages: Optional[List[Dict]] = None,
+        sender: Optional[Union[Agent, ClientActorHandle]] = None,
+        config: Optional[GroupChat] = None,
+    ) -> Union[str, Dict, None]:
+        """Run a group chat."""
+        if messages is None:
+            messages = self._messages[sender]
+        message = messages[-1]
+        speaker = sender
+        groupchat = config
+        for i in range(groupchat.max_round):
+            # set the name to speaker's name if the role is not function
+            if message["role"] != "function":
+                message["name"] = get_agent_name(speaker)
+            groupchat.messages.append(message)
+            # broadcast the message to all agents except the speaker
+            for agent in groupchat.agents:
+                if agent != speaker:
+                    self.send(message, agent, request_reply=False, silent=True)
+            if i == groupchat.max_round - 1:
+                # the last round
+                break
+            try:
+                # select the next speaker
+                speaker = groupchat.select_speaker(speaker, self)
+                # let the speaker speak
+                reply = speaker.generate_reply(sender=self)
+            except KeyboardInterrupt:
+                # let the admin agent speak if interrupted
+                if groupchat.admin_name in groupchat.agent_names:
+                    # admin agent is one of the participants
+                    speaker = groupchat.agent_by_name(groupchat.admin_name)
+                    reply = speaker.generate_reply(sender=self)
+                else:
+                    # admin agent is not found in the participants
+                    raise
+            if reply is None:
+                break
+            # The speaker sends the message without requesting a reply
+            speaker.send(reply, self, request_reply=False)
+            message = self.last_message(speaker)
+        return True, None
+
+    async def a_run_chat(
+        self,
+        messages: Optional[List[Dict]] = None,
+        sender: Optional[Agent] = None,
+        config: Optional[GroupChat] = None,
+    ):
+        """Run a group chat asynchronously."""
+        if messages is None:
+            messages = self._oai_messages[sender]
+        message = messages[-1]
+        speaker = sender
+        groupchat = config
+        for i in range(groupchat.max_round):
+            # set the name to speaker's name if the role is not function
+            if message["role"] != "function":
+                message["name"] = speaker.name
+            groupchat.messages.append(message)
+            # broadcast the message to all agents except the speaker
+            for agent in groupchat.agents:
+                if agent != speaker:
+                    await self.a_send(message, agent, request_reply=False, silent=True)
+            if i == groupchat.max_round - 1:
+                # the last round
+                break
+            try:
+                # select the next speaker
+                speaker = groupchat.select_speaker(speaker, self)
+                # let the speaker speak
+                reply = await speaker.a_generate_reply(sender=self)
+            except KeyboardInterrupt:
+                # let the admin agent speak if interrupted
+                if groupchat.admin_name in groupchat.agent_names:
+                    # admin agent is one of the participants
+                    speaker = groupchat.agent_by_name(groupchat.admin_name)
+                    reply = await speaker.a_generate_reply(sender=self)
+                else:
+                    # admin agent is not found in the participants
+                    raise
+            if reply is None:
+                break
+            # The speaker sends the message without requesting a reply
+            await speaker.a_send(reply, self, request_reply=False)
+            message = self.last_message(speaker)
+        return True, None

@@ -303,6 +303,7 @@ class ByzerLLM:
          
          conversations = [{"role":"system","content":request.extra_params.system_msg}]
          conversations += [{"role":item.role,"content":item.content} for item in request.extra_params.history]
+         
          conversations += [{
                         "role":"user",
                         "content":request.instruction
@@ -317,6 +318,36 @@ class ByzerLLM:
              
          return final_ins
     
+    def _to_openai_format(self,request:LLMRequest):
+        conversations = [{"role":"system","content":request.extra_params.system_msg}]
+        conversations += [{"role":item.role,"content":item.content} for item in request.extra_params.history]
+        
+        conversations += [{
+                    "role":"user",
+                    "content":request.instruction
+                }]
+        return conversations
+
+    def chat_oai(self,conversations,role_mapping,**llm_config):        
+        if role_mapping is None:
+            role_mapping = role_mapping = {
+                    "user_role":"User",
+                    "assistant_role": "Assistant",
+                    "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly."
+                    }, 
+        
+        final_ins = self.generate_instruction_from_history(conversations, role_mapping)                 
+        
+        if self.max_input_length and len(final_ins) > self.max_input_length:
+            raise Exception(f"input length {len(final_ins)} is larger than max_input_length {self.max_input_length}")
+        
+        v = [{"instruction":final_ins,**llm_config }] 
+        
+        res = self._query(self.default_model_name,v) 
+        return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
+        
+        
+
     def raw_chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
         if isinstance(request,str): 
             request = LLMRequest(instruction=request, extra_params=LLMRequestExtra(user_role=None))
