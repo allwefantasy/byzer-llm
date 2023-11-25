@@ -442,7 +442,7 @@ class ConversableAgent(Agent):
         silent: Optional[bool] = False,
     ):
         self._process_received_message(message, sender, silent)
-        print('''
+        print(f'''
 - request_reply is False or request_reply is None and self.reply_at_receive[sender] is False
 request_reply is {request_reply} or {request_reply} is None and {self.reply_at_receive[sender]} is False
 ''',flush=True)
