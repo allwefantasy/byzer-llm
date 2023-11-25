@@ -25,9 +25,9 @@ class ConversableAgent(Agent):
     
     def __init__(
         self,
+        name: str,
         llm: ByzerLLM,
-        retrieval: ByzerRetrieval,
-        name: str,        
+        retrieval: ByzerRetrieval,                
         system_message: Optional[str] = "You are a helpful AI Assistant.",
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         max_consecutive_auto_reply: Optional[int] = None,
@@ -288,7 +288,7 @@ class ConversableAgent(Agent):
 
     def initiate_chat(
         self,
-        recipient: ClientActorHandle, #"ConversableAgent"
+        recipient: Union[ClientActorHandle,Agent],
         clear_history: Optional[bool] = True,
         silent: Optional[bool] = False,
         **context,
