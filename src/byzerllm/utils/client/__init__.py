@@ -328,7 +328,7 @@ class ByzerLLM:
                 }]
         return conversations
 
-    def chat_oai(self,conversations,role_mapping,**llm_config):        
+    def chat_oai(self,conversations,role_mapping=None,**llm_config):        
         if role_mapping is None:
             role_mapping = role_mapping = {
                     "user_role":"User",
