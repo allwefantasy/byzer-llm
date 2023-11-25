@@ -74,6 +74,7 @@ class UserProxyAgent(ConversableAgent):
         """
         super().__init__(
             name,
+            llm,retrieval,
             system_message,
             is_termination_msg,
             max_consecutive_auto_reply,
