@@ -330,11 +330,11 @@ class ByzerLLM:
 
     def chat_oai(self,conversations,role_mapping=None,**llm_config):        
         if role_mapping is None:
-            role_mapping = role_mapping = {
+            role_mapping = {
                     "user_role":"User",
                     "assistant_role": "Assistant",
                     "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly."
-                    }, 
+                    } 
         
         final_ins = self.generate_instruction_from_history(conversations, role_mapping)                 
         
