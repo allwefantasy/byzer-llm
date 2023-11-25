@@ -294,7 +294,8 @@ class ConversableAgent(Agent):
             self.reply_at_receive[recipient] = True
             if clear_history:
                 self.clear_history(recipient)
-                recipient.clear_history(self)
+                # recipient.clear_history(self)
+                run_agent_func(recipient, "clear_history", self)
 
     def initiate_chat(
         self,
