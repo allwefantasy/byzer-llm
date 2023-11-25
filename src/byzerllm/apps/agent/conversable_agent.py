@@ -79,7 +79,7 @@ class ConversableAgent(Agent):
                 messages = self._messages[sender]
 
             # TODO: #1143 handle token limit exceeded error            
-            response = self.llm.chat_oai(self._oai_system_message + messages)
+            response = self.llm.chat_oai(self._system_message + messages)
             return True, response[0].output                
     
     def register_reply(
