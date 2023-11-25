@@ -437,12 +437,15 @@ class ConversableAgent(Agent):
     def receive(
         self,
         message: Union[Dict, str],
-        sender: ClientActorHandle, #"Agent"
+        sender: Union[ClientActorHandle,Agent], #"Agent"
         request_reply: Optional[bool] = None,
         silent: Optional[bool] = False,
     ):
         self._process_received_message(message, sender, silent)
-
+        print('''
+- request_reply is False or request_reply is None and self.reply_at_receive[sender] is False
+request_reply is {request_reply} or {request_reply} is None and {self.reply_at_receive[sender]} is False
+''',flush=True)
         if request_reply is False or request_reply is None and self.reply_at_receive[sender] is False:
             return
         reply = self.generate_reply(messages=self.chat_messages[sender], sender=sender)
