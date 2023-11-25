@@ -280,7 +280,10 @@ class ConversableAgent(Agent):
 
     
     def set_reply_at_receive(self, sender: Optional[Union[ClientActorHandle,Agent]] = None, value: bool = True):
-        self.reply_at_receive[sender] = True         
+        self.reply_at_receive[sender] = value 
+
+    def get_reply_at_receive(self, sender: Optional[Union[ClientActorHandle,Agent]] = None):
+        return self.reply_at_receive[sender] if sender is not None else self.reply_at_receive            
 
     def _prepare_chat(self, recipient, clear_history):
             from . import get_agent_name,run_agent_func
