@@ -60,7 +60,8 @@ class ConversableAgent(Agent):
         self._reply_func_list = []
         self.reply_at_receive = defaultdict(bool)
         
-        self.register_reply([Agent, None], ConversableAgent.generate_llm_reply)                
+        self.register_reply([Agent, ClientActorHandle], ConversableAgent.generate_llm_reply)   
+        self.register_reply([Agent, ClientActorHandle], ConversableAgent.check_termination_and_human_reply)             
     
     def get_function_map(self):
         """Get the function map."""
@@ -343,7 +344,7 @@ class ConversableAgent(Agent):
         config: Optional[Any] = None,
     ) -> Tuple[bool, Union[str, Dict, None]]:
         from . import get_agent_name,run_agent_func
-        
+
         """Check if the conversation should be terminated, and if human reply is provided."""
         if config is None:
             config = self
