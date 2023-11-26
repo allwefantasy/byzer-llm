@@ -347,8 +347,7 @@ class ConversableAgent(Agent):
         sender: Union[ClientActorHandle,Agent,str], #"Agent"
         request_reply: Optional[bool] = None,
         silent: Optional[bool] = False,
-    ):
-        print(f"{self.get_name()} accepting message from ", get_agent_name(sender),"message", flush=True)
+    ):        
         self._process_received_message(message, sender, silent)
 
         if request_reply is False or request_reply is None and self.reply_at_receive[get_agent_name(sender)] is False:

@@ -27,8 +27,8 @@ class Agent:
     def send(self, message: Union[Dict, str], recipient: "Agent", request_reply: Optional[bool] = None):
         """(Abstract method) Send a message to another agent."""
 
-    async def a_send(self, message: Union[Dict, str], recipient: "Agent", request_reply: Optional[bool] = None):
-        """(Abstract async method) Send a message to another agent."""
+    # async def a_send(self, message: Union[Dict, str], recipient: "Agent", request_reply: Optional[bool] = None):
+    #     """(Abstract async method) Send a message to another agent."""
 
     def receive(self, message: Union[Dict, str], sender: "Agent", request_reply: Optional[bool] = None):
         """(Abstract method) Receive a message from another agent."""
