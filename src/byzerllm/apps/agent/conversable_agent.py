@@ -239,7 +239,7 @@ class ConversableAgent(Agent):
         if "function_call" in oai_message:
             oai_message["role"] = "assistant"  # only messages with role 'assistant' can have a function call.
             oai_message["function_call"] = dict(oai_message["function_call"])
-        self._messages[conversation_id].append(oai_message)
+        self._messages[get_agent_name(conversation_id)].append(oai_message)
         return True    
 
 
