@@ -70,22 +70,7 @@ class ConversableAgent(Agent):
     def get_function_map(self):
         """Get the function map."""
         return self._function_map
-    
-    def generate_llm_reply(
-            self,
-            messages: Optional[List[Dict]] = None,
-            sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
-            config: Optional[Any] = None,
-        ) -> Tuple[bool, Union[str, Dict, None]]:
-            """Generate a reply using autogen.oai."""            
-            if self.llm is None:
-                return False, None
-            if messages is None:
-                messages = self._messages[get_agent_name(sender)]
-
-            # TODO: #1143 handle token limit exceeded error            
-            response = self.llm.chat_oai(self._system_message + messages)
-            return True, response[0].output                
+                       
     
     def register_reply(
         self,
@@ -341,6 +326,7 @@ class ConversableAgent(Agent):
             raise ValueError(
                 "Message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
             ) 
+    
     def _process_received_message(self, message, sender, silent):
             message = self._message_to_dict(message)
             # When the agent receives a message, the role of the message is "user". (If 'role' exists and is 'function', it will remain unchanged.)
@@ -394,7 +380,24 @@ class ConversableAgent(Agent):
             if final:
                 return reply
                 
-        return self._default_auto_reply    
+        return self._default_auto_reply 
+
+    def generate_llm_reply(
+            self,
+            messages: Optional[List[Dict]] = None,
+            sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
+            config: Optional[Any] = None,
+        ) -> Tuple[bool, Union[str, Dict, None]]:
+            """Generate a reply using autogen.oai."""            
+            if self.llm is None:
+                return False, None
+            if messages is None:
+                messages = self._messages[get_agent_name(sender)]
+
+            # TODO: #1143 handle token limit exceeded error  
+            print(f'''Generating reply for {get_agent_name(sender)} from LLM({self.llm.default_model_name})''')                      
+            response = self.llm.chat_oai(self._system_message + messages)
+            return True, response[0].output    
 
     def get_human_input(self, prompt: str) -> str:
             """Get human input.
