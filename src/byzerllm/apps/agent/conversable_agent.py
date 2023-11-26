@@ -333,7 +333,8 @@ class ConversableAgent(Agent):
             if isinstance(recipient, Agent):
                 return recipient.receive(message, self, request_reply, silent)
             elif isinstance(recipient, str):
-                return ray.get(ray.get_actor(recipient).receive.remote(message, self.get_name(), request_reply, silent))
+                t = ray.get_actor(recipient)
+                return ray.get(t.receive.remote(message, self.get_name(), request_reply, silent))
             else:
                 return ray.get(recipient.receive.remote(message, self.get_name(), request_reply, silent))    
         else:
