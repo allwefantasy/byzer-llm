@@ -9,6 +9,7 @@ from ray.util.client.common import ClientActorHandle, ClientObjectRef
 
 from .agent import Agent
 from ...utils.client import ByzerLLM,ByzerRetrieval,code_utils
+from . import get_agent_name,run_agent_func
 
 try:
     from termcolor import colored
@@ -77,7 +78,7 @@ class ConversableAgent(Agent):
             if self.llm is None:
                 return False, None
             if messages is None:
-                messages = self._messages[sender]
+                messages = self._messages[get_agent_name(sender)]
 
             # TODO: #1143 handle token limit exceeded error            
             response = self.llm.chat_oai(self._system_message + messages)
@@ -160,11 +161,11 @@ class ConversableAgent(Agent):
             for k in self._max_consecutive_auto_reply_dict:
                 self._max_consecutive_auto_reply_dict[k] = value
         else:
-            self._max_consecutive_auto_reply_dict[sender] = value
+            self._max_consecutive_auto_reply_dict[get_agent_name(sender)] = value
 
     def max_consecutive_auto_reply(self, sender: Optional[Union[Agent,ClientActorHandle]] = None) -> int:
         """The maximum number of consecutive auto replies."""
-        return self._max_consecutive_auto_reply if sender is None else self._max_consecutive_auto_reply_dict[sender]
+        return self._max_consecutive_auto_reply if sender is None else self._max_consecutive_auto_reply_dict[get_agent_name(sender)]
 
     @property
     def chat_messages(self) -> Dict[Agent, List[Dict]]:
@@ -194,7 +195,7 @@ class ConversableAgent(Agent):
             raise KeyError(
                 f"The agent '{agent.name}' is not present in any conversation. No history available for this agent."
             )
-        return self._messages[agent][-1]
+        return self._messages[get_agent_name(agent)][-1]
     
     @staticmethod
     def _message_to_dict(message: Union[Dict, str]):
@@ -258,14 +259,14 @@ class ConversableAgent(Agent):
         if sender is None:
             self.reply_at_receive.clear()
         else:
-            self.reply_at_receive[sender] = False
+            self.reply_at_receive[get_agent_name(sender)] = False
 
     def reset_consecutive_auto_reply_counter(self, sender: Optional[Union[ClientActorHandle,Agent]]  = None):
         """Reset the consecutive_auto_reply_counter of the sender."""
         if sender is None:
             self._consecutive_auto_reply_counter.clear()
         else:
-            self._consecutive_auto_reply_counter[sender] = 0
+            self._consecutive_auto_reply_counter[get_agent_name(sender)] = 0
 
     def clear_history(self, agent: Optional[Union[ClientActorHandle,Agent]] = None):
         """Clear the chat history of the agent.
@@ -276,17 +277,16 @@ class ConversableAgent(Agent):
         if agent is None:
             self._messages.clear()
         else:
-            self._messages[agent].clear()
+            self._messages[get_agent_name(agent)].clear()
 
     
     def set_reply_at_receive(self, sender: Optional[Union[ClientActorHandle,Agent]] = None, value: bool = True):
-        self.reply_at_receive[sender] = value 
+        self.reply_at_receive[get_agent_name(sender)] = value 
 
     def get_reply_at_receive(self, sender: Optional[Union[ClientActorHandle,Agent]] = None):
-        return self.reply_at_receive[sender] if sender is not None else self.reply_at_receive            
+        return self.reply_at_receive[get_agent_name(sender)] if sender is not None else self.reply_at_receive            
 
-    def _prepare_chat(self, recipient, clear_history):
-            from . import get_agent_name,run_agent_func
+    def _prepare_chat(self, recipient, clear_history):            
             self.reset_consecutive_auto_reply_counter(recipient)
 
             # recipient.reset_consecutive_auto_reply_counter(self)
@@ -294,7 +294,7 @@ class ConversableAgent(Agent):
                         
             # recipient.reply_at_receive[self] = True 
             run_agent_func(recipient, "set_reply_at_receive", self, True)
-            self.reply_at_receive[recipient] = True
+            self.reply_at_receive[get_agent_name(recipient)] = True
             if clear_history:
                 self.clear_history(recipient)
                 # recipient.clear_history(self)
@@ -355,14 +355,13 @@ class ConversableAgent(Agent):
         messages: Optional[List[Dict]] = None,
         sender: Optional[Union[ClientActorHandle,Agent]] = None,
         config: Optional[Any] = None,
-    ) -> Tuple[bool, Union[str, Dict, None]]:
-        from . import get_agent_name,run_agent_func
+    ) -> Tuple[bool, Union[str, Dict, None]]:        
 
         """Check if the conversation should be terminated, and if human reply is provided."""
         if config is None:
             config = self
         if messages is None:
-            messages = self._messages[sender]
+            messages = self._messages[get_agent_name(sender)]
         message = messages[-1]
         reply = ""
         no_human_input_msg = ""
@@ -374,7 +373,7 @@ class ConversableAgent(Agent):
             # if the human input is empty, and the message is a termination message, then we will terminate the conversation
             reply = reply if reply or not self._is_termination_msg(message) else "exit"
         else:            
-            if self._consecutive_auto_reply_counter[sender] >= self._max_consecutive_auto_reply_dict[sender]:
+            if self._consecutive_auto_reply_counter[get_agent_name(sender)] >= self._max_consecutive_auto_reply_dict[get_agent_name(sender)]:
                 if self.human_input_mode == "NEVER":
                     reply = "exit"
                 else:
@@ -407,17 +406,17 @@ class ConversableAgent(Agent):
         # stop the conversation
         if reply == "exit":
             # reset the consecutive_auto_reply_counter
-            self._consecutive_auto_reply_counter[sender] = 0
+            self._consecutive_auto_reply_counter[get_agent_name(sender)] = 0
             return True, None
 
         # send the human reply
-        if reply or self._max_consecutive_auto_reply_dict[sender] == 0:
+        if reply or self._max_consecutive_auto_reply_dict[get_agent_name(sender)] == 0:
             # reset the consecutive_auto_reply_counter
-            self._consecutive_auto_reply_counter[sender] = 0
+            self._consecutive_auto_reply_counter[get_agent_name(sender)] = 0
             return True, reply
 
         # increment the consecutive_auto_reply_counter        
-        self._consecutive_auto_reply_counter[sender] += 1
+        self._consecutive_auto_reply_counter[get_agent_name(sender)] += 1
         if self.human_input_mode != "NEVER":
             print(colored("\n>>>>>>>> USING AUTO REPLY...", "red"), flush=True)
 
@@ -432,8 +431,7 @@ class ConversableAgent(Agent):
                     "Received message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
                 )
             
-            if not silent:
-                from . import get_agent_name,run_agent_func
+            if not silent:                
                 print(colored(get_agent_name(sender), "yellow"), "(to", f"{self.name}):\n", flush=True)
                 print(colored(f"{message['content']}", "green"), flush=True)
 
@@ -445,13 +443,10 @@ class ConversableAgent(Agent):
         silent: Optional[bool] = False,
     ):
         self._process_received_message(message, sender, silent)
-        print(f'''
-- request_reply is False or request_reply is None and self.reply_at_receive[sender] is False
-request_reply is {request_reply} or {request_reply} is None and {self.reply_at_receive[sender]} is False
-''',flush=True)
-        if request_reply is False or request_reply is None and self.reply_at_receive[sender] is False:
+
+        if request_reply is False or request_reply is None and self.reply_at_receive[get_agent_name(sender)] is False:
             return
-        reply = self.generate_reply(messages=self.chat_messages[sender], sender=sender)
+        reply = self.generate_reply(messages=self.chat_messages[get_agent_name(sender)], sender=sender)
         if reply is not None:
             self.send(reply, sender, silent=silent)
 
@@ -467,7 +462,7 @@ request_reply is {request_reply} or {request_reply} is None and {self.reply_at_r
             raise AssertionError(error_msg)
         
         if messages is None:
-            messages = self._messages[sender]                
+            messages = self._messages[get_agent_name(sender)]                
 
         for reply_func_tuple in self._reply_func_list:
             reply_func = reply_func_tuple["reply_func"]
