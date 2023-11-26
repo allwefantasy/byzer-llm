@@ -61,8 +61,8 @@ class ConversableAgent(Agent):
         self._reply_func_list = []
         self.reply_at_receive = defaultdict(bool)
         
-        self.register_reply([Agent, ClientActorHandle], ConversableAgent.generate_llm_reply)   
-        self.register_reply([Agent, ClientActorHandle], ConversableAgent.check_termination_and_human_reply)             
+        self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
+        self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply)             
     
     def get_name(self) -> str:
         return self._name    
@@ -74,7 +74,7 @@ class ConversableAgent(Agent):
     def generate_llm_reply(
             self,
             messages: Optional[List[Dict]] = None,
-            sender: Optional[Union[ClientActorHandle,Agent]] = None,
+            sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
             config: Optional[Any] = None,
         ) -> Tuple[bool, Union[str, Dict, None]]:
             """Generate a reply using autogen.oai."""            
@@ -152,7 +152,7 @@ class ConversableAgent(Agent):
         """
         self._system_message[0]["content"] = system_message  
 
-    def update_max_consecutive_auto_reply(self, value: int, sender: Optional[Union[Agent,ClientActorHandle]] = None):
+    def update_max_consecutive_auto_reply(self, value: int, sender: Optional[Union[Agent,ClientActorHandle,str]] = None):
         """Update the maximum number of consecutive auto replies.
 
         Args:
@@ -213,7 +213,7 @@ class ConversableAgent(Agent):
         else:
             return dict(message)
 
-    def _append_message(self, message: Union[Dict, str], role, conversation_id: Union[ClientActorHandle,Agent]) -> bool:
+    def _append_message(self, message: Union[Dict, str], role, conversation_id: Union[ClientActorHandle,Agent,str]) -> bool:
         """Append a message to the ChatCompletion conversation.
 
         If the message received is a string, it will be put in the "content" field of the new dictionary.
@@ -257,21 +257,21 @@ class ConversableAgent(Agent):
             else:
                 reply_func_tuple["config"] = copy.copy(reply_func_tuple["init_config"])
 
-    def stop_reply_at_receive(self, sender: Optional[Union[ClientActorHandle,Agent]]  = None):
+    def stop_reply_at_receive(self, sender: Optional[Union[ClientActorHandle,Agent,str]]  = None):
         """Reset the reply_at_receive of the sender."""
         if sender is None:
             self.reply_at_receive.clear()
         else:
             self.reply_at_receive[get_agent_name(sender)] = False
 
-    def reset_consecutive_auto_reply_counter(self, sender: Optional[Union[ClientActorHandle,Agent]]  = None):
+    def reset_consecutive_auto_reply_counter(self, sender: Optional[Union[ClientActorHandle,Agent,str]]  = None):
         """Reset the consecutive_auto_reply_counter of the sender."""
         if sender is None:
             self._consecutive_auto_reply_counter.clear()
         else:
             self._consecutive_auto_reply_counter[get_agent_name(sender)] = 0
 
-    def clear_history(self, agent: Optional[Union[ClientActorHandle,Agent]] = None):
+    def clear_history(self, agent: Optional[Union[ClientActorHandle,Agent,str]] = None):
         """Clear the chat history of the agent.
 
         Args:
@@ -283,10 +283,10 @@ class ConversableAgent(Agent):
             self._messages[get_agent_name(agent)].clear()
 
     
-    def set_reply_at_receive(self, sender: Optional[Union[ClientActorHandle,Agent]] = None, value: bool = True):
+    def set_reply_at_receive(self, sender: Optional[Union[ClientActorHandle,Agent,str]] = None, value: bool = True):
         self.reply_at_receive[get_agent_name(sender)] = value 
 
-    def get_reply_at_receive(self, sender: Optional[Union[ClientActorHandle,Agent]] = None):
+    def get_reply_at_receive(self, sender: Optional[Union[ClientActorHandle,Agent,str]] = None):
         return self.reply_at_receive[get_agent_name(sender)] if sender is not None else self.reply_at_receive            
 
     def _prepare_chat(self, recipient, clear_history):            
@@ -303,28 +303,28 @@ class ConversableAgent(Agent):
                 # recipient.clear_history(self)
                 run_agent_func(recipient, "clear_history", self)
 
-    def initiate_chat(
-        self,
-        recipient: Union[ClientActorHandle,Agent],
-        clear_history: Optional[bool] = True,
-        silent: Optional[bool] = False,
-        **context,
-    ): 
-        self._prepare_chat(recipient, clear_history)
-        self.send(self.generate_init_message(**context), recipient, silent=silent)
-
     def generate_init_message(self, **context) -> Union[str, Dict]:
         """Generate the initial message for the agent.
 
         Override this function to customize the initial message based on user's request.
         If not overriden, "message" needs to be provided in the context.
         """
-        return context["message"]
+        return context["message"]            
 
+    def initiate_chat(
+        self,
+        recipient: Union[ClientActorHandle,Agent,str],
+        clear_history: Optional[bool] = True,
+        silent: Optional[bool] = False,
+        **context,
+    ): 
+        self._prepare_chat(recipient, clear_history)
+        self.send(self.generate_init_message(**context), recipient, silent=silent)
+    
     def send(
         self,
         message: Union[Dict, str],
-        recipient: Union[ClientActorHandle,Agent], #"Agent"
+        recipient: Union[ClientActorHandle,Agent,str], #"Agent"
         request_reply: Optional[bool] = None,
         silent: Optional[bool] = False,
     ) -> bool:
@@ -332,12 +332,68 @@ class ConversableAgent(Agent):
         if valid:
             if isinstance(recipient, Agent):
                 return recipient.receive(message, self, request_reply, silent)
+            elif isinstance(recipient, str):
+                return ray.get(ray.get_actor(recipient).receive.remote(message, self.get_name(), request_reply, silent))
             else:
-                return ray.get(recipient.receive.remote(message, self, request_reply, silent))    
+                return ray.get(recipient.receive.remote(message, self.get_name(), request_reply, silent))    
         else:
             raise ValueError(
                 "Message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
             ) 
+    def _process_received_message(self, message, sender, silent):
+            message = self._message_to_dict(message)
+            # When the agent receives a message, the role of the message is "user". (If 'role' exists and is 'function', it will remain unchanged.)
+            valid = self._append_message(message, "user", sender)
+            if not valid:
+                raise ValueError(
+                    "Received message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
+                )
+            
+            if not silent:                
+                print(colored(get_agent_name(sender), "yellow"), "(to", f"{self.name}):\n", flush=True)
+                print(colored(f"{message['content']}", "green"), flush=True)
+                print("\n", "-" * 80, flush=True, sep="")
+
+    def receive(
+        self,
+        message: Union[Dict, str],
+        sender: Union[ClientActorHandle,Agent,str], #"Agent"
+        request_reply: Optional[bool] = None,
+        silent: Optional[bool] = False,
+    ):
+        self._process_received_message(message, sender, silent)
+
+        if request_reply is False or request_reply is None and self.reply_at_receive[get_agent_name(sender)] is False:
+            return
+        reply = self.generate_reply(messages=self.chat_messages[get_agent_name(sender)], sender=sender)
+        if reply is not None:                        
+            self.send(reply, sender, silent=silent)
+
+    def generate_reply(
+        self,
+        messages: Optional[List[Dict]] = None,
+        sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
+        exclude: Optional[List[Callable]] = None,
+    ) -> Union[str, Dict, None]:
+        if all((messages is None, sender is None)):
+            error_msg = f"Either {messages=} or {sender=} must be provided."
+            logger.error(error_msg)
+            raise AssertionError(error_msg)
+        
+        if messages is None:
+            messages = self._messages[get_agent_name(sender)]                
+
+        for reply_func_tuple in self._reply_func_list:
+            reply_func = reply_func_tuple["reply_func"]
+            if exclude and reply_func in exclude:
+                continue
+            if asyncio.coroutines.iscoroutinefunction(reply_func):
+                continue
+            final, reply = reply_func(self, messages=messages, sender=sender, config=reply_func_tuple["config"])
+            if final:
+                return reply
+                
+        return self._default_auto_reply    
 
     def get_human_input(self, prompt: str) -> str:
             """Get human input.
@@ -356,7 +412,7 @@ class ConversableAgent(Agent):
     def check_termination_and_human_reply(
         self,
         messages: Optional[List[Dict]] = None,
-        sender: Optional[Union[ClientActorHandle,Agent]] = None,
+        sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
         config: Optional[Any] = None,
     ) -> Tuple[bool, Union[str, Dict, None]]:        
 
@@ -425,59 +481,6 @@ class ConversableAgent(Agent):
 
         return False, None
 
-    def _process_received_message(self, message, sender, silent):
-            message = self._message_to_dict(message)
-            # When the agent receives a message, the role of the message is "user". (If 'role' exists and is 'function', it will remain unchanged.)
-            valid = self._append_message(message, "user", sender)
-            if not valid:
-                raise ValueError(
-                    "Received message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
-                )
-            
-            if not silent:                
-                print(colored(get_agent_name(sender), "yellow"), "(to", f"{self.name}):\n", flush=True)
-                print(colored(f"{message['content']}", "green"), flush=True)
-                print("\n", "-" * 80, flush=True, sep="")
-
-    def receive(
-        self,
-        message: Union[Dict, str],
-        sender: Union[ClientActorHandle,Agent], #"Agent"
-        request_reply: Optional[bool] = None,
-        silent: Optional[bool] = False,
-    ):
-        self._process_received_message(message, sender, silent)
-
-        if request_reply is False or request_reply is None and self.reply_at_receive[get_agent_name(sender)] is False:
-            return
-        reply = self.generate_reply(messages=self.chat_messages[get_agent_name(sender)], sender=sender)
-        if reply is not None:
-            self.send(reply, sender, silent=silent)
-
-    def generate_reply(
-        self,
-        messages: Optional[List[Dict]] = None,
-        sender: Optional[Union[ClientActorHandle,Agent]] = None,
-        exclude: Optional[List[Callable]] = None,
-    ) -> Union[str, Dict, None]:
-        if all((messages is None, sender is None)):
-            error_msg = f"Either {messages=} or {sender=} must be provided."
-            logger.error(error_msg)
-            raise AssertionError(error_msg)
-        
-        if messages is None:
-            messages = self._messages[get_agent_name(sender)]                
-
-        for reply_func_tuple in self._reply_func_list:
-            reply_func = reply_func_tuple["reply_func"]
-            if exclude and reply_func in exclude:
-                continue
-            if asyncio.coroutines.iscoroutinefunction(reply_func):
-                continue
-            final, reply = reply_func(self, messages=messages, sender=sender, config=reply_func_tuple["config"])
-            if final:
-                return reply
-                
-        return self._default_auto_reply
+    
                 
     
