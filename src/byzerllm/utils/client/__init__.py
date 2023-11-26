@@ -434,10 +434,8 @@ class ByzerLLM:
         new_input_value = [json.dumps(x,ensure_ascii=False) for x in input_value]
       
         try:            
-            [index, worker] = ray.get(udf_master.get.remote())
-            print(f"GET worker index: {index}",flush=True)
-            res = ray.get(worker.async_apply.remote(new_input_value))                        
-            print(f"GET llm reponse: {res}",flush=True)
+            [index, worker] = ray.get(udf_master.get.remote())            
+            res = ray.get(worker.async_apply.remote(new_input_value))                                    
             return json.loads(res["value"][0])
         except Exception as inst:
             raise inst
