@@ -64,6 +64,9 @@ class ConversableAgent(Agent):
         self.register_reply([Agent, ClientActorHandle], ConversableAgent.generate_llm_reply)   
         self.register_reply([Agent, ClientActorHandle], ConversableAgent.check_termination_and_human_reply)             
     
+    def get_name(self) -> str:
+        return self._name    
+
     def get_function_map(self):
         """Get the function map."""
         return self._function_map

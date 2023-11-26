@@ -12,7 +12,7 @@ def get_agent_name(agent: Union[Agent,ClientActorHandle]) -> str:
     if isinstance(agent,Agent):
         agent_name = agent.name
     else:
-        agent_name = ray.get(agent.name.remote())
+        agent_name = ray.get(agent.get_name.remote())
 
     return agent_name    
 
