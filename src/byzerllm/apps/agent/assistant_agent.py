@@ -1,6 +1,9 @@
 from .conversable_agent import ConversableAgent
-from typing import Callable, Dict, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 from ...utils.client import ByzerLLM,ByzerRetrieval
+from .agent import Agent
+from ray.util.client.common import ClientActorHandle, ClientObjectRef
+from . import get_agent_name,run_agent_func
 
 
 class AssistantAgent(ConversableAgent):    
@@ -23,6 +26,7 @@ Reply "TERMINATE" in the end when everything is done.
         name: str,
         llm: ByzerLLM,
         retrieval: ByzerRetrieval,
+        code_agent: Union[Agent, ClientActorHandle,str],
         system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,        
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         max_consecutive_auto_reply: Optional[int] = None,
@@ -40,3 +44,40 @@ Reply "TERMINATE" in the end when everything is done.
             code_execution_config=code_execution_config,            
             **kwargs,
         )
+        self.code_agent = code_agent
+        self._reply_func_list = []
+        # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
+        self.register_reply([Agent, ClientActorHandle,str], AssistantAgent.generate_code_reply) 
+        self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply) 
+
+    def generate_code_reply(
+        self,
+        messages: Optional[List[Dict]] = None,
+        sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
+        config: Optional[Any] = None,
+    ) -> Tuple[bool, Union[str, Dict, None]]:  
+        
+        if messages is None:
+            messages = self._messages[get_agent_name(sender)]
+        
+        '''
+        if the message is from the code agent, if the 
+        '''
+        if get_agent_name(sender) == get_agent_name(self.code_agent):
+            return True, None 
+
+        final,output = self.generate_llm_reply(messages,sender)
+
+        current_len = len(self._messages[get_agent_name(self.code_agent)])
+        # ask the code agent to execute the code 
+        self.send(message=output,receiver=self.code_agent)
+
+        # wait for the code agent's reply
+        now_len = len(self._messages[get_agent_name(self.code_agent)])
+        while(now_len == current_len):
+            now_len = len(self._messages[get_agent_name(self.code_agent)])
+
+        # get the reply from the code agent
+        code_agent_reply = self._messages[get_agent_name(self.code_agent)][-1]['content']
+        return True,code_agent_reply    
+          
