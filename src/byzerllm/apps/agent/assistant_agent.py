@@ -70,7 +70,7 @@ Reply "TERMINATE" in the end when everything is done.
 
         current_len = len(self._messages[get_agent_name(self.code_agent)])
         # ask the code agent to execute the code 
-        self.send(message=output,receiver=self.code_agent)
+        self.send(message=output,recipient=self.code_agent)
 
         # wait for the code agent's reply
         now_len = len(self._messages[get_agent_name(self.code_agent)])
