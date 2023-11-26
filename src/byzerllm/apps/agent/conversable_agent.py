@@ -43,15 +43,6 @@ class ConversableAgent(Agent):
         self.llm = llm
         self.retrieval = retrieval   
 
-        if self.retrieval is None: 
-            self.retrieval = ByzerRetrieval()
-            self.retrieval.launch_gateway()
-
-        if self.llm is None:
-            self.llm = ByzerLLM()
-            self.llm.setup_default_model_name("chat")
-
-
         self._messages = defaultdict(list)
         self._system_message = [{"content": system_message, "role": "system"}]
         
@@ -404,7 +395,7 @@ class ConversableAgent(Agent):
                 messages = self._messages[get_agent_name(sender)]
 
             # TODO: #1143 handle token limit exceeded error  
-            print(f'''{self.get_name()} generating reply for {get_agent_name(sender)} from LLM({self.llm.default_model_name})''')                      
+            print(f'''{self.get_name()} generating reply for {get_agent_name(sender)} from LLM({self.llm.default_model_name})''')            
             response = self.llm.chat_oai(self._system_message + messages)
             return True, response[0].output    
 
