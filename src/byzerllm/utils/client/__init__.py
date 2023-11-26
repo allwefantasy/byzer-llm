@@ -341,8 +341,7 @@ class ByzerLLM:
         if self.max_input_length and len(final_ins) > self.max_input_length:
             raise Exception(f"input length {len(final_ins)} is larger than max_input_length {self.max_input_length}")
         
-        v = [{"instruction":final_ins,**llm_config }] 
-        print(f'''MESSAGE TO LLM: {final_ins}''',flush=True)        
+        v = [{"instruction":final_ins,**llm_config }]         
         res = self._query(self.default_model_name,v) 
         return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
         
@@ -431,13 +430,15 @@ class ByzerLLM:
         return res[0]
 
     def _query(self, model:str, input_value:List[Dict[str,Any]]):           
-        udf_master = ray.get_actor(model)
-        print(f'''To get udf master: {udf_master}''')
+        udf_master = ray.get_actor(model)        
         new_input_value = [json.dumps(x,ensure_ascii=False) for x in input_value]
       
         try:
+            print(f"udf_master: {udf_master}",flush=True)
             [index, worker] = ray.get(udf_master.get.remote())
+            print(f"worker index: {index}",flush=True)
             res = ray.get(worker.async_apply.remote(new_input_value))            
+            print(f"request: {res}",flush=True)
             return json.loads(res["value"][0])
         except Exception as inst:
             raise inst
