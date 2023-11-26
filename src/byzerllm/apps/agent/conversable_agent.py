@@ -318,7 +318,9 @@ class ConversableAgent(Agent):
             if isinstance(recipient, Agent):
                 return recipient.receive(message, self, request_reply, silent)
             elif isinstance(recipient, str):
+                print(f"Sending message to {recipient}")
                 t = ray.get_actor(recipient)
+                print(f"actor: {recipient}")
                 return ray.get(t.receive.remote(message, self.get_name(), request_reply, silent))
             else:
                 return ray.get(recipient.receive.remote(message, self.get_name(), request_reply, silent))    
@@ -353,8 +355,7 @@ class ConversableAgent(Agent):
         if request_reply is False or request_reply is None and self.reply_at_receive[get_agent_name(sender)] is False:
             return
         reply = self.generate_reply(messages=self.chat_messages[get_agent_name(sender)], sender=sender)
-        if reply is not None: 
-            print(f"reply======{sender}", flush=True)                       
+        if reply is not None:                                    
             self.send(reply, sender, silent=silent)
 
     def generate_reply(
@@ -378,10 +379,9 @@ class ConversableAgent(Agent):
             if asyncio.coroutines.iscoroutinefunction(reply_func):
                 continue
             final, reply = reply_func(self, messages=messages, sender=sender, config=reply_func_tuple["config"])
-            if final:
-                print(reply, flush=True)
+            if final:                
                 return reply
-        print("default======", flush=True)        
+                         
         return self._default_auto_reply 
 
     def generate_llm_reply(
