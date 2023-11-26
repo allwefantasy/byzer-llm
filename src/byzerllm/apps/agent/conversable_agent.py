@@ -41,7 +41,16 @@ class ConversableAgent(Agent):
         super().__init__(name)
         
         self.llm = llm
-        self.retrieval = retrieval        
+        self.retrieval = retrieval   
+
+        if self.retrieval is None: 
+            retrieval = ByzerRetrieval()
+            retrieval.launch_gateway()
+
+        if self.llm is None:
+            llm = ByzerLLM()
+            llm.setup_default_model_name("chat")
+
 
         self._messages = defaultdict(list)
         self._system_message = [{"content": system_message, "role": "system"}]
