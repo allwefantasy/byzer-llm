@@ -434,6 +434,7 @@ class ConversableAgent(Agent):
             if not silent:                
                 print(colored(get_agent_name(sender), "yellow"), "(to", f"{self.name}):\n", flush=True)
                 print(colored(f"{message['content']}", "green"), flush=True)
+                print("\n", "-" * 80, flush=True, sep="")
 
     def receive(
         self,
