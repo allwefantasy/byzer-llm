@@ -395,7 +395,7 @@ class ConversableAgent(Agent):
                 messages = self._messages[get_agent_name(sender)]
 
             # TODO: #1143 handle token limit exceeded error  
-            print(f'''Generating reply for {get_agent_name(sender)} from LLM({self.llm.default_model_name})''')                      
+            print(f'''{self.get_name()} generating reply for {get_agent_name(sender)} from LLM({self.llm.default_model_name})''')                      
             response = self.llm.chat_oai(self._system_message + messages)
             return True, response[0].output    
 
