@@ -378,8 +378,9 @@ class ConversableAgent(Agent):
                 continue
             final, reply = reply_func(self, messages=messages, sender=sender, config=reply_func_tuple["config"])
             if final:
+                print(reply, flush=True)
                 return reply
-                
+        print("default======", flush=True)        
         return self._default_auto_reply 
 
     def generate_llm_reply(
@@ -395,9 +396,8 @@ class ConversableAgent(Agent):
                 messages = self._messages[get_agent_name(sender)]
 
             # TODO: #1143 handle token limit exceeded error  
-            print(f'''{self.get_name()} generating reply for {get_agent_name(sender)} from LLM({self.llm.default_model_name})''')
-            response = self.llm.chat_oai(self._system_message + messages)
-            print(f'''{response[0].output}''',flush=True)
+            # print(f'''{self.get_name()} generating reply for {get_agent_name(sender)} from LLM({self.llm.default_model_name})''')
+            response = self.llm.chat_oai(self._system_message + messages)            
             return True, response[0].output    
 
     def get_human_input(self, prompt: str) -> str:
