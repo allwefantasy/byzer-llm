@@ -317,10 +317,8 @@ class ConversableAgent(Agent):
         if valid:
             if isinstance(recipient, Agent):
                 return recipient.receive(message, self, request_reply, silent)
-            elif isinstance(recipient, str):
-                print(f"Sending message to {recipient}")
-                t = ray.get_actor(recipient)
-                print(f"actor: {recipient}")
+            elif isinstance(recipient, str):                
+                t = ray.get_actor(recipient)                
                 return ray.get(t.receive.remote(message, self.get_name(), request_reply, silent))
             else:
                 return ray.get(recipient.receive.remote(message, self.get_name(), request_reply, silent))    
@@ -350,6 +348,7 @@ class ConversableAgent(Agent):
         request_reply: Optional[bool] = None,
         silent: Optional[bool] = False,
     ):
+        print(f"{self.get_name()} accepting message from ", get_agent_name(sender),"message", flush=True)
         self._process_received_message(message, sender, silent)
 
         if request_reply is False or request_reply is None and self.reply_at_receive[get_agent_name(sender)] is False:
