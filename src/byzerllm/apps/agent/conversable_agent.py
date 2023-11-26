@@ -44,12 +44,12 @@ class ConversableAgent(Agent):
         self.retrieval = retrieval   
 
         if self.retrieval is None: 
-            retrieval = ByzerRetrieval()
-            retrieval.launch_gateway()
+            self.retrieval = ByzerRetrieval()
+            self.retrieval.launch_gateway()
 
         if self.llm is None:
-            llm = ByzerLLM()
-            llm.setup_default_model_name("chat")
+            self.llm = ByzerLLM()
+            self.llm.setup_default_model_name("chat")
 
 
         self._messages = defaultdict(list)
