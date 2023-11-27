@@ -101,34 +101,8 @@ class PythonSandboxAgent(ConversableAgent):
 
         ## Register the reply functions                
         self.register_reply([Agent, ClientActorHandle,str], PythonSandboxAgent.generate_execute_code_reply) 
-        self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply)             
+        # self.regissster_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply)             
         
-    def generate_reply(
-        self,
-        raw_message: Optional[Union[Dict,str,ChatResponse]] = None,
-        messages: Optional[List[Dict]] = None,
-        sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
-        exclude: Optional[List[Callable]] = None,
-    ) -> Union[str, Dict, None,ChatResponse]:
-        if all((messages is None, sender is None)):
-            error_msg = f"Either {messages=} or {sender=} must be provided."            
-            raise AssertionError(error_msg)
-        
-        print(f"generating reply======",flush=True)
-        if messages is None:
-            messages = self._messages[get_agent_name(sender)]                
-
-        for reply_func_tuple in self._reply_func_list:
-            reply_func = reply_func_tuple["reply_func"]
-            if exclude and reply_func in exclude:
-                continue
-            print(f"======{reply_func}",flush=True)            
-            final, reply = reply_func(self, raw_message=raw_message, messages=messages, sender=sender, config=reply_func_tuple["config"])
-            if final:                
-                return reply
-                         
-        return self._default_auto_reply 
-    
 
     def generate_execute_code_reply(
         self,
