@@ -57,7 +57,7 @@ Reply "TERMINATE" in the end when everything is done.
         messages: Optional[List[Dict]] = None,
         sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
         config: Optional[Any] = None,
-    ) -> Tuple[bool, Union[str, Dict, None]]:  
+    ) -> Tuple[bool, Union[str, Dict, None,ChatResponse]]:  
         
         if messages is None:
             messages = self._messages[get_agent_name(sender)]

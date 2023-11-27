@@ -116,12 +116,11 @@ class PythonSandboxAgent(ConversableAgent):
         code_execution_config = config if config is not None else self._code_execution_config
         if code_execution_config is False:
             return False, None
-        if messages is None:
-            messages = self._oai_messages[sender]
-        last_n_messages = code_execution_config.pop("last_n_messages", 1)
-
+        
         if messages is None:
             messages = self._messages[get_agent_name(sender)]
+        
+        last_n_messages = code_execution_config.pop("last_n_messages", 1)        
 
         for i in range(min(len(messages), last_n_messages)):
             message = messages[-(i + 1)]
@@ -145,7 +144,7 @@ class PythonSandboxAgent(ConversableAgent):
                                       prompt=message,
                                       variables=response)
 
-        # no code blocks are found, push last_n_messages back and return.
+        print("No code block found in the last {} messages.".format(last_n_messages),flush=True)
         code_execution_config["last_n_messages"] = last_n_messages
 
         return False, None            
