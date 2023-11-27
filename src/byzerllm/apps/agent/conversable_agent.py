@@ -339,10 +339,10 @@ class ConversableAgent(Agent):
                     "Received message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
                 )
             
-            if not silent:                
-                print(colored(get_agent_name(sender), "yellow"), "(to", f"{self.name}):\n", flush=True)
-                print(colored(f"{raw_message['content']}", "green"), flush=True)
-                print("\n", "-" * 80, flush=True, sep="")
+            # if not silent:                
+            #     print(colored(get_agent_name(sender), "yellow"), "(to", f"{self.name}):\n", flush=True)
+            #     print(colored(f"{raw_message['content']}", "green"), flush=True)
+            #     print("\n", "-" * 80, flush=True, sep="")
 
     def receive(
         self,
@@ -380,6 +380,7 @@ class ConversableAgent(Agent):
                 continue
             if asyncio.coroutines.iscoroutinefunction(reply_func):
                 continue
+            print(f'''{self.get_name()} generating reply for {get_agent_name(sender)} from {reply_func.__name__}''',flush=True)
             final, reply = reply_func(self, raw_message=raw_message, messages=messages, sender=sender, config=reply_func_tuple["config"])
             if final:                
                 return reply
