@@ -66,12 +66,14 @@ Reply "TERMINATE" in the end when everything is done.
         if get_agent_name(sender) != get_agent_name(self.code_agent):
    
             final,output = self.generate_llm_reply(raw_message,messages,sender)            
-            # ask the code agent to execute the code 
-            self._prepare_chat(self.code_agent, False)
+            # ask the code agent to execute the code             
             self.send(message=output,recipient=self.code_agent)            
             return True, messages[-1]["content"]
         
-
+        ## no code block found so the code agent return None
+        if raw_message is None:
+            return False, None
+        
         raw_message: ChatResponse = raw_message
         if raw_message.status == 0:
             # stop the conversation if the code agent gives the success message
