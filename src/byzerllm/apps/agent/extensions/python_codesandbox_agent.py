@@ -111,12 +111,10 @@ class PythonSandboxAgent(ConversableAgent):
         sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
         config: Optional[Any] = None,
     ) -> Tuple[bool, Union[str, Dict, None,ChatResponse]]:
-        
-        print("Checking code execution...",flush=True)   
+                
         code_execution_config = config if config is not None else self._code_execution_config
         
-        if code_execution_config is False:
-            print("code_execution_config is False...",flush=True) 
+        if code_execution_config is False:            
             return False, None
         
         if messages is None:
@@ -137,7 +135,7 @@ class PythonSandboxAgent(ConversableAgent):
             codes = [code_block[1] for code_block in code_blocks if code_block[0] == "python"]
             code_str = "\n".join(codes)
             sandbox = self.get_or_create_sandbox(get_agent_name(sender)+"_sandbox",None,None,0,0)
-            exitcode, output,response = sandbox.exec_capture_output.remote(code_str,[])
+            exitcode, output,response = ray.get(sandbox.exec_capture_output.remote(code_str,[]))
             code_execution_config["last_n_messages"] = last_n_messages
             exitcode2str = "execution succeeded" if exitcode == 0 else "execution failed"
             print(f"exitcode: {exitcode} ({exitcode2str})\nCode output: {output}",flush=True)
