@@ -101,7 +101,7 @@ class PythonSandboxAgent(ConversableAgent):
 
         ## Register the reply functions                
         self.register_reply([Agent, ClientActorHandle,str], PythonSandboxAgent.generate_execute_code_reply) 
-        self.regissster_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply)             
+        self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply)             
         
 
     def generate_execute_code_reply(
