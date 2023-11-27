@@ -214,6 +214,11 @@ class ConversableAgent(Agent):
         Returns:
             bool: whether the message is appended to the ChatCompletion conversation.
         """
+        raw_message = message
+        
+        if isinstance(message, ChatResponse):
+            message = raw_message.output
+
         message = self._message_to_dict(message)
         # create oai message to be appended to the oai conversation that can be passed to oai directly.
         oai_message = {k: message[k] for k in ("content", "function_call", "name", "context") if k in message}
@@ -330,10 +335,10 @@ class ConversableAgent(Agent):
     def _process_received_message(self, message, sender, silent):
             raw_message = message
             if isinstance(message, ChatResponse):
-                raw_message = message.output  
-            raw_message = self._message_to_dict(raw_message)
+                message = raw_message.output  
+            raw_memessagessage = self._message_to_dict(message)
             # When the agent receives a message, the role of the message is "user". (If 'role' exists and is 'function', it will remain unchanged.)
-            valid = self._append_message(raw_message, "user", sender)
+            valid = self._append_message(message, "user", sender)
             if not valid:
                 raise ValueError(
                     "Received message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
@@ -341,7 +346,7 @@ class ConversableAgent(Agent):
             
             if not silent:                
                 print(colored(get_agent_name(sender), "yellow"), "(to", f"{self.name}):\n", flush=True)
-                print(colored(f"{raw_message['content']}", "green"), flush=True)
+                print(colored(f"{message['content']}", "green"), flush=True)
                 print("\n", "-" * 80, flush=True, sep="")
 
     def receive(
