@@ -336,7 +336,7 @@ class ConversableAgent(Agent):
             raw_message = message
             if isinstance(message, ChatResponse):
                 message = raw_message.output  
-            raw_memessagessage = self._message_to_dict(message)
+            message = self._message_to_dict(message)
             # When the agent receives a message, the role of the message is "user". (If 'role' exists and is 'function', it will remain unchanged.)
             valid = self._append_message(message, "user", sender)
             if not valid:
