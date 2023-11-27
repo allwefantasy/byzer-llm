@@ -339,10 +339,10 @@ class ConversableAgent(Agent):
                     "Received message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
                 )
             
-            # if not silent:                
-            #     print(colored(get_agent_name(sender), "yellow"), "(to", f"{self.name}):\n", flush=True)
-            #     print(colored(f"{raw_message['content']}", "green"), flush=True)
-            #     print("\n", "-" * 80, flush=True, sep="")
+            if not silent:                
+                print(colored(get_agent_name(sender), "yellow"), "(to", f"{self.name}):\n", flush=True)
+                print(colored(f"{raw_message['content']}", "green"), flush=True)
+                print("\n", "-" * 80, flush=True, sep="")
 
     def receive(
         self,
