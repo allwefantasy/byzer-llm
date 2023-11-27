@@ -70,7 +70,8 @@ Reply "TERMINATE" in the end when everything is done.
             self.send(message=output,recipient=self.code_agent)
 
             # summarize the conversation so far  
-            _, answer = self.generate_llm_reply(None,self._messages[get_agent_name(self.code_agent)],sender)
+            code_agent_messages = self._messages[get_agent_name(self.code_agent)]
+            _, answer = code_agent_messages[-1]["content"] # self.generate_llm_reply(None,,sender)
             # give the result to the user             
             return True, answer + "\nTERMINATE"
         
