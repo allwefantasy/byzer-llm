@@ -110,7 +110,7 @@ class PythonSandboxAgent(ConversableAgent):
         messages: Optional[List[Dict]] = None,
         sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
         exclude: Optional[List[Callable]] = None,
-    ) -> Union[str, Dict, None]:
+    ) -> Union[str, Dict, None,ChatResponse]:
         if all((messages is None, sender is None)):
             error_msg = f"Either {messages=} or {sender=} must be provided."            
             raise AssertionError(error_msg)
