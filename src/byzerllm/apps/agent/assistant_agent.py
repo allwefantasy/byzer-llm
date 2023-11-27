@@ -71,7 +71,7 @@ Reply "TERMINATE" in the end when everything is done.
 
             # summarize the conversation so far  
             code_agent_messages = self._messages[get_agent_name(self.code_agent)]
-            _, answer = code_agent_messages[-1]["content"] # self.generate_llm_reply(None,,sender)
+            answer = code_agent_messages[-1]["content"] # self.generate_llm_reply(None,,sender)
             # give the result to the user             
             return True, answer + "\nTERMINATE"
         
