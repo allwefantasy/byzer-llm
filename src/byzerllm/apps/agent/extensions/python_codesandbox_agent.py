@@ -9,7 +9,6 @@ import time
 import sys
 import io
 import traceback
-import dataclasses
 
 from ....utils.client import ByzerLLM,ByzerRetrieval,code_utils
 
@@ -81,7 +80,7 @@ class PythonSandboxAgent(ConversableAgent):
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         max_consecutive_auto_reply: Optional[int] = None,
         human_input_mode: Optional[str] = "NEVER",
-        code_execution_config: Optional[Union[Dict, bool]] = False,
+        code_execution_config: Optional[Union[Dict, bool]] = {},
         **kwargs,
     ):
         super().__init__(
@@ -115,6 +114,7 @@ class PythonSandboxAgent(ConversableAgent):
             error_msg = f"Either {messages=} or {sender=} must be provided."            
             raise AssertionError(error_msg)
         
+        print(f"generating reply======",flush=True)
         if messages is None:
             messages = self._messages[get_agent_name(sender)]                
 
