@@ -113,14 +113,15 @@ class PythonSandboxAgent(ConversableAgent):
         config: Optional[Any] = None,
     ) -> Tuple[bool, Union[str, Dict, None,ChatResponse]]:
         
+        print("Checking code execution...",flush=True)   
         code_execution_config = config if config is not None else self._code_execution_config
+        
         if code_execution_config is False:
+            print("code_execution_config is False...",flush=True) 
             return False, None
         
         if messages is None:
             messages = self._messages[get_agent_name(sender)]
-
-        print("Checking code execution...",flush=True)   
         
         last_n_messages = code_execution_config.pop("last_n_messages", 1)        
 
