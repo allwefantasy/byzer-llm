@@ -69,7 +69,7 @@ Reply "TERMINATE" in the end when everything is done.
             # ask the code agent to execute the code             
             self.send(message=output,recipient=self.code_agent) 
             # give the result to the user             
-            return True, self.generate_llm_reply(None,messages,sender)
+            return True, self.generate_llm_reply(None,self._messages[get_agent_name(self.code_agent)],sender)
         
         ## no code block found so the code agent return None
         if raw_message is None:
