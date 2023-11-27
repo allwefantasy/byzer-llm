@@ -138,6 +138,7 @@ class PythonSandboxAgent(ConversableAgent):
             exitcode, output,response = sandbox.exec_capture_output.remote(code_str,[])
             code_execution_config["last_n_messages"] = last_n_messages
             exitcode2str = "execution succeeded" if exitcode == 0 else "execution failed"
+            print(f"exitcode: {exitcode} ({exitcode2str})\nCode output: {output}",flush=True)
             return True, ChatResponse(status=exitcode,
                                       output=f"exitcode: {exitcode} ({exitcode2str})\nCode output: {output}",
                                       code=code_str,
