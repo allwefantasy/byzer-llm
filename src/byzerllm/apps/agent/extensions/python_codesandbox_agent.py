@@ -119,6 +119,8 @@ class PythonSandboxAgent(ConversableAgent):
         
         if messages is None:
             messages = self._messages[get_agent_name(sender)]
+
+        print("Checking code execution...",flush=True)   
         
         last_n_messages = code_execution_config.pop("last_n_messages", 1)        
 
