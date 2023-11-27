@@ -1,12 +1,21 @@
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING,Dict, List, Optional, Union
+from typing import TYPE_CHECKING,Dict, List, Optional, Union,Any
 from .agent import Agent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import ray
+import dataclasses
 
 if TYPE_CHECKING:
     from .conversable_agent import ConversableAgent
+
+@dataclasses.dataclass
+class ChatResponse:
+      status: int
+      output: str      
+      code: str
+      prompt: str
+      variables: Dict[str,Any]=dataclasses.field(default_factory=dict)
 
 def get_agent_name(agent: Union[Agent,ClientActorHandle,str]) -> str:
     if isinstance(agent,Agent):

@@ -1,6 +1,6 @@
 from ..conversable_agent import ConversableAgent
 from ..agent import Agent
-from .. import get_agent_name,run_agent_func
+from .. import get_agent_name,run_agent_func,ChatResponse
 import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
@@ -13,13 +13,7 @@ import dataclasses
 
 from ....utils.client import ByzerLLM,ByzerRetrieval,code_utils
 
-@dataclasses.dataclass
-class ExecuteCodeResponse:
-      status: int
-      output: str      
-      code: str
-      prompt: str
-      variables: Dict[str,Any]=dataclasses.field(default_factory=dict)
+
 
 class CodeSandbox:
     def __init__(self,file_path:str,file_ref) -> None:        
@@ -113,10 +107,11 @@ class PythonSandboxAgent(ConversableAgent):
     
     def generate_execute_code_reply(
         self,
+        raw_message: Optional[Union[Dict,str,ChatResponse]] = None,
         messages: Optional[List[Dict]] = None,
         sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
         config: Optional[Any] = None,
-    ) -> Tuple[bool, Union[str, Dict, None]]:
+    ) -> Tuple[bool, Union[str, Dict, None,ChatResponse]]:
         
         code_execution_config = config if config is not None else self._code_execution_config
         if code_execution_config is False:
@@ -139,11 +134,16 @@ class PythonSandboxAgent(ConversableAgent):
             # found code blocks, execute code and push "last_n_messages" back
             #  combine all code blocks into one code block
             codes = [code_block[1] for code_block in code_blocks if code_block[0] == "python"]
+            code_str = "\n".join(codes)
             sandbox = self.get_or_create_sandbox(get_agent_name(sender),None,None,0,0)
-            exitcode, output,response = sandbox.exec_capture_output.remote("\n".join(codes),[])
+            exitcode, output,response = sandbox.exec_capture_output.remote(code_str,[])
             code_execution_config["last_n_messages"] = last_n_messages
             exitcode2str = "execution succeeded" if exitcode == 0 else "execution failed"
-            return True, f"exitcode: {exitcode} ({exitcode2str})\nCode output: {output}"
+            return True, ChatResponse(status=exitcode,
+                                      output=f"exitcode: {exitcode} ({exitcode2str})\nCode output: {output}",
+                                      code=code_str,
+                                      prompt=message,
+                                      variables=response)
 
         # no code blocks are found, push last_n_messages back and return.
         code_execution_config["last_n_messages"] = last_n_messages

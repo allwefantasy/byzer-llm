@@ -3,7 +3,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 from ...utils.client import ByzerLLM,ByzerRetrieval
 from .agent import Agent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
-from . import get_agent_name,run_agent_func
+import time
+from . import get_agent_name,run_agent_func,ChatResponse
 
 
 class AssistantAgent(ConversableAgent):    
@@ -52,6 +53,7 @@ Reply "TERMINATE" in the end when everything is done.
 
     def generate_code_reply(
         self,
+        raw_message: Optional[Union[Dict,str,ChatResponse]] = None,
         messages: Optional[List[Dict]] = None,
         sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
         config: Optional[Any] = None,
@@ -60,24 +62,19 @@ Reply "TERMINATE" in the end when everything is done.
         if messages is None:
             messages = self._messages[get_agent_name(sender)]
         
-        '''
-        if the message is from the code agent, if the 
-        '''
-        if get_agent_name(sender) == get_agent_name(self.code_agent):
-            return True, None 
+        
+        if get_agent_name(sender) != get_agent_name(self.code_agent):
+   
+            final,output = self.generate_llm_reply(messages,sender)            
+            # ask the code agent to execute the code 
+            self.send(message=output,recipient=self.code_agent)            
+            return True, messages[get_agent_name(self.code_agent)][-1]["content"]
+        
 
-        final,output = self.generate_llm_reply(messages,sender)
-
-        current_len = len(self._messages[get_agent_name(self.code_agent)])
-        # ask the code agent to execute the code 
-        self.send(message=output,recipient=self.code_agent)
-
-        # wait for the code agent's reply
-        now_len = len(self._messages[get_agent_name(self.code_agent)])
-        while(now_len == current_len):
-            now_len = len(self._messages[get_agent_name(self.code_agent)])
-
-        # get the reply from the code agent
-        code_agent_reply = self._messages[get_agent_name(self.code_agent)][-1]['content']
-        return True,code_agent_reply    
-          
+        raw_message: ChatResponse = raw_message
+        if raw_message.status == 0:
+            # stop the conversation if the code agent gives the success message
+            return True, None
+        else:
+            return True, raw_message.output
+        

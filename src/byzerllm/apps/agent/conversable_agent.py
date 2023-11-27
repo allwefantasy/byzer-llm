@@ -9,7 +9,7 @@ from ray.util.client.common import ClientActorHandle, ClientObjectRef
 
 from .agent import Agent
 from ...utils.client import ByzerLLM,ByzerRetrieval,code_utils
-from . import get_agent_name,run_agent_func
+from . import get_agent_name,run_agent_func, ChatResponse
 
 try:
     from termcolor import colored
@@ -328,9 +328,12 @@ class ConversableAgent(Agent):
             ) 
     
     def _process_received_message(self, message, sender, silent):
-            message = self._message_to_dict(message)
+            raw_message = message
+            if isinstance(message, ChatResponse):
+                raw_message = message.output  
+            raw_message = self._message_to_dict(raw_message)
             # When the agent receives a message, the role of the message is "user". (If 'role' exists and is 'function', it will remain unchanged.)
-            valid = self._append_message(message, "user", sender)
+            valid = self._append_message(raw_message, "user", sender)
             if not valid:
                 raise ValueError(
                     "Received message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
@@ -338,12 +341,12 @@ class ConversableAgent(Agent):
             
             if not silent:                
                 print(colored(get_agent_name(sender), "yellow"), "(to", f"{self.name}):\n", flush=True)
-                print(colored(f"{message['content']}", "green"), flush=True)
+                print(colored(f"{raw_message['content']}", "green"), flush=True)
                 print("\n", "-" * 80, flush=True, sep="")
 
     def receive(
         self,
-        message: Union[Dict, str],
+        message: Union[Dict, str,ChatResponse],
         sender: Union[ClientActorHandle,Agent,str], #"Agent"
         request_reply: Optional[bool] = None,
         silent: Optional[bool] = False,
@@ -352,12 +355,13 @@ class ConversableAgent(Agent):
 
         if request_reply is False or request_reply is None and self.reply_at_receive[get_agent_name(sender)] is False:
             return
-        reply = self.generate_reply(messages=self.chat_messages[get_agent_name(sender)], sender=sender)
+        reply = self.generate_reply(raw_message=message, messages=self.chat_messages[get_agent_name(sender)], sender=sender)
         if reply is not None:                                    
             self.send(reply, sender, silent=silent)
 
     def generate_reply(
         self,
+        raw_message: Optional[Union[Dict,str,ChatResponse]] = None,
         messages: Optional[List[Dict]] = None,
         sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
         exclude: Optional[List[Callable]] = None,
@@ -376,7 +380,7 @@ class ConversableAgent(Agent):
                 continue
             if asyncio.coroutines.iscoroutinefunction(reply_func):
                 continue
-            final, reply = reply_func(self, messages=messages, sender=sender, config=reply_func_tuple["config"])
+            final, reply = reply_func(self, raw_message=raw_message, messages=messages, sender=sender, config=reply_func_tuple["config"])
             if final:                
                 return reply
                          
@@ -384,6 +388,7 @@ class ConversableAgent(Agent):
 
     def generate_llm_reply(
             self,
+            raw_message: Optional[Union[Dict,str,ChatResponse]] = None,
             messages: Optional[List[Dict]] = None,
             sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
             config: Optional[Any] = None,
@@ -415,6 +420,7 @@ class ConversableAgent(Agent):
     
     def check_termination_and_human_reply(
         self,
+        raw_message: Optional[Union[Dict,str,ChatResponse]] = None,
         messages: Optional[List[Dict]] = None,
         sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
         config: Optional[Any] = None,
