@@ -128,6 +128,9 @@ class ConversableAgent(Agent):
     def system_message(self):
         """Return the system message."""
         return self._system_message[0]["content"]
+    
+    def get_system_message(self):
+        return self.system_message
 
     def update_system_message(self, system_message: str):
         """Update the system message.
