@@ -4,7 +4,7 @@ from ....utils.client import ByzerLLM,ByzerRetrieval
 from ..agent import Agent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import time
-from . import get_agent_name,run_agent_func,ChatResponse
+from .. import get_agent_name,run_agent_func,ChatResponse
 from byzerllm.utils.client import TableSettings,SearchQuery,LLMHistoryItem,LLMRequest
 import uuid
 import json
