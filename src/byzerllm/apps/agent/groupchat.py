@@ -191,13 +191,13 @@ class GroupChatManager(ConversableAgent):
                 # select the next speaker
                 speaker = groupchat.select_speaker(speaker, self)
                 # let the speaker speak
-                reply = run_agent_func(speaker,"generate_reply",None,self)
+                reply = run_agent_func(speaker,"generate_reply",None,None,self)
             except KeyboardInterrupt:
                 # let the admin agent speak if interrupted
                 if groupchat.admin_name in groupchat.agent_names:
                     # admin agent is one of the participants
                     speaker = groupchat.agent_by_name(groupchat.admin_name)
-                    reply = run_agent_func(speaker,"generate_reply",None,self)
+                    reply = run_agent_func(speaker,"generate_reply",None,None,self)
                 else:
                     # admin agent is not found in the participants
                     raise
