@@ -6,8 +6,15 @@ from .conversable_agent import ConversableAgent
 import logging
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 from ...utils.client import ByzerLLM,ByzerRetrieval,code_utils
-import ray
+import json
 from . import get_agent_name, run_agent_func,ChatResponse
+
+try:
+    from termcolor import colored
+except ImportError:
+
+    def colored(x, *args, **kwargs):
+        return x
 
 logger = logging.getLogger(__name__)
 
@@ -100,15 +107,20 @@ Then select the next role from {[get_agent_name(agent) for agent in agents]} to 
                 logger.warning(
                     f"GroupChat is underpopulated with {n_agents} agents. Direct communication would be more efficient."
                 )
-        run_agent_func(selector,"update_system_message",self.select_speaker_msg(agents))         
-        final, name = run_agent_func(selector,"generate_llm_reply",None,
-            self.messages    +        [
+        
+        run_agent_func(selector,"update_system_message",self.select_speaker_msg(agents)) 
+        select_prompt = self.messages    +        [
                 {
                     "role": "user",
                     "content": f"Read the above conversation. Then select the next role from {[get_agent_name(agent) for agent in agents]} to play. Only return the role.",
                 }
-            ] 
-        )
+            ]        
+        
+        final, name = run_agent_func(selector,"generate_llm_reply",None,select_prompt)        
+        
+        print(colored(f"GroupChat select_speaker: {json.dumps(select_prompt)}","red"))        
+        print(colored(f"GroupChat select_speaker: {name}","green"))
+        
         if not final:
             # i = self._random.randint(0, len(self._agent_names) - 1)  # randomly pick an id
             return self.next_agent(last_speaker, agents)
