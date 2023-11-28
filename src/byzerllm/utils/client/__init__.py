@@ -115,6 +115,7 @@ class ByzerLLM:
             self.byzer_engine_url = kwargs["byzer_engine_url"]                         
 
         self.default_model_name = None
+        self.default_emb_model_name = None
 
         if url is not None and self.sql_model:            
             v = globals()
@@ -133,6 +134,10 @@ class ByzerLLM:
 
     def setup_default_model_name(self,model_name:str)->'ByzerLLM':
         self.default_model_name = model_name
+        return self 
+
+    def setup_default_emb_model_name(self,model_name:str)->'ByzerLLM':
+        self.default_emb_model_name = model_name
         return self    
 
     def setup(self,name:str, value:Any)->'ByzerLLM':
