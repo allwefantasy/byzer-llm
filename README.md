@@ -112,40 +112,6 @@ Once you deploy the model with `run command as LLM`, then you can ues the model 
 
 ---
 
-## Cooperate with Byzer-Retrieval
-
-Byzer-LLM can cooperate with [Byzer-Retrieval](https://github.com/allwefantasy/byzer-retrieval) to build a RAG application. The following code shows how to use Byzer-LLM and Byzer-Retrieval together.
-
-The first step is connect to Ray cluster:
-
-```python
-code_search_path=["/home/byzerllm/softwares/byzer-retrieval-lib/"]
-env_vars = {"JAVA_HOME": "/home/byzerllm/softwares/jdk-21",
-            "PATH":"/home/byzerllm/softwares/jdk-21/bin:/home/byzerllm/.rvm/gems/ruby-3.2.2/bin:/home/byzerllm/.rvm/gems/ruby-3.2.2@global/bin:/home/byzerllm/.rvm/rubies/ruby-3.2.2/bin:/home/byzerllm/.rbenv/shims:/home/byzerllm/.rbenv/bin:/home/byzerllm/softwares/byzer-lang-all-in-one-linux-amd64-3.3.0-2.3.7/jdk8/bin:/usr/local/cuda/bin:/usr/local/cuda/bin:/home/byzerllm/.rbenv/shims:/home/byzerllm/.rbenv/bin:/home/byzerllm/miniconda3/envs/byzerllm-dev/bin:/home/byzerllm/miniconda3/condabin:/home/byzerllm/.local/bin:/home/byzerllm/bin:/usr/local/cuda/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/byzerllm/.rvm/bin:/home/byzerllm/.rvm/bin"}
-
-import ray
-
-ray.init(address="auto",namespace="default",
-                 job_config=ray.job_config.JobConfig(code_search_path=code_search_path,
-                                                      runtime_env={"env_vars": env_vars})
-                 )            
-```
-
-The second step is to create ByzerLLM/ByzerRetrieval:
-
-```python
-from byzerllm.utils.retrieval import ByzerRetrieval
-from byzerllm.utils.client import ByzerLLM,LLMRequest,LLMResponse,LLMHistoryItem,LLMRequestExtra
-from byzerllm.records import SearchQuery
-
-retrieval = ByzerRetrieval()
-retrieval.launch_gateway()
-
-llm = ByzerLLM()
-```
-
-
-Now you can use `llm.chat` and `retrieval.search` to build a RAG application.
 
 
 
