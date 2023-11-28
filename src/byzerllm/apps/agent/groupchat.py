@@ -61,7 +61,7 @@ class GroupChat:
                 if self.agents[(offset + i) % len(self.agents)] in agents:
                     return self.agents[(offset + i) % len(self.agents)]
 
-    def select_speaker_msg(self, agents: List[Union[Agent,ClientActorHandle]]):
+    def select_speaker_msg(self, agents: List[Union[Agent,ClientActorHandle,str]]):
         """Return the message for selecting the next speaker."""
         return f"""You are in a role play game. The following roles are available:
 {self._participant_roles()}.
@@ -102,12 +102,12 @@ Then select the next role from {[get_agent_name(agent) for agent in agents]} to 
                 )
         run_agent_func(selector,"update_system_message",self.select_speaker_msg(agents))         
         final, name = run_agent_func(selector,"generate_llm_reply",
-            [
+            self.messages    +        [
                 {
-                    "role": "system",
+                    "role": "user",
                     "content": f"Read the above conversation. Then select the next role from {[get_agent_name(agent) for agent in agents]} to play. Only return the role.",
                 }
-            ] + self.messages            
+            ] 
         )
         if not final:
             # i = self._random.randint(0, len(self._agent_names) - 1)  # randomly pick an id
@@ -157,7 +157,10 @@ class GroupChatManager(ConversableAgent):
         )
         # Order of register_reply is important.
         # Allow sync chat if initiated using initiate_chat
-        self.register_reply([Agent, ClientActorHandle,str], GroupChatManager.run_chat, config=groupchat, reset_config=GroupChat.reset)        
+        self.register_reply([Agent, ClientActorHandle,str], 
+                            GroupChatManager.run_chat, 
+                            config=groupchat, 
+                            reset_config=GroupChat.reset)        
 
     def run_chat(
         self,
