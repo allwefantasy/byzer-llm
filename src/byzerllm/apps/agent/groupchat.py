@@ -113,7 +113,7 @@ Then select the next role from {[get_agent_name(agent) for agent in agents]} to 
             # i = self._random.randint(0, len(self._agent_names) - 1)  # randomly pick an id
             return self.next_agent(last_speaker, agents)
         try:
-            return self.agent_by_name(name)
+            return self.agent_by_name(name.strip())
         except ValueError:
             logger.warning(
                 f"GroupChat select_speaker failed to resolve the next speaker's name. Speaker selection will default to the next speaker in the list. This is because the speaker selection OAI call returned:\n{name}"
