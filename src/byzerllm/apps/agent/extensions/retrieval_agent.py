@@ -213,7 +213,7 @@ Context is: {input_context}
         if update_context_case:
             return True,"FAIL TO ANSWER"
         else:
-            return True,v
+            return True,v + " TERMINATE"
                 
         
         
