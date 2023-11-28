@@ -71,6 +71,7 @@ class RetrievalAgent(ConversableAgent):
         retrieval_cluster:str="data_analysis",
         retrieval_db:str="data_analysis",
         update_context_retry: int = 3,
+        chunk_size_in_context: int = 1,
         system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,        
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         max_consecutive_auto_reply: Optional[int] = None,
@@ -102,6 +103,7 @@ class RetrievalAgent(ConversableAgent):
         self.byzer_engine_url = byzer_engine_url
 
         self.update_context_retry = update_context_retry
+        self.chunk_size_in_context = chunk_size_in_context
 
         self._reply_func_list = []
         # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
@@ -184,13 +186,29 @@ field(chunk_vector,array(float))
         
         message = messages[-1]
         
-        contents = self.search_content_chunks(owner=self.owner,q=message["content"],limit=30,return_json=False)
+        contents = self.search_content_chunks(owner=self.owner,q=message["content"],limit=100,return_json=False)
+        # split the contents into n groups
+        groups = []
+        
+        if not contents:
+            return True,"FAIL TO ANSWER TERMINATE"
+        
+        for i in range(0,len(contents),self.chunk_size_in_context):
+            groups.append(contents[i:i + self.chunk_size_in_context])
+
+    
         current_doc = 0        
+
+        input_context = json.dumps([{"content":x["raw_chunk"]} for x in groups[current_doc]],ensure_ascii=False,indent=4)
 
         prompt = PromptTemplate.from_template('''User's question is: {input_question}
 
-Context is: {input_context}
-''').format(input_question=message["content"],input_context=contents[current_doc]["raw_chunk"])
+Context is: 
+
+```json                                                                                            
+{input_context}
+```
+''').format(input_question=message["content"],input_context=input_context)
         
         new_message = {"content":prompt,"role":"user"}                    
         final,v = self.generate_llm_reply(None,[new_message],sender)
@@ -200,12 +218,17 @@ Context is: {input_context}
             current_doc += 1
             if current_doc >= self.update_context_retry or current_doc >= len(contents):
                 break
-            func_print = f"Try to use the next context doc_index:{current_doc+1}: {contents[current_doc]['raw_chunk']}"
-            print(colored(func_print, "green"), flush=True)
+            
+            input_context = json.dumps([{"content":x["raw_chunk"]} for x in groups[current_doc]],ensure_ascii=False,indent=4)
+
             prompt = PromptTemplate.from_template('''User's question is: {input_question}
 
-Context is: {input_context}
-''').format(input_question=message["content"],input_context=contents[current_doc]["raw_chunk"])
+Context is: 
+
+```json                                                                                            
+{input_context}
+```
+''').format(input_question=message["content"],input_context=input_context)
             new_message = {"content":prompt,"role":"user"}
             final,v = self.generate_llm_reply(None,[new_message],sender)
             update_context_case = "UPDATE CONTEXT" in v[-20:].upper() or "UPDATE CONTEXT" in v[:20].upper()                
