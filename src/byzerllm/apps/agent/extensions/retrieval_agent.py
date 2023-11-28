@@ -332,7 +332,7 @@ Context is: {input_context}
             return docs[0:limit]    
 
     def emb(self,s:str):        
-        return self.llm.emb(self.emb_model,LLMRequest(instruction=s))[0].output    
+        return self.llm.emb(self.llm.default_emb_model_name,LLMRequest(instruction=s))[0].output    
     
     def search_tokenize(self,s:str):
         return self.llm.apply_sql_func("select mkString(' ',parse(value)) as value",[
