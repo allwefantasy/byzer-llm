@@ -235,7 +235,7 @@ Context is: {input_context}
     def get_conversations(self,owner:str, chat_name:str,limit=1000)->List[Dict[str,Any]]:
         docs = self.retrieval.filter(self.retrieval_cluster,
                         [SearchQuery(self.retrieval_db,"user_memory",
-                                     filters={"and":[self._owner_filter(),{"field":"chat_name","value":chat_name}]},
+                                     filters={"and":[self._owner_filter(owner),{"field":"chat_name","value":chat_name}]},
                                      sorts=[{"created_time":"desc"}],
                                     keyword=None,fields=["chat_name"],
                                     vector=[],vectorField=None,
@@ -284,10 +284,10 @@ Context is: {input_context}
     def _owner_filter(self,owner:str):
         return {"field":"owner","value":owner}
             
-    def search_content_chunks(self,q:str,limit:int=4,return_json:bool=True):   
+    def search_content_chunks(self,q:str,owner:str,limit:int=4,return_json:bool=True):   
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content_chunk",
-                                         filters={"and":[self._owner_filter()]},
+                                         filters={"and":[self._owner_filter(owner)]},
                                         keyword=self.search_tokenize(q),fields=["chunk"],
                                         vector=self.emb(q),vectorField="chunk_vector",
                                         limit=limit)])
@@ -298,29 +298,29 @@ Context is: {input_context}
         else:
             return docs
         
-    def get_doc(self,doc_id:str):
+    def get_doc(self,doc_id:str,owner:str):
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content",
-                                         filters={"and":[self._owner_filter()]},
+                                         filters={"and":[self._owner_filter(owner)]},
                                         keyword=doc_id,fields=["_id"],
                                         vector=[],vectorField=None,
                                         limit=1)])
         return docs[0] if docs else None
     
-    def get_doc_by_url(self,url:str):
+    def get_doc_by_url(self,url:str,owner:str):
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content",
-                                         filters={"and":[self._owner_filter()]},
+                                         filters={"and":[self._owner_filter(owner)]},
                                         keyword=url,fields=["url"],
                                         vector=[],vectorField=None,
                                         limit=1)])
         return docs[0] if docs else None
                 
         
-    def search_memory(self,chat_name:str, q:str,limit:int=4,return_json:bool=True):
+    def search_memory(self,chat_name:str, owner:str, q:str,limit:int=4,return_json:bool=True):
         docs = self.retrieval.search(self.retrieval_cluster,
                         [SearchQuery(self.retrieval_db,"user_memory",
-                                     filters={"and":[self._owner_filter()]},
+                                     filters={"and":[self._owner_filter(owner=owner)]},
                                     keyword=chat_name,fields=["chat_name"],
                                     vector=self.emb(q),vectorField="content_vector",
                                     limit=1000)])
