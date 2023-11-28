@@ -218,6 +218,9 @@ Context is:
             current_doc += 1
             if current_doc >= self.update_context_retry or current_doc >= len(contents):
                 break
+
+            if not groups[current_doc] :
+                break
             
             input_context = json.dumps([{"content":x["raw_chunk"]} for x in groups[current_doc]],ensure_ascii=False,indent=4)
 
