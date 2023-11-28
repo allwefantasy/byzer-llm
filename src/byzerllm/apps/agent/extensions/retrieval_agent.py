@@ -192,8 +192,8 @@ field(chunk_vector,array(float))
 Context is: {input_context}
 ''').format(input_question=message["content"],input_context=contents[current_doc]["raw_chunk"])
         
-                            
-        final,v = self.generate_llm_reply(None,[prompt],sender)
+        new_message = {"content":prompt,"role":"user"}                    
+        final,v = self.generate_llm_reply(None,[new_message],sender)
                 
         update_context_case = "UPDATE CONTEXT" in v[-20:].upper() or "UPDATE CONTEXT" in v[:20].upper()
         while update_context_case:            
@@ -206,7 +206,8 @@ Context is: {input_context}
 
 Context is: {input_context}
 ''').format(input_question=message["content"],input_context=contents[current_doc]["raw_chunk"])
-            final,v = self.generate_llm_reply(None,[prompt],sender)
+            new_message = {"content":prompt,"role":"user"}
+            final,v = self.generate_llm_reply(None,[new_message],sender)
             update_context_case = "UPDATE CONTEXT" in v[-20:].upper() or "UPDATE CONTEXT" in v[:20].upper()                
 
         if update_context_case:
