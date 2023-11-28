@@ -127,7 +127,7 @@ Then select the next role from {[get_agent_name(agent) for agent in agents]} to 
                 logger.warning(
                     f"The agent '{get_agent_name(agent)}' has an empty system_message, and may not work well with GroupChat."
                 )
-            roles.append(f"{get_agent_name(agent)}: {run_agent_func(agent,'system_message')}")
+            roles.append(f"{get_agent_name(agent)}: {run_agent_func(agent,'get_system_message')}")
         return "\n".join(roles)
 
 
