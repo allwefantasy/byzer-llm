@@ -9,6 +9,12 @@ from byzerllm.utils.client import TableSettings,SearchQuery,LLMHistoryItem,LLMRe
 import uuid
 import json
 from langchain import PromptTemplate
+try:
+    from termcolor import colored
+except ImportError:
+
+    def colored(x, *args, **kwargs):
+        return x
 
 PROMPT_DEFAULT = """You're a retrieve augmented chatbot. You answer user's questions based on your own knowledge and the
 context provided by the user. You should follow the following steps to answer a question:
@@ -190,10 +196,12 @@ Context is: {input_context}
         final,v = self.generate_llm_reply(None,[prompt],sender)
                 
         update_context_case = "UPDATE CONTEXT" in v[-20:].upper() or "UPDATE CONTEXT" in v[:20].upper()
-        while update_context_case:
+        while update_context_case:            
             current_doc += 1
             if current_doc >= self.update_context_retry or current_doc >= len(contents):
                 break
+            func_print = f"Try to use the next context doc_index:{current_doc+1}: {contents[current_doc]['raw_chunk']}"
+            print(colored(func_print, "green"), flush=True)
             prompt = PromptTemplate.from_template('''User's question is: {input_question}
 
 Context is: {input_context}
