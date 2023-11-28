@@ -7,7 +7,7 @@ import logging
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 from ...utils.client import ByzerLLM,ByzerRetrieval,code_utils
 import ray
-from . import get_agent_name, run_agent_func
+from . import get_agent_name, run_agent_func,ChatResponse
 
 logger = logging.getLogger(__name__)
 
@@ -164,6 +164,7 @@ class GroupChatManager(ConversableAgent):
 
     def run_chat(
         self,
+        raw_message: Optional[Union[Dict,str,ChatResponse]] = None,
         messages: Optional[List[Dict]] = None,
         sender: Optional[Union[Agent, ClientActorHandle,str]] = None,
         config: Optional[GroupChat] = None,
