@@ -107,7 +107,7 @@ class RetrievalAgent(ConversableAgent):
 
         # check byzer engine is accessible
         try:
-            self.llm.apply_sql_func("select 1 as value",[],url=self.byzer_engine_url)
+            self.llm.apply_sql_func("select 1 as value",[{"value":""}],url=self.byzer_engine_url)
         except Exception as e:
             raise Exception(f"byzer engine is not accessible at {self.byzer_engine_url}") from e
                 

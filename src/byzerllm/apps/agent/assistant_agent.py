@@ -86,6 +86,7 @@ Reply "TERMINATE" in the end when everything is done.
             # stop the conversation if the code agent gives the success message
             return True, None
         else:
+            # the code may be wrong, so generate a new code according to the conversation so far
             final,output = self.generate_llm_reply(raw_message,messages,sender)
             return True, output
         
