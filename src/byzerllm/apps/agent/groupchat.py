@@ -172,7 +172,12 @@ class GroupChatManager(ConversableAgent):
         self.register_reply([Agent, ClientActorHandle,str], 
                             GroupChatManager.run_chat, 
                             config=groupchat, 
-                            reset_config=GroupChat.reset)        
+                            reset_config=GroupChat.reset)  
+        self.groupchat = groupchat
+
+    def _prepare_chat(self, recipient, clear_history): 
+        super()._prepare_chat(recipient, clear_history)           
+        self.groupchat.reset()          
 
     def run_chat(
         self,
