@@ -118,9 +118,7 @@ Then select the next role from {[get_agent_name(agent) for agent in agents]} to 
             ]        
         
         final, name = run_agent_func(selector,"generate_llm_reply",None,select_prompt)        
-        
-        print(colored(f'system message: {run_agent_func(selector,"get_system_message")}',"red"))   
-        print(colored(f"GroupChat select_speaker: {json.dumps(select_prompt)}","red"))        
+                        
         print(colored(f"GroupChat select_speaker: {name}","green"))
         
         if not final:
@@ -175,11 +173,7 @@ class GroupChatManager(ConversableAgent):
                             GroupChatManager.run_chat, 
                             config=groupchat, 
                             reset_config=GroupChat.reset)  
-        self.groupchat = groupchat
-
-    def _prepare_chat(self, recipient, clear_history): 
-        super()._prepare_chat(recipient, clear_history)           
-        self.groupchat.reset()          
+        self.groupchat = groupchat        
 
     def run_chat(
         self,
@@ -210,13 +204,13 @@ class GroupChatManager(ConversableAgent):
                 # select the next speaker
                 speaker = groupchat.select_speaker(speaker, self)
                 # let the speaker speak
-                reply = run_agent_func(speaker,"generate_reply",None,None,self)
+                reply = run_agent_func(speaker,"generate_reply",sender=self)
             except KeyboardInterrupt:
                 # let the admin agent speak if interrupted
                 if groupchat.admin_name in groupchat.agent_names:
                     # admin agent is one of the participants
                     speaker = groupchat.agent_by_name(groupchat.admin_name)
-                    reply = run_agent_func(speaker,"generate_reply",None,None,self)
+                    reply = run_agent_func(speaker,"generate_reply",sender=self)
                 else:
                     # admin agent is not found in the participants
                     raise
