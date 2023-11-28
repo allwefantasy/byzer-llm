@@ -211,7 +211,7 @@ Context is: {input_context}
             update_context_case = "UPDATE CONTEXT" in v[-20:].upper() or "UPDATE CONTEXT" in v[:20].upper()                
 
         if update_context_case:
-            return True,"FAIL TO ANSWER"
+            return True,"FAIL TO ANSWER TERMINATE"
         else:
             return True,v + " TERMINATE"
                 
