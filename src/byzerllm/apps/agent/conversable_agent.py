@@ -163,7 +163,7 @@ class ConversableAgent(Agent):
         """A dictionary of conversations from agent to list of messages."""
         return self._messages    
     
-    def last_message(self, agent: Optional[Union[Agent,ClientActorHandle]] = None) -> Dict:
+    def last_message(self, agent: Optional[Union[Agent,ClientActorHandle,str]] = None) -> Dict:
         """The last message exchanged with the agent.
 
         Args:
@@ -182,9 +182,9 @@ class ConversableAgent(Agent):
                 for conversation in self._messages.values():
                     return conversation[-1]
             raise ValueError("More than one conversation is found. Please specify the sender to get the last message.")
-        if agent not in self._messages.keys():
+        if get_agent_name(agent) not in self._messages.keys():
             raise KeyError(
-                f"The agent '{agent.name}' is not present in any conversation. No history available for this agent."
+                f"The agent '{get_agent_name(agent)}' is not present in any conversation. No history available for this agent."
             )
         return self._messages[get_agent_name(agent)][-1]
     
