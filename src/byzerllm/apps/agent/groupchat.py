@@ -101,7 +101,7 @@ Then select the next role from {[get_agent_name(agent) for agent in agents]} to 
                     f"GroupChat is underpopulated with {n_agents} agents. Direct communication would be more efficient."
                 )
         run_agent_func(selector,"update_system_message",self.select_speaker_msg(agents))         
-        final, name = run_agent_func(selector,"generate_llm_reply",
+        final, name = run_agent_func(selector,"generate_llm_reply",None,
             self.messages    +        [
                 {
                     "role": "user",
@@ -182,7 +182,7 @@ class GroupChatManager(ConversableAgent):
             groupchat.messages.append(message)
             # broadcast the message to all agents except the speaker
             for agent in groupchat.agents:
-                if agent != speaker:
+                if get_agent_name(agent) != get_agent_name(speaker):
                     self.send(message, agent, request_reply=False, silent=True)
             if i == groupchat.max_round - 1:
                 # the last round
