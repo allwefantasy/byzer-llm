@@ -123,7 +123,7 @@ Then select the next role from {[get_agent_name(agent) for agent in agents]} to 
     def _participant_roles(self):
         roles = []
         for agent in self.agents:
-            if agent.system_message.strip() == "":
+            if run_agent_func(agent,"get_system_message").strip() == "":
                 logger.warning(
                     f"The agent '{get_agent_name(agent)}' has an empty system_message, and may not work well with GroupChat."
                 )
