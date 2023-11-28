@@ -78,7 +78,7 @@ Reply "TERMINATE" in the end when everything is done.
         
 
         ## no code block found so the code agent return None
-        if raw_message is None:
+        if raw_message is None or isinstance(raw_message,str):
             return False, None
                 
         raw_message: ChatResponse = raw_message
