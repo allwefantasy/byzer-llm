@@ -108,7 +108,8 @@ Then select the next role from {[get_agent_name(agent) for agent in agents]} to 
                     f"GroupChat is underpopulated with {n_agents} agents. Direct communication would be more efficient."
                 )
         
-        run_agent_func(selector,"update_system_message",self.select_speaker_msg(agents)) 
+        run_agent_func(selector,"update_system_message",self.select_speaker_msg(agents))
+
         select_prompt = self.messages    +        [
                 {
                     "role": "user",
@@ -118,6 +119,7 @@ Then select the next role from {[get_agent_name(agent) for agent in agents]} to 
         
         final, name = run_agent_func(selector,"generate_llm_reply",None,select_prompt)        
         
+        print(colored(f'system message: {run_agent_func(selector,"get_system_message")}',"red"))   
         print(colored(f"GroupChat select_speaker: {json.dumps(select_prompt)}","red"))        
         print(colored(f"GroupChat select_speaker: {name}","green"))
         
