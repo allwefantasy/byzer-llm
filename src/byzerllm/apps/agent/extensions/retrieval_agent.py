@@ -178,7 +178,7 @@ field(chunk_vector,array(float))
         
         message = messages[-1]
         
-        contents = self.search_content_chunks(q=message,limit=30,return_json=False)
+        contents = self.search_content_chunks(owner=self.owner,q=message,limit=30,return_json=False)
         current_doc = 0        
 
         prompt = PromptTemplate.from_template('''User's question is: {input_question}
