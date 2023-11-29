@@ -163,7 +163,20 @@ The code above is totally the same as the code for vLLM, except that the `InferB
 
 ## SQL Support
 
-The following code have the same effect as the above python code.
+In addition to the Python API, Byzer-llm also support SQL API. In order to use the SQL API, you should install Byzer-SQL language first.
+
+Try to install the Byzer-SQL language with the following command:
+
+```bash
+git clone https://gitee.com/allwefantasy/byzer-llm
+cd byzer-llm/setup-machine
+sudo -i 
+ROLE=master ./setup-machine.sh
+```
+
+After the installation, you can visit the Byzer Console at http://localhost:9002. 
+
+In the Byzer Console, you can run the following SQL to deploy a llama2 model which have the same effect as the Python code above.
 
 ```sql
 !byzerllm setup single;
@@ -179,6 +192,12 @@ and reconnect="false"
 and udfName="llama2_chat"
 and modelTable="command";
 
+```
+
+Then you can invoke the model with UDF `llama2_chat`:
+
+```sql
+
 select 
 llama2_chat(llm_param(map(
               "user_role","User",
@@ -188,16 +207,230 @@ llama2_chat(llm_param(map(
 Please remenber my name: {0}              
 ',array("Zhu William"))
 
-)))
-
- as q as q1;
-
+))) as q 
+as q1;
 ```
 
 Once you deploy the model with `run command as LLM`, then you can ues the model as a SQL function. This feature is very useful for data scientists who want to use LLM in their data analysis or data engineers who want to use LLM in their data pipeline.
 
 ---
 
+## Pretrain
+
+This section will introduce how to pretrain a LLM model with Byzer-llm.  However, for now, the pretrain feature is more mature in Byzer-SQL, so we will introduce the pretrain feature in Byzer-SQL.
+
+```sql
+-- Deepspeed Config
+set ds_config='''
+{
+  "gradient_accumulation_steps": 1,
+  "train_micro_batch_size_per_gpu": 1,
+  "prescale_gradients": false,
+  "zero_allow_untested_optimizer": true,
+  "optimizer": {
+    "type": "AdamW",
+    "params": {
+      "lr": 1e-8,
+      "eps": 1.0e-8,
+      "betas": [
+        0.9,
+        0.95
+      ],
+      "weight_decay": 0.1
+    }
+  },
+  "tensorboard": {
+    "enabled": true
+  },
+  "zero_optimization": {
+    "stage": 3,
+    "offload_optimizer": {
+         "device": "cpu"         
+     },           
+    "offload_param": {
+         "device": "cpu"
+    },
+    "contiguous_gradients": true,
+    "allgather_bucket_size": 1e8,
+    "reduce_bucket_size": 1e8,
+    "overlap_comm": true,
+    "reduce_scatter": true
+  },
+  "steps_per_print": 16,
+  "gradient_clipping": 1.0,
+  "wall_clock_breakdown": true,
+  "bf16": {
+    "enabled": true
+  }
+}
+''';
+
+-- load data
+load text.`file:///home/byzerllm/data/raw_data/*`
+where wholetext="true" as trainData;
+
+select value as text,file from trainData  as newTrainData;
+
+-- split the data into 12 partitions
+run newTrainData as TableRepartition.`` where partitionNum="12" and partitionCols="file" 
+as finalTrainData;
+
+
+-- setup env, we use 12 gpus to pretrain the model
+!byzerllm setup sfft;
+!byzerllm setup "num_gpus=12";
+
+-- specify the pretrain model type and the pretrained model path
+run command as LLM.`` where 
+and localPathPrefix="/home/byzerllm/models/sfft/jobs"
+and pretrainedModelType="sfft/llama2"
+-- original model is from
+and localModelDir="/home/byzerllm/models/Llama-2-7b-chat-hf"
+-- and localDataDir="/home/byzerllm/data/raw_data"
+
+-- we use async mode to pretrain the model, since the pretrain process will take several days or weeks
+-- Ray Dashboard will show the tensorboard address, and then you can monitor the loss
+and detached="true"
+and keepPartitionNum="true"
+
+-- use deepspeed config, this is optional
+and deepspeedConfig='''${ds_config}'''
+
+
+-- the pretrain data is from finalTrainData table
+and inputTable="finalTrainData"
+and outputTable="llama2_cn"
+and model="command"
+-- some hyper parameters
+and `sfft.int.max_length`="128"
+and `sfft.bool.setup_nccl_socket_ifname_by_ip`="true"
+;
+```
+
+Since the deepspeed checkpoint is not compatible with the huggingface checkpoint, we need to convert the deepspeed checkpoint to the huggingface checkpoint. The following code will convert the deepspeed checkpoint to the huggingface checkpoint.
+
+```sql
+!byzerllm setup single;
+
+run command as LLM.`` where 
+action="convert"
+and pretrainedModelType="deepspeed/llama3b"
+and modelNameOrPath="/home/byzerllm/models/base_model"
+and checkpointDir="/home/byzerllm/data/checkpoints"
+and tag="Epoch-1"
+and savePath="/home/byzerllm/models/my_3b_test2";
+```
+
+
+Now you can deploy the converted model :
+
+```sql
+-- 部署hugginface 模型
+!byzerllm setup single;
+
+set node="master";
+!byzerllm setup "num_gpus=2";
+!byzerllm setup "workerMaxConcurrency=1";
+
+run command as LLM.`` where 
+action="infer"
+and pretrainedModelType="custom/auto"
+and localModelDir="/home/byzerllm/models/my_3b_test2"
+and reconnect="false"
+and udfName="my_3b_chat"
+and modelTable="command";
+```
+
+## Finetune
+
+```sql
+-- load data, we use the dummy data for finetune
+-- data format supported by Byzer-SQL：https://docs.byzer.org/#/byzer-lang/zh-cn/byzer-llm/model-sft
+
+load json.`/tmp/upload/dummy_data.jsonl` where
+inferSchema="true"
+as sft_data;
+
+-- Fintune Llama2
+!byzerllm setup sft;
+!byzerllm setup "num_gpus=4";
+
+run command as LLM.`` where 
+and localPathPrefix="/home/byzerllm/models/sft/jobs"
+
+-- 指定模型类型
+and pretrainedModelType="sft/llama2"
+
+-- 指定模型
+and localModelDir="/home/byzerllm/models/Llama-2-7b-chat-hf"
+and model="command"
+
+-- 指定微调数据表
+and inputTable="sft_data"
+
+-- 输出新模型表
+and outputTable="llama2_300"
+
+-- 微调参数
+and  detached="true"
+and `sft.int.max_seq_length`="512";
+```
+
+You can check the finetune actor in the Ray Dashboard, the name of the actor is `sft-william-xxxxx`.
+
+After the finetune actor is finished, you can get the model path, so you can deploy the finetuned model.
+
+
+Here is the log of the finetune actor:
+
+```
+Loading data: /home/byzerllm/projects/sft/jobs/sft-william-20230809-13-04-48-674fd1b9-2fc1-45b9-9d75-7abf07cb84cb/finetune_data/data.jsonl3
+2
+there are 33 data in dataset
+*** starting training ***
+{'train_runtime': 19.0203, 'train_samples_per_second': 1.735, 'train_steps_per_second': 0.105, 'train_loss': 3.0778136253356934, 'epoch': 0.97}35
+
+***** train metrics *****36  
+epoch                    =       0.9737  
+train_loss               =     3.077838  
+train_runtime            = 0:00:19.0239  
+train_samples_per_second =      1.73540  
+train_steps_per_second   =      0.10541
+
+[sft-william] Copy /home/byzerllm/models/Llama-2-7b-chat-hf to /home/byzerllm/projects/sft/jobs/sft-william-20230809-13-04-48-674fd1b9-2fc1-45b9-9d75-7abf07cb84cb/finetune_model/final/pretrained_model4243              
+[sft-william] Train Actor is already finished. You can check the model in: /home/byzerllm/projects/sft/jobs/sft-william-20230809-13-04-48-674fd1b9-2fc1-45b9-9d75-7abf07cb84cb/finetune_model/final   
+```
+
+You can download the finetuned model from the path `/home/byzerllm/projects/sft/jobs/sft-william-20230809-13-04-48-674fd1b9-2fc1-45b9-9d75-7abf07cb84cb/finetune_model/final`, or copy the model to all other node in the Ray cluster.
+
+Try to deploy the finetuned model:
+
+```sql
+!byzerllm setup single;
+run command as LLM.`` where 
+action="infer"
+and localPathPrefix="/home/byzerllm/models/infer/jobs"
+and localModelDir="/home/byzerllm/models/sft/jobs/sft-william-llama2-alpaca-data-ccb8fb55-382c-49fb-af04-5cbb3966c4e6/finetune_model/final"
+and pretrainedModelType="custom/llama2"
+and udfName="fintune_llama2_chat"
+and modelTable="command";
+```
+
+Byzer-LLM use QLora to finetune the model, you can merge the finetuned model with the original model with the following code:
+
+```sql
+-- 合并lora model + base model
+
+!byzerllm setup single;
+
+run command as LLM.`` where 
+action="convert"
+and pretrainedModelType="deepspeed/llama"
+and model_dir="/home/byzerllm/models/sft/jobs/sft-william-20230912-21-50-10-2529bf9f-493e-40a3-b20f-0369bd01d75d/finetune_model/final/pretrained_model"
+and checkpoint_dir="/home/byzerllm/models/sft/jobs/sft-william-20230912-21-50-10-2529bf9f-493e-40a3-b20f-0369bd01d75d/finetune_model/final"
+and savePath="/home/byzerllm/models/sft/jobs/sft-william-20230912-21-50-10-2529bf9f-493e-40a3-b20f-0369bd01d75d/finetune_model/merge";
+
+```
 
 
 
