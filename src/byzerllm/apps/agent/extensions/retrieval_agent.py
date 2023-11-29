@@ -9,7 +9,7 @@ from byzerllm.utils.client import TableSettings,SearchQuery,LLMHistoryItem,LLMRe
 import uuid
 import json
 from langchain import PromptTemplate
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter,Document
 try:
     from termcolor import colored
 except ImportError:
@@ -363,14 +363,16 @@ Context is:
     def emb(self,s:str):        
         return self.llm.emb(self.llm.default_emb_model_name,LLMRequest(instruction=s))[0].output 
 
+
     def split_text_into_chunks(self,s:str):
         # self.llm.apply_sql_func(
         #     '''select llm_split(value,array(",","。","\n"),1600) as value ''',[{"value":content}],
         #     url=self.byzer_engine_url
         #     )["value"]
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1600, chunk_overlap=200)
-        split_docs = text_splitter.split_documents([{"page_content":s}])         
-        return [s["page_content"] for s in split_docs]   
+        split_docs = text_splitter.split_documents([Document(page_content=s)])         
+        return [s.page_content for s in split_docs] 
+
     
     def search_tokenize(self,s:str):
         seg_list = jieba.cut(s, cut_all=False)
