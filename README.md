@@ -72,6 +72,31 @@ llm.chat("llama2_chat",LLMRequest(instruction="hello world"))[0].output
 
 The above code will deploy a llama2 model and then use the model to infer the input text. If you use transformers as the inference backend, you should specify the `pretrained_model_type` manually since the transformers backend can not auto detect the model type.
 
+Byzer-LLM also support `deploy` SaaS model with the same way. This feature provide a unified interface for both open-source model and SaaS model. The following code will deploy a Azure OpenAI model and then use the model to infer the input text.
+
+```python
+llm = ByzerLLM()
+
+llm.setup_gpus_per_worker(0).setup_num_workers(10)
+llm.setup_infer_backend(InferBackend.transformers)
+
+llm.deploy(pretrained_model_type="saas/azure_openai",
+           udf_name="azure_openai",
+           infer_params={
+            "saas.api_type":"azure",
+            "saas.api_key"="xxx"
+            "saas.api_base"="xxx"
+            "saas.api_version"="2023-07-01-preview"
+            "saas.deployment_id"="xxxxxx"
+           })
+
+llm.chat("azure_openai",LLMRequest(instruction="hello world"))[0].output
+```
+
+Notice that the SaaS model does not need GPU, so we set the `setup_gpus_per_worker` to 0, and you can use `setup_num_workers`
+to control max concurrency,how ever, the SaaS model has its own max concurrency limit, the `setup_num_workers` only control the max
+concurrency accepted by the Byzer-LLM.
+
 ## Supported Models
 
 The supported open-source `pretrained_model_type` are:
@@ -212,6 +237,147 @@ as q1;
 ```
 
 Once you deploy the model with `run command as LLM`, then you can ues the model as a SQL function. This feature is very useful for data scientists who want to use LLM in their data analysis or data engineers who want to use LLM in their data pipeline.
+
+---
+## SaaS Models
+
+Since the different SaaS models have different parameters, here we provide some templates for the SaaS models to help you deploy the SaaS models.
+
+### qianfan
+
+
+```sql
+!byzerllm setup single;
+!byzerllm setup "num_gpus=0";
+!byzerllm setup "maxConcurrency=10";
+
+run command as LLM.`` where
+action="infer"
+and pretrainedModelType="saas/qianfan"
+and `saas.api_key`="xxxxxxxxxxxxxxxxxx"
+and `saas.secret_key`="xxxxxxxxxxxxxxxx"
+and `saas.model`="ERNIE-Bot-turbo"
+and `saas.retry_count`="3"
+and `saas.request_timeout`="120"
+and reconnect="false"
+and udfName="qianfan_saas"
+and modelTable="command";
+
+```
+
+### azure openai
+
+```sql
+
+!byzerllm setup single;
+!byzerllm setup "num_gpus=0";
+!byzerllm setup "maxConcurrency=10";
+
+run command as LLM.`` where
+action="infer"
+and pretrainedModelType="saas/azure_openai"
+and `saas.api_type`="azure"
+and `saas.api_key`="xxx"
+and `saas.api_base`="xxx"
+and `saas.api_version`="2023-07-01-preview"
+and `saas.deployment_id`="xxxxx"
+and udfName="azure_openai"
+and modelTable="command";
+```
+
+### openai
+
+```sql
+
+!byzerllm setup single;
+!byzerllm setup "num_gpus=0";
+!byzerllm setup "maxConcurrency=10";
+
+run command as LLM.`` where
+action="infer"
+and pretrainedModelType="saas/azure_openai"
+and `saas.api_type`="azure"
+and `saas.api_key`="xxx"
+and `saas.api_base`="xxx"
+and `saas.api_version`="xxxxx"
+and `saas.model`="xxxxx"
+and udfName="openai_saas"
+and modelTable="command";
+```
+
+### zhipu
+
+```sql
+
+!byzerllm setup single;
+!byzerllm setup "num_gpus=0";
+!byzerllm setup "maxConcurrency=10";
+
+run command as LLM.`` where
+action="infer"
+and pretrainedModelType="saas/zhipu"
+and `saas.api_key`="xxxxxxxxxxxxxxxxxx"
+and `saas.secret_key`="xxxxxxxxxxxxxxxx"
+and `saas.model`="chatglm_lite"
+and udfName="zhipu_saas"
+and modelTable="command";
+```
+
+### minimax
+
+```sql
+
+!byzerllm setup single;
+!byzerllm setup "num_gpus=0";
+!byzerllm setup "maxConcurrency=10";
+
+run command as LLM.`` where
+action="infer"
+and pretrainedModelType="saas/minimax"
+and `saas.api_key`="xxxxxxxxxxxxxxxxxx"
+and `saas.group_id`="xxxxxxxxxxxxxxxx"
+and `saas.model`="abab5.5-chat"
+and `saas.api_url`="https://api.minimax.chat/v1/text/chatcompletion_pro"
+and udfName="minimax_saas"
+and modelTable="command";
+
+```
+
+### sparkdesk
+
+```sql
+!byzerllm setup single;
+!byzerllm setup "num_gpus=0";
+!byzerllm setup "maxConcurrency=10";
+
+run command as LLM.`` where
+action="infer"
+and pretrainedModelType="saas/sparkdesk"
+and `saas.appid`="xxxxxxxxxxxxxxxxxx"
+and `saas.api_key`="xxxxxxxxxxxxxxxx"
+and `saas.api_secret`="xxxx"
+and `gpt_url`="ws://spark-api.xf-yun.com/v1.1/chat"
+and udfName="sparkdesk_saas"
+and modelTable="command";
+```
+
+### baichuan
+
+```sql
+!byzerllm setup single;
+!byzerllm setup "num_gpus=0";
+!byzerllm setup "maxConcurrency=10";
+
+run command as LLM.`` where
+action="infer"
+and pretrainedModelType="saas/baichuan"
+and `saas.api_key`="xxxxxxxxxxxxxxxxxx"
+and `saas.secret_key`="xxxxxxxxxxxxxxxx"
+and `saas.baichuan_api_url`="https://api.baichuan-ai.com/v1/chat"
+and `saas.model`="Baichuan2-53B"
+and udfName="baichuan_saas"
+and modelTable="command";
+```
 
 ---
 
