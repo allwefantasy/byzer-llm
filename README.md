@@ -23,15 +23,11 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 Byzer-LLM is Ray based , a full lifecycle solution for LLM that includes pretrain, fintune, deployment and serving.
 
-The key differences between Byzer-LLM and other LLM solutions  are:
+The unique features of Byzer-LLM are:
 
-The first one is that Byzer-LLM supports Byzer-SQL which is a SQL dialect that can be used to manage the LLM lifecycle while the other solutions only support Python API.
-
-1. Python (alpha)
-2. [Byzer-SQL](https://github.com/byzer-org/byzer-lang) (stable)
-3. Rest API (todo...)
-
-The second one is that Byzer-LLM is totally based on Ray. This means you can deploy multiple LLM models on a single machine or a cluster. This is very useful for large scale LLM deployment. And Byzer-LLM also supports vLLM/DeepSpeed/Transformers as the inference backend transparently.
+1. Full lifecyle: pretrain and finetune,deploy and serving support
+2. Python/SQL API support
+3. Ray based, easy to scale
 
 ---
 
@@ -54,11 +50,12 @@ ray start --head
 
 ---
 
-## Usage (Python)
+## Quick Start
 
 ```python
 import ray
 from byzerllm.utils.client import ByzerLLM,LLMRequest,InferBackend
+
 ray.init(address="auto",namespace="default",ignore_reinit_error=True)
 
 llm = ByzerLLM()
@@ -73,9 +70,98 @@ llm.deploy(model_path="/home/byzerllm/models/openbuddy-llama-13b-v5-fp16",
 llm.chat("llama2_chat",LLMRequest(instruction="hello world"))[0].output
 ```
 
-The above code will deploy a llama2 model and then use the model to infer the input text. The Python API is very simple and easy to use and it is very useful to explore the LLM model.
+The above code will deploy a llama2 model and then use the model to infer the input text. If you use transformers as the inference backend, you should specify the `pretrained_model_type` manually since the transformers backend can not auto detect the model type.
 
-## Usage (Byzer-SQL)
+## Supported Models
+
+The supported open-source `pretrained_model_type` are:
+
+1. custom/llama2
+2. bark	
+3. whisper	
+3. chatglm6b
+4. custom/chatglm2
+5. moss
+6. custom/alpha_moss
+7. dolly
+8. falcon
+9. llama
+10. custom/starcode
+11. custom/visualglm
+12. custom/m3e
+13. custom/baichuan
+14. custom/bge
+15. custom/qwen_vl_chat
+16. custom/stable_diffusion
+17. custom/zephyr
+
+The supported SaaS `pretrained_model_type` are:
+
+1. saas/chatglm	Chatglm130B
+2. saas/sparkdesk	星火大模型
+3. saas/baichuan	百川大模型
+4. saas/zhipu	智谱大模型
+5. saas/minimax	MiniMax 大模型
+6. saas/qianfan	文心一言
+7. saas/azure_openai	
+8. saas/openai
+
+Notice that the derived models from llama/llama2/startcode are also supported. For example, you can use `llama` to load vicuna model.
+
+## vLLM Support
+
+The Byzer-llm also support vLLM as the inference backend. The following code will deploy a vLLM model and then use the model to infer the input text.
+
+```python
+import ray
+from byzerllm.utils.retrieval import ByzerRetrieval
+from byzerllm.utils.client import ByzerLLM,LLMRequest,InferBackend
+
+llm.setup_gpus_per_worker(2)
+llm.setup_num_workers(1)
+llm.setup_infer_backend(InferBackend.VLLM)
+
+llm.deploy(
+    model_path="/home/byzerllm/models/openbuddy-zephyr-7b-v14.1",
+    pretrained_model_type="custom/auto",
+    udf_name="zephyr_chat"",
+    infer_params={"backend.max_num_batched_tokens":32768}
+)
+
+llm.chat("zephyr_chat",LLMRequest(instruction="hello world"))[0].output
+```
+
+There are some tiny differences between the vLLM and the transformers backend. 
+
+1. The `pretrained_model_type` is fixed to `custom/auto` for vLLM, since the vLLM will auto detect the model type.
+2. Use `setup_infer_backend` to specify `InferBackend.VLLM` as the inference backend.
+
+## DeepSpeed Support
+
+The Byzer-llm also support DeepSpeed as the inference backend. The following code will deploy a DeepSpeed model and then use the model to infer the input text.
+
+```python
+import ray
+from byzerllm.utils.retrieval import ByzerRetrieval
+from byzerllm.utils.client import ByzerLLM,LLMRequest,InferBackend
+
+llm.setup_gpus_per_worker(4)
+llm.setup_num_workers(1)
+llm.setup_infer_backend(InferBackend.DeepSpeed)
+
+llm.deploy(
+    model_path="/home/byzerllm/models/openbuddy-llama-13b-v5-fp16",
+    pretrained_model_type="custom/auto",
+    udf_name="llama_chat"",
+    infer_params={}
+)
+
+llm.chat("llama_chat",LLMRequest(instruction="hello world"))[0].output
+```
+
+The code above is totally the same as the code for vLLM, except that the `InferBackend` is `InferBackend.DeepSpeed`.
+
+## SQL Support
 
 The following code have the same effect as the above python code.
 

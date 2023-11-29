@@ -40,7 +40,7 @@ wudao
 SwissArmyTransformer
 
 # dependencies only for chatglm
-# jieba
+jieba
 # rouge_chinese
 # icetk
 
