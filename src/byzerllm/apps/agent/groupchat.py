@@ -198,7 +198,7 @@ class GroupChatManager(ConversableAgent):
         speaker = sender
         groupchat = config
         for i in range(groupchat.max_round):
-            print(colored(f"GroupChatManager run_chat: {i} the last message: {message}","green"))
+            print(colored(f"GroupChatManager run_chat: {i}:\n {message}","green"),flush=True)
             # set the name to speaker's name if the role is not function
             if message["role"] != "function":
                 message["name"] = get_agent_name(speaker)
@@ -229,6 +229,8 @@ class GroupChatManager(ConversableAgent):
             # The speaker sends the message without requesting a reply
             run_agent_func(speaker,"send",message=reply,recipient=self,request_reply=False);
             # get the speaker's last message and in next round, broadcast it to all other agents
+            print(colored(f"the speaker({get_agent_name(speaker)})'s reply: \n{reply}","green"))
             message = self.last_message(speaker)
+            print(colored(f"get the speaker's reply from messages: {message}","green"))
         return True, None
     
