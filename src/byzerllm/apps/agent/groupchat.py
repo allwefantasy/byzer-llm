@@ -227,7 +227,7 @@ class GroupChatManager(ConversableAgent):
             if reply is None:
                 break
             # The speaker sends the message without requesting a reply
-            run_agent_func(speaker,"send",message=reply,recipient=self,request_reply=False);
+            run_agent_func(speaker,"send",message=reply,recipient=get_agent_name(self),request_reply=False);
             # get the speaker's last message and in next round, broadcast it to all other agents
             print(colored(f"the speaker({get_agent_name(speaker)})'s reply: \n{reply}","green"))
             message = self.last_message(speaker)
