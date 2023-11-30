@@ -34,4 +34,11 @@ def run_agent_func(agent: Union[Agent,"ConversableAgent",ClientActorHandle], fun
     elif isinstance(agent,str):
         return ray.get(getattr(ray.get_actor(agent), func_name).remote(*args, **kwargs))    
     else:
-        return ray.get(getattr(agent, func_name).remote(*args, **kwargs))    
+        return ray.get(getattr(agent, func_name).remote(*args, **kwargs)) 
+
+class Agents:
+    @staticmethod
+    def create_remote_agent(cls,name:str,llm,retrieval,*args, **kwargs)->ClientActorHandle:
+        return ray.remote(name=name,max_concurrency=10)(cls).remote(
+        name=name,llm=llm,retrieval=retrieval,*args, **kwargs)   
+
