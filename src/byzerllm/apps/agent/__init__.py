@@ -47,10 +47,19 @@ class Agents:
         from .groupchat import GroupChat
         from .groupchat import GroupChatManager
         
-        groupchat = GroupChat(agents=agents, *args, **kwargs)
-        group_chat_manager =Agents.create_remote_agent(GroupChatManager,name=group_name,llm=llm,retrieval=retrieval,groupchat=groupchat,*args, **kwargs)
+        group_parameters = ["agents","messages","max_round","admin_name","func_call_filter"]
+        group_parameters_dict = {}
+        for parameter in group_parameters:
+            if parameter in kwargs:
+                group_parameters_dict[parameter] = kwargs[parameter]
+                del kwargs[parameter]
+
+        groupchat = GroupChat(agents=agents, **group_parameters_dict)
+        group_chat_manager =Agents.create_remote_agent(GroupChatManager,name=group_name,
+                                                       llm=llm,retrieval=retrieval,
+                                                       groupchat=groupchat,*args, **kwargs)
         return group_chat_manager   
     
-    
+
 
         
