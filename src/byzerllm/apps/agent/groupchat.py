@@ -117,10 +117,10 @@ Then select the next role from {[get_agent_name(agent) for agent in agents]} to 
                 }
             ]        
         
-        final, name = run_agent_func(selector,"generate_llm_reply",None,select_prompt)        
-                        
-        print(colored(f"GroupChat select_speaker: {name}","green"))
         
+        final, name = run_agent_func(selector,"generate_llm_reply",None,select_prompt)                                        
+        print(colored(f"GroupChat select_speaker: {name}","green"))
+
         if not final:
             # i = self._random.randint(0, len(self._agent_names) - 1)  # randomly pick an id
             return self.next_agent(last_speaker, agents)
@@ -198,6 +198,7 @@ class GroupChatManager(ConversableAgent):
         speaker = sender
         groupchat = config
         for i in range(groupchat.max_round):
+            print(colored(f"GroupChatManager run_chat: {i}","green"))
             # set the name to speaker's name if the role is not function
             if message["role"] != "function":
                 message["name"] = get_agent_name(speaker)
@@ -226,7 +227,7 @@ class GroupChatManager(ConversableAgent):
             if reply is None:
                 break
             # The speaker sends the message without requesting a reply
-            run_agent_func(speaker,"send",reply,self,request_reply=False);
+            run_agent_func(speaker,"send",message=reply,sender=self,request_reply=False);
             # speaker.send(reply, self, request_reply=False)
             message = self.last_message(speaker)
         return True, None
