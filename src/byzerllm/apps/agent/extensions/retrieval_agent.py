@@ -107,13 +107,8 @@ class RetrievalAgent(ConversableAgent):
         self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply) 
                 
         self.retrieval_cluster = retrieval_cluster
-        self.retrieval_db = retrieval_db  
-
-        # check byzer engine is accessible
-        try:
-            self.llm.apply_sql_func("select 1 as value",[{"value":""}],url=self.byzer_engine_url)
-        except Exception as e:
-            raise Exception(f"byzer engine is not accessible at {self.byzer_engine_url}") from e
+        self.retrieval_db = retrieval_db          
+        
                 
         if self.llm.default_emb_model_name is None:
             raise Exception(f'''
