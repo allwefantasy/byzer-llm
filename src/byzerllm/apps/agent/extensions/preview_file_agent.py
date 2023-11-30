@@ -10,7 +10,7 @@ from .. import get_agent_name,run_agent_func,ChatResponse
 class PreviewFileAgent(ConversableAgent):    
 
     DEFAULT_SYSTEM_MESSAGE = """You are a helpful AI assistant.
-I have a file where the path is {file_path}, I want to use pandas to read it.The packages all are installed, you can use it directly.
+I have a file where the path is {{file_path}}, I want to use pandas to read it.The packages all are installed, you can use it directly.
 Try to help me to generate python code which should match the following requirements:
 1. try to read the file according the suffix of file name in Try block
 2. if read success, set variable loaded_successfully to True, otherwise set it to False.
@@ -68,9 +68,11 @@ Try to help me to generate python code which should match the following requirem
 
             # summarize the conversation so far  
             code_agent_messages = self._messages[get_agent_name(self.code_agent)]
-            answer = code_agent_messages[-1]["content"] # self.generate_llm_reply(None,,sender)
-            # give the result to the user             
-            return True, answer + "\nTERMINATE"
+            
+            response:ChatResponse = code_agent_messages[-1]["metadata"] # self.generate_llm_reply(None,,sender)            
+            file_preview = response.variables["file_preview"].to_csv(index=False)    
+            
+            return True, file_preview + "\nTERMINATE"
         
 
         ## no code block found so the code agent return None
