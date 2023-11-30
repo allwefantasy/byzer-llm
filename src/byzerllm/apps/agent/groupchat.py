@@ -177,7 +177,12 @@ class GroupChatManager(ConversableAgent):
 
     def get_groupchat(self) -> GroupChat:
         """Return the group chat."""
-        return self.groupchat          
+        return self.groupchat   
+
+    def reset_agents(self):
+        """Reset the agents."""
+        for agent in self.groupchat.agents:
+            run_agent_func(agent,"reset")       
 
     def run_chat(
         self,

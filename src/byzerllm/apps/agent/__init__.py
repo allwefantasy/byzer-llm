@@ -42,3 +42,15 @@ class Agents:
         return ray.remote(name=name,max_concurrency=10)(cls).remote(
         name=name,llm=llm,retrieval=retrieval,*args, **kwargs)   
 
+    @staticmethod
+    def group(group_name:str,agents: List[Union[Agent,ClientActorHandle,str]],llm,retrieval,*args, **kwargs) -> List[Union[Agent,ClientActorHandle,str]]:
+        from .groupchat import GroupChat
+        from .groupchat import GroupChatManager
+        
+        groupchat = GroupChat(agents=agents, *args, **kwargs)
+        group_chat_manager =Agents.create_remote_agent(GroupChatManager,name=group_name,llm=llm,retrieval=retrieval,groupchat=groupchat,*args, **kwargs)
+        return group_chat_manager   
+    
+    
+
+        
