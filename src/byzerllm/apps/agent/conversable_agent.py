@@ -161,7 +161,10 @@ class ConversableAgent(Agent):
     @property
     def chat_messages(self) -> Dict[Agent, List[Dict]]:
         """A dictionary of conversations from agent to list of messages."""
-        return self._messages    
+        return self._messages   
+
+    def get_chat_messages(self):
+        return self.chat_messages 
     
     def last_message(self, agent: Optional[Union[Agent,ClientActorHandle,str]] = None) -> Dict:
         """The last message exchanged with the agent.
