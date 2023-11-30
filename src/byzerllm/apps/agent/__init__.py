@@ -40,10 +40,35 @@ class Agents:
     @staticmethod
     def create_remote_agent(cls,name:str,llm,retrieval,*args, **kwargs)->ClientActorHandle:
         return ray.remote(name=name,max_concurrency=10)(cls).remote(
-        name=name,llm=llm,retrieval=retrieval,*args, **kwargs)   
+        name=name,llm=llm,retrieval=retrieval,*args, **kwargs) 
 
     @staticmethod
-    def group(group_name:str,agents: List[Union[Agent,ClientActorHandle,str]],llm,retrieval,*args, **kwargs) -> List[Union[Agent,ClientActorHandle,str]]:
+    def create_local_agent(cls,name:str,llm,retrieval,*args, **kwargs)->Agent:
+        return cls(name=name,llm=llm,retrieval=retrieval,*args, **kwargs)
+
+    @staticmethod
+    def create_local_group(group_name:str,agents: List[Agent],llm,retrieval,*args, **kwargs) -> List[Agent]:
+        from .groupchat import GroupChat
+        from .groupchat import GroupChatManager
+
+        if any([not isinstance(agent,Agent) for agent in agents]):
+            raise ValueError("agents must be a list of Agent objects")
+                
+        group_parameters = ["messages","max_round","admin_name","func_call_filter"]
+        group_parameters_dict = {}
+        for parameter in group_parameters:
+            if parameter in kwargs:
+                group_parameters_dict[parameter] = kwargs[parameter]
+                del kwargs[parameter]
+
+        groupchat = GroupChat(agents=agents, **group_parameters_dict)
+        group_chat_manager =Agents.create_local_agent(GroupChatManager,name=group_name,
+                                                       llm=llm,retrieval=retrieval,
+                                                       groupchat=groupchat,*args, **kwargs)
+        return group_chat_manager
+    
+    @staticmethod
+    def create_remote_group(group_name:str,agents: List[Union[Agent,ClientActorHandle,str]],llm,retrieval,*args, **kwargs) -> List[Union[Agent,ClientActorHandle,str]]:
         from .groupchat import GroupChat
         from .groupchat import GroupChatManager
                 
