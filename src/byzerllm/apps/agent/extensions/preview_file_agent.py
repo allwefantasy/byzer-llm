@@ -80,7 +80,7 @@ Try to help me to generate python code which should match the following requirem
             return False, None
                 
         raw_message: ChatResponse = raw_message
-        if raw_message.status == 0:
+        if raw_message.status == 0 and "loaded_successfully" in raw_message.variables and raw_message.variables["loaded_successfully"]:
             # stop the conversation if the code agent gives the success message
             return True, None
         else:
