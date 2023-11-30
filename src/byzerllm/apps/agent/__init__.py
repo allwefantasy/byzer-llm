@@ -46,9 +46,9 @@ class Agents:
     def group(group_name:str,agents: List[Union[Agent,ClientActorHandle,str]],llm,retrieval,*args, **kwargs) -> List[Union[Agent,ClientActorHandle,str]]:
         from .groupchat import GroupChat
         from .groupchat import GroupChatManager
-        
-        group_parameters = ["agents","messages","max_round","admin_name","func_call_filter"]
-        group_parameters_dict = {}
+                
+        group_parameters = ["messages","max_round","admin_name","func_call_filter"]
+        group_parameters_dict = []
         for parameter in group_parameters:
             if parameter in kwargs:
                 group_parameters_dict[parameter] = kwargs[parameter]

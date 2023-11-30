@@ -99,14 +99,14 @@ Then select the next role from {[get_agent_name(agent) for agent in agents]} to 
                         f"No agent can execute the function {self.messages[-1]['name']}. "
                         "Please check the function_map of the agents."
                     )
-        # else:
-        #     agents = self.agents
-        #     # Warn if GroupChat is underpopulated
-        #     n_agents = len(agents)
-        #     if n_agents < 3:
-        #         logger.warning(
-        #             f"GroupChat is underpopulated with {n_agents} agents. Direct communication would be more efficient."
-        #         )
+        else:
+            agents = self.agents
+            # Warn if GroupChat is underpopulated
+            n_agents = len(agents)
+            if n_agents < 3:
+                logger.warning(
+                    f"GroupChat is underpopulated with {n_agents} agents. Direct communication would be more efficient."
+                )
         
         run_agent_func(selector,"update_system_message",self.select_speaker_msg(agents))
 
