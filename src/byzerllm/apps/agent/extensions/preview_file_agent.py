@@ -9,9 +9,10 @@ from .. import get_agent_name,run_agent_func,ChatResponse
 
 class PreviewFileAgent(ConversableAgent):    
 
-    DEFAULT_SYSTEM_MESSAGE = """You are a helpful AI assistant.
-I have a file where the path is {{file_path}}, I want to use pandas to read it.The packages all are installed, you can use it directly.
-Try to help me to generate python code which should match the following requirements:
+    DEFAULT_SYSTEM_MESSAGE = """You are a helpful AI assistant. You will use your knowledge to help the user to preview the file.Try
+to use Python and Pandas to read the file and show the first 5 rows of the file. The user will mention the file path in his/her question.
+The packages all are installed, you can use it directly.
+Try to generate python code which should match the following requirements:
 1. try to read the file according the suffix of file name in Try block
 2. if read success, set variable loaded_successfully to True, otherwise set it to False.
 3. if loaded_successfully is True, then assigh the loaded data with head() to file_preview, otherwise assign error message to file_preview
