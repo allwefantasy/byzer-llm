@@ -5,6 +5,7 @@ from ..agent import Agent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import time
 from .. import get_agent_name,run_agent_func,ChatResponse
+from langchain import PromptTemplate
 
 
 class VisualizationAgent(ConversableAgent):  
@@ -22,7 +23,22 @@ The preview of the file is:
 Use pandas to analyze it. 
 Please DO NOT consider the package installation, the packages all are installed, you can use it directly.
 
-{visualization_prompt}
+When the question require you to do visualization, please use package Plotly or matplotlib to do this.
+Try to use base64 to encode the image, assign the base64 string to the variable named image_base64. 
+Make sure the image_base64 defined in the global scope. Notice that try to create figure with `plt.figure()` before you plot the image.
+
+Here is the example code how to save the plot to a BytesIO object and encode the image to base64:
+
+```python
+# Save the plot to a BytesIO object
+buf = io.BytesIO()
+plt.savefig(buf, format='png')
+buf.seek(0)
+
+# Encode the image to base64
+image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+buf.close()
+```
 
 Please try to generate python code to analyze the file and answer the following questions:
 
@@ -57,7 +73,7 @@ Reply "TERMINATE" in the end when everything is done.
         self.code_agent = code_agent
         self._reply_func_list = []
         # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
-        self.register_reply([Agent, ClientActorHandle,str], AssistantAgent.generate_code_reply) 
+        self.register_reply([Agent, ClientActorHandle,str], VisualizationAgent.generate_code_reply) 
         self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply) 
 
     def generate_code_reply(
@@ -83,7 +99,10 @@ Reply "TERMINATE" in the end when everything is done.
             code_agent_messages = self._messages[get_agent_name(self.code_agent)]
             answer = code_agent_messages[-1]["content"] # self.generate_llm_reply(None,,sender)
             # give the result to the user             
-            return True, answer + "\nTERMINATE"
+            response:ChatResponse = code_agent_messages[-1]["metadata"] # self.generate_llm_reply(None,,sender)            
+            base64_image = response.variables["base64_image"]
+
+            return True, base64_image + "\nTERMINATE"
         
 
         ## no code block found so the code agent return None
@@ -91,7 +110,7 @@ Reply "TERMINATE" in the end when everything is done.
             return False, None
                 
         raw_message: ChatResponse = raw_message
-        if raw_message.status == 0:
+        if raw_message.status == 0 and "image_base64" in raw_message.variables and raw_message.variables["image_base64"]:
             # stop the conversation if the code agent gives the success message
             return True, None
         else:
