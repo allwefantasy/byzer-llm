@@ -81,6 +81,7 @@ Try to generate python code which should match the following requirements:
             return False, None
                 
         raw_message: ChatResponse = raw_message
+        print(raw_message.variables)
         if raw_message.status == 0 and "loaded_successfully" in raw_message.variables and raw_message.variables["loaded_successfully"]:
             # stop the conversation if the code agent gives the success message
             return True, None
