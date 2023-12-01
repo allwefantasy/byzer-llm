@@ -185,6 +185,12 @@ class PythonSandboxAgent(ConversableAgent):
         if name in self.sandboxes:            
             return self.sandboxes[name]
         
+        try :
+            sandbox = ray.get_actor(name)
+            return sandbox
+        except ValueError:
+            pass
+        
         sandbox = ray.remote(CodeSandbox).options(
                 name=name,                              
                 num_cpus=num_cpus,
