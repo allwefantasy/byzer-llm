@@ -5,6 +5,7 @@ from ..agent import Agent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import time
 from .. import get_agent_name,run_agent_func,ChatResponse
+import json
 
 
 class PreviewFileAgent(ConversableAgent):    
@@ -64,8 +65,12 @@ Try to generate python code which should match the following requirements:
         if get_agent_name(sender) != get_agent_name(self.code_agent):
    
             final,output = self.generate_llm_reply(raw_message,messages,sender)            
-            # ask the code agent to execute the code             
-            self.send(message=output,recipient=self.code_agent)
+            # ask the code agent to execute the code  
+            new_message = {
+                "content":output,
+                "target_names":{"loaded_successfully":True,"file_preview":""}
+            }           
+            self.send(message=json.dumps(new_message,ensure_ascii=False),recipient=self.code_agent)
 
             # summarize the conversation so far  
             code_agent_messages = self._messages[get_agent_name(self.code_agent)]
