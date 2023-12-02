@@ -9,6 +9,7 @@ import copy
 
 if TYPE_CHECKING:
     from .conversable_agent import ConversableAgent
+    from byzerllm.utils.client import ByzerLLM,ByzerRetrieval
 
 @dataclasses.dataclass
 class ChatResponse:
@@ -57,6 +58,28 @@ def modify_last_message(messages: List[Dict], message:Dict) -> List[Dict]:
     messages = copy_message(messages)
     messages[-1] = message
     return messages
+
+# if tokenizer.__class__.__name__ == 'QWenTokenizer':
+def qwen_chat(llm:ByzerLLM,conversations: Optional[List[Dict]] = None,llm_config={}):
+    for conv in conversations:
+        for m in conv["messages"]:            
+            if m["sender"] == "system":
+                m["content"] = "<|im_start|>system\n" + m["content"] + "<|im_end|>"
+    t = llm.chat_oai(conversations=conversations,role_mapping={
+                    "user_role":"<|im_start|>user\n",
+                    "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
+                    "system_msg":"<|im_start|>system\nYou are a helpful assistant. Think it over and answer the user question correctly.<|im_end|>"
+                    },  **{**llm_config,**{
+                        "generation.early_stopping":False,
+                        "generation.repetition_penalty":1.1,
+                        "generation.stop_token_ids":[151643]}})       
+    v = t[0].output
+    if "<|im_end|>" in v:
+        v = v.split("<|im_end|>")[0]
+    if "<|endoftext|>" in v:
+        v = v.split("<|endoftext|>")[0]
+    return v    
+
         
 
 class Agents:

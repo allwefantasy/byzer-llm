@@ -127,6 +127,14 @@ class ByzerLLM:
             ) 
             self.context.have_fetched = True
             self.ray_context = self.context.rayContext
+
+        # self.model_configs = {}
+        if "defaultLLMRequestExtra" in kwargs:
+            self.defaultLLMRequestExtra = kwargs["defaultLLMRequestExtra"]
+        else:
+            self.defaultLLMRequestExtra = LLMRequestExtra()    
+
+            
     
     def setup_reset(self):
         self.sys_conf = self.default_sys_conf.copy()

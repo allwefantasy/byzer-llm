@@ -413,7 +413,9 @@ class ConversableAgent(Agent):
 
             # TODO: #1143 handle token limit exceeded error  
             # print(f'''{self.get_name()} generating reply for {get_agent_name(sender)} from LLM({self.llm.default_model_name})''')
-            response = self.llm.chat_oai(self._system_message + messages)            
+            from . import qwen_chat
+            # response = self.llm.chat_oai(self._system_message + messages)            
+            response = qwen_chat(self.llm,self._system_message + messages)
             return True, response[0].output    
 
     def get_human_input(self, prompt: str) -> str:

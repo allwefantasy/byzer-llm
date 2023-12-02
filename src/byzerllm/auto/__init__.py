@@ -92,7 +92,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
                                      top_p=top_p,                                      
                                      max_tokens=max_tokens,
                                      ** other_params
-                                     )
+                                     )    
     
     results_generator = model.generate(ins, sampling_params,request_id) 
     final_output = None
