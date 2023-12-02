@@ -86,7 +86,7 @@ The file path is: {file_path}. Try to preview this file.
             # summarize the conversation so far  
             code_agent_messages = self._messages[get_agent_name(self.code_agent)]
             
-            response:ChatResponse = code_agent_messages[-1]["metadata"] # self.generate_llm_reply(None,,sender)            
+            response:ChatResponse = code_agent_messages[-1]["metadata"]["raw_message"] # self.generate_llm_reply(None,,sender)            
             file_preview = response.variables["file_preview"].to_csv(index=False)    
             
             return True, file_preview + "\nTERMINATE"
@@ -98,7 +98,17 @@ The file path is: {file_path}. Try to preview this file.
                 
         raw_message: ChatResponse = raw_message
 
-        if raw_message.status == 0 and "loaded_successfully" in raw_message.variables and raw_message.variables["loaded_successfully"]:
+        if raw_message.status == 0: 
+            # and "loaded_successfully" in raw_message.variables and raw_message.variables["loaded_successfully"]:
+            if "loaded_successfully" not in raw_message.variables:
+                temp_message = {
+                "content":"loaded_successfully not defined",
+                "metadata":{
+                    "target_names":{"loaded_successfully":True,"file_preview":""}
+                    },
+                } 
+                return True, temp_message
+            
             # stop the conversation if the code agent gives the success message
             return True, None
         else:
