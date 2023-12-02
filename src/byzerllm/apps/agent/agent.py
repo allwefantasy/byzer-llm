@@ -1,9 +1,6 @@
 from typing import TYPE_CHECKING,Dict, List, Optional, Union
 from ray.util.client.common import ClientActorHandle
 
-if TYPE_CHECKING:
-    from ..agent import ChatResponse
-
 class Agent:
     """(In preview) An abstract class for AI agent.
 
@@ -45,7 +42,7 @@ class Agent:
 
     def generate_reply(
         self,
-        raw_message: Optional[Union[Dict,str,"ChatResponse"]] = None,
+        raw_message: Optional[Union[Dict,str]] = None,
         messages: Optional[List[Dict]] = None,
         sender: Optional["Agent"] = None,
         **kwargs,
