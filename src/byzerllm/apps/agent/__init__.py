@@ -84,7 +84,8 @@ def qwen_chat(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_conf
         v = v.split("<|im_end|>")[0]
     if "<|endoftext|>" in v:
         v = v.split("<|endoftext|>")[0]
-    return [{"output":v}]   
+    t[0].output = v    
+    return t
 
         
 
