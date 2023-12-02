@@ -103,30 +103,34 @@ The file path is: {file_path}. Try to preview this file.
                 
         raw_message: ChatResponse = raw_message
 
-        if raw_message.status == 0: 
-            # and "loaded_successfully" in raw_message.variables and raw_message.variables["loaded_successfully"]:
+        if raw_message.status == 0 and "loaded_successfully" in raw_message.variables and raw_message.variables["loaded_successfully"]:                                 
+            # stop the conversation if the code agent gives the success message
+            return True, None
+        else:
+            # the code may be wrong, so generate a new code according to the conversation so far 
+            extra_messages = []            
             if "loaded_successfully" not in raw_message.variables:
-                temp_message = {
+                improve_code_message = {
                 "content":"loaded_successfully is not defined",
                 "metadata":{
                     "target_names":{"loaded_successfully":None,"file_preview":None}
                     },
+                "role":"user"
                 } 
-                return True, temp_message
-            elif not raw_message.variables["loaded_successfully"]:
-                temp_message = {
+                extra_messages.append(improve_code_message)
+            
+            elif raw_message.variables["loaded_successfully"] is False:
+                improve_code_message = {
                 "content":"loaded_successfully is False, it means the file is not loaded successfully, check the file path and the code then try again",
                 "metadata":{
                     "target_names":{"loaded_successfully":None,"file_preview":None}
                     },
-                } 
-                return True, temp_message
-            
-            # stop the conversation if the code agent gives the success message
-            return True, None
-        else:
-            # the code may be wrong, so generate a new code according to the conversation so far              
-            _,code = self.generate_llm_reply(raw_message,messages,sender)
+                 "role":"user"
+                }             
+                extra_messages.append(improve_code_message)
+                
+
+            _,code = self.generate_llm_reply(raw_message,messages + extra_messages,sender)
             temp_message = {
                 "content":code,
                 "metadata":{
