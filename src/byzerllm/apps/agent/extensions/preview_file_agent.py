@@ -70,7 +70,7 @@ The file path is: {file_path}. Try to preview the file.
         if get_agent_name(sender) != get_agent_name(self.code_agent):
             
             new_message = messages[-1] 
-            content = PromptTemplate.from_template(self.DEFUALT_USER_MESSAGE).format(file_path=new_message["metadata"]["file_path"])
+            content = PromptTemplate.from_template(self.DEFAULT_USER_MESSAGE).format(file_path=new_message["metadata"]["file_path"])
             new_messages = modify_last_message(messages,modify_message_content(new_message,content))
             _,code = self.generate_llm_reply(raw_message,new_messages,sender)            
             # ask the code agent to execute the code  
