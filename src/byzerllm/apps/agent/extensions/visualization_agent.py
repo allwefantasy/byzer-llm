@@ -4,7 +4,7 @@ from ....utils.client import ByzerLLM,ByzerRetrieval
 from ..agent import Agent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import time
-from .. import get_agent_name,run_agent_func,ChatResponse
+from .. import get_agent_name,run_agent_func,ChatResponse,modify_last_message,modify_message_content
 from langchain import PromptTemplate
 
 
@@ -18,7 +18,7 @@ You'll be asked to generate code to visualize data. You can only use python.
 The preview of the file is:
 
 ```text
-{preview_csv}
+{file_preview}
 ```
 Use pandas to analyze it. 
 Please DO NOT consider the package installation, the packages all are installed, you can use it directly.
@@ -42,7 +42,7 @@ buf.close()
 
 Please try to generate python code to analyze the file and answer the following questions:
 
-{quesion}
+{question}
 
 Reply "TERMINATE" in the end when everything is done.
     """
@@ -89,15 +89,21 @@ Reply "TERMINATE" in the end when everything is done.
         
         # if the message is not from the code agent, then generate code 
         # and talk to the code agent until the code agent gives the success message
-        if get_agent_name(sender) != get_agent_name(self.code_agent):
-   
-            final,output = self.generate_llm_reply(raw_message,messages,sender)            
+        if get_agent_name(sender) != get_agent_name(self.code_agent):  
+            message = messages[-1]                                    
+            formated_prompt = PromptTemplate.from_template(VisualizationAgent.DEFAULT_USER_MESSAGE).format(
+                file_preview=message["metadata"]["file_preview"],
+                question=message["content"],
+            ) 
+            
+            temp_message = modify_message_content(message,formated_prompt)                        
+            _,output = self.generate_llm_reply(raw_message,modify_last_message(messages,temp_message),sender)            
             # ask the code agent to execute the code             
             self.send(message=output,recipient=self.code_agent)
 
             # summarize the conversation so far  
             code_agent_messages = self._messages[get_agent_name(self.code_agent)]
-            answer = code_agent_messages[-1]["content"] # self.generate_llm_reply(None,,sender)
+            answer = code_agent_messages[-1]["content"] 
             # give the result to the user             
             response:ChatResponse = code_agent_messages[-1]["metadata"] # self.generate_llm_reply(None,,sender)            
             base64_image = response.variables["base64_image"]

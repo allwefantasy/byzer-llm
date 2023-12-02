@@ -223,7 +223,7 @@ class ConversableAgent(Agent):
         raw_message = message
         
         if isinstance(message, ChatResponse):
-            message = {"content":raw_message.output,"metadata":raw_message}
+            message = {"content":raw_message.output,"metadata":{"raw_message":raw_message}}
 
         message = self._message_to_dict(message)
         # create oai message to be appended to the oai conversation that can be passed to oai directly.
@@ -341,7 +341,7 @@ class ConversableAgent(Agent):
     def _process_received_message(self, message, sender, silent):
             raw_message = message
             if isinstance(message, ChatResponse):                
-                message = {"content":raw_message.output,"metadata":raw_message}
+                message = {"content":raw_message.output,"metadata":{"raw_message":raw_message}}
             message = self._message_to_dict(message)
             # When the agent receives a message, the role of the message is "user". (If 'role' exists and is 'function', it will remain unchanged.)
             valid = self._append_message(message, "user", sender)

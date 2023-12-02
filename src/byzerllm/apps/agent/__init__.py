@@ -5,6 +5,7 @@ from .agent import Agent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import ray
 import dataclasses
+import copy
 
 if TYPE_CHECKING:
     from .conversable_agent import ConversableAgent
@@ -35,6 +36,28 @@ def run_agent_func(agent: Union[Agent,"ConversableAgent",ClientActorHandle], fun
         return ray.get(getattr(ray.get_actor(agent), func_name).remote(*args, **kwargs))    
     else:
         return ray.get(getattr(agent, func_name).remote(*args, **kwargs)) 
+    
+def copy_message(message: Dict) -> Dict:
+    return copy.deepcopy(message)
+
+def modify_message_metadata(message: Dict, **kwargs) -> Dict:
+    message = copy_message(message)
+    if "metadata" not in message:
+        message["metadata"] = {}
+    for key, value in kwargs.items():
+        message["metadata"][key] = value
+    return message
+
+def modify_message_content(message: Dict, content:str) -> Dict:
+    message = copy_message(message)
+    message["content"] = content
+    return message
+
+def modify_last_message(messages: List[Dict], message:Dict) -> List[Dict]:
+    messages = copy_message(messages)
+    messages[-1] = message
+    return messages
+        
 
 class Agents:
     @staticmethod

@@ -18,7 +18,7 @@ Try to generate python code which should match the following requirements:
 2. if read success, set variable loaded_successfully to True, otherwise set it to False.
 3. if loaded_successfully is True, then assigh the loaded data with head() to file_preview, otherwise assign error message to file_preview
 4. make sure the loaded_successfully, file_preview are defined in the global scope
-"""
+"""    
 
     def __init__(
         self,
@@ -86,7 +86,7 @@ Try to generate python code which should match the following requirements:
             return False, None
                 
         raw_message: ChatResponse = raw_message
-                
+
         if raw_message.status == 0 and "loaded_successfully" in raw_message.variables and raw_message.variables["loaded_successfully"]:
             # stop the conversation if the code agent gives the success message
             return True, None

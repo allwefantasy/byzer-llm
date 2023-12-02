@@ -1,4 +1,6 @@
 from typing import Dict, List, Optional, Union
+from ..agent import ChatResponse
+from ray.util.client.common import ClientActorHandle
 
 
 class Agent:
@@ -24,13 +26,14 @@ class Agent:
         """Get the name of the agent."""
         return self._name
 
-    def send(self, message: Union[Dict, str], recipient: "Agent", request_reply: Optional[bool] = None):
+
+    def send(self, message: Union[Dict, str], recipient: Union[ClientActorHandle,"Agent",str], request_reply: Optional[bool] = None):
         """(Abstract method) Send a message to another agent."""
 
     # async def a_send(self, message: Union[Dict, str], recipient: "Agent", request_reply: Optional[bool] = None):
     #     """(Abstract async method) Send a message to another agent."""
 
-    def receive(self, message: Union[Dict, str], sender: "Agent", request_reply: Optional[bool] = None):
+    def receive(self, message: Union[Dict, str], sender: Union[ClientActorHandle,"Agent",str], request_reply: Optional[bool] = None):
         """(Abstract method) Receive a message from another agent."""
 
     # async def a_receive(self, message: Union[Dict, str], sender: "Agent", request_reply: Optional[bool] = None):
@@ -41,6 +44,7 @@ class Agent:
 
     def generate_reply(
         self,
+        raw_message: Optional[Union[Dict,str,ChatResponse]] = None,
         messages: Optional[List[Dict]] = None,
         sender: Optional["Agent"] = None,
         **kwargs,

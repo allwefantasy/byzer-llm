@@ -6,9 +6,8 @@ from ray.util.client.common import ClientActorHandle, ClientObjectRef
 from .. import get_agent_name,run_agent_func,ChatResponse
 from langchain import PromptTemplate
 
-SYSTEM_PROMPT = '''You're a summary chatbot. You answer user's questions based on the
-conversation between the the user and other agent. 
-You must give as short an answer as possible.
+SYSTEM_PROMPT = '''You are a helpful AI assistant. The user will give you a conversation.
+You should check the conversation is
 '''
 USER_PROMPT = '''User's question is: {input_question}
 
