@@ -67,6 +67,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     other_params = {}
     if "early_stopping" in kwargs:
         other_params["early_stopping"] = bool(kwargs["early_stopping"])
+    
     if "repetition_penalty" in kwargs:
         other_params["repetition_penalty"] = float(kwargs["repetition_penalty"]) 
 
@@ -75,17 +76,9 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         if isinstance(stop_token_ids,str):
             stop_token_ids = [int(i) for i in stop_token_ids.split(",")]
         else:
-            stop_token_ids = kwargs["stop_token_ids"]    
-    
-    # sampling_kwargs = {
-    #         "stop_token_ids": self.stop_words_ids,
-    #         "early_stopping": False,
-    #         "top_p": generation_config.top_p,
-    #         "top_k": -1 if generation_config.top_k == 0 else generation_config.top_k,
-    #         "temperature": generation_config.temperature,
-    #         "max_tokens": generation_config.max_new_tokens,
-    #         "repetition_penalty": generation_config.repetition_penalty
-    #     }
+            stop_token_ids = kwargs["stop_token_ids"]
+        other_params["stop_token_ids"] = stop_token_ids        
+        
     sampling_params = SamplingParams(temperature=temperature, 
                                      n = n,
                                      best_of=best_of,
