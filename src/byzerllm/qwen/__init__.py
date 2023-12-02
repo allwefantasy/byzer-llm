@@ -93,7 +93,6 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     tokenizer.pad_token_id=0
     tokenizer.bos_token_id = 1
 
-    print(f"longContextMode:{longContextMode}", flush=True)
 
     quatization = infer_params.get("quatization", "false")
 
