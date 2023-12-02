@@ -69,7 +69,11 @@ def qwen_chat(llm:ByzerLLM,conversations: Optional[List[Dict]] = None,llm_config
                     "user_role":"<|im_start|>user\n",
                     "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
                     "system_msg":"<|im_start|>system\nYou are a helpful assistant. Think it over and answer the user question correctly.<|im_end|>"
-                    },  **{**llm_config,**{
+                    },  **{**{
+                        "max_length":1024*16,
+                        "top_p":0.95,
+                        "temperature":0,
+                    },**llm_config,**{
                         "generation.early_stopping":False,
                         "generation.repetition_penalty":1.1,
                         "generation.stop_token_ids":[151643]}})       
