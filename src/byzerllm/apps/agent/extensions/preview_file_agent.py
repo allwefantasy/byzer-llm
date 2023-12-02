@@ -76,7 +76,9 @@ The file path is: {file_path}. Try to preview the file.
             # ask the code agent to execute the code  
             temp_message = {
                 "content":code,
-                "target_names":{"loaded_successfully":True,"file_preview":""}
+                "metadata":{
+                    "target_names":{"loaded_successfully":True,"file_preview":""}
+                },
             }           
             self.send(message=temp_message,recipient=self.code_agent)
 
