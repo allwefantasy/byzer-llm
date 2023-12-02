@@ -4,7 +4,8 @@ from ....utils.client import ByzerLLM,ByzerRetrieval
 from ..agent import Agent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import time
-from .. import get_agent_name,run_agent_func,ChatResponse
+from .. import get_agent_name,run_agent_func,ChatResponse,modify_last_message,modify_message_content
+from langchain import PromptTemplate
 import json
 
 
@@ -19,6 +20,10 @@ Try to generate python code which should match the following requirements:
 3. if loaded_successfully is True, then assigh the loaded data with head() to file_preview, otherwise assign error message to file_preview
 4. make sure the loaded_successfully, file_preview are defined in the global scope
 """    
+    
+    DEFAULT_USER_MESSAGE = """
+The file path is: {file_path}. Try to preview the file.
+"""
 
     def __init__(
         self,
@@ -63,14 +68,17 @@ Try to generate python code which should match the following requirements:
         # if the message is not from the code agent, then generate code 
         # and talk to the code agent until the code agent gives the success message
         if get_agent_name(sender) != get_agent_name(self.code_agent):
-   
-            final,output = self.generate_llm_reply(raw_message,messages,sender)            
+            
+            new_message = messages[-1] 
+            content = PromptTemplate.from_template(self.DEFUALT_USER_MESSAGE).format(file_path=new_message["metadata"]["file_path"])
+            new_messages = modify_last_message(messages,modify_message_content(new_message,content))
+            _,code = self.generate_llm_reply(raw_message,new_messages,sender)            
             # ask the code agent to execute the code  
-            new_message = {
-                "content":output,
+            temp_message = {
+                "content":code,
                 "target_names":{"loaded_successfully":True,"file_preview":""}
             }           
-            self.send(message=json.dumps(new_message,ensure_ascii=False),recipient=self.code_agent)
+            self.send(message=temp_message,recipient=self.code_agent)
 
             # summarize the conversation so far  
             code_agent_messages = self._messages[get_agent_name(self.code_agent)]
