@@ -72,7 +72,7 @@ The file path is: {file_path}. Try to preview this file.
             new_message = messages[-1] 
             content = PromptTemplate.from_template(self.DEFAULT_USER_MESSAGE).format(file_path=new_message["metadata"]["file_path"])
             new_messages = modify_last_message(messages,modify_message_content(new_message,content))
-            print(new_messages,flush=True)
+            print(json.dumps(new_messages,ensure_ascii=False,indent=4),flush=True)
             _,code = self.generate_llm_reply(raw_message,new_messages,sender)            
             # ask the code agent to execute the code  
             temp_message = {
@@ -103,7 +103,7 @@ The file path is: {file_path}. Try to preview this file.
             return True, None
         else:
             # the code may be wrong, so generate a new code according to the conversation so far  
-            print(messages,flush=True)             
+            print(json.dumps(messages,ensure_ascii=False,indent=4),flush=True)             
             final,output = self.generate_llm_reply(raw_message,messages,sender)
             return True, output
         
