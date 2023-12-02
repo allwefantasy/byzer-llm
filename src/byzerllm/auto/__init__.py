@@ -62,12 +62,13 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     ignore_eos: bool = kwargs.get("ignore_eos","false") == "true"
     max_tokens: int = max_length
     logprobs: Optional[int] = kwargs["logprobs"] if "logprobs" in kwargs else None
-    repetition_penalty: float = float(kwargs.get("repetition_penalty",1.1))
+    # repetition_penalty: float = float(kwargs.get("repetition_penalty",1.1))
 
     other_params = {}
     if "early_stopping" in kwargs:
         other_params["early_stopping"] = bool(kwargs["early_stopping"])
-        
+    if "repetition_penalty" in kwargs:
+        other_params["repetition_penalty"] = float(kwargs["repetition_penalty"])    
     
     # sampling_kwargs = {
     #         "stop_token_ids": self.stop_words_ids,
@@ -88,9 +89,10 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
                                      stop = stop,
                                      ignore_eos=ignore_eos,
                                      logprobs=logprobs,
-                                     top_p=top_p, 
-                                     repetition_penalty=repetition_penalty,
-                                     max_tokens=max_tokens)
+                                     top_p=top_p,                                      
+                                     max_tokens=max_tokens,
+                                     ** other_params
+                                     )
     
     results_generator = model.generate(ins, sampling_params,request_id) 
     final_output = None
