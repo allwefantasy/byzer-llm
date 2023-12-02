@@ -103,6 +103,12 @@ The file path is: {file_path}. Try to preview this file.
             return True, None
         else:
             # the code may be wrong, so generate a new code according to the conversation so far              
-            final,output = self.generate_llm_reply(raw_message,messages,sender)
-            return True, output
+            _,code = self.generate_llm_reply(raw_message,messages,sender)
+            temp_message = {
+                "content":code,
+                "metadata":{
+                    "target_names":{"loaded_successfully":True,"file_preview":""}
+                },
+            } 
+            return True, temp_message
         

@@ -136,8 +136,7 @@ class PythonSandboxAgent(ConversableAgent):
             #  combine all code blocks into one code block
             codes = [code_block[1] for code_block in code_blocks if code_block[0] == "python"]
             code_str = "\n".join(codes)
-            sandbox = self.get_or_create_sandbox(get_agent_name(sender)+"_sandbox",None,None,0,0)
-            print(message,flush=True)
+            sandbox = self.get_or_create_sandbox(get_agent_name(sender)+"_sandbox",None,None,0,0)            
             exitcode, output,response = ray.get(sandbox.exec_capture_output.remote(code_str,message["metadata"]["target_names"]))
             code_execution_config["last_n_messages"] = last_n_messages
             exitcode2str = "execution succeeded" if exitcode == 0 else "execution failed"
