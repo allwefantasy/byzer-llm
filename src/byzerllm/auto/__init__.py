@@ -214,7 +214,7 @@ For example:
             gpu_memory_utilization=gpu_memory_utilization,
             max_num_batched_tokens=max_num_batched_tokens,
             max_num_seqs=max_num_seqs,
-            disable_log_stats=disable_log_stats
+            disable_log_stats=disable_log_stats,
             ** ohter_params
         )
         llm = AsyncLLMEngine.from_engine_args(engine_args)                       
