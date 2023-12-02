@@ -191,6 +191,11 @@ For example:
         max_num_batched_tokens: int = int(infer_params.get("backend.max_num_batched_tokens",32768))
         max_num_seqs: int = int(infer_params.get("backend.max_num_seqs",256))
         disable_log_stats: bool = infer_params.get("backend.disable_log_stats","false") == "true"
+        quantization = infer_params.get("backend.quantization",None)
+        ohter_params = {}
+        if quantization is not None:
+            ohter_params["quantization"] = quantization
+        
 
         from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs     
         engine_args = AsyncEngineArgs(
@@ -210,6 +215,7 @@ For example:
             max_num_batched_tokens=max_num_batched_tokens,
             max_num_seqs=max_num_seqs,
             disable_log_stats=disable_log_stats
+            ** ohter_params
         )
         llm = AsyncLLMEngine.from_engine_args(engine_args)                       
         # llm.stream_chat = types.MethodType(vllm_chat, llm) 
