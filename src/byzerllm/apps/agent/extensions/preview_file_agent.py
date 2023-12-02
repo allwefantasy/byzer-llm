@@ -70,6 +70,7 @@ The file path is: {file_path}. Try to preview this file.
         if get_agent_name(sender) != get_agent_name(self.code_agent):
             
             new_message = messages[-1] 
+            file_path = new_message["metadata"]["file_path"]
             content = PromptTemplate.from_template(self.DEFAULT_USER_MESSAGE).format(file_path=new_message["metadata"]["file_path"])
             new_messages = modify_last_message(messages,modify_message_content(new_message,content))
             
@@ -78,7 +79,7 @@ The file path is: {file_path}. Try to preview this file.
             temp_message = {
                 "content":code,
                 "metadata":{
-                    "target_names":{"loaded_successfully":True,"file_preview":""}
+                    "target_names":{"loaded_successfully":None,"file_preview":None}
                 },
             }           
             self.send(message=temp_message,recipient=self.code_agent)
@@ -86,7 +87,11 @@ The file path is: {file_path}. Try to preview this file.
             # summarize the conversation so far  
             code_agent_messages = self._messages[get_agent_name(self.code_agent)]
             
-            response:ChatResponse = code_agent_messages[-1]["metadata"]["raw_message"] # self.generate_llm_reply(None,,sender)            
+            response:ChatResponse = code_agent_messages[-1]["metadata"]["raw_message"] # self.generate_llm_reply(None,,sender)
+
+            if "loaded_successfully" not in response.variables or response.variables["loaded_successfully"] is False:
+                return True, f'''Fail to load the file: {file_path}. reason: {response.variables.get("file_preview","")}''' + "\nTERMINATE"
+            
             file_preview = response.variables["file_preview"].to_csv(index=False)    
             
             return True, file_preview + "\nTERMINATE"
@@ -102,9 +107,17 @@ The file path is: {file_path}. Try to preview this file.
             # and "loaded_successfully" in raw_message.variables and raw_message.variables["loaded_successfully"]:
             if "loaded_successfully" not in raw_message.variables:
                 temp_message = {
-                "content":"loaded_successfully not defined",
+                "content":"loaded_successfully is not defined",
                 "metadata":{
-                    "target_names":{"loaded_successfully":True,"file_preview":""}
+                    "target_names":{"loaded_successfully":None,"file_preview":None}
+                    },
+                } 
+                return True, temp_message
+            elif not raw_message.variables["loaded_successfully"]:
+                temp_message = {
+                "content":"loaded_successfully is False, it means the file is not loaded successfully, check the file path and the code then try again",
+                "metadata":{
+                    "target_names":{"loaded_successfully":None,"file_preview":None}
                     },
                 } 
                 return True, temp_message
