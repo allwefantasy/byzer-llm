@@ -60,7 +60,7 @@ def modify_last_message(messages: List[Dict], message:Dict) -> List[Dict]:
     return messages
 
 # if tokenizer.__class__.__name__ == 'QWenTokenizer':
-def qwen_chat(llm:ByzerLLM,conversations: Optional[List[Dict]] = None,llm_config={}):
+def qwen_chat(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
     for conv in conversations:
         for m in conv["messages"]:            
             if m["sender"] == "system":
