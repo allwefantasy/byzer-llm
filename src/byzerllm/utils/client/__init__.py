@@ -55,12 +55,12 @@ class LLMRequest:
     instruction: Union[str,List[str]]
     embedding: bool = False
     max_length: int = 4096
-    top_p: float = 0.7
-    temperature: float = 0.9
+    top_p: float = 0.95
+    temperature: float = 0.1
     extra_params: LLMRequestExtra = LLMRequestExtra()
     
     @classmethod
-    def build(cls, instruction:str,max_length:int=4096,temperature:float=0.1,role_mapping:Dict[str,str]={}):
+    def build(cls, instruction:str,max_length:int=4096*2,temperature:float=0.1,role_mapping:Dict[str,str]={}):
         return cls(instruction=instruction,max_length=max_length,temperature=temperature,extra_params=LLMRequestExtra(**role_mapping))
         
 
