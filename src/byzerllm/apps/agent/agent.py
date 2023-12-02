@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Union,TYPE_CHECKING
 from ray.util.client.common import ClientActorHandle
-if TYPE_CHECKING:
-    from ..agent import ChatResponse
+# if TYPE_CHECKING:
+from ..agent import ChatResponse
 
 class Agent:
     """(In preview) An abstract class for AI agent.
