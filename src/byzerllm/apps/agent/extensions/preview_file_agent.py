@@ -22,7 +22,8 @@ Try to generate python code which should match the following requirements:
 """    
     
     DEFAULT_USER_MESSAGE = """
-The file path is: {file_path}. Try to preview this file.
+We have a file, the path is: {file_path}. Try to  write code preview this file. Make sure the {file_path} is defined in the code. We need to 
+execute the code to preview the file. If the code is correct, the file will be loaded successfully and the first 5 rows of the file will be shown.
 """
 
     def __init__(
