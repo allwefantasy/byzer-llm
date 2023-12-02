@@ -74,7 +74,7 @@ def qwen_chat(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_conf
                     },  **{**{
                         "max_length":1024*16,
                         "top_p":0.95,
-                        "temperature":0,
+                        "temperature":0.01,
                     },**llm_config,**{
                         "generation.early_stopping":False,
                         "generation.repetition_penalty":1.1,
