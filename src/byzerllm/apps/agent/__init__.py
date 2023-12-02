@@ -61,9 +61,11 @@ def modify_last_message(messages: List[Dict], message:Dict) -> List[Dict]:
 
 # if tokenizer.__class__.__name__ == 'QWenTokenizer':
 def qwen_chat(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
+    
+    
     for conv in conversations:
         if conv["role"] == "system":
-            conv["content"] = "<|im_start|>system\n" + m["content"] + "<|im_end|>"
+            conv["content"] = "<|im_start|>system\n" + conv["content"] + "<|im_end|>"
             
     t = llm.chat_oai(conversations=conversations,role_mapping={
                     "user_role":"<|im_start|>user\n",
