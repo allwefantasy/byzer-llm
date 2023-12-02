@@ -189,8 +189,8 @@ class ByzerLLM:
             pass
 
     def generate_instruction_from_history(self,conversations:List[Dict[str,str]],role_mapping:Dict[str,str]={        
-        "user_role":"User",        
-        "assistant_role":"Assistant",
+        "user_role":"User:",        
+        "assistant_role":"Assistant:",
     }):
         
         new_his = []    
@@ -199,10 +199,10 @@ class ByzerLLM:
                 new_his.append(item["content"])
                 continue        
             k = item['role']+"_role"            
-            new_his.append(f"{role_mapping[k]}:{item['content']}")            
+            new_his.append(f"{role_mapping[k]}{item['content']}")            
         
         if conversations[-1]["role"] == "user":            
-            new_his.append(f"{role_mapping['assistant_role']}:")
+            new_his.append(f"{role_mapping['assistant_role']}")
 
         fin_ins = "\n".join(new_his)
         return fin_ins     
@@ -336,8 +336,8 @@ class ByzerLLM:
     def chat_oai(self,conversations,role_mapping=None,**llm_config):        
         if role_mapping is None:
             role_mapping = {
-                    "user_role":"User",
-                    "assistant_role": "Assistant",
+                    "user_role":"User:",
+                    "assistant_role": "Assistant:",
                     "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly."
                     } 
         
@@ -561,8 +561,8 @@ class ByzerDataAnalysis:
                  retrieval_db:str="data_analysis", 
                  data_analysis_mode:DataAnalysisMode=DataAnalysisMode.data_analysis, 
                  role_mapping = {
-                    "user_role":"User",
-                    "assistant_role": "Assistant",
+                    "user_role":"User:",
+                    "assistant_role": "Assistant:",
                     "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly."
                     }, 
                  max_length:int=8024,   
