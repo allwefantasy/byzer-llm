@@ -45,7 +45,7 @@ class Agent:
 
     def generate_reply(
         self,
-        raw_message: Optional[Union[Dict,str,ChatResponse]] = None,
+        raw_message: Optional[Union[Dict,str,"ChatResponse"]] = None,
         messages: Optional[List[Dict]] = None,
         sender: Optional["Agent"] = None,
         **kwargs,
