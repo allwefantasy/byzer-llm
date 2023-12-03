@@ -76,16 +76,13 @@ execute the code to preview the file. If the code is correct, the file will be l
             new_messages = modify_last_message(messages,modify_message_content(new_message,content))
             
             _,code = self.generate_llm_reply(raw_message,new_messages,sender)            
-            # ask the code agent to execute the code  
-            temp_message = {
-                "content":code,
-                "metadata":{
-                    "target_names":{"loaded_successfully":None,"file_preview":None}
-                },
-            }           
-            self.send(message=temp_message,recipient=self.code_agent)
+            
+            # only the first time we should keep the message sent to the code agent which have file_path, file_ref
+            # in message metadata, when the sandbox is created, then we will reuse the sandbox, no need to contain
+            # the file_path, file_ref in the message metadata.
+            self.send(message=self.create_temp_message(code,new_message),recipient=self.code_agent)
 
-            # summarize the conversation so far  
+            # get the code agent's reply
             code_agent_messages = self._messages[get_agent_name(self.code_agent)]
             
             response:ChatResponse = code_agent_messages[-1]["metadata"]["raw_message"] # self.generate_llm_reply(None,,sender)
@@ -110,33 +107,25 @@ execute the code to preview the file. If the code is correct, the file will be l
         else:
             # the code may be wrong, so generate a new code according to the conversation so far 
             extra_messages = []            
-            if "loaded_successfully" not in raw_message.variables:
-                improve_code_message = {
-                "content":"loaded_successfully is not defined",
-                "metadata":{
-                    "target_names":{"loaded_successfully":None,"file_preview":None}
-                    },
-                "role":"user"
-                } 
-                extra_messages.append(improve_code_message)
+            if "loaded_successfully" not in raw_message.variables:                
+                extra_messages.append(self.create_temp_message("loaded_successfully is not defined"))
             
-            elif raw_message.variables["loaded_successfully"] is False:
-                improve_code_message = {
-                "content":"loaded_successfully is False, it means the file is not loaded successfully, check the file path and the code then try again",
-                "metadata":{
-                    "target_names":{"loaded_successfully":None,"file_preview":None}
-                    },
-                 "role":"user"
-                }             
-                extra_messages.append(improve_code_message)
+            elif raw_message.variables["loaded_successfully"] is False:                            
+                extra_messages.append(self.create_temp_message("loaded_successfully is False, it means the file is not loaded successfully, check the file path and the code then try again"))
                 
 
-            _,code = self.generate_llm_reply(raw_message,messages + extra_messages,sender)
-            temp_message = {
-                "content":code,
-                "metadata":{
-                    "target_names":{"loaded_successfully":True,"file_preview":""}
-                },
-            } 
-            return True, temp_message
+            _,code = self.generate_llm_reply(raw_message,messages + extra_messages,sender)            
+            return True, self.create_temp_message(code)
+        
+    def create_temp_message(self,code,original_message=None):
+        temp_message = {
+            "content":code,
+            "metadata":{
+                "target_names":{"loaded_successfully":None,"file_preview":None}
+            },
+            "role":"user"
+        }
+        if original_message is not None:
+            temp_message["metadata"] = {**original_message["metadata"],**temp_message["metadata"]}
+        return temp_message    
         

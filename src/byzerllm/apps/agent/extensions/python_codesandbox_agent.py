@@ -76,7 +76,7 @@ class PythonSandboxAgent(ConversableAgent):
         self,
         name: str,
         llm: ByzerLLM,
-        retrieval: ByzerRetrieval,
+        retrieval: ByzerRetrieval,        
         system_message: Optional[str],        
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         max_consecutive_auto_reply: Optional[int] = None,
@@ -136,7 +136,15 @@ class PythonSandboxAgent(ConversableAgent):
             #  combine all code blocks into one code block
             codes = [code_block[1] for code_block in code_blocks if code_block[0] == "python"]
             code_str = "\n".join(codes)
-            sandbox = self.get_or_create_sandbox(get_agent_name(sender)+"_sandbox",None,None,0,0)            
+            
+            file_path = None
+            file_ref = None
+            
+            if "file_path" in message["metadata"]:
+                file_path = message["metadata"]["file_path"]
+                file_ref = message["metadata"]["file_ref"]                
+            
+            sandbox = self.get_or_create_sandbox(get_agent_name(sender)+"_sandbox",file_path,file_ref,0,0)            
             exitcode, output,response = ray.get(sandbox.exec_capture_output.remote(code_str,message["metadata"]["target_names"]))
             code_execution_config["last_n_messages"] = last_n_messages
             exitcode2str = "execution succeeded" if exitcode == 0 else "execution failed"
@@ -187,7 +195,9 @@ class PythonSandboxAgent(ConversableAgent):
             pass
         
         sandbox = ray.remote(CodeSandbox).options(
-                name=name,                              
+                name=name,   
+                file_path=file_path,
+                file_ref=file_ref,                           
                 num_cpus=num_cpus,
                 num_gpus=num_gpus
             ).remote(file_path,file_ref)

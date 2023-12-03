@@ -93,14 +93,20 @@ class Agents:
     @staticmethod
     def create_remote_agent(cls,name:str,llm,retrieval,*args, **kwargs)->ClientActorHandle:
         return ray.remote(name=name,max_concurrency=10)(cls).remote(
-        name=name,llm=llm,retrieval=retrieval,*args, **kwargs) 
+        name=name,llm=llm,retrieval=retrieval,*args, **kwargs)
 
     @staticmethod
-    def create_local_agent(cls,name:str,llm,retrieval,*args, **kwargs)->Agent:
+    def create_remote_detached_agent(cls,name:str,llm,retrieval,*args, **kwargs)->ClientActorHandle:
+        return ray.remote(name=name,max_concurrency=10,lifetime="detached"
+                          )(cls).remote(
+        name=name,llm=llm,retrieval=retrieval,*args, **kwargs)  
+
+    @staticmethod
+    def create_local_agent(cls,name:str,llm,retrieval,*args, **kwargs)->ConversableAgent:
         return cls(name=name,llm=llm,retrieval=retrieval,*args, **kwargs)
 
     @staticmethod
-    def create_local_group(group_name:str,agents: List[Agent],llm,retrieval,*args, **kwargs) -> List[Agent]:
+    def create_local_group(group_name:str,agents: List[Agent],llm,retrieval,*args, **kwargs) -> List[ConversableAgent]:
         from .groupchat import GroupChat
         from .groupchat import GroupChatManager
 
