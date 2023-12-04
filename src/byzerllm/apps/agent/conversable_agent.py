@@ -47,7 +47,7 @@ class ConversableAgent(Agent):
         self._system_message = [{"content": system_message, "role": "system"}]
         
         self._is_termination_msg = (
-            is_termination_msg if is_termination_msg is not None else (lambda x: x.get("content") == "TERMINATE")
+            is_termination_msg if is_termination_msg is not None else (lambda x: x.get("content", "").rstrip().endswith("TERMINATE"))
         )
         self.human_input_mode = human_input_mode
         self._max_consecutive_auto_reply = (
