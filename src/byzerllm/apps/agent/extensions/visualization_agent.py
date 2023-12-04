@@ -38,7 +38,6 @@ Please try to generate python code to analyze the file and answer the following 
 
 {question}
 
-Reply "TERMINATE" in the end when everything is done.
     """
 
     def __init__(
