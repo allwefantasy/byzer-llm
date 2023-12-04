@@ -15,7 +15,6 @@ from byzerllm.apps.agent.user_proxy_agent import UserProxyAgent
 from byzerllm.apps.agent.assistant_agent import AssistantAgent
 from byzerllm.utils import generate_str_md5
 import os
-from ray.util.client.common import ClientObjectRef, RayClientObjectRef
 class DataAnalysisPipeline(ConversableAgent):  
     DEFAULT_SYSTEM_MESSAGE = '''You are a helpful data anaylisys AI assistant.
 You don't need to write code, or anwser the question. The only thing you need to do 
@@ -40,7 +39,7 @@ you should reply exactly `UPDATE CONTEXT`.
         llm: ByzerLLM,
         retrieval: ByzerRetrieval, 
         file_path:str,
-        file_ref:RayClientObjectRef ,
+        file_ref:ClientObjectRef ,
         system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,        
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         max_consecutive_auto_reply: Optional[int] = None,
