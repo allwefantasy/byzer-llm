@@ -254,7 +254,13 @@ class DataAnalysis:
                 },
            ) 
         )
-        return ray.get(self.data_analysis_pipeline.last_message.remote(get_agent_name(self.client)))
+        o = self.output()
+        # remove \nTERMINATE from the output, recursively since the output may contain multi \nTERMINATE in the end
+        while o[-10:] == "\nTERMINATE":
+            o = o[:-10]
+        
+        return o    
+        
     
     def output(self):
         return ray.get(self.data_analysis_pipeline.last_message.remote(get_agent_name(self.client)))
