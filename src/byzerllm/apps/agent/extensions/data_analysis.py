@@ -12,6 +12,7 @@ from byzerllm.apps.agent.extensions.preview_file_agent import PreviewFileAgent
 from byzerllm.apps.agent.extensions.python_codesandbox_agent import PythonSandboxAgent
 from byzerllm.apps.agent.extensions.visualization_agent import VisualizationAgent
 from byzerllm.apps.agent.user_proxy_agent import UserProxyAgent
+from byzerllm.apps.agent.assistant_agent import AssistantAgent
 from byzerllm.utils import generate_str_md5
 import os
 from ray.util.client.common import ClientObjectRef, RayClientObjectRef
@@ -23,6 +24,7 @@ is plan the data analysis pipeline.
 You have some tools like the following:
 
 1. visualization_agent, this agent will help you to visualize the data.
+2. assistant_agent, this agent will help you to analyze the data but not visualize it.
 
 Please check the user's question and decide which tool you need to use. And then reply the tool name only.
 If there is no tool can help you, 
@@ -78,21 +80,20 @@ you should reply exactly `UPDATE CONTEXT`.
         self.visualization_agent = Agents.create_local_agent(VisualizationAgent,"visualization_agent",llm,retrieval,
                                         max_consecutive_auto_reply=3,
                                         code_agent = self.python_interpreter
-                                        )
-        
-        self.client = Agents.create_local_agent(UserProxyAgent,"user",llm,retrieval,
-                                human_input_mode="NEVER",
-                                max_consecutive_auto_reply=0,
-                                is_termination_msg=lambda x: x.get("content", "").rstrip().endswith("TERMINATE") )
+                                        ) 
+        self.assistant_agent = Agents.create_local_agent(AssistantAgent,"assistant_agent",llm,retrieval,
+                                        max_consecutive_auto_reply=3,
+                                        code_agent = self.python_interpreter
+                                        )                 
         
         self.agents = {
-            "preview_file_agent":self.preview_file_agent,
+            "assistant_agent":self.assistant_agent,
             "visualization_agent":self.visualization_agent
         }
 
     def preview_file(self):
         self.preview_file_agent._prepare_chat(self.python_interpreter, True)        
-        self.client.initiate_chat(
+        self.initiate_chat(
         self.preview_file_agent,
         message={
             "content":"",
@@ -100,7 +101,11 @@ you should reply exactly `UPDATE CONTEXT`.
                 "file_path":self.file_path,
                 "file_ref":self.file_ref
             }
-        },)      
+        })      
+        # sync the conversation of preview_file_agent to other agents
+        for agent in self.agents.values():
+            for message in self.chat_messages:
+                self.send(message=message,recipient=agent,request_reply=False)
 
     def select_agent(self,raw_message,messages,sender):
         _,llm_reply = self.generate_llm_reply(raw_message,messages,sender)
@@ -121,27 +126,13 @@ you should reply exactly `UPDATE CONTEXT`.
         if messages is None:
             messages = self._messages[get_agent_name(sender)]
         
-        ori_message = messages[-1]
-        
-
-        if "metadata" not in ori_message or "file_path" in ori_message["metadata"]:
-            raise ValueError("metadata/file_path is not in the message")
-
-        # we always need to preview file
-        preview_file_agent = self.agents["preview_file_agent"]
-        
-        self.send(message=ori_message,recipient=preview_file_agent,request_reply=False)
-        
-        _,file_preview = preview_file_agent.generate_reply(None,None,self)
-        
+        ori_message = messages[-1]                             
 
         _,agent_name = self.select_agent(raw_message,messages,sender)
 
         if agent_name:
-            agent = self.agents[agent_name]
-            
-            temp_message = modify_message_metadata(ori_message,file_preview=file_preview)
-            self.send(message=temp_message,recipient=agent,request_reply=False)                                                
+            agent = self.agents[agent_name]                        
+            self.send(message=ori_message,recipient=agent,request_reply=False)                                                
             _,agent_reply = agent.generate_reply(raw_message=None,messages=None,sender=self)
             return True, agent_reply + "\nTERMINATE"
         
