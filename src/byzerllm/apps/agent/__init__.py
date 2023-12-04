@@ -68,7 +68,8 @@ def qwen_chat(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_conf
     
     for conv in conversations:
         if conv["role"] == "system":
-            conv["content"] = "<|im_start|>system\n" + conv["content"] + "<|im_end|>"
+            if "<|im_start|>" not in conv["content"]:
+                conv["content"] = "<|im_start|>system\n" + conv["content"] + "<|im_end|>"
             
     t = llm.chat_oai(conversations=conversations,role_mapping={
                     "user_role":"<|im_start|>user\n",

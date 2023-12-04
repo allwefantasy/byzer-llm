@@ -92,8 +92,7 @@ Reply "TERMINATE" in the end when everything is done.
             
             temp_message = modify_message_content(message,formated_prompt)  
             temp_message2 = modify_last_message(messages,temp_message)
-
-            print(f"The lenght of converation to generate visualization code is {count_messages_length(temp_message2)}")
+            
             _,output = self.generate_llm_reply(raw_message,temp_message2,sender)            
             # ask the code agent to execute the code   
             self._prepare_chat(self.code_agent, True)             
