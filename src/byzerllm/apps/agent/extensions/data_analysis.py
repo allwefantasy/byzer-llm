@@ -120,7 +120,11 @@ you should reply exactly `UPDATE CONTEXT`.
         messages: Optional[List[Dict]] = None,
         sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
         config: Optional[Any] = None,
-    ) -> Tuple[bool, Union[str, Dict, None,ChatResponse]]:  
+    ) -> Tuple[bool, Union[str, Dict, None,ChatResponse]]:
+        
+        # reset the reply counter
+        for agent in self.agents.values():
+            agent._prepare_chat(self.python_interpreter, clear_history=False)              
         
         if messages is None:
             messages = self._messages[get_agent_name(sender)]
