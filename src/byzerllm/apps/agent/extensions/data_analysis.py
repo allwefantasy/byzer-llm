@@ -135,7 +135,7 @@ you should reply exactly `UPDATE CONTEXT`.
         if agent_name:
             agent = self.agents[agent_name]                        
             self.send(message=ori_message,recipient=agent,request_reply=False)                                                
-            _,agent_reply = agent.generate_reply(raw_message=None,messages=None,sender=self)
+            agent_reply = agent.generate_reply(raw_message=None,messages=None,sender=self)
             return True, agent_reply + "\nTERMINATE"
         
         return self.generate_llm_reply(raw_message,messages,sender)
