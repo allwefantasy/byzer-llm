@@ -113,7 +113,7 @@ Please try to generate python code to analyze the file and answer the following 
             code_agent_messages = self._messages[get_agent_name(self.code_agent)]
             # give the result to the user             
             response:ChatResponse = code_agent_messages[-1]["metadata"]["raw_message"]
-            base64_image = response.variables["base64_image"]
+            base64_image = response.variables["image_base64"]
 
             return True, {"content":base64_image,"metadata":{"TERMINATE":True}}
         
