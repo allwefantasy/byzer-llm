@@ -102,8 +102,8 @@ you should reply exactly `UPDATE CONTEXT`.
             }
         })      
         # sync the conversation of preview_file_agent to other agents
-        for agent in self.agents.values():
-            for message in self.chat_messages:
+        for agent in self.agents.values():            
+            for message in self._messages["privew_file_agent"]:
                 self.send(message=message,recipient=agent,request_reply=False)
 
     def select_agent(self,raw_message,messages,sender):
