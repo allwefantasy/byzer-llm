@@ -96,7 +96,7 @@ you should reply exactly `UPDATE CONTEXT`.
         self.initiate_chat(
         self.preview_file_agent,
         message={
-            "content":"",
+            "content":"We have a file, the file path is: {self.file_path} , please preview this file",
             "metadata":{
                 "file_path":self.file_path,
                 "file_ref":self.file_ref
@@ -105,7 +105,7 @@ you should reply exactly `UPDATE CONTEXT`.
         # sync the conversation of preview_file_agent to other agents
         print("sync the conversation of preview_file_agent to other agents",flush=True)
         for agent in self.agents.values():            
-            for message in self._messages["privew_file_agent"]:                                
+            for message in self._messages["privew_file_agent"]:                 
                 self.send(message=message,recipient=agent,request_reply=False)
 
     def select_agent(self,raw_message,messages,sender):
