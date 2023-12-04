@@ -195,9 +195,7 @@ class PythonSandboxAgent(ConversableAgent):
             pass
         
         sandbox = ray.remote(CodeSandbox).options(
-                name=name,   
-                file_path=file_path,
-                file_ref=file_ref,                           
+                name=name,                                             
                 num_cpus=num_cpus,
                 num_gpus=num_gpus
             ).remote(file_path,file_ref)
