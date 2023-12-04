@@ -138,7 +138,9 @@ you should reply exactly `UPDATE CONTEXT`.
             self._prepare_chat(agent, clear_history=False)                      
             self.send(message=ori_message,recipient=agent,request_reply=False)                                                
             agent_reply = agent.generate_reply(raw_message=None,messages=None,sender=self)
-            return True, agent_reply + "\nTERMINATE"
+            if isinstance(agent_reply,dict):
+                agent_reply = agent_reply["content"]
+            return True, {"content":agent_reply,"metadata":{"TERMINATE":True}}
         
         return self.generate_llm_reply(raw_message,messages,sender)
 
