@@ -229,10 +229,7 @@ class DataAnalysis:
         # trigger file preview manually
         ray.get(self.data_analysis_pipeline.preview_file.remote()) 
         
-        self.client = Agents.create_remote_agent(UserProxyAgent,f"user_{self.name}",llm,retrieval,
-                                human_input_mode="NEVER",
-                                max_consecutive_auto_reply=0,
-                                is_termination_msg=lambda x: x.get("content", "").rstrip().endswith("TERMINATE") )
+        self.client = self.get_or_create_user(f"user_{self.name}")
 
     def get_or_create_user(self,name:str)->bool:
         try:
@@ -240,8 +237,7 @@ class DataAnalysis:
         except Exception:
             return Agents.create_remote_agent(UserProxyAgent,f"user_{self.name}",self.llm,self.retrieval,
                                 human_input_mode="NEVER",
-                                max_consecutive_auto_reply=0,
-                                is_termination_msg=lambda x: x.get("content", "").rstrip().endswith("TERMINATE") )
+                                max_consecutive_auto_reply=0)
         
     def analyze(self,content:str):        
         ray.get(self.data_analysis_pipeline.update_max_consecutive_auto_reply.remote(1))
