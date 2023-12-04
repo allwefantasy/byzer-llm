@@ -70,6 +70,18 @@ Reply "TERMINATE" in the end when everything is done.
         self.register_reply([Agent, ClientActorHandle,str], VisualizationAgent.generate_code_reply) 
         self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply) 
 
+    def create_temp_message(self,code,original_message=None):
+        temp_message = {
+            "content":code,
+            "metadata":{
+                "target_names":{"image_base64":None},
+            },
+            "role":"user"
+        }
+        if original_message is not None:
+            temp_message["metadata"] = {**original_message["metadata"],**temp_message["metadata"]}
+        return temp_message   
+
     def generate_code_reply(
         self,
         raw_message: Optional[Union[Dict,str,ChatResponse]] = None,
@@ -95,8 +107,8 @@ Reply "TERMINATE" in the end when everything is done.
             
             _,output = self.generate_llm_reply(raw_message,temp_message2,sender)            
             # ask the code agent to execute the code   
-            self._prepare_chat(self.code_agent, True)             
-            self.send(message=output,recipient=self.code_agent)
+            self._prepare_chat(self.code_agent, True)                                     
+            self.send(message=self.create_temp_message(output,temp_message),recipient=self.code_agent)
 
             # summarize the conversation so far  
             code_agent_messages = self._messages[get_agent_name(self.code_agent)]
