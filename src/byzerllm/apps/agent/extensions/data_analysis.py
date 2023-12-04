@@ -68,20 +68,20 @@ you should reply exactly `UPDATE CONTEXT`.
 
         self.python_interpreter = Agents.create_local_agent(PythonSandboxAgent,"python_interpreter",
                                                 llm,retrieval,
-                                                max_consecutive_auto_reply=3,
+                                                max_consecutive_auto_reply=100,
                                                 system_message="you are a code sandbox")
 
         self.preview_file_agent = Agents.create_local_agent(PreviewFileAgent,"privew_file_agent",llm,retrieval,
-                                        max_consecutive_auto_reply=3,
+                                        max_consecutive_auto_reply=100,
                                         code_agent = self.python_interpreter
                                         )
         
         self.visualization_agent = Agents.create_local_agent(VisualizationAgent,"visualization_agent",llm,retrieval,
-                                        max_consecutive_auto_reply=3,
+                                        max_consecutive_auto_reply=100,                                        
                                         code_agent = self.python_interpreter
                                         ) 
         self.assistant_agent = Agents.create_local_agent(AssistantAgent,"assistant_agent",llm,retrieval,
-                                        max_consecutive_auto_reply=3,
+                                        max_consecutive_auto_reply=100,
                                         code_agent = self.python_interpreter
                                         )                 
         
@@ -209,25 +209,26 @@ class DataAnalysis:
         self.llm = llm
         self.retrieval = retrieval
         
-        if self.file_path and not self.use_shared_disk:
-            base_name = os.path.basename(file_path)
-            _, ext = os.path.splitext(base_name)
-            new_base_name = self.name + ext
-            dir_name = os.path.dirname(file_path)
-            new_file_path = os.path.join(dir_name, new_base_name)
-            print(f"use_shared_disk: {self.use_shared_disk} file_path: {self.file_path} new_file_path: {new_file_path}",flush=True)
-            self.file_ref = ray.put(open(self.file_path,"rb").read())
-            self.file_path = new_file_path
+        if not self.manager.check_pipeline_exists(self.name):
+            if self.file_path and not self.use_shared_disk:
+                base_name = os.path.basename(file_path)
+                _, ext = os.path.splitext(base_name)
+                new_base_name = self.name + ext
+                dir_name = os.path.dirname(file_path)
+                new_file_path = os.path.join(dir_name, new_base_name)
+                print(f"use_shared_disk: {self.use_shared_disk} file_path: {self.file_path} new_file_path: {new_file_path}",flush=True)
+                self.file_ref = ray.put(open(self.file_path,"rb").read())
+                self.file_path = new_file_path
 
-        self.data_analysis_pipeline = ray.get(self.manager.get_or_create_pipeline.remote(
-             name = self.name,
-             llm =llm,
-             retrieval =retrieval,
-             file_path=self.file_path,
-             file_ref=self.file_ref)) 
+            self.data_analysis_pipeline = ray.get(self.manager.get_or_create_pipeline.remote(
+                name = self.name,
+                llm =llm,
+                retrieval =retrieval,
+                file_path=self.file_path,
+                file_ref=self.file_ref)) 
 
-        # trigger file preview manually
-        ray.get(self.data_analysis_pipeline.preview_file.remote()) 
+            # trigger file preview manually
+            ray.get(self.data_analysis_pipeline.preview_file.remote()) 
         
         self.client = self.get_or_create_user(f"user_{self.name}")
 
