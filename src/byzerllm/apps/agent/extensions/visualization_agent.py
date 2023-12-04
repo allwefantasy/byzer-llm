@@ -103,7 +103,7 @@ Reply "TERMINATE" in the end when everything is done.
             response:ChatResponse = code_agent_messages[-1]["metadata"] # self.generate_llm_reply(None,,sender)            
             base64_image = response.variables["base64_image"]
 
-            return True, base64_image + "\nTERMINATE"
+            return True, {"content":base64_image,"metadata":{"TERMINATE":True}}
         
 
         ## no code block found so the code agent return None

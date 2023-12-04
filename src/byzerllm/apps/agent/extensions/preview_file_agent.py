@@ -93,7 +93,7 @@ execute the code to preview the file. If the code is correct, the file will be l
             
             file_preview = response.variables["file_preview"].to_csv(index=False)    
             
-            return True, file_preview + "\nTERMINATE"
+            return True, {"content":file_preview,"metadata":{"TERMINATE":True}}
         
 
         ## no code block found so the code agent return None

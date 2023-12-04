@@ -76,7 +76,7 @@ Reply "TERMINATE" in the end when everything is done.
             code_agent_messages = self._messages[get_agent_name(self.code_agent)]
             answer = code_agent_messages[-1]["content"] # self.generate_llm_reply(None,,sender)
             # give the result to the user             
-            return True, answer + "\nTERMINATE"
+            return True, {"content":answer,"metadata":{"TERMINATE":True}}
         
 
         ## no code block found so the code agent return None
