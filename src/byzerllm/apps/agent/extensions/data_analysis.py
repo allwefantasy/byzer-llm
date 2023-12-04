@@ -129,7 +129,8 @@ you should reply exactly `UPDATE CONTEXT`.
         ori_message = messages[-1]                             
 
         _,agent_name = self.select_agent(raw_message,messages,sender)
-
+        print(f"Select agent: {agent_name} to answer the question: {ori_message['content'][0:20]}",flush=True)
+        
         if agent_name:
             agent = self.agents[agent_name]                        
             self.send(message=ori_message,recipient=agent,request_reply=False)                                                
