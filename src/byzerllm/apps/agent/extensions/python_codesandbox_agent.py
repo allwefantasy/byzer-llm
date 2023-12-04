@@ -139,13 +139,20 @@ class PythonSandboxAgent(ConversableAgent):
             
             file_path = None
             file_ref = None
+
+            if "metadata" not in message:
+                message["metadata"] = {}
             
             if "file_path" in message["metadata"]:
                 file_path = message["metadata"]["file_path"]
                 file_ref = message["metadata"]["file_ref"]                
             
+            target_names = {}
+            if "target_names" in message["metadata"]:
+                target_names = message["metadata"]["target_names"]
+
             sandbox = self.get_or_create_sandbox(get_agent_name(sender)+"_sandbox",file_path,file_ref,0,0)            
-            exitcode, output,response = ray.get(sandbox.exec_capture_output.remote(code_str,message["metadata"]["target_names"]))
+            exitcode, output,response = ray.get(sandbox.exec_capture_output.remote(code_str,target_names))
             code_execution_config["last_n_messages"] = last_n_messages
             exitcode2str = "execution succeeded" if exitcode == 0 else "execution failed"
             # print(f"exitcode: {exitcode} ({exitcode2str})\nCode output: {output}",flush=True)
