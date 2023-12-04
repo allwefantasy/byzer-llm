@@ -163,11 +163,12 @@ class DataAnalysisPipelineManager:
         self.pipelines = {}
         self.lasted_updated = {}
 
-    def get_or_create_pipeline(self,name:str,
-                              llm:ByzerLLM,retrieval:ByzerRetrieval,
-                              file_path:str,
-                              file_ref:ClientObjectRef,
-                              num_gpus:int=0,num_cpus:int=0):
+    def get_or_create_pipeline( self,
+                                name:str,
+                                llm:ByzerLLM,retrieval:ByzerRetrieval,
+                                file_path:str,
+                                file_ref:ClientObjectRef,
+                                num_gpus:int=0,num_cpus:int=0):
         self.lasted_updated[name] = time.time()
         self.check_pipeline_timeout()
         if name in self.pipelines:            
@@ -178,7 +179,7 @@ class DataAnalysisPipelineManager:
                 num_cpus=num_cpus,
                 num_gpus=num_gpus
             ).remote(
-                name = self.name,
+                name = name,
                 llm = llm,
                 retrieval = retrieval,
                 file_path=file_path,
