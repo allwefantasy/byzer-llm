@@ -38,6 +38,9 @@ def run_agent_func(agent: Union[Agent,"ConversableAgent",ClientActorHandle], fun
     else:
         return ray.get(getattr(agent, func_name).remote(*args, **kwargs)) 
     
+def count_messages_length(messages: List[Dict]) -> int:
+    return sum([len(message["content"]) for message in messages])    
+    
 def copy_message(message: Dict) -> Dict:
     return copy.deepcopy(message)
 

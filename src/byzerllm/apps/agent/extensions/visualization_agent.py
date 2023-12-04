@@ -4,7 +4,7 @@ from ....utils.client import ByzerLLM,ByzerRetrieval
 from ..agent import Agent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import time
-from .. import get_agent_name,run_agent_func,ChatResponse,modify_last_message,modify_message_content
+from .. import get_agent_name,run_agent_func,ChatResponse,modify_last_message,modify_message_content,count_messages_length
 from langchain import PromptTemplate
 
 
@@ -90,8 +90,11 @@ Reply "TERMINATE" in the end when everything is done.
                 question=message["content"],
             ) 
             
-            temp_message = modify_message_content(message,formated_prompt)                        
-            _,output = self.generate_llm_reply(raw_message,modify_last_message(messages,temp_message),sender)            
+            temp_message = modify_message_content(message,formated_prompt)  
+            temp_message2 = modify_last_message(messages,temp_message)
+
+            print(f"The lenght of converation to generate visualization code is {count_messages_length(temp_message2)}")
+            _,output = self.generate_llm_reply(raw_message,temp_message2,sender)            
             # ask the code agent to execute the code   
             self._prepare_chat(self.code_agent, True)             
             self.send(message=output,recipient=self.code_agent)
