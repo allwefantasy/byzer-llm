@@ -209,7 +209,7 @@ class DataAnalysis:
         self.llm = llm
         self.retrieval = retrieval
         
-        if not self.manager.check_pipeline_exists(self.name):
+        if not ray.get(self.manager.check_pipeline_exists.remote(self.name)):
             if self.file_path and not self.use_shared_disk:
                 base_name = os.path.basename(file_path)
                 _, ext = os.path.splitext(base_name)
