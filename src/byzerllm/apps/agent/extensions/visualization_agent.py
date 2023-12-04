@@ -114,7 +114,7 @@ Reply "TERMINATE" in the end when everything is done.
             code_agent_messages = self._messages[get_agent_name(self.code_agent)]
             answer = code_agent_messages[-1]["content"] 
             # give the result to the user             
-            response:ChatResponse = code_agent_messages[-1]["metadata"] # self.generate_llm_reply(None,,sender)            
+            response:ChatResponse = code_agent_messages[-1]["metadata"]["raw_message"]
             base64_image = response.variables["base64_image"]
 
             return True, {"content":base64_image,"metadata":{"TERMINATE":True}}
@@ -134,5 +134,5 @@ Reply "TERMINATE" in the end when everything is done.
                 extra_messages.append(self.create_temp_message("image_base64 is not defined"))                        
             # the code may be wrong, so generate a new code according to the conversation so far
             _,output = self.generate_llm_reply(raw_message,messages + extra_messages,sender)
-            return True, output
+            return True, self.create_temp_message(output)            
         
