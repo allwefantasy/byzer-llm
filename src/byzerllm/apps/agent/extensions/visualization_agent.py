@@ -115,7 +115,10 @@ Reply "TERMINATE" in the end when everything is done.
             # stop the conversation if the code agent gives the success message
             return True, None
         else:
+            extra_messages = []            
+            if "image_base64" not in raw_message.variables:                
+                extra_messages.append(self.create_temp_message("image_base64 is not defined"))                        
             # the code may be wrong, so generate a new code according to the conversation so far
-            final,output = self.generate_llm_reply(raw_message,messages,sender)
+            _,output = self.generate_llm_reply(raw_message,messages + extra_messages,sender)
             return True, output
         
