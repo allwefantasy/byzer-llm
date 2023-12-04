@@ -133,7 +133,9 @@ you should reply exactly `UPDATE CONTEXT`.
         print(f"Select agent: {agent_name} to answer the question: {ori_message['content'][0:20]}",flush=True)
         
         if agent_name:
-            agent = self.agents[agent_name]                        
+            agent = self.agents[agent_name]
+            # reset the agent except the conversation history  
+            self._prepare_chat(agent, clear_history=False)                      
             self.send(message=ori_message,recipient=agent,request_reply=False)                                                
             agent_reply = agent.generate_reply(raw_message=None,messages=None,sender=self)
             return True, agent_reply + "\nTERMINATE"

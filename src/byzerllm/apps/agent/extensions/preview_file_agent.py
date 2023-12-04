@@ -80,6 +80,7 @@ execute the code to preview the file. If the code is correct, the file will be l
             # only the first time we should keep the message sent to the code agent which have file_path, file_ref
             # in message metadata, when the sandbox is created, then we will reuse the sandbox, no need to contain
             # the file_path, file_ref in the message metadata.
+            self._prepare_chat(self.code_agent, True)   
             self.send(message=self.create_temp_message(code,new_message),recipient=self.code_agent)
 
             # get the code agent's reply
