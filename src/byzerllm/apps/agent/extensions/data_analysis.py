@@ -232,7 +232,8 @@ class DataAnalysis:
                                 is_termination_msg=lambda x: x.get("content", "").rstrip().endswith("TERMINATE") )
 
     def analyze(self,content:str):        
-        return ray.get(
+        ray.get(self.data_analysis_pipeline.update_max_consecutive_auto_reply.remote(1))
+        return ray.get(           
            self.client.initiate_chat.remote(
                 self.data_analysis_pipeline,
                 message={
