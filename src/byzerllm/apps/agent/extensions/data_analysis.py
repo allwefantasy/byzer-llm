@@ -16,7 +16,7 @@ from byzerllm.apps.agent.assistant_agent import AssistantAgent
 from byzerllm.utils import generate_str_md5
 import os
 class DataAnalysisPipeline(ConversableAgent):  
-    DEFAULT_SYSTEM_MESSAGE = '''You are a helpful data anaylisys AI assistant.
+    DEFAULT_SYSTEM_MESSAGE = '''You are a helpful data analysis assistant.
 You don't need to write code, or anwser the question. The only thing you need to do 
 is plan the data analysis pipeline.
 
