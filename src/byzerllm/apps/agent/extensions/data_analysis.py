@@ -42,7 +42,7 @@ you should reply exactly `UPDATE CONTEXT`.
         file_ref:ClientObjectRef ,
         system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,        
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
-        max_consecutive_auto_reply: Optional[int] = None,
+        max_consecutive_auto_reply: Optional[int] = 0,
         human_input_mode: Optional[str] = "NEVER",
         code_execution_config: Optional[Union[Dict, bool]] = False,
         **kwargs,
