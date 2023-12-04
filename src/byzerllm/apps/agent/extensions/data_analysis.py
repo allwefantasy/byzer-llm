@@ -42,7 +42,7 @@ you should reply exactly `UPDATE CONTEXT`.
         file_ref:ClientObjectRef ,
         system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,        
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
-        max_consecutive_auto_reply: Optional[int] = 0,
+        max_consecutive_auto_reply: Optional[int] = None,
         human_input_mode: Optional[str] = "NEVER",
         code_execution_config: Optional[Union[Dict, bool]] = False,
         **kwargs,
@@ -92,6 +92,7 @@ you should reply exactly `UPDATE CONTEXT`.
 
     def preview_file(self):
         self.preview_file_agent._prepare_chat(self.python_interpreter, True)        
+        self.max_consecutive_auto_reply = 0          
         self.initiate_chat(
         self.preview_file_agent,
         message={
@@ -121,11 +122,7 @@ you should reply exactly `UPDATE CONTEXT`.
         sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
         config: Optional[Any] = None,
     ) -> Tuple[bool, Union[str, Dict, None,ChatResponse]]:
-        
-        # reset the reply counter
-        for agent in self.agents.values():
-            agent._prepare_chat(self.python_interpreter, clear_history=False)              
-        
+                
         if messages is None:
             messages = self._messages[get_agent_name(sender)]
         
@@ -234,7 +231,7 @@ class DataAnalysis:
                                 max_consecutive_auto_reply=0,
                                 is_termination_msg=lambda x: x.get("content", "").rstrip().endswith("TERMINATE") )
 
-    def analyze(self,content:str):
+    def analyze(self,content:str):        
         return ray.get(
            self.client.initiate_chat.remote(
                 self.data_analysis_pipeline,
