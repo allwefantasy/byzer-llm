@@ -98,7 +98,8 @@ Reply "TERMINATE" in the end when everything is done.
             
             temp_message = modify_message_content(message,formated_prompt)                        
             _,output = self.generate_llm_reply(raw_message,modify_last_message(messages,temp_message),sender)            
-            # ask the code agent to execute the code             
+            # ask the code agent to execute the code   
+            self._prepare_chat(self.code_agent, True)             
             self.send(message=output,recipient=self.code_agent)
 
             # summarize the conversation so far  

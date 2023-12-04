@@ -67,6 +67,8 @@ Reply "TERMINATE" in the end when everything is done.
         if get_agent_name(sender) != get_agent_name(self.code_agent):
    
             final,output = self.generate_llm_reply(raw_message,messages,sender)            
+            
+            self._prepare_chat(self.code_agent, True)        
             # ask the code agent to execute the code             
             self.send(message=output,recipient=self.code_agent)
 
