@@ -244,7 +244,7 @@ class DataAnalysis:
         
     def analyze(self,content:str):        
         ray.get(self.data_analysis_pipeline.update_max_consecutive_auto_reply.remote(1))
-        return ray.get(           
+        ray.get(           
            self.client.initiate_chat.remote(
                 self.data_analysis_pipeline,
                 message={
@@ -254,8 +254,9 @@ class DataAnalysis:
                 },
            ) 
         )
+        return ray.get(self.data_analysis_pipeline.last_message.remote(get_agent_name(self.data_analysis_pipeline)))
     def output(self):
-        ray.get(self.data_analysis_pipeline.last_message.remote(get_agent_name(self.data_analysis_pipeline)))
+        return ray.get(self.data_analysis_pipeline.last_message.remote(get_agent_name(self.data_analysis_pipeline)))
     
     def get_pipeline(self):
         return ray.get(self.manager.get_pipeline.remote(self.name))
