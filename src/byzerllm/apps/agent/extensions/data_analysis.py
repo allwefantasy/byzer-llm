@@ -254,9 +254,10 @@ class DataAnalysis:
                 },
            ) 
         )
-        return ray.get(self.data_analysis_pipeline.last_message.remote(get_agent_name(self.data_analysis_pipeline)))
+        return ray.get(self.data_analysis_pipeline.last_message.remote(get_agent_name(self.client)))
+    
     def output(self):
-        return ray.get(self.data_analysis_pipeline.last_message.remote(get_agent_name(self.data_analysis_pipeline)))
+        return ray.get(self.data_analysis_pipeline.last_message.remote(get_agent_name(self.client)))
     
     def get_pipeline(self):
         return ray.get(self.manager.get_pipeline.remote(self.name))
