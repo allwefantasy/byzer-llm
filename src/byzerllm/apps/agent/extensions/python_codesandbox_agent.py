@@ -155,7 +155,7 @@ class PythonSandboxAgent(ConversableAgent):
             exitcode, output,response = ray.get(sandbox.exec_capture_output.remote(code_str,target_names))
             code_execution_config["last_n_messages"] = last_n_messages
             exitcode2str = "execution succeeded" if exitcode == 0 else "execution failed"
-            # print(f"exitcode: {exitcode} ({exitcode2str})\nCode output: {output}",flush=True)
+            print(f"to: {get_agent_name(sender)} exitcode: {exitcode} ({exitcode2str})\nCode output: {output[0:100]}",flush=True)
             return True, ChatResponse(status=exitcode,
                                       output=f"exitcode: {exitcode} ({exitcode2str})\nCode output: {output}",
                                       code=code_str,

@@ -112,7 +112,6 @@ Reply "TERMINATE" in the end when everything is done.
 
             # summarize the conversation so far  
             code_agent_messages = self._messages[get_agent_name(self.code_agent)]
-            answer = code_agent_messages[-1]["content"] 
             # give the result to the user             
             response:ChatResponse = code_agent_messages[-1]["metadata"]["raw_message"]
             base64_image = response.variables["base64_image"]
