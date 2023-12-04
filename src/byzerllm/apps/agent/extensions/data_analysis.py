@@ -234,8 +234,8 @@ class DataAnalysis:
             # trigger file preview manually
             ray.get(self.data_analysis_pipeline.preview_file.remote()) 
         else:
-            self.data_analysis_pipeline = self.get_pipeline(self.name)
-            
+            self.data_analysis_pipeline = ray.get(self.manager.get_pipeline.remote(self.name))
+
         self.client = self.get_or_create_user(f"user_{self.name}")
 
     def get_or_create_user(self,name:str)->bool:
@@ -267,10 +267,7 @@ class DataAnalysis:
         
     
     def output(self):
-        return ray.get(self.data_analysis_pipeline.last_message.remote(get_agent_name(self.client)))
-    
-    def get_pipeline(self):
-        return ray.get(self.manager.get_pipeline.remote(self.name))
+        return ray.get(self.data_analysis_pipeline.last_message.remote(get_agent_name(self.client)))        
     
     def get_pipeline_manager(self)->ClientActorHandle:
         name = "DATA_ANALYSIS_PIPELINE_MANAGER"
