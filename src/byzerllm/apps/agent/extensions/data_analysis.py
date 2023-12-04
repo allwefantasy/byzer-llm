@@ -233,7 +233,9 @@ class DataAnalysis:
 
             # trigger file preview manually
             ray.get(self.data_analysis_pipeline.preview_file.remote()) 
-        
+        else:
+            self.data_analysis_pipeline = self.get_pipeline(self.name)
+            
         self.client = self.get_or_create_user(f"user_{self.name}")
 
     def get_or_create_user(self,name:str)->bool:
