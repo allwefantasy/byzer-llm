@@ -102,11 +102,11 @@ class Agents:
         name=name,llm=llm,retrieval=retrieval,*args, **kwargs)  
 
     @staticmethod
-    def create_local_agent(cls,name:str,llm,retrieval,*args, **kwargs)->ConversableAgent:
+    def create_local_agent(cls,name:str,llm,retrieval,*args, **kwargs)->"ConversableAgent":
         return cls(name=name,llm=llm,retrieval=retrieval,*args, **kwargs)
 
     @staticmethod
-    def create_local_group(group_name:str,agents: List[Agent],llm,retrieval,*args, **kwargs) -> List[ConversableAgent]:
+    def create_local_group(group_name:str,agents: List[Agent],llm,retrieval,*args, **kwargs) -> List["ConversableAgent"]:
         from .groupchat import GroupChat
         from .groupchat import GroupChatManager
 
