@@ -105,10 +105,8 @@ you should reply exactly `UPDATE CONTEXT`.
         # sync the conversation of preview_file_agent to other agents
         print("sync the conversation of preview_file_agent to other agents",flush=True)
         for agent in self.agents.values():            
-            for message in self._messages["privew_file_agent"]:
-                # if use send, the message will be duplicated in sender's message list
-                agent.receive(message=message, sender=self, request_reply=False)
-                # self.send(message=message,recipient=agent,request_reply=False)
+            for message in self._messages["privew_file_agent"]:                                
+                self.send(message=message,recipient=agent,request_reply=False)
 
     def select_agent(self,raw_message,messages,sender):
         _,llm_reply = self.generate_llm_reply(raw_message,messages,sender)
