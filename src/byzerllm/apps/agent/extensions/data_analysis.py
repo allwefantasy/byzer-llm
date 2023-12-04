@@ -254,12 +254,12 @@ class DataAnalysis:
                 },
            ) 
         )
-        o = str(self.output())
-        # remove \nTERMINATE from the output, recursively since the output may contain multi \nTERMINATE in the end
-        while o[-10:] == "\nTERMINATE":
-            o = o[:-10]
+        # o = str(self.output())
+        # # remove \nTERMINATE from the output, recursively since the output may contain multi \nTERMINATE in the end
+        # while o[-10:] == "\nTERMINATE":
+        #     o = o[:-10]
         
-        return o    
+        return self.output()    
         
     
     def output(self):

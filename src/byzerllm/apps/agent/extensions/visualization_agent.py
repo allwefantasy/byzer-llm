@@ -15,12 +15,6 @@ You'll be asked to generate code to visualize data. You can only use python.
 ''' 
 
     DEFAULT_USER_MESSAGE = """
-The preview of the file is:
-
-```text
-{file_preview}
-```
-Use pandas to analyze it. 
 Please DO NOT consider the package installation, the packages all are installed, you can use it directly.
 
 When the question require you to do visualization, please use package Plotly or matplotlib to do this.
@@ -91,8 +85,8 @@ Reply "TERMINATE" in the end when everything is done.
         # and talk to the code agent until the code agent gives the success message
         if get_agent_name(sender) != get_agent_name(self.code_agent):  
             message = messages[-1]                                    
-            formated_prompt = PromptTemplate.from_template(VisualizationAgent.DEFAULT_USER_MESSAGE).format(
-                file_preview=message["metadata"]["file_preview"],
+            
+            formated_prompt = PromptTemplate.from_template(VisualizationAgent.DEFAULT_USER_MESSAGE).format(                
                 question=message["content"],
             ) 
             
