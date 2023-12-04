@@ -96,7 +96,7 @@ you should reply exactly `UPDATE CONTEXT`.
         self.initiate_chat(
         self.preview_file_agent,
         message={
-            "content":"We have a file, the file path is: {self.file_path} , please preview this file",
+            "content":f"We have a file, the file path is: {self.file_path} , please preview this file",
             "metadata":{
                 "file_path":self.file_path,
                 "file_ref":self.file_ref
