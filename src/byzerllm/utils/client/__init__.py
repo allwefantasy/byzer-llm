@@ -112,7 +112,7 @@ class ByzerLLM:
 
         self.byzer_engine_url = None
         if "byzer_engine_url" in kwargs:
-            self.byzer_engine_url = kwargs["byzer_engine_url"]                         
+            self.byzer_engine_url = kwargs["byzer_engine_url"]                                     
 
         self.default_model_name = None
         self.default_emb_model_name = None

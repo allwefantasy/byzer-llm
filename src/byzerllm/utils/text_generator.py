@@ -21,6 +21,12 @@ class ByzerLLMGenerator:
     
     def predict(self,query:Dict[str,Any]):
         ins = query["instruction"]
+        
+        if query.get("tokenizer",False):
+            if not self.tokenizer:
+                raise Exception("This model do not support text tokenizer service")
+            return self.tokenizer(ins,return_token_type_ids=False,return_tensors="pt")
+        
         if query.get("embedding",False):
             if not self.embedding:
                 raise Exception("This model do not support text emedding service")

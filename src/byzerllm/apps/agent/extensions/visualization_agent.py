@@ -19,7 +19,9 @@ Please DO NOT consider the package installation, the packages all are installed,
 
 When the question require you to do visualization, please use package Plotly or matplotlib to do this.
 Try to use base64 to encode the image, assign the base64 string to the variable named image_base64. 
-Make sure the image_base64 defined in the global scope. Notice that try to create figure with `plt.figure()` before you plot the image.
+Make sure the image_base64 defined in the global scope. 
+
+Notice that ALWAYS create figure with `plt.figure()` before you plot the image.
 
 Here is the example code how to save the plot to a BytesIO object and encode the image to base64:
 
