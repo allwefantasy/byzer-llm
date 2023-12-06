@@ -107,8 +107,13 @@ class ByzerLLM:
         self.sql_model = "context" in globals()
         
         self.max_input_length = None
+        self.max_output_length = None
+
         if "max_input_length" in kwargs:
             self.max_input_length = kwargs["max_input_length"] 
+
+        if "max_output_length" in kwargs:
+            self.max_output_length = kwargs["max_output_length"]    
 
         self.byzer_engine_url = None
         if "byzer_engine_url" in kwargs:
@@ -220,8 +225,7 @@ class ByzerLLM:
             ray.get_actor(udf_name)
             return True
         except Exception as inst:
-            return False    
-               
+            return False                           
 
     def deploy(self,model_path:str,
                pretrained_model_type:str,
@@ -276,7 +280,18 @@ class ByzerLLM:
         
         UDFBuilder.build(self.ray_context,init_model,getattr(predict_module,predict_func))
 
+    def tokenize(self,model:str,s:str,llm_config:Dict[str,Any]={})->List[str]:
+        
+        if not model and not self.default_model_name:
+            raise Exception("model name is required")
+        
+        if not model:
+            model = self.default_model_name
 
+        v = [{"instruction":s,"tokenizer":True, **llm_config }]        
+        res = self._query(model,v) 
+        return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
+        
     def emb(self, model, request:LLMRequest ,extract_params:Dict[str,Any]={})->List[List[float]]:
         
         if not model and not self.default_model_name:
@@ -349,11 +364,16 @@ class ByzerLLM:
                     "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly."
                     } 
         
-        final_ins = self.generate_instruction_from_history(conversations, role_mapping)                 
+        final_ins = self.generate_instruction_from_history(conversations, role_mapping)  
+
+        try:
+            input_size = len(self.tokenize(None,final_ins,llm_config)[0])
+        except Exception as inst:
+            input_size = len(final_ins)
         
-        if self.max_input_length and len(final_ins) > self.max_input_length:
-            raise Exception(f"input length {len(final_ins)} is larger than max_input_length {self.max_input_length}")
-        
+        if self.max_input_length and input_size > self.max_input_length:
+            raise Exception(f"input length {len(final_ins)} is larger than max_input_length {self.max_input_length}")                
+
         v = [{"instruction":final_ins,**llm_config }]         
         res = self._query(self.default_model_name,v) 
         return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
