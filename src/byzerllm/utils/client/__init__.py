@@ -105,9 +105,14 @@ class ByzerLLM:
                          }
         self.sys_conf = self.default_sys_conf.copy()
         self.sql_model = "context" in globals()
+
+        self.force_skip_context_length_check = False
+        if "force_skip_context_length_check" in kwargs:
+            self.force_skip_context_length_check = kwargs["force_skip_context_length_check"]
         
         self.max_input_length = None
-        self.max_output_length = None
+        self.max_output_length = 1024
+        self.max_model_length = None
 
         if "max_input_length" in kwargs:
             self.max_input_length = kwargs["max_input_length"] 
@@ -115,9 +120,13 @@ class ByzerLLM:
         if "max_output_length" in kwargs:
             self.max_output_length = kwargs["max_output_length"]    
 
+        if "max_context_length" in kwargs:
+            self.max_model_length = kwargs["max_model_length"]    
+
         self.byzer_engine_url = None
         if "byzer_engine_url" in kwargs:
-            self.byzer_engine_url = kwargs["byzer_engine_url"]                                     
+            self.byzer_engine_url = kwargs["byzer_engine_url"]  
+        
 
         self.default_model_name = None
         self.default_emb_model_name = None
@@ -171,6 +180,18 @@ class ByzerLLM:
 
     def setup_num_workers(self,num_workers:int)->'ByzerLLM':
         self.sys_conf["maxConcurrency"] = num_workers
+        return self
+    
+    def setup_max_model_length(self,max_model_length:int)->'ByzerLLM':
+        self.max_model_length = max_model_length
+        return self
+    
+    def setup_max_input_length(self,max_input_length:int)->'ByzerLLM':
+        self.max_input_length = max_input_length
+        return self
+    
+    def setup_max_output_length(self,max_output_length:int)->'ByzerLLM':
+        self.max_output_length = max_output_length
         return self
     
     def raw_sft(self,train_params:Dict[str,Any]):                   
@@ -364,15 +385,7 @@ class ByzerLLM:
                     "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly."
                     } 
         
-        final_ins = self.generate_instruction_from_history(conversations, role_mapping)  
-
-        try:
-            input_size = len(self.tokenize(None,final_ins,llm_config)[0])
-        except Exception as inst:
-            input_size = len(final_ins)
-        
-        if self.max_input_length and input_size > self.max_input_length:
-            raise Exception(f"input length {len(final_ins)} is larger than max_input_length {self.max_input_length}")                
+        final_ins = self.generate_instruction_from_history(conversations, role_mapping)          
 
         v = [{"instruction":final_ins,**llm_config }]         
         res = self._query(self.default_model_name,v) 
@@ -462,7 +475,29 @@ class ByzerLLM:
         res = json.loads(response.text)        
         return res[0]
 
-    def _query(self, model:str, input_value:List[Dict[str,Any]]):           
+    def _query(self, model:str, input_value:List[Dict[str,Any]]):  
+        
+        if not self.force_skip_context_length_check:
+            for input in input_value:
+                # if this is a embedding/tokenizer query ,skip            
+                if input.get("embedding",False) or input.get("tokenizer",False):
+                    continue            
+                
+                final_ins = input.get("instruction","")
+                
+                try:
+                    input_size = len(self.tokenize(None,final_ins,{})[0])
+                except Exception as inst:                
+                    input_size = len(final_ins)
+                
+                if self.max_input_length and input_size > self.max_input_length:
+                    raise Exception(f"input length {len(final_ins)} is larger than max_input_length {self.max_input_length}")                
+                
+                if  self.max_output_length and self.max_model_length:
+                    if input_size + self.max_output_length > self.max_model_length:
+                        raise Exception(f"input_size ({input_size}) plus max_output_length {self.max_output_length} is larget than model context length {self.max_model_length}")                
+
+
         udf_master = ray.get_actor(model)        
         new_input_value = [json.dumps(x,ensure_ascii=False) for x in input_value]
       
