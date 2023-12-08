@@ -110,18 +110,9 @@ class ByzerLLM:
         if "force_skip_context_length_check" in kwargs:
             self.force_skip_context_length_check = kwargs["force_skip_context_length_check"]
         
-        self.max_input_length = None
-        self.max_output_length = 1024
-        self.max_model_length = None
-
-        if "max_input_length" in kwargs:
-            self.max_input_length = kwargs["max_input_length"] 
-
-        if "max_output_length" in kwargs:
-            self.max_output_length = kwargs["max_output_length"]    
-
-        if "max_context_length" in kwargs:
-            self.max_model_length = kwargs["max_model_length"]    
+        self.mapping_max_input_length = {}
+        self.mapping_max_output_length = {}
+        self.mapping_max_model_length = {}        
 
         self.byzer_engine_url = None
         if "byzer_engine_url" in kwargs:
@@ -182,16 +173,16 @@ class ByzerLLM:
         self.sys_conf["maxConcurrency"] = num_workers
         return self
     
-    def setup_max_model_length(self,max_model_length:int)->'ByzerLLM':
-        self.max_model_length = max_model_length
+    def setup_max_model_length(self,model:str,max_model_length:int)->'ByzerLLM':
+        self.mapping_max_model_length[model] = max_model_length
         return self
     
-    def setup_max_input_length(self,max_input_length:int)->'ByzerLLM':
-        self.max_input_length = max_input_length
+    def setup_max_input_length(self,model:str,max_input_length:int)->'ByzerLLM':
+        self.mapping_max_input_length[model] = max_input_length
         return self
     
-    def setup_max_output_length(self,max_output_length:int)->'ByzerLLM':
-        self.max_output_length = max_output_length
+    def setup_max_output_length(self,model:str, max_output_length:int)->'ByzerLLM':
+        self.mapping_max_output_length[model] = max_output_length
         return self
     
     def raw_sft(self,train_params:Dict[str,Any]):                   
@@ -268,7 +259,7 @@ class ByzerLLM:
             UDFBuilder.build(self.ray_context,init_model,simple_predict_func)
             return 
 
-
+        
         if pretrained_model_type == "bark":
             from byzerllm.bark.bark_voice import build_void_infer, ZH_SPEAKER, EN_SPEAKER            
             def init_model(model_refs: List[ClientObjectRef], conf: Dict[str, str]) -> Any:
@@ -283,7 +274,9 @@ class ByzerLLM:
             UDFBuilder.build(self.ray_context,init_model,predict_func)
             return                
         
-        
+        # we put in this place so it only take effect for private model
+        self.mapping_max_output_length[udf_name]=1024
+
         if pretrained_model_type.startswith("custom/"):
             model_type = pretrained_model_type.split("/")[-1]
 
@@ -475,8 +468,8 @@ class ByzerLLM:
         res = json.loads(response.text)        
         return res[0]
 
-    def get_max_model_length(self):
-        return self.max_model_length    
+    def get_max_model_length(self,model:str):
+        return self.mapping_max_model_length.get(model,-1)
 
     def _query(self, model:str, input_value:List[Dict[str,Any]]):  
         
@@ -491,14 +484,17 @@ class ByzerLLM:
                 try:
                     input_size = len(self.tokenize(None,final_ins,{})[0])
                 except Exception as inst:                
-                    input_size = len(final_ins)
+                    continue
                 
-                if self.max_input_length and input_size > self.max_input_length:
-                    raise Exception(f"input length {len(final_ins)} is larger than max_input_length {self.max_input_length}")                
+                if model in self.mapping_max_input_length and input_size > self.mapping_max_input_length[model]:
+                    raise Exception(f"input length {input_size} is larger than max_input_length {self.mapping_max_input_length[model]}")                
                 
-                if  self.max_output_length and self.max_model_length:
-                    if input_size + self.max_output_length > self.max_model_length:
-                        raise Exception(f"input_size ({input_size}) plus max_output_length {self.max_output_length} is larget than model context length {self.max_model_length}")                
+                if  model in self.mapping_max_output_length and model in self.mapping_max_model_length:
+                    if input_size + self.mapping_max_output_length[model] > self.mapping_max_model_length[model]:
+                        raise Exception(f"input_size ({input_size}) plus max_output_length {self.mapping_max_output_length[model]} is larget than model context length {self.mapping_max_model_length[model]}")                
+                
+                # dynamically update the max_length
+                input["max_length"] = input_size + self.mapping_max_output_length[model]
 
 
         udf_master = ray.get_actor(model)        
