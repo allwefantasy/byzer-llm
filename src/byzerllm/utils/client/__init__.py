@@ -475,6 +475,9 @@ class ByzerLLM:
         res = json.loads(response.text)        
         return res[0]
 
+    def get_max_model_length(self):
+        return self.max_model_length    
+
     def _query(self, model:str, input_value:List[Dict[str,Any]]):  
         
         if not self.force_skip_context_length_check:
