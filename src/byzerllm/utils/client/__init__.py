@@ -476,7 +476,7 @@ class ByzerLLM:
                 final_ins = input.get("instruction","")
                 
                 try:
-                    input_size = len(self.tokenize(None,final_ins,{})[0])
+                    input_size = len(self.tokenize(None,final_ins,{})[0].output[0])
                 except Exception as inst:                
                     continue
                 
