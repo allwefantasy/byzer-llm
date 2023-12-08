@@ -406,10 +406,7 @@ class ByzerLLM:
             params = {**request.extra_params.__dict__,**extract_params}
             if "history" in params:
                 del params["history"]
-            final_input = self._generate_ins(request) 
-            
-            if self.max_input_length and len(final_input) > self.max_input_length:
-                    raise Exception(f"input length {len(final_input)} is larger than max_input_length {self.max_input_length}")
+            final_input = self._generate_ins(request)                         
             
             v = [{
             "instruction":final_input,
@@ -429,10 +426,7 @@ class ByzerLLM:
                 params = {**new_request.extra_params.__dict__,**extract_params}
                 if "history" in params:
                     del params["history"]
-                final_input = self._generate_ins(new_request)    
-                
-                if self.max_input_length and len(final_input) > self.max_input_length:
-                    raise Exception(f"input length {len(final_input)} is larger than max_input_length {self.max_input_length}")
+                final_input = self._generate_ins(new_request)                                    
                 
                 v.append({
                 "instruction":final_input, 
