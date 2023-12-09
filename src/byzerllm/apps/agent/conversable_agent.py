@@ -8,7 +8,7 @@ import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 
 from .agent import Agent
-from ...utils.client import ByzerLLM,ByzerRetrieval,default_chat_wrapper
+from ...utils.client import ByzerLLM,ByzerRetrieval,default_chat_wrapper,LLMResponse
 from . import get_agent_name,run_agent_func, ChatResponse
 
 try:
@@ -36,7 +36,7 @@ class ConversableAgent(Agent):
         function_map: Optional[Dict[str, Callable]] = None,
         code_execution_config: Optional[Union[Dict, bool]] = None,        
         default_auto_reply: Optional[Union[str, Dict, None]] = "",
-        chat_wrapper:Optional[Callable[[ByzerLLM,Optional[List[Dict]],Dict],str]] = default_chat_wrapper
+        chat_wrapper:Optional[Callable[[ByzerLLM,Optional[List[Dict]],Dict],List[LLMResponse]]] = default_chat_wrapper
         
     ):
         super().__init__(name)

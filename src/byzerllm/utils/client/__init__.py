@@ -518,7 +518,7 @@ class ByzerLLM:
 
 
 def default_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
-    return llm.chat_oai(conversations=conversations,**llm_config)[0].output
+    return llm.chat_oai(conversations=conversations,**llm_config)
 
 def qwen_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
     
