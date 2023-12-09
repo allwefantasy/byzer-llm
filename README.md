@@ -63,7 +63,7 @@ llm = ByzerLLM()
 llm.setup_gpus_per_worker(4).setup_num_workers(1)
 llm.setup_infer_backend(InferBackend.transformers)
 
-llm.deploy(model_path="/home/byzerllm/models/openbuddy-llama-13b-v5-fp16",
+llm.deploy(model_path="/home/byzerllm/models/openbuddy-llama2-13b64k-v15",
            pretrained_model_type="custom/llama2",
            udf_name="llama2_chat",infer_params={})
 
@@ -73,6 +73,7 @@ llm.chat("llama2_chat",LLMRequest(instruction="hello world"))[0].output
 The above code will deploy a llama2 model and then use the model to infer the input text. If you use transformers as the inference backend, you should specify the `pretrained_model_type` manually since the transformers backend can not auto detect the model type.
 
 Byzer-LLM also support `deploy` SaaS model with the same way. This feature provide a unified interface for both open-source model and SaaS model. The following code will deploy a Azure OpenAI model and then use the model to infer the input text.
+
 
 ```python
 llm = ByzerLLM()
@@ -237,6 +238,60 @@ as q1;
 ```
 
 Once you deploy the model with `run command as LLM`, then you can ues the model as a SQL function. This feature is very useful for data scientists who want to use LLM in their data analysis or data engineers who want to use LLM in their data pipeline.
+
+---
+
+### QWen
+
+If you use QWen in ByzerLLM, you should sepcify the following parameters mannualy:
+
+1. the role mapping 
+2. the stop_token_ids
+3. trim the stop tokens from the output
+
+However, we provide a wraper for this, try to the following code:
+
+```python
+from byzerllm.utils.client import qwen_chat_wrapper
+output_text = qwen_chat_wrapper(llm,[{
+    "role":"user",
+    "message":"你好"
+}])
+```
+
+Here is the implementation of `qwen_chat_wrapper`.
+
+```python
+from byzerllm.utils.client import ByzerLLM,ByzerRetrieval,code_utils
+
+def qwen_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
+    
+    
+    for conv in conversations:
+        if conv["role"] == "system":
+            if "<|im_start|>" not in conv["content"]:
+                conv["content"] = "<|im_start|>system\n" + conv["content"] + "<|im_end|>"
+            
+    t = llm.chat_oai(conversations=conversations,role_mapping={
+                    "user_role":"<|im_start|>user\n",
+                    "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
+                    "system_msg":"<|im_start|>system\nYou are a helpful assistant. Think it over and answer the user question correctly.<|im_end|>"
+                    },  **{**{
+                        "max_length":1024*16,
+                        "top_p":0.95,
+                        "temperature":0.01,
+                    },**llm_config,**{
+                        "generation.early_stopping":False,
+                        "generation.repetition_penalty":1.1,
+                        "generation.stop_token_ids":[151643]}})       
+    v = t[0].output
+    if "<|im_end|>" in v:
+        v = v.split("<|im_end|>")[0]
+    if "<|endoftext|>" in v:
+        v = v.split("<|endoftext|>")[0]
+    t[0].output = v    
+    return t
+```
 
 ---
 ## SaaS Models

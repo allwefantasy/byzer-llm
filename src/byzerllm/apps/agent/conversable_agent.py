@@ -8,7 +8,7 @@ import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 
 from .agent import Agent
-from ...utils.client import ByzerLLM,ByzerRetrieval,code_utils
+from ...utils.client import ByzerLLM,ByzerRetrieval,default_chat_wrapper
 from . import get_agent_name,run_agent_func, ChatResponse
 
 try:
@@ -36,12 +36,14 @@ class ConversableAgent(Agent):
         function_map: Optional[Dict[str, Callable]] = None,
         code_execution_config: Optional[Union[Dict, bool]] = None,        
         default_auto_reply: Optional[Union[str, Dict, None]] = "",
+        chat_wrapper:Optional[Callable[[ByzerLLM,Optional[List[Dict]],Dict],str]] = default_chat_wrapper
         
     ):
         super().__init__(name)
         
         self.llm = llm
         self.retrieval = retrieval   
+        self.chat_wrapper = chat_wrapper
 
         self._messages = defaultdict(list)
         self._system_message = [{"content": system_message, "role": "system"}]
@@ -412,10 +414,9 @@ class ConversableAgent(Agent):
                 messages = self._messages[get_agent_name(sender)]
 
             # TODO: #1143 handle token limit exceeded error  
-            # print(f'''{self.get_name()} generating reply for {get_agent_name(sender)} from LLM({self.llm.default_model_name})''')
-            from . import qwen_chat
+            # print(f'''{self.get_name()} generating reply for {get_agent_name(sender)} from LLM({self.llm.default_model_name})''')            
             # response = self.llm.chat_oai(self._system_message + messages)            
-            response = qwen_chat(self.llm,self._system_message + messages)
+            response = self.chat_wrapper(self.llm,self._system_message + messages)
             return True, response[0].output    
 
     def get_human_input(self, prompt: str) -> str:
