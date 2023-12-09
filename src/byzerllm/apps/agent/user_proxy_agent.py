@@ -28,6 +28,7 @@ class UserProxyAgent(ConversableAgent):
         code_execution_config: Optional[Union[Dict, bool]] = None,
         default_auto_reply: Optional[Union[str, Dict, None]] = "",        
         system_message: Optional[str] = "",
+        **kwargs,
     ):
         """
         Args:
@@ -81,4 +82,5 @@ class UserProxyAgent(ConversableAgent):
             function_map,
             code_execution_config,            
             default_auto_reply,
+            **kwargs,
         )
