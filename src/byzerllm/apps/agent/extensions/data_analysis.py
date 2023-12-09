@@ -64,25 +64,28 @@ you should reply exactly `UPDATE CONTEXT`.
         self.register_reply([Agent, ClientActorHandle,str], DataAnalysisPipeline.run_pipeline) 
         self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply) 
 
-        
+        params = {}
+        if "chat_wrapper" in kwargs:
+            params["chat_wrapper"] = kwargs["chat_wrapper"]        
 
         self.python_interpreter = Agents.create_local_agent(PythonSandboxAgent,"python_interpreter",
                                                 llm,retrieval,
                                                 max_consecutive_auto_reply=100,
-                                                system_message="you are a code sandbox")
+                                                system_message="you are a code sandbox",**params
+                                                )
 
         self.preview_file_agent = Agents.create_local_agent(PreviewFileAgent,"privew_file_agent",llm,retrieval,
                                         max_consecutive_auto_reply=100,
-                                        code_agent = self.python_interpreter
+                                        code_agent = self.python_interpreter,**params
                                         )
         
         self.visualization_agent = Agents.create_local_agent(VisualizationAgent,"visualization_agent",llm,retrieval,
                                         max_consecutive_auto_reply=100,                                        
-                                        code_agent = self.python_interpreter
+                                        code_agent = self.python_interpreter,**params
                                         ) 
         self.assistant_agent = Agents.create_local_agent(AssistantAgent,"assistant_agent",llm,retrieval,
                                         max_consecutive_auto_reply=100,
-                                        code_agent = self.python_interpreter
+                                        code_agent = self.python_interpreter,**params
                                         )                 
         
         self.agents = {
