@@ -491,12 +491,12 @@ class ByzerLLM:
                 except Exception as inst:                
                     continue
                 
-                if model in self.mapping_max_input_length and input_size > self.get_max_input_length(model):
+                if self.get_max_input_length(model) and input_size > self.get_max_input_length(model):
                     raise Exception(f"input length {input_size} is larger than max_input_length {self.mapping_max_input_length[model]}")                
                 
                 max_output_length = self.get_max_output_length(model)
 
-                if  model in self.mapping_max_model_length:                    
+                if  self.get_max_model_length(model):                    
                     if input_size + max_output_length > self.get_max_model_length(model):
                         raise Exception(f"input_size ({input_size}) + max_output_length {max_output_length} is larget than model context length {self.mapping_max_model_length[model]}")                
                 
