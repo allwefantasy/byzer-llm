@@ -7,6 +7,7 @@ import time
 import ray
 from .. import get_agent_name,run_agent_func,ChatResponse,modify_message_metadata,modify_message_content
 from langchain import PromptTemplate
+from byzerllm.utils.client import default_chat_wrapper,LLMResponse
 from byzerllm.apps.agent import Agents
 from byzerllm.apps.agent.extensions.preview_file_agent import PreviewFileAgent
 from byzerllm.apps.agent.extensions.python_codesandbox_agent import PythonSandboxAgent
@@ -178,6 +179,7 @@ class DataAnalysisPipelineManager:
                                 llm:ByzerLLM,retrieval:ByzerRetrieval,
                                 file_path:str,
                                 file_ref:ClientObjectRef,
+                                chat_wrapper:Optional[Callable[[ByzerLLM,Optional[List[Dict]],Dict],List[LLMResponse]]] = default_chat_wrapper,
                                 num_gpus:int=0,num_cpus:int=0):
         self.lasted_updated[name] = time.time()
         self.check_pipeline_timeout()
@@ -193,7 +195,8 @@ class DataAnalysisPipelineManager:
                 llm = llm,
                 retrieval = retrieval,
                 file_path=file_path,
-                file_ref=file_ref
+                file_ref=file_ref,
+                chat_wrapper=chat_wrapper
                 )
         self.pipelines[name] = pipeline
         return pipeline
@@ -204,10 +207,12 @@ class DataAnalysis:
                  file_path:str,
                  llm:ByzerLLM,
                  retrieval:ByzerRetrieval,
-                 use_shared_disk:bool=False,                 
+                 use_shared_disk:bool=False, 
+                 chat_wrapper:Optional[Callable[[ByzerLLM,Optional[List[Dict]],Dict],List[LLMResponse]]] = default_chat_wrapper               
                  ):
         self.chat_name = chat_name
         self.owner = owner
+        self.chat_wrapper = chat_wrapper
         self.suffix = generate_str_md5(f"{self.chat_name}_{self.owner}")
         self.name = f"data_analysis_pp_{self.suffix}"   
         self.manager = self.get_pipeline_manager()  
@@ -232,7 +237,9 @@ class DataAnalysis:
                 llm =llm,
                 retrieval =retrieval,
                 file_path=self.file_path,
-                file_ref=self.file_ref)) 
+                file_ref=self.file_ref,
+                chat_wrapper = self.chat_wrapper
+                )) 
 
             # trigger file preview manually
             ray.get(self.data_analysis_pipeline.preview_file.remote()) 
@@ -247,7 +254,7 @@ class DataAnalysis:
         except Exception:
             return Agents.create_remote_agent(UserProxyAgent,f"user_{self.name}",self.llm,self.retrieval,
                                 human_input_mode="NEVER",
-                                max_consecutive_auto_reply=0)
+                                max_consecutive_auto_reply=0,chat_wrapper=self.chat_wrapper)
         
     def analyze(self,content:str):        
         ray.get(self.data_analysis_pipeline.update_max_consecutive_auto_reply.remote(1))
