@@ -10,6 +10,7 @@ import sys
 import io
 import traceback
 import json
+import os
 
 from ....utils.client import ByzerLLM,ByzerRetrieval,code_utils
 
@@ -24,7 +25,13 @@ class CodeSandbox:
             if isinstance(self.file_ref,ClientObjectRef):
                 content = ray.get(self.file_ref)
             else:
-                content = self.file_ref            
+                content = self.file_ref   
+
+            # check parent directory of self.file_path exists
+            parent_dir = os.path.dirname(self.file_path)
+            if not os.path.exists(parent_dir):
+                os.makedirs(parent_dir)     
+                     
             with open(self.file_path, "wb") as f:
                 f.write(content)
                 
