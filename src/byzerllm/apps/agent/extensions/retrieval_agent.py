@@ -228,9 +228,9 @@ Context is:
             update_context_case = "UPDATE CONTEXT" in v[-20:].upper() or "UPDATE CONTEXT" in v[:20].upper()                
 
         if update_context_case:
-            return True,"FAIL TO ANSWER TERMINATE"
+            return True,{"content":"FAIL TO ANSWER","metadata":{"TERMINATE":True}}
         else:
-            return True,v + " TERMINATE"
+            return True, {"content":v,"metadata":{"TERMINATE":True}}
                 
         
         

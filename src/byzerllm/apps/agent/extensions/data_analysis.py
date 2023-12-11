@@ -164,6 +164,7 @@ class DataAnalysisPipelineManager:
             del self.lasted_updated[name]        
 
     def check_pipeline_exists(self,name:str)->bool:
+        self.check_pipeline_timeout() 
         return name in self.pipelines
 
     def get_pipeline(self,name:str):                
