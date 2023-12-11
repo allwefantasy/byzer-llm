@@ -54,6 +54,8 @@ select * from csv_table as new_table;
 The difference between Byzer-SQL/Spark SQL in `select` statement is that you should use `as` in the end to define the table name.
 and you can use the table name in the following SQL again.
 
+Notice that when you write select statement, you should always add "as [TableName]" in the end of the SQL and add a semicolon finally.
+
 The Byzer-SQL support the following datasource:
 
 1. excel
@@ -108,6 +110,6 @@ The last but most important, you always try to collect the info from the user be
                         
         _,v = self.generate_llm_reply(raw_message,messages,sender)
         
-        return True, {"content":v,"metadata":{}}
+        return True, {"content":v,"metadata":{"TERMINATE":True}}
 
         

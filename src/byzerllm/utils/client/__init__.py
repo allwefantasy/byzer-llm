@@ -96,7 +96,7 @@ class ExecuteCodeResponse:
 class ByzerLLM:
    
     def __init__(self,url:Optional[str]=None,**kwargs):
-        self.url = url       
+        self.url = url               
         self.default_sys_conf = {"pythonMode":"ray",
                          "maxConcurrency":1,
                          "num_gpus":1,
