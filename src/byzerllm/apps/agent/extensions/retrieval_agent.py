@@ -2,9 +2,11 @@ from ..conversable_agent import ConversableAgent
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 from ....utils.client import ByzerLLM,ByzerRetrieval
 from ..agent import Agent
+import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import time
 from .. import get_agent_name,run_agent_func,ChatResponse
+from ....utils import generate_str_md5
 from byzerllm.utils.client import TableSettings,SearchQuery,LLMHistoryItem,LLMRequest
 import uuid
 import json
@@ -174,10 +176,21 @@ field(chunk_vector,array(float))
         
         if messages is None:
             messages = self._messages[get_agent_name(sender)]
+                
+        new_message = messages[-1]
+
+        if "file_path" in new_message["metadata"]:
+            file_path = new_message["metadata"]["file_path"]
+            content = open(file_path,"r").read()
+            self.save_text_content(owner=self.owner,title="",content=content,url=file_path) 
+
+        if "file_ref" in new_message["metadata"]:
+            file_ref = new_message["metadata"]["file_ref"]
+            file_path = new_message["metadata"].get("file_path","")
+            content = ray.get(file_ref)
+            self.save_text_content(owner=self.owner,title="",content=content,url=file_path) 
         
-        message = messages[-1]
-        
-        contents = self.search_content_chunks(owner=self.owner,q=message["content"],limit=100,return_json=False)
+        contents = self.search_content_chunks(owner=self.owner,q=new_message["content"],limit=100,return_json=False)
         # split the contents into n groups
         groups = []
         
@@ -199,7 +212,7 @@ Context is:
 ```json                                                                                            
 {input_context}
 ```
-''').format(input_question=message["content"],input_context=input_context)
+''').format(input_question=new_message["content"],input_context=input_context)
         
         new_message = {"content":prompt,"role":"user"}                    
         final,v = self.generate_llm_reply(None,[new_message],sender)
@@ -222,7 +235,7 @@ Context is:
 ```json                                                                                            
 {input_context}
 ```
-''').format(input_question=message["content"],input_context=input_context)
+''').format(input_question=new_message["content"],input_context=input_context)
             new_message = {"content":prompt,"role":"user"}
             final,v = self.generate_llm_reply(None,[new_message],sender)
             update_context_case = "UPDATE CONTEXT" in v[-20:].upper() or "UPDATE CONTEXT" in v[:20].upper()                
@@ -279,8 +292,9 @@ Context is:
 
         if not self.retrieval:
             raise Exception("retrieval is not setup")
+
                         
-        text_content = [{"_id":str(uuid.uuid4()),
+        text_content = [{"_id":generate_str_md5(content),
             "title":self.search_tokenize(title),
             "content":self.search_tokenize(content),
             "owner":owner,
@@ -295,13 +309,13 @@ Context is:
         content_chunks= self.split_text_into_chunks(content)
         
         
-        text_content_chunks = [{"_id":str(uuid.uuid4()),
+        text_content_chunks = [{"_id":f'''{text_content[0]["_id"]}_{i}''',
             "doc_id":text_content[0]["_id"],
             "owner":owner,
             "chunk":self.search_tokenize(item["content"]),
             "raw_chunk":item["content"],
             "chunk_vector":self.emb(item["content"])
-            } for item in content_chunks]
+            } for i,item in enumerate(content_chunks)]
         
         self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content_chunk",text_content_chunks)    
     
