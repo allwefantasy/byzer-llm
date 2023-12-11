@@ -45,16 +45,26 @@ as csv_table;
 
 The above SQL code will load the csv file from `/tmp/csv_file` with header and named the loaded table as `csv_table`.
 
-You can use the `csv_table` in the following SQL:
+You can use the `csv_table` in SQL.
+
+For example:
 
 ```sql
-select * from csv_table as new_table;
+select * from csv_table 
+as new_table;
 ```
 
-The difference between Byzer-SQL/Spark SQL in `select` statement is that you should use `as` in the end to define the table name.
-and you can use the table name in the following SQL again.
+The above SQL code will select all the data from `csv_table` and named the result table as `new_table`.
 
-Notice that when you write select statement, you should always add "as [TableName]" in the end of the SQL and add a semicolon finally.
+Notice that when you write select statement in SQL, you should always add "as [TableName];". Because 
+the Byzer-SQL requires give every select statement a table name. So you can use the table name in the next SQL statement.
+
+For example:
+
+```
+select * from new_table limit 10
+as new_table_2;
+```
 
 The Byzer-SQL support the following datasource:
 
