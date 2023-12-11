@@ -312,9 +312,9 @@ Context is:
         text_content_chunks = [{"_id":f'''{text_content[0]["_id"]}_{i}''',
             "doc_id":text_content[0]["_id"],
             "owner":owner,
-            "chunk":self.search_tokenize(item["content"]),
-            "raw_chunk":item["content"],
-            "chunk_vector":self.emb(item["content"])
+            "chunk":self.search_tokenize(item),
+            "raw_chunk":item,
+            "chunk_vector":self.emb(item)
             } for i,item in enumerate(content_chunks)]
         
         self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content_chunk",text_content_chunks)    
