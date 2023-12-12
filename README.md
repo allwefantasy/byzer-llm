@@ -76,6 +76,10 @@ Byzer-LLM also support `deploy` SaaS model with the same way. This feature provi
 
 
 ```python
+import ray
+from byzerllm.utils.client import ByzerLLM,LLMRequest,InferBackend
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)
+
 llm = ByzerLLM()
 
 llm.setup_gpus_per_worker(0).setup_num_workers(10)
@@ -143,6 +147,9 @@ import ray
 from byzerllm.utils.retrieval import ByzerRetrieval
 from byzerllm.utils.client import ByzerLLM,LLMRequest,InferBackend
 
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)
+llm = ByzerLLM()
+
 llm.setup_gpus_per_worker(2)
 llm.setup_num_workers(1)
 llm.setup_infer_backend(InferBackend.VLLM)
@@ -170,6 +177,9 @@ The Byzer-llm also support DeepSpeed as the inference backend. The following cod
 import ray
 from byzerllm.utils.retrieval import ByzerRetrieval
 from byzerllm.utils.client import ByzerLLM,LLMRequest,InferBackend
+
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)
+llm = ByzerLLM()
 
 llm.setup_gpus_per_worker(4)
 llm.setup_num_workers(1)
