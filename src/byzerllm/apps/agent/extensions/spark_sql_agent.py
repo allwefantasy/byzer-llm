@@ -61,7 +61,7 @@ The last but most important, let me know if you have any areas of confusion. If 
 
         self._reply_func_list = []
         # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
-        self.register_reply([Agent, ClientActorHandle,str], ByzerSQLAgent.generate_sql_reply) 
+        self.register_reply([Agent, ClientActorHandle,str], SparkSQLAgent.generate_sql_reply) 
         self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply) 
 
     def generate_sql_reply(
