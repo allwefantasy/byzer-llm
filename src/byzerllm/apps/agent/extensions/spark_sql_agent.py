@@ -51,7 +51,9 @@ FROM department_count d;
 
 在这个例子中，WITH 子句创建了一个名为 department_count 的临时视图，该视图包含每个部门的 department_id 和相应的 employee_count（员工数量）。随后的 SELECT 语句从这个临时视图中检索数据。
 
+请注意： 生成的 Spark SQL 要避免了手动输入，而是让数据库自动为我们处理，比如 in 查询里，要用子查询，而不是手动输入。
 The last but most important, let me know if you have any areas of confusion. If you do, please don't generate code, ask me, and provide possible solutions.
+
 
 
     '''
