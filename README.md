@@ -44,6 +44,7 @@ The unique features of Byzer-LLM are:
 
 ```bash
 pip install -r requirements.txt
+pip install -U vllm
 pip install -U byzerllm
 ray start --head
 ```
