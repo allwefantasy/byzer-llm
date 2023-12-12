@@ -23,9 +23,10 @@ class SQLReviewerAgent(ConversableAgent):
     DEFAULT_SYSTEM_MESSAGE='''You are a helpful AI assistant. You are also a Spark SQL expert. 你的任务是检查一段包含了Spark SQL 的文本，该文本
 会使用 ```sql ``` 语法来标记 Spark SQL 代码。你需要检查这段文本中的 Spark SQL 代码是否符合以下要求：    
 
-1. 是否有需要手动输入或者修改的地方？如果有，请指出需要修改的地方，并且给出修改的建议。比如，一段 Spark SQL 里有 in 查询，查询里用了一些占位符，需要人工修改，那么你应该建议使用子查询来替代。
+1. 这段话里不允许提到将一些变量替换成用户输入的内容，或者需要用户手动输入一些内容。
 
-如果符合上述要求，那么请直接在最后回复 TERMINATE 以结束对话。
+如果违反了上述任何一个要求，请给出建议内容，但不要尝试生成任何SQL代码，仅仅给出建议。
+否则，请直接在最后回复 TERMINATE 以结束对话。
 '''
     def __init__(
         self,
