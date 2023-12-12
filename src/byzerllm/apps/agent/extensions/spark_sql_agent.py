@@ -19,7 +19,7 @@ except ImportError:
     def colored(x, *args, **kwargs):
         return x
     
-class ByzerSQLAgent(ConversableAgent): 
+class SparkSQLAgent(ConversableAgent): 
     DEFAULT_SYSTEM_MESSAGE='''You are a helpful AI assistant. You are also a Spark SQL expert. 
 
 In the following cases, suggest Byzer-SQL code (in a sql coding block) for the user to execute.
