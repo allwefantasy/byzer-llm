@@ -550,7 +550,7 @@ def qwen_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,
                     },**llm_config,**{
                         "generation.early_stopping":False,
                         "generation.repetition_penalty":1.1,
-                        "generation.stop_token_ids":[151643]}})       
+                        "generation.stop_token_ids":[151643,151645]}})       
     v = t[0].output
     if "<|im_end|>" in v:
         v = v.split("<|im_end|>")[0]
