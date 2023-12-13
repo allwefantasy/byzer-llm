@@ -34,7 +34,7 @@ class SQLReviewerAgent(ConversableAgent):
 如果你觉得看起来没有什么问题了，那么请直接在最后回复 TERMINATE 以结束对话。
 如果用户给的内容不包含任何SQL代码，那么请直接在最后回复 TERMINATE 以结束对话。
 如果用户给的内容是诸如"很高兴能帮到您！如果您还有其他问题或需要进一步的帮助，请随时告诉我。祝您工作顺利！"，请直接回复 TERMINATE 以结束对话。
-注意，不要翻译 TERMINATE 。
+注意，不要翻译 TERMINATE 中文！
 '''
     def __init__(
         self,
