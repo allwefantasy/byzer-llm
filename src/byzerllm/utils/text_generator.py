@@ -69,12 +69,9 @@ class ByzerLLMGenerator:
         ins, his, 
         max_length=int(query.get("max_length",1024)), 
         top_p=float(query.get("top_p",0.7)),
-        temperature=float(query.get("temperature",0.9)),**new_params)
+        temperature=float(query.get("temperature",0.9)),**new_params)                
         
-        last = ""
-        for t,_ in response:                                               
-            last=t        
-        return last  
+        return response[-1]  
 
     async def async_predict(self,query:Dict[str,Any]):
             ins = query["instruction"]
@@ -121,6 +118,7 @@ class ByzerLLMGenerator:
                     new_params[k[len("gen."):]] = v
                 if k.startswith("generation."):
                     new_params[k[len("generation."):]] = v     
+            
             if hasattr(self.model, "async_stream_chat"):
                 response = await self.model.async_stream_chat(self.tokenizer, 
                 ins, his, 
@@ -132,12 +130,9 @@ class ByzerLLMGenerator:
                 ins, his, 
                 max_length=int(query.get("max_length",1024)), 
                 top_p=float(query.get("top_p",0.7)),
-                temperature=float(query.get("temperature",0.9)),**new_params)    
+                temperature=float(query.get("temperature",0.9)),**new_params)                
             
-            last = ""
-            for t,_ in response:                                               
-                last=t        
-            return last        
+            return response[-1]
 
 
 async def simple_predict_func(model,v):
@@ -148,8 +143,14 @@ async def simple_predict_func(model,v):
     results=[]
     for item in data:        
         v = await llm.async_predict(item)
+        
+        metadata = {}
+        if isinstance(v,tuple):
+            metadata = v[1] 
+
         results.append({
-            "predict":v,
+            "predict":v[0],
+            "metadata":metadata,
             "input":item})
 
     return {"value":[json.dumps(results,ensure_ascii=False)]}
@@ -165,8 +166,14 @@ def chatglm_predict_func(model,v):
         if "system" in item:
             item["instruction"] = f'{item["system"]}\n{item["instruction"]}'
         v = llm.predict(item)
+        
+        metadata = {}
+        if isinstance(v,tuple):
+            metadata = v[1]            
+
         results.append({
-            "predict":v,
+            "predict":v[0],
+            "metadata":metadata,
             "input":item})
         
     return {"value":[json.dumps(results,ensure_ascii=False)]}
@@ -180,7 +187,7 @@ def qa_predict_func(model,v):
             item["instruction"] = f'{item["system"]}\n{item["instruction"]}'
         v = model.predict(item)
         results.append({
-            "predict":v,
+            "predict":v[0],
             "input":item})
         
     return {"value":[json.dumps(results,ensure_ascii=False)]}

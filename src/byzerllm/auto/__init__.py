@@ -108,9 +108,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     text_outputs = [output for output in final_output.outputs]
     generated_text = text_outputs[0].text
     current_time_milliseconds2 = int(time.time() * 1000)
-
-    
-    
+        
     input_tokens_count = len(final_output.prompt_token_ids)
     generated_tokens_count = len(text_outputs[0].token_ids) 
     time_cost = current_time_milliseconds2-current_time_milliseconds
@@ -118,7 +116,13 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     INFER_TOKEN_METRICS.inc(f"infer_{INFERENCE_NAME}_input_tokens_num",input_tokens_count,tags={"request_id":final_output.request_id})
     INFER_TOKEN_METRICS.inc(f"infer_{INFERENCE_NAME}_output_tokens_num", generated_tokens_count,tags={"request_id":final_output.request_id})
     INFER_TOKEN_METRICS.push()
-    return [(generated_text,"")]   
+    return [(generated_text,{"metadata":{
+        "request_id":final_output.request_id,
+        "input_tokens_count":input_tokens_count,
+        "generated_tokens_count":generated_tokens_count,
+        "time_cost":time_cost,
+        "first_token_time":first_token_time,
+    }})]   
 
 def block_vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
