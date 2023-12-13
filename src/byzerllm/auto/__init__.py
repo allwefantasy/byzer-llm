@@ -3,6 +3,7 @@ import ray
 import torch
 import os
 import ray
+import time
 from typing import Any,Any,Dict, List,Tuple,Generator,Optional,Union
 import types
 
@@ -141,8 +142,7 @@ def block_vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
                                      ignore_eos=ignore_eos,
                                      logprobs=logprobs,
                                      top_p=top_p, 
-                                     max_tokens=max_tokens)
-    
+                                     max_tokens=max_tokens)    
     outputs = model.generate([ins], sampling_params)    
 
     output = outputs[0].outputs[0]

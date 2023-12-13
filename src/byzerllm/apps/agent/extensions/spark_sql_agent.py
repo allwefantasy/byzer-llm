@@ -110,8 +110,7 @@ The last but most important, let me know if you have any areas of confusion. If 
         has_sql_code = False
 
         for code in codes:                  
-            if code[0]!="unknown":
-                print(colored("code[1]","red"),code[1])
+            if code[0]!="unknown":                
                 has_sql_code = True           
 
         if has_sql_code:                
