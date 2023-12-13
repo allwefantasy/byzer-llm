@@ -55,14 +55,16 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     from vllm import  SamplingParams
     from vllm.utils import random_uuid
 
-    stream = False 
+    stream = kwargs.get("stream",False)
+    first_request = False
+
     if "request_id" in kwargs:
-        request_id = kwargs["request_id"]
-        stream = True
+        request_id = kwargs["request_id"]        
     else:
         request_id = random_uuid()
+        first_request = True
 
-    if stream:
+    if stream and not first_request:
         final_output = model.get_item(request_id) 
         if final_output is None:
             return [("NONE",{"metadata":{"request_id":request_id}})]
