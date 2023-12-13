@@ -10,6 +10,9 @@ import types
 from pyjava.api.mlsql import DataServer
 from byzerllm.utils.metrics import Metric
 from .. import BlockRow
+from byzerllm.utils import ThreadSafeDict
+import threading
+import asyncio
 
 
 INFERENCE_NAME = "auto"
@@ -52,10 +55,18 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     from vllm import  SamplingParams
     from vllm.utils import random_uuid
 
+    stream = False 
     if "request_id" in kwargs:
         request_id = kwargs["request_id"]
+        stream = True
     else:
         request_id = random_uuid()
+
+    if stream:
+        final_output = model.get_item(request_id) 
+        text_outputs = [output for output in final_output.outputs]
+        generated_text = text_outputs[0].text        
+        return [(generated_text,{"metadata":{"request_id":final_output.request_id}})]    
     
     n: int = 1
     best_of: Optional[int] =  kwargs["best_of"] if "best_of" in kwargs else None
@@ -101,6 +112,26 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     
     current_time_milliseconds = int(time.time() * 1000)
     results_generator = model.generate(ins, sampling_params,request_id) 
+    
+    async def writer():
+        async for request_output in results_generator:  
+            model.add_item(request_output.request_id, request_output)
+        # mark the request is done
+        model.mark_done(request_output.request_id)    
+    
+    def run_async_in_thread():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(writer())
+        loop.close()
+
+    if stream:
+        t1 = threading.Thread(target=run_async_in_thread)    
+        t1.daemon = True
+        t1.start()
+        return [("",{"metadata":{"request_id":request_id}})]
+        
+
     final_output = None
     first_token_time = None
     async for request_output in results_generator:  
@@ -257,6 +288,7 @@ For example:
         llm = AsyncLLMEngine.from_engine_args(engine_args)                       
         # llm.stream_chat = types.MethodType(vllm_chat, llm) 
         llm.async_stream_chat = types.MethodType(async_vllm_chat, llm) 
+        llm.byzer_request_cache = ThreadSafeDict()
         return (llm,llm.engine.tokenizer)  
 
     if  infer_mode == "ray/deepspeed":

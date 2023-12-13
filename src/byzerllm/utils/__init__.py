@@ -6,6 +6,7 @@ import json
 from transformers import PreTrainedTokenizer,StoppingCriteria
 import torch
 import hashlib
+import threading
 
 T = TypeVar("T")
 
@@ -155,6 +156,29 @@ def generate_file_md5(file_path: str) -> str:
 def generate_str_md5(s: str) -> str:
     md5_hash = hashlib.md5()
     md5_hash.update(s.encode("utf-8"))
-    return md5_hash.hexdigest()       
+    return md5_hash.hexdigest()  
+
+class ThreadSafeDict:
+    def __init__(self):
+        self.cache = {}
+        self.cache_status = {} 
+        self.lock = threading.Lock()
+
+    def add_item(self, request_id, item):
+        with self.lock:            
+            self.cache[request_id]=item
+            self.cache_status[request_id]=False
+    
+    def mark_done(self, request_id):
+        with self.lock:            
+            self.cache_status[request_id]=True
+
+    def get_item(self, request_id):
+        with self.lock:
+            v = self.cache.get(request_id, None)     
+            if self.cache_status.get(request_id, False):
+                del self.cache[request_id]
+                del self.cache_status[request_id]
+            return v
 
 
