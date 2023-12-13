@@ -40,6 +40,7 @@ class LLMHistoryItem:
 class LLMResponse:
     output: str
     input: str
+    metadata: Dict[str,Any] = dataclasses.field(default_factory=dict)
 
 @dataclasses.dataclass
 class LLMRequestExtra:
@@ -318,7 +319,7 @@ class ByzerLLM:
 
         v = [{"instruction":s,"tokenizer":True, **llm_config }]        
         res = self._query(model,v) 
-        return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
+        return [LLMResponse(output=item["predict"],metadata=item["metadata"],input=item["input"]) for item in res]
         
     def emb(self, model, request:LLMRequest ,extract_params:Dict[str,Any]={})->List[List[float]]:
         
@@ -351,7 +352,7 @@ class ByzerLLM:
             ** extract_params} for x in request.instruction]    
         res = self._query(model,v) 
       
-        return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
+        return [LLMResponse(output=item["predict"],metadata=item["metadata"],input=item["input"]) for item in res]
             
     def _generate_ins(self,request:LLMRequest):
          if not request.extra_params.user_role:
@@ -396,7 +397,7 @@ class ByzerLLM:
 
         v = [{"instruction":final_ins,**llm_config }]         
         res = self._query(self.default_model_name,v) 
-        return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
+        return [LLMResponse(output=item["predict"],metadata=item["metadata"],input=item["input"]) for item in res]
         
         
 
@@ -450,7 +451,7 @@ class ByzerLLM:
                 ** params
                 })
         res = self._query(model,v) 
-        return [LLMResponse(output=item["predict"],input=item["input"]) for item in res]
+        return [LLMResponse(output=item["predict"],metadata=item["metadata"],input=item["input"]) for item in res]
     
     def apply_sql_func(self,sql:str,data:List[Dict[str,Any]],owner:str="admin",url:str="http://127.0.0.1:9003/model/predict"):
         if self.byzer_engine_url and url == "http://127.0.0.1:9003/model/predict":
