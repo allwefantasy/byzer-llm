@@ -107,6 +107,9 @@ class ByzerLLM:
         self.sys_conf = self.default_sys_conf.copy()
         self.sql_model = "context" in globals()
 
+        if verbose := kwargs.get("verbose",False):
+            self.verbose = verbose
+
         self.force_skip_context_length_check = False
         if "force_skip_context_length_check" in kwargs:
             self.force_skip_context_length_check = kwargs["force_skip_context_length_check"]
@@ -513,6 +516,8 @@ class ByzerLLM:
 
         udf_master = ray.get_actor(model)        
         new_input_value = [json.dumps(x,ensure_ascii=False) for x in input_value]
+        if self.verbose:
+            print(f"Send to model[{model}]:{new_input_value}")
       
         try:            
             [index, worker] = ray.get(udf_master.get.remote())                        
