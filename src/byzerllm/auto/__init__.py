@@ -64,6 +64,9 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
 
     if stream:
         final_output = model.get_item(request_id) 
+        if final_output is None:
+            return [("NONE",{"metadata":{"request_id":request_id}})]
+        
         text_outputs = [output for output in final_output.outputs]
         generated_text = text_outputs[0].text        
         return [(generated_text,{"metadata":{"request_id":final_output.request_id}})]    
