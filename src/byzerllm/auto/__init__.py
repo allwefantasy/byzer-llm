@@ -51,7 +51,11 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         temperature:float=0.1,**kwargs):
     from vllm import  SamplingParams
     from vllm.utils import random_uuid
-    request_id = random_uuid()
+
+    if "request_id" in kwargs:
+        request_id = kwargs["request_id"]
+    else:
+        request_id = random_uuid()
     
     n: int = 1
     best_of: Optional[int] =  kwargs["best_of"] if "best_of" in kwargs else None
@@ -113,9 +117,11 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     generated_tokens_count = len(text_outputs[0].token_ids) 
     time_cost = current_time_milliseconds2-current_time_milliseconds
     print(f"cost: {time_cost}ms first_token:{first_token_time-current_time_milliseconds}ms speed: {float(generated_tokens_count)/time_cost*1000}tokens/s total_tokens_count:{input_tokens_count + generated_tokens_count} request_id:{final_output.request_id}  input_tokens_count:{input_tokens_count} generated_tokens_count:{generated_tokens_count}",flush=True)    
+    
     INFER_TOKEN_METRICS.inc(f"infer_{INFERENCE_NAME}_input_tokens_num",input_tokens_count,tags={"request_id":final_output.request_id})
     INFER_TOKEN_METRICS.inc(f"infer_{INFERENCE_NAME}_output_tokens_num", generated_tokens_count,tags={"request_id":final_output.request_id})
     INFER_TOKEN_METRICS.push()
+    
     return [(generated_text,{"metadata":{
         "request_id":final_output.request_id,
         "input_tokens_count":input_tokens_count,
