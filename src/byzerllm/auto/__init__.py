@@ -128,6 +128,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         "generated_tokens_count":generated_tokens_count,
         "time_cost":time_cost,
         "first_token_time":first_token_time,
+        "speed":float(generated_tokens_count)/time_cost*1000
     }})]   
 
 def block_vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
