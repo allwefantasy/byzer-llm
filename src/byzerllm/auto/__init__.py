@@ -98,7 +98,10 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     current_time_milliseconds = int(time.time() * 1000)
     results_generator = model.generate(ins, sampling_params,request_id) 
     final_output = None
-    async for request_output in results_generator:        
+    first_token_time = None
+    async for request_output in results_generator:  
+        if first_token_time is None and request_output.outputs and len(request_output.outputs[0].token_ids)>0:
+            first_token_time = int(time.time() * 1000)      
         final_output = request_output
     assert final_output is not None    
     
@@ -111,7 +114,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     input_tokens_count = len(final_output.prompt_token_ids)
     generated_tokens_count = len(text_outputs[0].token_ids) 
     time_cost = current_time_milliseconds2-current_time_milliseconds
-    print(f"cost: {time_cost}ms speed: {float(generated_tokens_count)/time_cost*1000}tokens/s total_tokens_count:{input_tokens_count + generated_tokens_count} request_id:{final_output.request_id}  input_tokens_count:{input_tokens_count} generated_tokens_count:{generated_tokens_count}",flush=True)    
+    print(f"cost: {time_cost}ms first_token:{first_token_time-current_time_milliseconds}ms speed: {float(generated_tokens_count)/time_cost*1000}tokens/s total_tokens_count:{input_tokens_count + generated_tokens_count} request_id:{final_output.request_id}  input_tokens_count:{input_tokens_count} generated_tokens_count:{generated_tokens_count}",flush=True)    
     INFER_TOKEN_METRICS.inc(f"infer_{INFERENCE_NAME}_input_tokens_num",input_tokens_count,tags={"request_id":final_output.request_id})
     INFER_TOKEN_METRICS.inc(f"infer_{INFERENCE_NAME}_output_tokens_num", generated_tokens_count,tags={"request_id":final_output.request_id})
     INFER_TOKEN_METRICS.push()
