@@ -121,7 +121,7 @@ The last but most important, let me know if you have any areas of confusion. If 
             
             reply = self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-2]["content"]
             # reply = run_agent_func(self.sql_reviewer_agent,"get_chat_messages")[get_agent_name(self.sql_reviewer_agent)][-2]        
-            return True, {"content":reply["content"],"metadata":{"TERMINATE":True}}             
+            return True, {"content":reply,"metadata":{"TERMINATE":True}}             
         
         return True,  {"content":v,"metadata":{"TERMINATE":True}}
         
