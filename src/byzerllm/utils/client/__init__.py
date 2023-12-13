@@ -106,10 +106,9 @@ class ByzerLLM:
                          }
         self.sys_conf = self.default_sys_conf.copy()
         self.sql_model = "context" in globals()
-
-        if verbose := kwargs.get("verbose",False):
-            self.verbose = verbose
-
+        
+        self.verbose = kwargs.get("verbose",False)
+        
         self.force_skip_context_length_check = False
         if "force_skip_context_length_check" in kwargs:
             self.force_skip_context_length_check = kwargs["force_skip_context_length_check"]
