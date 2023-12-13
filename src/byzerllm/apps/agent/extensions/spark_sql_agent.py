@@ -109,9 +109,10 @@ The last but most important, let me know if you have any areas of confusion. If 
         codes = code_utils.extract_code(v)
         has_sql_code = False
 
-        for code in codes:
-            #if code[0]=="sql":
-            has_sql_code = True            
+        for code in codes:                  
+            if code[0]!="unknown":
+                print(colored("code[1]","red"),code[1])
+                has_sql_code = True           
 
         if has_sql_code:                
             self.send(messages[-1],self.sql_reviewer_agent,request_reply=False)
