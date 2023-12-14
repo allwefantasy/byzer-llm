@@ -399,7 +399,16 @@ class ByzerLLM:
         res = self._query(self.default_model_name,v) 
         return [LLMResponse(output=item["predict"],metadata=item["metadata"],input=item["input"]) for item in res]
         
-        
+    def stream_chat_oai(self,conversations,role_mapping=None,**llm_config): 
+        v = self.chat_oai(conversations,role_mapping,**{**llm_config,**{"generation.stream":True}})       
+        t = v[0].metadata["request_id"]
+        while True:
+            v = self.chat_oai([],role_mapping,**{**llm_config,**{"generation.request_id":t,"generation.stream":True}})
+            if "status" in v[0].metadata  and v[0].metadata["status"] == "running":
+                yield v[0]
+            else:
+                break        
+    
 
     def raw_chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
         if isinstance(request,str): 
