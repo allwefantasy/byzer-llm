@@ -5,7 +5,8 @@ from .agent import Agent
 from .conversable_agent import ConversableAgent
 import logging
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
-from ...utils.client import ByzerLLM,ByzerRetrieval,code_utils
+from ...utils.client import ByzerLLM,code_utils
+from byzerllm.utils.retrieval import ByzerRetrieval
 import json
 from . import get_agent_name, run_agent_func,ChatResponse
 

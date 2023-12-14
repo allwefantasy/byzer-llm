@@ -1,6 +1,7 @@
 from ..conversable_agent import ConversableAgent
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
-from ....utils.client import ByzerLLM,ByzerRetrieval,code_utils
+from ....utils.client import ByzerLLM,code_utils
+from byzerllm.utils.retrieval import ByzerRetrieval
 from ..agent import Agent
 import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
