@@ -145,19 +145,19 @@ async def simple_predict_func(model,v):
         v = await llm.async_predict(item)
         
         if item.get("tokenizer",False) or item.get("embedding",False):
-            return results.append({
+            results.append({
             "predict":v,
             "metadata":{},
             "input":item})
-        
-        metadata = {}
-        if isinstance(v[1],dict) and "metadata" in v[1]:
-            metadata = v[1]["metadata"] 
+        else:            
+            metadata = {}
+            if isinstance(v[1],dict) and "metadata" in v[1]:
+                metadata = v[1]["metadata"] 
 
-        results.append({
-            "predict":v[0],
-            "metadata":metadata,
-            "input":item})
+            results.append({
+                "predict":v[0],
+                "metadata":metadata,
+                "input":item})
 
     return {"value":[json.dumps(results,ensure_ascii=False)]}
 
@@ -174,19 +174,19 @@ def chatglm_predict_func(model,v):
         v = llm.predict(item)
 
         if item.get("tokenizer",False) or item.get("embedding",False):
-            return results.append({
+            results.append({
             "predict":v,
             "metadata":{},
             "input":item})
-        
-        metadata = {}
-        if isinstance(v[1],dict) and "metadata" in v[1]:
-            metadata = v[1]["metadata"]            
+        else:            
+            metadata = {}
+            if isinstance(v[1],dict) and "metadata" in v[1]:
+                metadata = v[1]["metadata"]            
 
-        results.append({
-            "predict":v[0],
-            "metadata":metadata,
-            "input":item})
+            results.append({
+                "predict":v[0],
+                "metadata":metadata,
+                "input":item})
         
     return {"value":[json.dumps(results,ensure_ascii=False)]}
 
