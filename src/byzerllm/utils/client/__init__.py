@@ -69,17 +69,31 @@ class ExecuteCodeResponse:
       prompt: str
       variables: Dict[str,Any]=dataclasses.field(default_factory=dict)
 
+class Template:
+    def __init__(self,role_mapping:Dict[str,str],generation_config:Dict[str,Any],clean_func:Callable[[str],str]=lambda s: s ) -> None:
+        self.role_mapping = role_mapping
+        self.generation_config = generation_config
+        self.clean_func = clean_func
+
+
 class Templates:
     @staticmethod
     def qwen():
-        return ({
+        def clean_func(v):            
+            if "<|im_end|>" in v:
+                v = v.split("<|im_end|>")[0]
+            if "<|endoftext|>" in v:
+                v = v.split("<|endoftext|>")[0]            
+            return v    
+        return Template({
                     "user_role":"<|im_start|>user\n",
                     "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
                     "system_msg":"<|im_start|>system\nYou are a helpful assistant. Think it over and answer the user question correctly.<|im_end|>"
                     },{
                         "generation.early_stopping":False,
                         "generation.repetition_penalty":1.1,
-                        "generation.stop_token_ids":[151643,151645]})      
+                        "generation.stop_token_ids":[151643,151645]},clean_func) 
+         
 
 class ByzerLLM:
    
@@ -106,6 +120,7 @@ class ByzerLLM:
         self.mapping_max_model_length = {}        
         self.mapping_role_mapping = {}
         self.mapping_extra_generation_params = {}
+        self.mapping_clean_func = {}
 
         self.byzer_engine_url = None
         if "byzer_engine_url" in kwargs:
@@ -196,9 +211,10 @@ class ByzerLLM:
         self.mapping_extra_generation_params[model] = extra_generation_params
         return self
     
-    def setup_template(self,model:str,template:Tuple[Dict[str,str],Dict[str,Any]])->'ByzerLLM':
-        self.mapping_role_mapping[model] = template[0]
-        self.mapping_extra_generation_params[model] = template[1]
+    def setup_template(self,model:str,template:Template)->'ByzerLLM':
+        self.mapping_role_mapping[model] = template.role_mapping
+        self.mapping_extra_generation_params[model] = template.generation_config
+        self.mapping_clean_func[model] = template.clean_func
         return self
     
     def raw_sft(self,train_params:Dict[str,Any]):                   
@@ -400,7 +416,8 @@ class ByzerLLM:
         default_config = self.mapping_extra_generation_params.get(self.default_model_name,{})
         v = [{"instruction":final_ins,**default_config,**llm_config }]         
         res = self._query(self.default_model_name,v) 
-        return [LLMResponse(output=item["predict"],metadata=item["metadata"],input=item["input"]) for item in res]
+        clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)
+        return [LLMResponse(output=clean_func(item["predict"]),metadata=item["metadata"],input=item["input"]) for item in res]
         
     def stream_chat_oai(self,conversations,role_mapping=None,**llm_config): 
         v = self.chat_oai(conversations,role_mapping,**{**llm_config,**{"generation.stream":True}})       
@@ -417,8 +434,9 @@ class ByzerLLM:
                 break
             
             text_outputs = [output for output in final_output.outputs]
+            clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)
             generated_text = text_outputs[0].text                                
-            yield generated_text
+            yield clean_func(generated_text)
 
     async def async_stream_chat_oai(self,conversations,role_mapping=None,**llm_config): 
         v = self.chat_oai(conversations,role_mapping,**{**llm_config,**{"generation.stream":True}})       
@@ -435,8 +453,9 @@ class ByzerLLM:
                 break
             
             text_outputs = [output for output in final_output.outputs]
+            clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)
             generated_text = text_outputs[0].text                                
-            yield generated_text        
+            yield clean_func(generated_text)        
     
 
     def raw_chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
@@ -490,7 +509,8 @@ class ByzerLLM:
                 **extract_params
                 })
         res = self._query(model,v) 
-        return [LLMResponse(output=item["predict"],metadata=item["metadata"],input=item["input"]) for item in res]
+        clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)
+        return [LLMResponse(output=clean_func(item["predict"]),metadata=item["metadata"],input=item["input"]) for item in res]
     
     def apply_sql_func(self,sql:str,data:List[Dict[str,Any]],owner:str="admin",url:str="http://127.0.0.1:9003/model/predict"):
         if self.byzer_engine_url and url == "http://127.0.0.1:9003/model/predict":
