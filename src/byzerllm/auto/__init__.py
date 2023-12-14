@@ -56,27 +56,30 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     from vllm.utils import random_uuid
 
     stream = kwargs.get("stream",False)
-    first_request = False
+    request_id = random_uuid()
+    
+    # in future, we should add the cancel logic here
+    # first_request = False
 
-    if "request_id" in kwargs:
-        request_id = kwargs["request_id"]        
-    else:
-        request_id = random_uuid()
-        first_request = True
+    # if "request_id" in kwargs:
+    #     request_id = kwargs["request_id"]        
+    # else:
+    #     request_id = random_uuid()
+    #     first_request = True
 
-    if stream and not first_request:
-        server = ray.get_actor("VLLM_STREAM_SERVER")
-        final_output = ray.get(server.get_item.remote(request_id))
+    # if stream and not first_request:
+    #     server = ray.get_actor("VLLM_STREAM_SERVER")
+    #     final_output = ray.get(server.get_item.remote(request_id))
         
-        if isinstance(final_output,str):
-            return [("",{"metadata":{"request_id":request_id,"status":"running"}})]
+    #     if isinstance(final_output,str):
+    #         return [("",{"metadata":{"request_id":request_id,"status":"running"}})]
         
-        if final_output is None:
-            return [("",{"metadata":{"request_id":request_id,"status":"finish"}})]
+    #     if final_output is None:
+    #         return [("",{"metadata":{"request_id":request_id,"status":"finish"}})]
         
-        text_outputs = [output for output in final_output.outputs]
-        generated_text = text_outputs[0].text        
-        return [(generated_text,{"metadata":{"request_id":final_output.request_id}})]    
+    #     text_outputs = [output for output in final_output.outputs]
+    #     generated_text = text_outputs[0].text        
+    #     return [(generated_text,{"metadata":{"request_id":final_output.request_id}})]    
     
     n: int = 1
     best_of: Optional[int] =  kwargs["best_of"] if "best_of" in kwargs else None
