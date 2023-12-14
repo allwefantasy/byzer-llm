@@ -132,16 +132,16 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         server = ray.get_actor("VLLM_STREAM_SERVER")
         async def writer():
             async for request_output in results_generator:              
-                await server.add_item.remote(request_output.request_id, request_output)
+                ray.get(server.add_item.remote(request_output.request_id, request_output))
             # mark the request is done
-            await server.mark_done.remote(request_output.request_id)
+            ray.get(server.mark_done.remote(request_output.request_id))
     
         def run_async_in_thread():            
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             loop.run_until_complete(writer())            
 
-        await server.add_item.remote(request_id, "RUNNING")
+        ray.get(server.add_item.remote(request_id, "RUNNING"))
         t1 = threading.Thread(target=run_async_in_thread)    
         t1.daemon = True
         t1.start()

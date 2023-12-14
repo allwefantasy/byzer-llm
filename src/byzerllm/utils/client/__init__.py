@@ -20,7 +20,6 @@ import logging
 import time
 import math
 from byzerllm.utils import generate_str_md5
-import asyncio
 
 
 logger = logging.getLogger(__name__)
@@ -403,12 +402,9 @@ class ByzerLLM:
     def stream_chat_oai(self,conversations,role_mapping=None,**llm_config): 
         v = self.chat_oai(conversations,role_mapping,**{**llm_config,**{"generation.stream":True}})       
         request_id = v[0].metadata["request_id"]
-        server = ray.get_actor("VLLM_STREAM_SERVER")
-        async def get_output():
-            return server.get_item.remote(request_id)
-
+        server = ray.get_actor("VLLM_STREAM_SERVER")        
         while True:                            
-            final_output = asyncio.run(get_output())
+            final_output = ray.get(server.get_item.remote(request_id))            
             if isinstance(final_output,str):
                 time.sleep(0.01)
                 continue
