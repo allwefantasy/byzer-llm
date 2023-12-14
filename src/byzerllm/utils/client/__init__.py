@@ -567,6 +567,46 @@ class ByzerLLM:
 def default_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
     return llm.chat_oai(conversations=conversations,**llm_config)
 
+async def async_stream_qwen_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
+    for conv in conversations:
+        if conv["role"] == "system":
+            if "<|im_start|>" not in conv["content"]:
+                conv["content"] = "<|im_start|>system\n" + conv["content"] + "<|im_end|>"
+            
+    t = llm.async_stream_chat_oai(conversations=conversations,role_mapping={
+                    "user_role":"<|im_start|>user\n",
+                    "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
+                    "system_msg":"<|im_start|>system\nYou are a helpful assistant. Think it over and answer the user question correctly.<|im_end|>"
+                    },  **{**{
+                        "max_length":1024*16,
+                        "top_p":0.95,
+                        "temperature":0.01,
+                    },**llm_config,**{
+                        "generation.early_stopping":False,
+                        "generation.repetition_penalty":1.1,
+                        "generation.stop_token_ids":[151643,151645]}})       
+    return t
+
+def stream_qwen_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
+    for conv in conversations:
+        if conv["role"] == "system":
+            if "<|im_start|>" not in conv["content"]:
+                conv["content"] = "<|im_start|>system\n" + conv["content"] + "<|im_end|>"
+            
+    t = llm.stream_chat_oai(conversations=conversations,role_mapping={
+                    "user_role":"<|im_start|>user\n",
+                    "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
+                    "system_msg":"<|im_start|>system\nYou are a helpful assistant. Think it over and answer the user question correctly.<|im_end|>"
+                    },  **{**{
+                        "max_length":1024*16,
+                        "top_p":0.95,
+                        "temperature":0.01,
+                    },**llm_config,**{
+                        "generation.early_stopping":False,
+                        "generation.repetition_penalty":1.1,
+                        "generation.stop_token_ids":[151643,151645]}})       
+    return t
+
 def qwen_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
     
     
