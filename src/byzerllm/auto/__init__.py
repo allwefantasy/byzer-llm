@@ -10,7 +10,7 @@ import types
 from pyjava.api.mlsql import DataServer
 from byzerllm.utils.metrics import Metric
 from .. import BlockRow
-from byzerllm.utils import ThreadSafeDict
+from byzerllm.utils import VLLMStreamServer
 import threading
 import asyncio
 
@@ -65,7 +65,8 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         first_request = True
 
     if stream and not first_request:
-        final_output = model.byzer_request_cache.get_item(request_id) 
+        server = ray.get_actor("VLLM_STREAM_SERVER")
+        final_output = ray.get(server.get_item.remote(request_id))
         
         if isinstance(final_output,str):
             return [("",{"metadata":{"request_id":request_id,"status":"running"}})]
@@ -122,20 +123,22 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     current_time_milliseconds = int(time.time() * 1000)
     results_generator = model.generate(ins, sampling_params,request_id) 
     
-    async def writer():
-        async for request_output in results_generator:              
-            model.byzer_request_cache.add_item(request_output.request_id, request_output)
-        # mark the request is done
-        model.byzer_request_cache.mark_done(request_output.request_id)    
-    
-    def run_async_in_thread():
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(writer())
-        loop.close()
+   
 
     if stream:
-        model.byzer_request_cache.add_item(request_id, "RUNNING")
+        server = ray.get_actor("VLLM_STREAM_SERVER")
+        async def writer():
+            async for request_output in results_generator:              
+                ray.get(server.add_item.remote(request_output.request_id, request_output))
+            # mark the request is done
+            ray.get(server.remote.mark_done(request_output.request_id))
+    
+        def run_async_in_thread():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(writer())
+            loop.close()
+        ray.get(server.add_item.remote(request_id, "RUNNING"))
         t1 = threading.Thread(target=run_async_in_thread)    
         t1.daemon = True
         t1.start()
@@ -253,6 +256,11 @@ For example:
         print(f"infer_mode:{infer_mode} tensor_parallel_size: {num_gpus}")
         global INFERENCE_NAME
         INFERENCE_NAME = infer_params.get("udfName","auto")
+
+        try:
+            ray.get_actor("VLLM_STREAM_SERVER")
+        except ValueError:            
+            ray.get(ray.remote(VLLMStreamServer).options(name="VLLM_STREAM_SERVER", lifetime="detached").remote())
         
         # use_np_weights: bool = infer_params.get("backend.use_np_weights","false") == "true"
         # use_dummy_weights: bool = infer_params.get("backend.use_dummy_weights","false") == "true"
@@ -298,7 +306,6 @@ For example:
         llm = AsyncLLMEngine.from_engine_args(engine_args)                       
         # llm.stream_chat = types.MethodType(vllm_chat, llm) 
         llm.async_stream_chat = types.MethodType(async_vllm_chat, llm) 
-        llm.byzer_request_cache = ThreadSafeDict()
         return (llm,llm.engine.tokenizer)  
 
     if  infer_mode == "ray/deepspeed":

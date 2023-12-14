@@ -158,7 +158,7 @@ def generate_str_md5(s: str) -> str:
     md5_hash.update(s.encode("utf-8"))
     return md5_hash.hexdigest()  
 
-class ThreadSafeDict:
+class VLLMStreamServer:
     def __init__(self):
         self.cache = {}
         self.cache_status = {} 

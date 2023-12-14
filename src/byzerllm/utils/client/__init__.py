@@ -401,13 +401,21 @@ class ByzerLLM:
         
     def stream_chat_oai(self,conversations,role_mapping=None,**llm_config): 
         v = self.chat_oai(conversations,role_mapping,**{**llm_config,**{"generation.stream":True}})       
-        t = v[0].metadata["request_id"]
-        while True:
-            v = self.chat_oai([],role_mapping,**{**llm_config,**{"generation.request_id":t,"generation.stream":True}})
-            if "status" in v[0].metadata  and v[0].metadata["status"] == "running":
-                yield v[0]
-            else:
-                break        
+        request_id = v[0].metadata["request_id"]
+        while True:                
+            server = ray.get_actor("VLLM_STREAM_SERVER")
+            final_output = ray.get(server.get_item.remote(request_id))
+            
+            if isinstance(final_output,str):
+                time.sleep(0.01)
+                continue
+            
+            if final_output is None:
+                break
+            
+            text_outputs = [output for output in final_output.outputs]
+            generated_text = text_outputs[0].text                                
+            yield generated_text
     
 
     def raw_chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
