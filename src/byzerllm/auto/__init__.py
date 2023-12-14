@@ -65,7 +65,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         first_request = True
 
     if stream and not first_request:
-        final_output = model.get_item(request_id) 
+        final_output = model.byzer_request_cache.get_item(request_id) 
         if final_output is None:
             return [("NONE",{"metadata":{"request_id":request_id}})]
         
@@ -120,9 +120,9 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     
     async def writer():
         async for request_output in results_generator:  
-            model.add_item(request_output.request_id, request_output)
+            model.byzer_request_cache.add_item(request_output.request_id, request_output)
         # mark the request is done
-        model.mark_done(request_output.request_id)    
+        model.byzer_request_cache.mark_done(request_output.request_id)    
     
     def run_async_in_thread():
         loop = asyncio.new_event_loop()
