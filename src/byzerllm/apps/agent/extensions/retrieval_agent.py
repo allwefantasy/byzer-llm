@@ -298,13 +298,13 @@ Context is:
                         
         text_content = [{"_id":generate_str_md5(content),
             "title":self.search_tokenize(title),
-            "content":self.search_tokenize(content),
+            "content":self.search_tokenize(content[0:1000]),
             "owner":owner,
             "raw_content":content,
             "url":url,
             "auth_tag":self.search_tokenize(auth_tag),
             "title_vector":self.emb(title),
-            "content_vector":self.emb(content)
+            "content_vector":self.emb(content[0:1000])
             }]
         self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content",text_content)
         
