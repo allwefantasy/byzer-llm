@@ -183,7 +183,7 @@ class VLLMStreamServer:
     async def get_item(self, request_id):                
         with self.lock:
             v = self.cache.get(request_id, None)     
-            if self.cache_status.get(request_id,0) == 0:
+            if request_id in self.cache_status and self.cache_status[request_id] == 0:
                 del self.cache[request_id]
                 del self.cache_status[request_id]
             return v

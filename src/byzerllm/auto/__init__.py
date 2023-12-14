@@ -124,10 +124,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
                                      )    
     
     current_time_milliseconds = int(time.time() * 1000)
-    
-    
-   
-
+        
     if stream:
         server = ray.get_actor("VLLM_STREAM_SERVER")
         async def writer():
