@@ -405,7 +405,7 @@ class ByzerLLM:
         server = ray.get_actor("VLLM_STREAM_SERVER")                
         
         while True:                 
-            final_output = ray.get(server.get_item.remote(request_id))            
+            final_output = asyncio.run(server.get_item.remote(request_id))
             if isinstance(final_output,str):
                 time.sleep(0.01)
                 continue
