@@ -145,8 +145,8 @@ async def simple_predict_func(model,v):
         v = await llm.async_predict(item)
         
         metadata = {}
-        if isinstance(v,tuple):
-            metadata = v[1] 
+        if isinstance(v[1],dict) and "metadata" in v[1]:
+            metadata = v[1]["metadata"] 
 
         results.append({
             "predict":v[0],
@@ -168,8 +168,8 @@ def chatglm_predict_func(model,v):
         v = llm.predict(item)
         
         metadata = {}
-        if isinstance(v,tuple):
-            metadata = v[1]            
+        if isinstance(v[1],dict) and "metadata" in v[1]:
+            metadata = v[1]["metadata"]            
 
         results.append({
             "predict":v[0],
@@ -187,7 +187,7 @@ def qa_predict_func(model,v):
             item["instruction"] = f'{item["system"]}\n{item["instruction"]}'
         v = model.predict(item)
         results.append({
-            "predict":v[0],
+            "predict":v,
             "input":item})
         
     return {"value":[json.dumps(results,ensure_ascii=False)]}

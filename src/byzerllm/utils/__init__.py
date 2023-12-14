@@ -167,13 +167,20 @@ class ThreadSafeDict:
     def add_item(self, request_id, item):
         with self.lock:            
             self.cache[request_id]=item
-            self.cache_status[request_id]=False
+            self.cache_status[request_id]=int(time.time()*1000)
     
     def mark_done(self, request_id):
+        if len(self.cache_status) > 30:
+            now = int(time.time()*1000)
+            with self.lock:
+                for k in list(self.cache_status.keys()):
+                    if now - self.cache_status[k] > 10*60*60*1000:
+                        del self.cache_status[k]
+                        del self.cache[k] 
         with self.lock:            
-            self.cache_status[request_id]=True
+            self.cache_status[request_id] = 0
 
-    def get_item(self, request_id):
+    def get_item(self, request_id):                
         with self.lock:
             v = self.cache.get(request_id, None)     
             if self.cache_status.get(request_id, False):
