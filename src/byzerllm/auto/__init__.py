@@ -134,7 +134,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
             async for request_output in results_generator:              
                 ray.get(server.add_item.remote(request_output.request_id, request_output))
             # mark the request is done
-            ray.get(server.remote.mark_done(request_output.request_id))
+            ray.get(server.mark_done.remote(request_output.request_id))
     
         def run_async_in_thread():
             loop = asyncio.new_event_loop()
