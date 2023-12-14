@@ -66,8 +66,12 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
 
     if stream and not first_request:
         final_output = model.byzer_request_cache.get_item(request_id) 
+        
+        if isinstance(final_output,str):
+            return [("",{"metadata":{"request_id":request_id,"status":"running"}})]
+        
         if final_output is None:
-            return [("NONE",{"metadata":{"request_id":request_id}})]
+            return [("",{"metadata":{"request_id":request_id,"status":"finish"}})]
         
         text_outputs = [output for output in final_output.outputs]
         generated_text = text_outputs[0].text        
@@ -119,8 +123,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     results_generator = model.generate(ins, sampling_params,request_id) 
     
     async def writer():
-        async for request_output in results_generator:  
-            print(f"request_id:{request_output.request_id}  generated_tokens_count:{len(request_output.outputs[0].token_ids)}",flush=True)
+        async for request_output in results_generator:              
             model.byzer_request_cache.add_item(request_output.request_id, request_output)
         # mark the request is done
         model.byzer_request_cache.mark_done(request_output.request_id)    
@@ -132,6 +135,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         loop.close()
 
     if stream:
+        model.byzer_request_cache.add_item(request_id, "RUNNING")
         t1 = threading.Thread(target=run_async_in_thread)    
         t1.daemon = True
         t1.start()
