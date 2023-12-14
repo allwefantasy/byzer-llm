@@ -260,6 +260,13 @@ class ByzerLLM:
                infer_params:Dict[str,Any]):        
         from byzerllm import common_init_model
         self.setup("UDF_CLIENT",udf_name)
+
+        infer_backend = self.sys_conf["infer_backend"]
+        
+        if infer_backend == InferBackend.VLLM or infer_backend == InferBackend.DeepSpeed:
+            if pretrained_model_type != "custom/auto":
+                raise ValueError(f"Backend({infer_backend}) is set. the pretrained_model_type should be `custom/auto`")
+
         model_type = pretrained_model_type
         
         if pretrained_model_type.startswith("saas/"):

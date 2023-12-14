@@ -32,6 +32,8 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.18： Support stream chat
+- 0.1.17： None
 - 0.1.16： Enhance the API for byzer-retrieval
 - 0.1.14： add get_tables/get_databases API for byzer-retrieval
 - 0.1.13: support shutdown cluster for byzer-retrieval
@@ -169,6 +171,19 @@ There are some tiny differences between the vLLM and the transformers backend.
 
 1. The `pretrained_model_type` is fixed to `custom/auto` for vLLM, since the vLLM will auto detect the model type.
 2. Use `setup_infer_backend` to specify `InferBackend.VLLM` as the inference backend.
+
+If the model you deploy with the backend vLLM, then it also support `stream chat`：
+the `stream_chat_oai` will return a generator, you can use the generator to get the output text.
+
+```python
+t = llm.stream_chat_oai(conversations=[{
+    "role":"user",
+    "content":"Hello, how are you?"
+}])
+
+for line in t:
+   print(line+"\n")
+```
 
 ## DeepSpeed Support
 
