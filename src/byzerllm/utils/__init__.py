@@ -180,7 +180,7 @@ class VLLMStreamServer:
         with self.lock:            
             self.cache_status[request_id] = 0
 
-    def get_item(self, request_id):                
+    async def get_item(self, request_id):                
         with self.lock:
             v = self.cache.get(request_id, None)     
             if self.cache_status.get(request_id,0) == 0:
