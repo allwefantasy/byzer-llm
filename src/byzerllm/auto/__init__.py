@@ -135,7 +135,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
                 await server.add_item.remote(request_output.request_id, request_output)
             # mark the request is done
             await server.mark_done.remote(request_output.request_id)
-        asyncio.to_thread(writer)                    
+        writer()
         await server.add_item.remote(request_id, "RUNNING")        
         return [("",{"metadata":{"request_id":request_id}})]
         
