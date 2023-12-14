@@ -402,10 +402,9 @@ class ByzerLLM:
     def stream_chat_oai(self,conversations,role_mapping=None,**llm_config): 
         v = self.chat_oai(conversations,role_mapping,**{**llm_config,**{"generation.stream":True}})       
         request_id = v[0].metadata["request_id"]
-        while True:                
-            server = ray.get_actor("VLLM_STREAM_SERVER")
-            final_output = ray.get(server.get_item.remote(request_id))
-            
+        server = ray.get_actor("VLLM_STREAM_SERVER")
+        while True:                            
+            final_output = ray.get(server.get_item.remote(request_id))            
             if isinstance(final_output,str):
                 time.sleep(0.01)
                 continue
