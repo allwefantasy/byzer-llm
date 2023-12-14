@@ -94,6 +94,18 @@ class ExecuteCodeResponse:
       prompt: str
       variables: Dict[str,Any]=dataclasses.field(default_factory=dict)
 
+class Templates:
+    @staticmethod
+    def qwen():
+        return ({
+                    "user_role":"<|im_start|>user\n",
+                    "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
+                    "system_msg":"<|im_start|>system\nYou are a helpful assistant. Think it over and answer the user question correctly.<|im_end|>"
+                    },{
+                        "generation.early_stopping":False,
+                        "generation.repetition_penalty":1.1,
+                        "generation.stop_token_ids":[151643,151645]})      
+
 class ByzerLLM:
    
     def __init__(self,url:Optional[str]=None,**kwargs):
@@ -117,6 +129,8 @@ class ByzerLLM:
         self.mapping_max_input_length = {}
         self.mapping_max_output_length = {}
         self.mapping_max_model_length = {}        
+        self.mapping_role_mapping = {}
+        self.mapping_extra_generation_params = {}
 
         self.byzer_engine_url = None
         if "byzer_engine_url" in kwargs:
@@ -198,6 +212,19 @@ class ByzerLLM:
     
     def setup_max_output_length(self,model:str, max_output_length:int)->'ByzerLLM':
         self.mapping_max_output_length[model] = max_output_length
+        return self
+    
+    def setup_role_mapping(self,model:str,role_mapping:Dict[str,str])->'ByzerLLM':
+        self.mapping_role_mapping[model] = role_mapping
+        return self
+    
+    def setup_extra_generation_params(self,model:str,extra_generation_params:Dict[str,Any])->'ByzerLLM':
+        self.mapping_extra_generation_params[model] = extra_generation_params
+        return self
+    
+    def setup_template(self,model:str,template:Tuple[Dict[str,str],Dict[str,Any]])->'ByzerLLM':
+        self.mapping_role_mapping[model] = template[0]
+        self.mapping_extra_generation_params[model] = template[1]
         return self
     
     def raw_sft(self,train_params:Dict[str,Any]):                   
@@ -324,7 +351,9 @@ class ByzerLLM:
         if not model:
             model = self.default_model_name
 
-        v = [{"instruction":s,"tokenizer":True, **llm_config }]        
+        default_config = self.mapping_extra_generation_params.get(model,{})
+
+        v = [{"instruction":s,"tokenizer":True, **{**default_config,**llm_config} }]        
         res = self._query(model,v) 
         return [LLMResponse(output=item["predict"],metadata=item["metadata"],input=item["input"]) for item in res]
         
@@ -336,6 +365,8 @@ class ByzerLLM:
         if not model:
             model = self.default_model_name
 
+        default_config = self.mapping_extra_generation_params.get(model,{})    
+
         if isinstance(request,list):
             request = LLMRequest(instruction=request)
 
@@ -345,8 +376,9 @@ class ByzerLLM:
             "embedding":True,
             "max_length":request.max_length,
             "top_p":request.top_p,
-            "temperature":request.temperature,
-            ** request.extra_params.__dict__,
+            "temperature":request.temperature,                        
+            ** request.extra_params.__dict__, 
+            ** default_config,           
             ** extract_params}] 
         else: 
             v = [{
@@ -356,6 +388,7 @@ class ByzerLLM:
             "top_p":request.top_p,
             "temperature":request.temperature,
             ** request.extra_params.__dict__,
+            ** default_config, 
             ** extract_params} for x in request.instruction]    
         res = self._query(model,v) 
       
@@ -394,15 +427,15 @@ class ByzerLLM:
 
     def chat_oai(self,conversations,role_mapping=None,**llm_config):        
         if role_mapping is None:
-            role_mapping = {
+            role_mapping = self.mapping_role_mapping.get(self.default_model_name, {
                     "user_role":"User:",
                     "assistant_role": "Assistant:",
                     "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly."
-                    } 
+                    })
         
         final_ins = self.generate_instruction_from_history(conversations, role_mapping)          
-
-        v = [{"instruction":final_ins,**llm_config }]         
+        default_config = self.mapping_extra_generation_params.get(self.default_model_name,{})
+        v = [{"instruction":final_ins,**default_config,**llm_config }]         
         res = self._query(self.default_model_name,v) 
         return [LLMResponse(output=item["predict"],metadata=item["metadata"],input=item["input"]) for item in res]
         
@@ -455,9 +488,16 @@ class ByzerLLM:
         
         if not model:
             model = self.default_model_name
+
+        default_config = self.mapping_extra_generation_params.get(model,{})  
+        role_mapping = self.mapping_role_mapping.get(model, {
+                    "user_role":"User:",
+                    "assistant_role": "Assistant:",
+                    "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly."
+                    })  
         
         if isinstance(request,str): 
-            request = LLMRequest(instruction=request)
+            request = LLMRequest(instruction=request, extra_params=LLMRequestExtra(**role_mapping))
 
         if isinstance(request.instruction,str):
             params = {**request.extra_params.__dict__,**extract_params}
@@ -469,7 +509,8 @@ class ByzerLLM:
             "instruction":final_input,
             "max_length":request.max_length,
             "top_p":request.top_p,
-            "temperature":request.temperature,            
+            "temperature":request.temperature, 
+             **default_config,           
              ** params}] 
         else: 
             v = []
@@ -477,7 +518,7 @@ class ByzerLLM:
                 
                 new_request = LLMRequest(instruction=x,extra_params=request.extra_params,
                                          embedding=request.embedding,max_length=request.max_length,top_p=request.top_p,
-                                         temperature=request.temperature
+                                         temperature=request.temperature,extra_params=LLMRequestExtra(**role_mapping)
                                          )
                 
                 params = {**new_request.extra_params.__dict__,**extract_params}
@@ -489,7 +530,8 @@ class ByzerLLM:
                 "instruction":final_input, 
                 "max_length":request.max_length,
                 "top_p":request.top_p,
-                "temperature":request.temperature,           
+                "temperature":request.temperature, 
+                **default_config,          
                 ** params
                 })
         res = self._query(model,v) 
