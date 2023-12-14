@@ -32,7 +32,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
-- 0.1.18： Support stream chat
+- 0.1.18： Support stream chat/ Support Model Template
 - 0.1.17： None
 - 0.1.16： Enhance the API for byzer-retrieval
 - 0.1.14： add get_tables/get_databases API for byzer-retrieval
@@ -275,48 +275,19 @@ If you use QWen in ByzerLLM, you should sepcify the following parameters mannual
 2. the stop_token_ids
 3. trim the stop tokens from the output
 
-However, we provide a wraper for this, try to the following code:
+However, we provide a template for this, try to the following code:
 
 ```python
-from byzerllm.utils.client import qwen_chat_wrapper
-output_text = qwen_chat_wrapper(llm,[{
+from byzerllm.utils.client import Templates
+
+### Here,we setup the template for qwen
+llm.setup_template("chat",Templates.qwen())
+
+t = llm.chat_oai(conversations=[{
     "role":"user",
-    "message":"你好"
+    "content":"你好,给我讲个100字的笑话吧?"
 }])
-```
-
-Here is the implementation of `qwen_chat_wrapper`.
-
-```python
-from byzerllm.utils.client import ByzerLLM,ByzerRetrieval,code_utils
-
-def qwen_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
-    
-    
-    for conv in conversations:
-        if conv["role"] == "system":
-            if "<|im_start|>" not in conv["content"]:
-                conv["content"] = "<|im_start|>system\n" + conv["content"] + "<|im_end|>"
-            
-    t = llm.chat_oai(conversations=conversations,role_mapping={
-                    "user_role":"<|im_start|>user\n",
-                    "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
-                    "system_msg":"<|im_start|>system\nYou are a helpful assistant. Think it over and answer the user question correctly.<|im_end|>"
-                    },  **{**{
-                        "max_length":1024*16,
-                        "top_p":0.95,
-                        "temperature":0.01,
-                    },**llm_config,**{
-                        "generation.early_stopping":False,
-                        "generation.repetition_penalty":1.1,
-                        "generation.stop_token_ids":[151643,151645]}})       
-    v = t[0].output
-    if "<|im_end|>" in v:
-        v = v.split("<|im_end|>")[0]
-    if "<|endoftext|>" in v:
-        v = v.split("<|endoftext|>")[0]
-    t[0].output = v    
-    return t
+print(t)
 ```
 
 ---
