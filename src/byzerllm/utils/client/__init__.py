@@ -405,11 +405,7 @@ class ByzerLLM:
 
     def chat_oai(self,conversations,role_mapping=None,**llm_config):        
         if role_mapping is None:
-            role_mapping = self.mapping_role_mapping.get(self.default_model_name, {
-                    "user_role":"User:",
-                    "assistant_role": "Assistant:",
-                    "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly."
-                    })
+            role_mapping = self.mapping_role_mapping.get(self.default_model_name, self.default_role_mapping)
         
         final_ins = self.generate_instruction_from_history(conversations, role_mapping)          
         default_config = self.mapping_extra_generation_params.get(self.default_model_name,{})
