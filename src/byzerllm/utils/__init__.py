@@ -164,12 +164,12 @@ class VLLMStreamServer:
         self.cache_status = {} 
         self.lock = threading.Lock()
 
-    def add_item(self, request_id, item):
+    async def add_item(self, request_id, item):
         with self.lock:            
             self.cache[request_id]=item
             self.cache_status[request_id]=int(time.time()*1000)
     
-    def mark_done(self, request_id):
+    async def mark_done(self, request_id):
         if len(self.cache_status) > 30:
             now = int(time.time()*1000)
             with self.lock:
