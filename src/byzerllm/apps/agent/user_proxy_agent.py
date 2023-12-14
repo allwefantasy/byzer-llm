@@ -1,6 +1,7 @@
 from .conversable_agent import ConversableAgent
 from typing import Callable, Dict, Optional, Union
 from byzerllm.utils.retrieval import ByzerRetrieval
+from byzerllm.utils.client import ByzerLLM
 
 
 class UserProxyAgent(ConversableAgent):
