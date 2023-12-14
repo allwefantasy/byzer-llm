@@ -18,7 +18,7 @@ from ..retrieval import ByzerRetrieval,TableSettings,SearchQuery
 from .. import prompts as PROMPTS
 import logging
 import time
-import math
+import asyncio
 from byzerllm.utils import generate_str_md5
 
 
@@ -402,8 +402,9 @@ class ByzerLLM:
     def stream_chat_oai(self,conversations,role_mapping=None,**llm_config): 
         v = self.chat_oai(conversations,role_mapping,**{**llm_config,**{"generation.stream":True}})       
         request_id = v[0].metadata["request_id"]
-        server = ray.get_actor("VLLM_STREAM_SERVER")        
-        while True:                            
+        server = ray.get_actor("VLLM_STREAM_SERVER")                
+        
+        while True:                 
             final_output = ray.get(server.get_item.remote(request_id))            
             if isinstance(final_output,str):
                 time.sleep(0.01)
@@ -415,6 +416,24 @@ class ByzerLLM:
             text_outputs = [output for output in final_output.outputs]
             generated_text = text_outputs[0].text                                
             yield generated_text
+
+    async def async_stream_chat_oai(self,conversations,role_mapping=None,**llm_config): 
+        v = self.chat_oai(conversations,role_mapping,**{**llm_config,**{"generation.stream":True}})       
+        request_id = v[0].metadata["request_id"]
+        server = ray.get_actor("VLLM_STREAM_SERVER")                
+        
+        while True:                 
+            final_output = await server.get_item.remote(request_id)
+            if isinstance(final_output,str):
+                time.sleep(0.01)
+                continue
+            
+            if final_output is None:
+                break
+            
+            text_outputs = [output for output in final_output.outputs]
+            generated_text = text_outputs[0].text                                
+            yield generated_text        
     
 
     def raw_chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
