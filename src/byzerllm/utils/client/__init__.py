@@ -43,26 +43,12 @@ class LLMResponse:
     metadata: Dict[str,Any] = dataclasses.field(default_factory=dict)
 
 @dataclasses.dataclass
-class LLMRequestExtra:
-    system_msg:str = "You are a helpful assistant. Think it over and answer the user question correctly."
-    user_role:str = "User"
-    assistant_role:str = "Assistant"
-    history:List[LLMHistoryItem] = dataclasses.field(default_factory=list)
-    
-
-
-@dataclasses.dataclass
 class LLMRequest:
     instruction: Union[str,List[str]]
     embedding: bool = False
     max_length: int = 4096
     top_p: float = 0.95
-    temperature: float = 0.1
-    extra_params: LLMRequestExtra = LLMRequestExtra()
-    
-    @classmethod
-    def build(cls, instruction:str,max_length:int=4096*2,temperature:float=0.1,role_mapping:Dict[str,str]={}):
-        return cls(instruction=instruction,max_length=max_length,temperature=temperature,extra_params=LLMRequestExtra(**role_mapping))
+    temperature: float = 0.1    
         
 
 @dataclasses.dataclass
@@ -143,6 +129,11 @@ class ByzerLLM:
 
         self.default_model_name = None
         self.default_emb_model_name = None
+        self.default_role_mapping = {
+                    "user_role":"User:",
+                    "assistant_role": "Assistant:",
+                    "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly."
+                    }
 
         if url is not None and self.sql_model:            
             v = globals()
@@ -153,13 +144,7 @@ class ByzerLLM:
                 0,[],self.sys_conf
             ) 
             self.context.have_fetched = True
-            self.ray_context = self.context.rayContext
-
-        # self.model_configs = {}
-        if "defaultLLMRequestExtra" in kwargs:
-            self.defaultLLMRequestExtra = kwargs["defaultLLMRequestExtra"]
-        else:
-            self.defaultLLMRequestExtra = LLMRequestExtra()    
+            self.ray_context = self.context.rayContext         
 
             
     
@@ -365,7 +350,7 @@ class ByzerLLM:
         if not model:
             model = self.default_model_name
 
-        default_config = self.mapping_extra_generation_params.get(model,{})    
+        default_config = self.mapping_extra_generation_params.get(model,{})            
 
         if isinstance(request,list):
             request = LLMRequest(instruction=request)
@@ -376,8 +361,7 @@ class ByzerLLM:
             "embedding":True,
             "max_length":request.max_length,
             "top_p":request.top_p,
-            "temperature":request.temperature,                        
-            ** request.extra_params.__dict__, 
+            "temperature":request.temperature,                                    
             ** default_config,           
             ** extract_params}] 
         else: 
@@ -386,19 +370,18 @@ class ByzerLLM:
             "embedding":True,
             "max_length":request.max_length,
             "top_p":request.top_p,
-            "temperature":request.temperature,
-            ** request.extra_params.__dict__,
+            "temperature":request.temperature,            
             ** default_config, 
             ** extract_params} for x in request.instruction]    
         res = self._query(model,v) 
       
         return [LLMResponse(output=item["predict"],metadata=item["metadata"],input=item["input"]) for item in res]
             
-    def _generate_ins(self,request:LLMRequest):
-         if not request.extra_params.user_role:
+    def _generate_ins(self,request:LLMRequest,role_mapping:Dict[str,str]):
+         if not role_mapping["user_role"]:
              return request.instruction
          
-         conversations = [{"role":"system","content":request.extra_params.system_msg}]
+         conversations = [{"role":"system","content":role_mapping["system_msg"]}]
          conversations += [{"role":item.role,"content":item.content} for item in request.extra_params.history]
          
          conversations += [{
@@ -406,12 +389,7 @@ class ByzerLLM:
                         "content":request.instruction
                  }]
          
-         final_ins = self.generate_instruction_from_history(conversations,                 
-                 {
-                    "user_role":request.extra_params.user_role,
-                    "assistant_role":request.extra_params.assistant_role,
-                    "system_msg":request.extra_params.system_msg
-             })                      
+         final_ins = self.generate_instruction_from_history(conversations,role_mapping)                      
              
          return final_ins
     
@@ -478,8 +456,8 @@ class ByzerLLM:
 
     def raw_chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
         if isinstance(request,str): 
-            request = LLMRequest(instruction=request, extra_params=LLMRequestExtra(user_role=None))
-        request.extra_params.user_role = None    
+            request = LLMRequest(instruction=request)
+
         return self.chat(model,request,extract_params)
 
     def chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
@@ -490,41 +468,33 @@ class ByzerLLM:
             model = self.default_model_name
 
         default_config = self.mapping_extra_generation_params.get(model,{})  
-        role_mapping = self.mapping_role_mapping.get(model, {
-                    "user_role":"User:",
-                    "assistant_role": "Assistant:",
-                    "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly."
-                    })  
+        
+        default_role_mapping = self.mapping_role_mapping.get(model, self.default_role_mapping)  
         
         if isinstance(request,str): 
-            request = LLMRequest(instruction=request, extra_params=LLMRequestExtra(**role_mapping))
+            request = LLMRequest(instruction=request)
 
         if isinstance(request.instruction,str):
-            params = {**request.extra_params.__dict__,**extract_params}
-            if "history" in params:
-                del params["history"]
-            final_input = self._generate_ins(request)                         
+            
+            final_input = self._generate_ins(request,default_role_mapping)                         
             
             v = [{
             "instruction":final_input,
             "max_length":request.max_length,
             "top_p":request.top_p,
-            "temperature":request.temperature, 
-             **default_config,           
-             ** params}] 
+            "temperature":request.temperature,                       
+             **default_config,**extract_params
+             }] 
         else: 
             v = []
             for x in request.instruction:
                 
                 new_request = LLMRequest(instruction=x,extra_params=request.extra_params,
                                          embedding=request.embedding,max_length=request.max_length,top_p=request.top_p,
-                                         temperature=request.temperature,extra_params=LLMRequestExtra(**role_mapping)
+                                         temperature=request.temperature,
                                          )
-                
-                params = {**new_request.extra_params.__dict__,**extract_params}
-                if "history" in params:
-                    del params["history"]
-                final_input = self._generate_ins(new_request)                                    
+                               
+                final_input = self._generate_ins(new_request,default_role_mapping)                                    
                 
                 v.append({
                 "instruction":final_input, 
@@ -532,7 +502,7 @@ class ByzerLLM:
                 "top_p":request.top_p,
                 "temperature":request.temperature, 
                 **default_config,          
-                ** params
+                **extract_params
                 })
         res = self._query(model,v) 
         return [LLMResponse(output=item["predict"],metadata=item["metadata"],input=item["input"]) for item in res]
