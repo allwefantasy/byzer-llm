@@ -124,22 +124,23 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
                                      )    
     
     current_time_milliseconds = int(time.time() * 1000)
-    results_generator = model.generate(ins, sampling_params,request_id) 
+    
     
    
 
     if stream:
         server = ray.get_actor("VLLM_STREAM_SERVER")
         async def writer():
+            results_generator = model.generate(ins, sampling_params,request_id) 
             async for request_output in results_generator:              
                 await server.add_item.remote(request_output.request_id, request_output)
             # mark the request is done
             await server.mark_done.remote(request_output.request_id)
-        writer()
+        asyncio.create_task(writer())
         await server.add_item.remote(request_id, "RUNNING")        
         return [("",{"metadata":{"request_id":request_id}})]
         
-
+    results_generator = model.generate(ins, sampling_params,request_id) 
     final_output = None
     first_token_time = None
     async for request_output in results_generator:  
