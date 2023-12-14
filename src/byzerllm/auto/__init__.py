@@ -263,7 +263,7 @@ For example:
         try:
             ray.get_actor("VLLM_STREAM_SERVER")
         except ValueError:            
-            ray.remote(VLLMStreamServer).options(name="VLLM_STREAM_SERVER", lifetime="detached").remote()
+            ray.remote(VLLMStreamServer).options(name="VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()
         
         # use_np_weights: bool = infer_params.get("backend.use_np_weights","false") == "true"
         # use_dummy_weights: bool = infer_params.get("backend.use_dummy_weights","false") == "true"
