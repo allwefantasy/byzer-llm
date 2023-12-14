@@ -8,7 +8,8 @@ import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 
 from .agent import Agent
-from ...utils.client import ByzerLLM,ByzerRetrieval,default_chat_wrapper,LLMResponse
+from ...utils.retrieval import ByzerRetrieval
+from ...utils.client import ByzerLLM,default_chat_wrapper,LLMResponse
 from . import get_agent_name,run_agent_func, ChatResponse
 
 try:
