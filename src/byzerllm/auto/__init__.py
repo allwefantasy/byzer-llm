@@ -120,6 +120,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     
     async def writer():
         async for request_output in results_generator:  
+            print(f"request_id:{request_output.request_id}  generated_tokens_count:{len(request_output.outputs[0].token_ids)}",flush=True)
             model.byzer_request_cache.add_item(request_output.request_id, request_output)
         # mark the request is done
         model.byzer_request_cache.mark_done(request_output.request_id)    
