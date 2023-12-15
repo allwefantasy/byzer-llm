@@ -345,7 +345,7 @@ class ByzerLLM:
 
         v = [{"instruction":s,"tokenizer":True, **{**default_config,**llm_config} }]        
         res = self._query(model,v) 
-        return [LLMResponse(output=item["predict"],metadata=item["metadata"],input=item["input"]) for item in res]
+        return [LLMResponse(output=item["predict"],metadata=item.get("metadata",{}),input=item["input"]) for item in res]
         
     def emb(self, model, request:LLMRequest ,extract_params:Dict[str,Any]={})->List[List[float]]:
         
@@ -380,7 +380,7 @@ class ByzerLLM:
             ** extract_params} for x in request.instruction]    
         res = self._query(model,v) 
       
-        return [LLMResponse(output=item["predict"],metadata=item["metadata"],input=item["input"]) for item in res]
+        return [LLMResponse(output=item["predict"],metadata=item.get("metadata",{}),input=item["input"]) for item in res]
             
     def _generate_ins(self,request:LLMRequest,role_mapping:Dict[str,str]):
          if not role_mapping["user_role"]:
@@ -417,7 +417,7 @@ class ByzerLLM:
         v = [{"instruction":final_ins,**default_config,**llm_config }]         
         res = self._query(self.default_model_name,v) 
         clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)
-        return [LLMResponse(output=clean_func(item["predict"]),metadata=item["metadata"],input=item["input"]) for item in res]
+        return [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]
         
     def stream_chat_oai(self,conversations,role_mapping=None,**llm_config): 
         v = self.chat_oai(conversations,role_mapping,**{**llm_config,**{"generation.stream":True}})       
@@ -510,7 +510,7 @@ class ByzerLLM:
                 })
         res = self._query(model,v) 
         clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)
-        return [LLMResponse(output=clean_func(item["predict"]),metadata=item["metadata"],input=item["input"]) for item in res]
+        return [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]
     
     def apply_sql_func(self,sql:str,data:List[Dict[str,Any]],owner:str="admin",url:str="http://127.0.0.1:9003/model/predict"):
         if self.byzer_engine_url and url == "http://127.0.0.1:9003/model/predict":

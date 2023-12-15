@@ -1,11 +1,14 @@
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING,Dict, List, Optional, Union,Any
+from typing import TYPE_CHECKING,Dict, List, Optional, Union,Any,get_type_hints
 from .agent import Agent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import ray
 import dataclasses
 import copy
+import inspect
+import json
+
 
 if TYPE_CHECKING:
     from .conversable_agent import ConversableAgent
@@ -61,6 +64,35 @@ def modify_last_message(messages: List[Dict], message:Dict) -> List[Dict]:
     messages = copy_message(messages)
     messages[-1] = message
     return messages
+
+def get_type_name(t):
+    name = str(t)
+    if "list" in name or "dict" in name:
+        return name
+    else:
+        return t.__name__
+    
+def serialize_function_to_json(func):
+    signature = inspect.signature(func)
+    type_hints = get_type_hints(func)
+
+    function_info = {
+        "name": func.__name__,
+        "description": func.__doc__,
+        "parameters": {
+            "type": "object",
+            "properties": {}
+        },
+        "returns": type_hints.get('return', 'void').__name__
+    }
+
+    for name, _ in signature.parameters.items():
+        param_type = get_type_name(type_hints.get(name, type(None)))
+        function_info["parameters"]["properties"][name] = {"type": param_type}
+
+    return json.dumps(function_info, indent=2)
+
+
 
 
 class Agents:
