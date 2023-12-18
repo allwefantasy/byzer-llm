@@ -40,6 +40,12 @@ class LLMFunctionCallResponse(pydantic.BaseModel):
     values:List[Any]
     metadata:Dict[str,Any]
 
+
+class LLMClassResponse(pydantic.BaseModel):
+    response:LLMResponse
+    value:Optional[Any]
+    metadata:Dict[str,Any]
+
 @dataclasses.dataclass
 class LLMRequest:
     instruction: Union[str,List[str]]
@@ -448,6 +454,31 @@ class ByzerLLM:
             r.metadata["reason"] = str(inst)            
 
         return r
+    
+    def execute_response_format(self,response:LLMResponse,response_class:pydantic.BaseModel):
+        codes = code_utils.extract_code(response.output)
+        
+        r = LLMClassResponse(response=response,value=None,metadata={"reason":""})
+        
+        if len(codes) == 0:
+            r.metadata["reason"] = "No json block found"
+            return r 
+        
+        lang,code = codes[0]
+
+        if lang != "json":
+            r.metadata["reason"] = "No json block found"
+            return r
+        
+        try:
+            ms = response_class.parse_obj(json.loads(code))            
+        except Exception as inst:
+            r.metadata["reason"] = str(inst)
+            return r                                       
+        
+        r.value=ms
+
+        return r
 
     def chat_oai(self,
                  conversations,
@@ -479,8 +510,9 @@ class ByzerLLM:
         clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)        
         responses = [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]        
 
+        temp_result = responses    
         if response_class and response_after_chat: 
-            final_result = []
+            temp_result = []
             for response in responses:
                 new_conversations = conversations + [{
                                         "content":response.output,
@@ -489,8 +521,14 @@ class ByzerLLM:
                                         "content":response_class_format_after_chat(response_class),
                                         "role":"user"
                                     }]
-                final_result.append(self.chat_oai(new_conversations,role_mapping=role_mapping,**llm_config)[0])
-            return final_result            
+                temp_result.append(self.chat_oai(new_conversations,role_mapping=role_mapping,**llm_config)[0])            
+
+        if response_class:
+            final_result = []
+            for response in temp_result:
+                final_result.append(self.execute_response_format(response,response_class))
+            return final_result    
+
 
         if not execute_tool:
             return responses
