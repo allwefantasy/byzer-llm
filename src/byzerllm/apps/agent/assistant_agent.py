@@ -51,6 +51,8 @@ When you find an answer, verify the answer carefully. Include verifiable evidenc
         self.register_reply([Agent, ClientActorHandle,str], AssistantAgent.generate_code_reply) 
         self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply) 
 
+        
+
     def generate_code_reply(
         self,
         raw_message: Optional[Union[Dict,str,ChatResponse]] = None,

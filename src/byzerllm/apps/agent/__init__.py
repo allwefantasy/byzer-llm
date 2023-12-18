@@ -1,6 +1,7 @@
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING,Dict, List, Optional, Union,Any,get_type_hints
+from typing import TYPE_CHECKING,Dict, List, Optional, Union,Any,get_type_hints,Annotated,get_args
+import typing
 from .agent import Agent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import ray
@@ -72,6 +73,15 @@ def get_type_name(t):
     else:
         return t.__name__
     
+def is_annotated_type(hint):
+    if hasattr(typing, '_AnnotatedAlias'):  # Python 3.9 and later
+        return isinstance(hint, typing._AnnotatedAlias)
+    elif hasattr(typing, '_SpecialForm'):  # Python versions before 3.9
+        # Check if it's a _SpecialForm and its name is 'Annotated'
+        return isinstance(hint, typing._SpecialForm) and hint.__name__ == 'Annotated'
+    else:
+        return False    
+    
 def serialize_function_to_json(func):
     signature = inspect.signature(func)
     type_hints = get_type_hints(func)
@@ -88,7 +98,30 @@ def serialize_function_to_json(func):
 
     for name, _ in signature.parameters.items():
         param_type = get_type_name(type_hints.get(name, type(None)))
-        function_info["parameters"]["properties"][name] = {"type": param_type}
+        param_annotated= func.__annotations__.get(name, '')
+
+        function_info["parameters"]["properties"][name]  = {}
+        properties = function_info["parameters"]["properties"][name] 
+
+        
+        if is_annotated_type(param_annotated,typing.Annotated):
+            _, *metadata = get_args(param_annotated)
+        else:
+            metadata = []  
+   
+        param_desc = ""
+        for meta in metadata:
+            if isinstance(meta, str):
+                param_desc = meta 
+            if isinstance(meta, Dict):
+                param_desc = meta.get("description", "")
+                if "enum" in meta:
+                    properties["enum"] = meta["enum"]
+
+        properties["type"] = param_type
+        properties["description"] = param_desc
+
+        
 
     return json.dumps(function_info, indent=2)
 

@@ -417,7 +417,7 @@ class ByzerLLM:
         v = [{"instruction":final_ins,**default_config,**llm_config }]         
         res = self._query(self.default_model_name,v) 
         clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)
-        return [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]
+        return [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]        
         
     def stream_chat_oai(self,conversations,role_mapping=None,**llm_config): 
         v = self.chat_oai(conversations,role_mapping,**{**llm_config,**{"generation.stream":True}})       
