@@ -275,7 +275,7 @@ FUNCTION_CALLING_SCHEMA = FunctionCallList.schema_json()
 
 def function_calling_format(prompt:str,tools:List[Callable],tool_choice:Callable)->str:
     tool_serializes = []
-    for k,v in tools:
+    for v in tools:
         tool_serializes.append(serialize_function_to_json(v))
 
     force_prompt = ""
