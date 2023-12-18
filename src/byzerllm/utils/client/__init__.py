@@ -487,7 +487,7 @@ class ByzerLLM:
                  execute_tool:bool=False,  
                  response_class:Optional[pydantic.BaseModel] = None, 
                  response_after_chat:Optional[pydantic.BaseModel] = False, 
-                 role_mapping=None,**llm_config)->Union[List[LLMResponse],List[LLMFunctionCallResponse]]:        
+                 role_mapping=None,**llm_config)->Union[List[LLMResponse],List[LLMFunctionCallResponse],List[LLMClassResponse]]:        
         if role_mapping is None:
             role_mapping = self.mapping_role_mapping.get(self.default_model_name, self.default_role_mapping)
         
