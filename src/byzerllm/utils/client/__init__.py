@@ -445,7 +445,7 @@ class ByzerLLM:
                 if m.function.name in _func_maps:
                     r.values.append(_func_maps[m.function.name](**m.function.arguments))
         except Exception as inst:
-            return -1, [response,str(inst)]            
+            r.metadata["reason"] = str(inst)            
 
         return r
 
