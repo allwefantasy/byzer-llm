@@ -3,6 +3,7 @@ from typing import Dict,Any,List,Optional,Union,Tuple,Callable
 from pyjava.udf import UDFBuilder
 import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
+from byzerllm.utils import FunctionCallList,function_calling_format
 import json
 import dataclasses
 import importlib  
@@ -408,11 +409,20 @@ class ByzerLLM:
                 }]
         return conversations
 
-    def chat_oai(self,conversations,role_mapping=None,**llm_config):        
+    def chat_oai(self,
+                 conversations,
+                 tools:List[Callable]=[], 
+                 tool_choice:Callable=None,                 
+                 role_mapping=None,**llm_config):        
         if role_mapping is None:
             role_mapping = self.mapping_role_mapping.get(self.default_model_name, self.default_role_mapping)
         
-        final_ins = self.generate_instruction_from_history(conversations, role_mapping)          
+        last_message = conversations[-1]
+        
+        last_message["content"] = function_calling_format(last_message["content"],tools,tool_choice)
+
+        final_ins = self.generate_instruction_from_history(conversations, role_mapping)         
+
         default_config = self.mapping_extra_generation_params.get(self.default_model_name,{})
         v = [{"instruction":final_ins,**default_config,**llm_config }]         
         res = self._query(self.default_model_name,v) 

@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Any, TypeVar, Dict,Union,List
 from functools import wraps
 import time
 import json
@@ -7,6 +6,11 @@ from transformers import PreTrainedTokenizer,StoppingCriteria
 import torch
 import hashlib
 import threading
+from typing import TYPE_CHECKING,TypeVar,Dict, List, Optional, Union,Any,get_type_hints,Annotated,get_args,Callable
+import typing
+from ray.util.client.common import ClientActorHandle, ClientObjectRef
+import inspect
+import pydantic
 
 T = TypeVar("T")
 
@@ -187,5 +191,130 @@ class VLLMStreamServer:
                 del self.cache[request_id]
                 del self.cache_status[request_id]
             return v
+        
+def get_type_name(t):
+    name = str(t)
+    if "list" in name or "dict" in name:
+        return name
+    else:
+        return t.__name__
+    
+def is_annotated_type(hint):
+    if hasattr(typing, '_AnnotatedAlias'):  # Python 3.9 and later
+        return isinstance(hint, typing._AnnotatedAlias)
+    elif hasattr(typing, '_SpecialForm'):  # Python versions before 3.9
+        # Check if it's a _SpecialForm and its name is 'Annotated'
+        return isinstance(hint, typing._SpecialForm) and hint.__name__ == 'Annotated'
+    else:
+        return False    
+    
+def serialize_function_to_json(func):
+    signature = inspect.signature(func)
+    type_hints = get_type_hints(func)
+
+    function_info = {
+        "name": func.__name__,
+        "description": func.__doc__,
+        "parameters": {
+            "type": "object",
+            "properties": {}
+        },
+        "returns": type_hints.get('return', 'void').__name__
+    }
+
+    for name, _ in signature.parameters.items():
+        param_type = get_type_name(type_hints.get(name, type(None)))
+        param_annotated= func.__annotations__.get(name, '')
+
+        function_info["parameters"]["properties"][name]  = {}
+        properties = function_info["parameters"]["properties"][name] 
+
+        
+        if is_annotated_type(param_annotated):
+            _, *metadata = get_args(param_annotated)
+        else:
+            metadata = []  
+   
+        param_desc = ""
+        for meta in metadata:
+            if isinstance(meta, str):
+                param_desc = meta 
+            if isinstance(meta, Dict):
+                param_desc = meta.get("description", "")
+                if "enum" in meta:
+                    properties["enum"] = meta["enum"]
+
+        properties["type"] = param_type
+        properties["description"] = param_desc
+
+        
+
+    return json.dumps(function_info, indent=2)
+
+
+class FunctionCall(pydantic.BaseModel):
+    '''
+    函数名称和函数参数列表
+    '''        
+    name: str = pydantic.Field(description="函数名")
+    arguments: Dict[str,Any] = pydantic.Field(description="函数参数")
+
+class FunctionCallWrapper(pydantic.BaseModel):    
+    function: FunctionCall = pydantic.Field(description="函数调用")
+
+class FunctionCallList(pydantic.BaseModel):
+    '''
+    函数调用列表    
+    '''
+    tool_calls: List[FunctionCallWrapper] = pydantic.Field(description="函数调用列表")
+    id: str = pydantic.Field(description="工具调用的唯一标识符,无需生成")
+    type: str = pydantic.Field("function",description="工具调用的类型，固定为 function，无需生成")
+
+FUNCTION_CALLING_SCHEMA = FunctionCallList.schema_json() 
+
+
+def function_calling_format(prompt:str,tools:List[Callable],tool_choice:Callable)->str:
+    tool_serializes = []
+    for k,v in tools:
+        tool_serializes.append(serialize_function_to_json(v))
+
+    force_prompt = ""
+    if tool_choice is not None:
+        tool_choice_ser = serialize_function_to_json(tool_choice)
+        force_prompt = f''''
+你必须使用如下的工具来解决用户的问题：        
+```json
+{tool_choice_ser}
+```
+'''  
+   
+    if tool_choice is None and len(tools) == 0:
+        return prompt                   
+
+    tools_str = "\n".join(tool_serializes)
+    msg = f'''
+You are a helpful assistant with access to the following functions:
+
+```json
+{tools_str}
+```
+
+{force_prompt}
+
+当用户的问题可以使用上面的一个或者多个工具解决时,你需要生成json格式进行回复。
+
+下面是使用 OpenAPI 3.1. 规范描述了你需如何进行json格式的生成。
+
+```json
+{FUNCTION_CALLING_SCHEMA}
+```
+
+现在用户的问题是：{prompt}
+
+请根据描述生成 json 并发送给我。
+注意：如果你无法使用上述函数解决用户的问题，请如实告诉我你没有办法回答。
+''' 
+    return msg        
+
 
 

@@ -9,6 +9,7 @@ import dataclasses
 import copy
 import inspect
 import json
+import pydantic
 
 
 if TYPE_CHECKING:
@@ -65,68 +66,6 @@ def modify_last_message(messages: List[Dict], message:Dict) -> List[Dict]:
     messages = copy_message(messages)
     messages[-1] = message
     return messages
-
-def get_type_name(t):
-    name = str(t)
-    if "list" in name or "dict" in name:
-        return name
-    else:
-        return t.__name__
-    
-def is_annotated_type(hint):
-    if hasattr(typing, '_AnnotatedAlias'):  # Python 3.9 and later
-        return isinstance(hint, typing._AnnotatedAlias)
-    elif hasattr(typing, '_SpecialForm'):  # Python versions before 3.9
-        # Check if it's a _SpecialForm and its name is 'Annotated'
-        return isinstance(hint, typing._SpecialForm) and hint.__name__ == 'Annotated'
-    else:
-        return False    
-    
-def serialize_function_to_json(func):
-    signature = inspect.signature(func)
-    type_hints = get_type_hints(func)
-
-    function_info = {
-        "name": func.__name__,
-        "description": func.__doc__,
-        "parameters": {
-            "type": "object",
-            "properties": {}
-        },
-        "returns": type_hints.get('return', 'void').__name__
-    }
-
-    for name, _ in signature.parameters.items():
-        param_type = get_type_name(type_hints.get(name, type(None)))
-        param_annotated= func.__annotations__.get(name, '')
-
-        function_info["parameters"]["properties"][name]  = {}
-        properties = function_info["parameters"]["properties"][name] 
-
-        
-        if is_annotated_type(param_annotated):
-            _, *metadata = get_args(param_annotated)
-        else:
-            metadata = []  
-   
-        param_desc = ""
-        for meta in metadata:
-            if isinstance(meta, str):
-                param_desc = meta 
-            if isinstance(meta, Dict):
-                param_desc = meta.get("description", "")
-                if "enum" in meta:
-                    properties["enum"] = meta["enum"]
-
-        properties["type"] = param_type
-        properties["description"] = param_desc
-
-        
-
-    return json.dumps(function_info, indent=2)
-
-
-
 
 class Agents:
     @staticmethod
