@@ -314,7 +314,20 @@ You are a helpful assistant with access to the following functions:
 请根据描述生成 json 并发送给我。
 注意：如果你无法使用上述函数解决用户的问题，请如实告诉我你没有办法回答。
 ''' 
-    return msg        
+    return msg  
+
+def execute_function_calling(code:str,tools:List[Callable])->List[Any]:    
+    from byzerllm.utils.client import code_utils    
+    ms = FunctionCallList.parse_obj(json.loads(code_utils.extract_code(code)[0][1]))
+    
+    _func_maps = dict([(t.__name__,t) for t in tools])
+
+    res = []
+    for m in ms.tool_calls:        
+        if m.function.name in _func_maps:
+            res.append( _func_maps[m.function.name](**m.function.arguments))
+
+    return res      
 
 
 

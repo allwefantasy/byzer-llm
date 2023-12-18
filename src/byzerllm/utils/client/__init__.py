@@ -3,7 +3,7 @@ from typing import Dict,Any,List,Optional,Union,Tuple,Callable
 from pyjava.udf import UDFBuilder
 import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
-from byzerllm.utils import FunctionCallList,function_calling_format
+from byzerllm.utils import execute_function_calling,function_calling_format
 import json
 import dataclasses
 import importlib  
@@ -412,8 +412,9 @@ class ByzerLLM:
     def chat_oai(self,
                  conversations,
                  tools:List[Callable]=[], 
-                 tool_choice:Callable=None,                 
-                 role_mapping=None,**llm_config):        
+                 tool_choice:Callable=None,
+                 execute_tool:bool=False,                 
+                 role_mapping=None,**llm_config)->Union[List[LLMResponse],List[List[Any]]]:        
         if role_mapping is None:
             role_mapping = self.mapping_role_mapping.get(self.default_model_name, self.default_role_mapping)
         
@@ -426,8 +427,14 @@ class ByzerLLM:
         default_config = self.mapping_extra_generation_params.get(self.default_model_name,{})
         v = [{"instruction":final_ins,**default_config,**llm_config }]         
         res = self._query(self.default_model_name,v) 
-        clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)
-        return [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]        
+        clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)        
+        responses = [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]        
+        if not execute_tool:
+            return responses
+        
+        if execute_tool:
+            return [execute_function_calling(response.output,tools) for response in responses]
+
         
     def stream_chat_oai(self,conversations,role_mapping=None,**llm_config): 
         v = self.chat_oai(conversations,role_mapping,**{**llm_config,**{"generation.stream":True}})       
