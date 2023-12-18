@@ -11,6 +11,7 @@ import importlib
 import logging
 import time
 import asyncio
+import pydantic
 
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,12 @@ class LLMResponse:
     output: str
     input: str
     metadata: Dict[str,Any] = dataclasses.field(default_factory=dict)
+
+
+class LLMFunctionCallResponse(pydantic.BaseModel):
+    response:LLMResponse
+    values:List[Any]
+    metadata:Dict[str,Any]
 
 @dataclasses.dataclass
 class LLMRequest:
@@ -410,39 +417,44 @@ class ByzerLLM:
                 }]
         return conversations
 
-    def execute_function_calling(self,response:LLMResponse,tools:List[Callable])-> Tuple[int,List[Any]]:            
+    def execute_function_calling(self,response:LLMResponse,tools:List[Callable])-> LLMFunctionCallResponse:            
         codes = code_utils.extract_code(response.output)
+        
+        r = LLMFunctionCallResponse(response=response,values=[],metadata={"reason":""})
+        
         if len(codes) == 0:
-            return -1, ["no json block found"]
+            r.metadata["reason"] = "No json block found"
+            return r 
         
         lang,code = codes[0]
 
         if lang != "json":
-            return -1, ["no json block found"]
+            r.metadata["reason"] = "No json block found"
+            return r
         
         try:
             ms = FunctionCallList.parse_obj(json.loads(code))
         except Exception as inst:
-            return -1, [str(inst)]
+            r.metadata["reason"] = str(inst)
+            return r
                     
         _func_maps = dict([(t.__name__,t) for t in tools])
-
-        res = []
+        
         try:
             for m in ms.tool_calls:        
                 if m.function.name in _func_maps:
-                    res.append( _func_maps[m.function.name](**m.function.arguments))
+                    r.values.append(_func_maps[m.function.name](**m.function.arguments))
         except Exception as inst:
-            return -1, [str(inst)]            
+            return -1, [response,str(inst)]            
 
-        return 0,res
+        return r
 
     def chat_oai(self,
                  conversations,
                  tools:List[Callable]=[], 
                  tool_choice:Callable=None,
                  execute_tool:bool=False,                 
-                 role_mapping=None,**llm_config)->Union[List[LLMResponse],List[List[Any]]]:        
+                 role_mapping=None,**llm_config)->Union[List[LLMResponse],List[LLMFunctionCallResponse]]:        
         if role_mapping is None:
             role_mapping = self.mapping_role_mapping.get(self.default_model_name, self.default_role_mapping)
         
@@ -458,7 +470,6 @@ class ByzerLLM:
         clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)        
         responses = [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]        
         
-
 
         if not execute_tool:
             return responses
