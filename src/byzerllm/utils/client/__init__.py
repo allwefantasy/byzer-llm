@@ -3,7 +3,8 @@ from typing import Dict,Any,List,Optional,Union,Tuple,Callable
 from pyjava.udf import UDFBuilder
 import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
-from byzerllm.utils import execute_function_calling,function_calling_format
+from byzerllm.utils.client import code_utils 
+from byzerllm.utils import execute_function_calling,function_calling_format,FunctionCallList
 import json
 import dataclasses
 import importlib  
@@ -409,6 +410,33 @@ class ByzerLLM:
                 }]
         return conversations
 
+    def execute_function_calling(self,response:LLMResponse,tools:List[Callable])-> Tuple[int,List[Any]]:            
+        codes = code_utils.extract_code(response.output)
+        if len(codes) == 0:
+            return -1, ["no json block found"]
+        
+        lang,code = codes[0]
+
+        if lang != "json":
+            return -1, ["no json block found"]
+        
+        try:
+            ms = FunctionCallList.parse_obj(json.loads(code))
+        except Exception as inst:
+            return -1, [str(inst)]
+                    
+        _func_maps = dict([(t.__name__,t) for t in tools])
+
+        res = []
+        try:
+            for m in ms.tool_calls:        
+                if m.function.name in _func_maps:
+                    res.append( _func_maps[m.function.name](**m.function.arguments))
+        except Exception as inst:
+            return -1, [str(inst)]            
+
+        return 0,res
+
     def chat_oai(self,
                  conversations,
                  tools:List[Callable]=[], 
@@ -429,11 +457,18 @@ class ByzerLLM:
         res = self._query(self.default_model_name,v) 
         clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)        
         responses = [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]        
+        
+
+
         if not execute_tool:
             return responses
         
         if execute_tool:
-            return [execute_function_calling(response.output,tools) for response in responses]
+            final_result = []
+            for response in responses:
+                final_result.append(self.execute_function_calling(response,tools))
+
+            return final_result
 
         
     def stream_chat_oai(self,conversations,role_mapping=None,**llm_config): 
