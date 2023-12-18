@@ -17,6 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
+- [2023/12] Release Byzer-LLM 0.1.20
 - [2023/11] Release Byzer-LLM 0.1.16
 
 ---
@@ -32,6 +33,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.20： Function Calling support/ Response with pydantic class
 - 0.1.19： Fix embedding bugs
 - 0.1.18： Support stream chat/ Support Model Template
 - 0.1.17： None
@@ -39,7 +41,7 @@ The unique features of Byzer-LLM are:
 - 0.1.14： add get_tables/get_databases API for byzer-retrieval
 - 0.1.13: support shutdown cluster for byzer-retrieval
 - 0.1.12: Support Python API (alpha)
-- 0.1.5: Support python wrapper for [byzer-retrieval](https://github.com/allwefantasy/byzer-retrieval)
+- 0.1.5:  Support python wrapper for [byzer-retrieval](https://github.com/allwefantasy/byzer-retrieval)
 
 ---
 
@@ -213,6 +215,132 @@ llm.chat("llama_chat",LLMRequest(instruction="hello world"))[0].output
 ```
 
 The code above is totally the same as the code for vLLM, except that the `InferBackend` is `InferBackend.DeepSpeed`.
+
+
+## Function Calling
+
+Here is a simple example for function calling based on QWen 72B
+
+Deploy Model:
+
+
+```python
+import ray
+ray.init(address="auto",namespace="default") 
+llm = ByzerLLM()
+
+model_location="/home/byzerllm/models/Qwen-72B-Chat"
+max_model_len = 24000
+
+llm.setup_gpus_per_worker(8).setup_num_workers(1).setup_infer_backend(InferBackend.VLLM)
+llm.deploy(
+    model_path=model_location,
+    pretrained_model_type="custom/auto",
+    udf_name=chat_model_name,
+    infer_params={"backend.max_num_batched_tokens":24000,
+                  "backend.max_model_len":max_model_len}
+)
+
+llm.setup_default_model_name("chat")
+llm.setup_max_model_length("chat",max_model_len)
+llm.setup_template("chat",Templates.qwen()) 
+
+```
+
+Try to create some Python functions:
+
+```python
+
+from typing import List,Dict,Any,Annotated
+import pydantic 
+import datetime
+from dateutil.relativedelta import relativedelta
+
+def compute_date_range(count:Annotated[int,"时间跨度，数值类型"],
+                       unit:Annotated[str,"时间单位，字符串类型",{"enum":["day","week","month","year"]}])->List[str]:
+    '''
+    计算日期范围
+
+    Args:
+        count: 时间跨度，数值类型
+        unit: 时间单位，字符串类型，可选值为 day,week,month,year
+    '''        
+    now = datetime.datetime.now()
+    now_str = now.strftime("%Y-%m-%d %H:%M:%S")
+    if unit == "day":
+        return [(now - relativedelta(days=count)).strftime("%Y-%m-%d %H:%M:%S"),now_str]
+    elif unit == "week":
+        return [(now - relativedelta(weeks=count)).strftime("%Y-%m-%d %H:%M:%S"),now_str]
+    elif unit == "month":
+        return [(now - relativedelta(months=count)).strftime("%Y-%m-%d %H:%M:%S"),now_str]
+    elif unit == "year":
+        return [(now - relativedelta(years=count)).strftime("%Y-%m-%d %H:%M:%S"),now_str]
+    return ["",""]
+
+def compute_now()->str:
+    '''
+    计算当前时间
+    '''
+    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+```
+
+Here we provide two functions:
+
+1. compute_date_range: compute the date range based on the count and unit
+2. compute_now: compute the current date
+
+We will use the model to call these tools according the user's quesion.
+
+```python
+t = llm.chat_oai([{
+    "content":'''计算当前时间''',
+    "role":"user"    
+}],tools=[compute_date_range,compute_now],execute_tool=True)
+
+t[0].values
+
+## output: ['2023-12-18 17:30:49']
+```
+
+```python
+t = llm.chat_oai([{
+    "content":'''最近三个月趋势''',
+    "role":"user"    
+}],tools=[compute_date_range,compute_now],execute_tool=True)
+
+t[0].values
+
+## output: [['2023-09-18 17:31:21', '2023-12-18 17:31:21']]
+```
+
+```python
+t = llm.chat_oai([{
+    "content":'''最近三天''',
+    "role":"user"    
+}],tools=[compute_date_range,compute_now],execute_tool=True)
+
+t[0].values
+
+## output: [['2023-12-15 17:23:38', '2023-12-18 17:23:38']]
+```
+
+```python
+t = llm.chat_oai([{
+    "content":'''你吃饭了么？''',
+    "role":"user"    
+}],tools=[compute_date_range,compute_now],execute_tool=True)
+
+if t[0].values:
+    print(t[0].values[0])
+else:
+    print(t[0].response.output)   
+
+## output: '您好，我是一个人工智能语言模型，暂时无法吃饭。'
+```
+
+## Respond with pydantic class
+
+
 
 ## SQL Support
 

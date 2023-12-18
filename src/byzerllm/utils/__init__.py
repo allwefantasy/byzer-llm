@@ -316,6 +316,36 @@ You are a helpful assistant with access to the following functions:
 ''' 
     return msg  
 
+
+def response_class_format(prompt:str,cls:pydantic.BaseModel)->str:
+    
+    msg = f'''当你回答用户问题的时候，你的输出需要是 Json 格式。
+下面是使用 OpenAPI 3.1. 规范描述了你需如何进行json格式的生成。
+
+```json
+{cls.schema_json()}
+```
+
+现在用户的问题是：{prompt}
+
+请根据描述生成 json 并发送给我。
+''' 
+    return msg 
+
+
+def response_class_format_after_chat(cls:pydantic.BaseModel)->str:
+    
+    msg = f'''请你把刚才的回复使用 json 进行格式化。
+下面是使用 OpenAPI 3.1. 规范描述了你需如何进行json格式的生成。
+
+```json
+{cls.schema_json()}
+```
+
+请根据描述生成 json 并发送给我。
+''' 
+    return msg 
+
   
 
 

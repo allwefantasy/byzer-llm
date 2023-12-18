@@ -4,7 +4,7 @@ from pyjava.udf import UDFBuilder
 import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 from byzerllm.utils.client import code_utils 
-from byzerllm.utils import function_calling_format,FunctionCallList
+from byzerllm.utils import function_calling_format,response_class_format,response_class_format_after_chat,FunctionCallList
 import json
 import dataclasses
 import importlib  
@@ -453,14 +453,23 @@ class ByzerLLM:
                  conversations,
                  tools:List[Callable]=[], 
                  tool_choice:Callable=None,
-                 execute_tool:bool=False,                 
+                 execute_tool:bool=False,  
+                 response_class:Optional[pydantic.BaseModel] = None, 
+                 response_after_chat:Optional[pydantic.BaseModel] = False, 
                  role_mapping=None,**llm_config)->Union[List[LLMResponse],List[LLMFunctionCallResponse]]:        
         if role_mapping is None:
             role_mapping = self.mapping_role_mapping.get(self.default_model_name, self.default_role_mapping)
         
+        if response_class and (tools or tool_choice):
+            raise Exception("function calling is enabled,response_class should be set.")
+        
         last_message = conversations[-1]
         
-        last_message["content"] = function_calling_format(last_message["content"],tools,tool_choice)
+        if tools or tool_choice:
+            last_message["content"] = function_calling_format(last_message["content"],tools,tool_choice)
+
+        if response_class and not response_after_chat:
+            last_message["content"] = response_class_format(last_message["content"],cls = response_class)
 
         final_ins = self.generate_instruction_from_history(conversations, role_mapping)         
 
@@ -469,7 +478,19 @@ class ByzerLLM:
         res = self._query(self.default_model_name,v) 
         clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)        
         responses = [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]        
-        
+
+        if response_class and response_after_chat: 
+            final_result = []
+            for response in responses:
+                new_conversations = conversations + [{
+                                        "content":response.output,
+                                        "role":"assistant"
+                                    },{
+                                        "content":response_class_format_after_chat(response_class),
+                                        "role":"user"
+                                    }]
+                final_result.append(self.chat_oai(new_conversations,role_mapping=role_mapping,**llm_config)[0])
+            return final_result            
 
         if not execute_tool:
             return responses
