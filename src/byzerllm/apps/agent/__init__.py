@@ -104,7 +104,7 @@ def serialize_function_to_json(func):
         properties = function_info["parameters"]["properties"][name] 
 
         
-        if is_annotated_type(param_annotated,typing.Annotated):
+        if is_annotated_type(param_annotated):
             _, *metadata = get_args(param_annotated)
         else:
             metadata = []  
