@@ -4,7 +4,7 @@ from pyjava.udf import UDFBuilder
 import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 from byzerllm.utils.client import code_utils 
-from byzerllm.utils import execute_function_calling,function_calling_format,FunctionCallList
+from byzerllm.utils import function_calling_format,FunctionCallList
 import json
 import dataclasses
 import importlib  
