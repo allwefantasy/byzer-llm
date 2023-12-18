@@ -340,6 +340,48 @@ else:
 
 ## Respond with pydantic class
 
+When you chat with LLM, you can specify the reponse class, 
+
+```python
+import pydantic 
+
+class Story(pydantic.BaseModel):
+    '''
+    故事
+    '''
+
+    title: str = pydantic.Field(description="故事的标题")
+    body: str = pydantic.Field(description="故事主体")
+
+
+
+t = llm.chat_oai([
+{
+    "content":f'''请给我讲个故事，分成两个部分，一个标题，一个故事主体''',
+    "role":"user"
+},
+],response_class=Story)
+
+t[0].value
+
+## output: Story(title='勇敢的小兔子', body='在一个美丽的森林里，住着一只可爱的小兔子。小兔子非常勇敢，有一天，森林里的动物们都被大灰狼吓坏了。只有小兔子站出来，用智慧和勇气打败了大灰狼，保护了所有的动物。从此，小兔子成为了森林里的英雄。')
+```
+The above code will ask the LLM to generate the Story class directly. However, sometimes we hope the LLM 
+generate text first, then extract the structure from the text, youcan set `response_after_chat=True` to 
+enable this behavior. This mode will interactive with LLM one more time.
+
+```python
+t = llm.chat_oai([
+{
+    "content":f'''请给我讲个故事，分成两个部分，一个标题，一个故事主体''',
+    "role":"user"
+},
+],response_class=Story,response_after_chat=True)
+
+t[0].value
+## output: Story(title='月光下的守护者', body='在一个遥远的古老村庄里，住着一位名叫阿明的年轻人。阿明是个孤儿，从小在村里长大，以种田为生。他善良、勤劳，深受村民们喜爱。\n\n村子里有个传说，每当满月时分，月亮女神会在村子后山的古树下出现，赐福给那些善良的人们。然而，只有最纯洁的心才能看到她。因此，每年的这个时候，阿明都会独自一人前往后山，希望能得到女神的祝福。\n\n这一年，村子遭受了严重的旱灾，庄稼枯黄，人们生活困苦。阿明决定向月亮女神祈求降雨，拯救村子。他在月光下虔诚地祈祷，希望女神能听到他的呼唤。\n\n就在这个时刻，月亮女神出现了。她被阿明的善良和执着所感动，答应了他的请求。第二天早晨，天空乌云密布，大雨倾盆而下，久旱的土地得到了滋润，庄稼重新焕发生机。\n\n从此以后，每年的满月之夜，阿明都会去后山等待月亮女神的出现，他成为了村民心中的守护者，用他的善良和执着，守护着整个村庄。而他也终于明白，真正的守护者，并非需要超凡的力量，只需要一颗充满爱与善良的心。')
+```
+
 
 
 ## SQL Support
