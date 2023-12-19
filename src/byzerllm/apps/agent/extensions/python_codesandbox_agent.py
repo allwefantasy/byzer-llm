@@ -11,8 +11,8 @@ import io
 import traceback
 import json
 import os
-
-from ....utils.client import ByzerLLM,ByzerRetrieval,code_utils
+from ....utils.retrieval import ByzerRetrieval
+from ....utils.client import ByzerLLM,code_utils
 
 
 
