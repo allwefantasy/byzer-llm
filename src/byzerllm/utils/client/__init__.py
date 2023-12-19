@@ -30,7 +30,7 @@ class LLMHistoryItem:
 
 @dataclasses.dataclass
 class LLMResponse:
-    output: str
+    output: Union[str,List[float]]
     input: Union[str,Dict[str,Any]]
     metadata: Dict[str,Any] = dataclasses.field(default_factory=dict)
 
