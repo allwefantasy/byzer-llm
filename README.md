@@ -35,7 +35,7 @@ The unique features of Byzer-LLM are:
 * [Versions](#Versions)
 * [Installation](#Installation)
 * [Quick Start](#Quick-Start)
-
+* [Quatization](#Quatization)
 * [Supported Models](#Supported-Models)
 * [vLLM Support](#vLLM-Support)
 * [DeepSpeed Support](#DeepSpeed-Support)
@@ -127,9 +127,9 @@ Notice that the SaaS model does not need GPU, so we set the `setup_gpus_per_work
 to control max concurrency,how ever, the SaaS model has its own max concurrency limit, the `setup_num_workers` only control the max
 concurrency accepted by the Byzer-LLM.
 
-## Quantation
+## Quatization
 
-For now, only the `InferBackend.transformers` backend support `Quantation` configuration. Here is the baichuan2 example:
+For now, only the `InferBackend.transformers` backend support `Quatization` configuration. Here is the baichuan2 example:
 
 ```python
 llm.setup_gpus_per_worker(2).setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
