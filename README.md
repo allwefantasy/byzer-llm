@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2023/12] Release Byzer-LLM 0.1.20
+- [2023/12] Release Byzer-LLM 0.1.22
 - [2023/11] Release Byzer-LLM 0.1.16
 
 ---
