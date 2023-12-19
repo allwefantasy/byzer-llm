@@ -32,6 +32,25 @@ The unique features of Byzer-LLM are:
 
 ---
 
+* [Versions](#Versions)
+* [Installation](#Installation)
+* [Quick Start](#Quick-Start)
+
+* [Supported Models](#Supported-Models)
+* [vLLM Support](#vLLM-Support)
+* [DeepSpeed Support](#DeepSpeed-Support)
+* [Function Calling](#Function-Calling)
+* [Respond with pydantic class](#Respond-with-pydantic-class)
+* [LLM-Friendly Function/DataClass](#LLM-Friendly-Function/DataClass)
+* [SQL Support](#SQL-Support)
+* [SaaS Models](#SaaS-Models)
+* [Pretrain](#Pretrain)
+* [Finetune](#Finetune)
+* [Stream Chat](#Stream-Chat)
+* [Contributing](#Contributing)
+
+---
+
 ## Versions
 - 0.1.20： Function Calling support/ Response with pydantic class
 - 0.1.19： Fix embedding bugs
@@ -108,6 +127,27 @@ Notice that the SaaS model does not need GPU, so we set the `setup_gpus_per_work
 to control max concurrency,how ever, the SaaS model has its own max concurrency limit, the `setup_num_workers` only control the max
 concurrency accepted by the Byzer-LLM.
 
+## Quantation
+
+For now, only the `InferBackend.transformers` backend support `Quantation` configuration. Here is the baichuan2 example:
+
+```python
+llm.setup_gpus_per_worker(2).setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
+llm.deploy(
+    model_path=model_location,
+    pretrained_model_type="custom/baichuan2",
+    udf_name="baichuan2_13_chat",
+    infer_params={"quatization":"4"}
+)
+```
+The available `quatization` values:
+
+1. 4
+2. 8
+3. true/false
+
+When it's set true, the int4 will be choosed.
+
 ## Supported Models
 
 The supported open-source `pretrained_model_type` are:
@@ -175,7 +215,10 @@ There are some tiny differences between the vLLM and the transformers backend.
 1. The `pretrained_model_type` is fixed to `custom/auto` for vLLM, since the vLLM will auto detect the model type.
 2. Use `setup_infer_backend` to specify `InferBackend.VLLM` as the inference backend.
 
-If the model you deploy with the backend vLLM, then it also support `stream chat`：
+
+### Stream Chat
+
+If the model deployed with the backend vLLM, then it also support `stream chat`：
 the `stream_chat_oai` will return a generator, you can use the generator to get the output text.
 
 ```python
@@ -287,9 +330,9 @@ def compute_now()->str:
 Here we provide two functions:
 
 1. compute_date_range: compute the date range based on the count and unit
-2. compute_now: compute the current date
+2. compute_now: get the current date
 
-We will use the model to call these tools according the user's quesion.
+We will use the model to call these tools according to the user's question.
 
 ```python
 t = llm.chat_oai([{
@@ -366,9 +409,10 @@ t[0].value
 
 ## output: Story(title='勇敢的小兔子', body='在一个美丽的森林里，住着一只可爱的小兔子。小兔子非常勇敢，有一天，森林里的动物们都被大灰狼吓坏了。只有小兔子站出来，用智慧和勇气打败了大灰狼，保护了所有的动物。从此，小兔子成为了森林里的英雄。')
 ```
+
 The above code will ask the LLM to generate the Story class directly. However, sometimes we hope the LLM 
-generate text first, then extract the structure from the text, youcan set `response_after_chat=True` to 
-enable this behavior. This mode will interactive with LLM one more time.
+generate text first, then extract the structure from the text, you can set `response_after_chat=True` to 
+enable this behavior. However, this will bring some performance penalty(additional inference).
 
 ```python
 t = llm.chat_oai([
@@ -381,6 +425,49 @@ t = llm.chat_oai([
 t[0].value
 ## output: Story(title='月光下的守护者', body='在一个遥远的古老村庄里，住着一位名叫阿明的年轻人。阿明是个孤儿，从小在村里长大，以种田为生。他善良、勤劳，深受村民们喜爱。\n\n村子里有个传说，每当满月时分，月亮女神会在村子后山的古树下出现，赐福给那些善良的人们。然而，只有最纯洁的心才能看到她。因此，每年的这个时候，阿明都会独自一人前往后山，希望能得到女神的祝福。\n\n这一年，村子遭受了严重的旱灾，庄稼枯黄，人们生活困苦。阿明决定向月亮女神祈求降雨，拯救村子。他在月光下虔诚地祈祷，希望女神能听到他的呼唤。\n\n就在这个时刻，月亮女神出现了。她被阿明的善良和执着所感动，答应了他的请求。第二天早晨，天空乌云密布，大雨倾盆而下，久旱的土地得到了滋润，庄稼重新焕发生机。\n\n从此以后，每年的满月之夜，阿明都会去后山等待月亮女神的出现，他成为了村民心中的守护者，用他的善良和执着，守护着整个村庄。而他也终于明白，真正的守护者，并非需要超凡的力量，只需要一颗充满爱与善良的心。')
 ```
+
+## LLM-Friendly Function/DataClass
+
+If you want to improve the performance of Function Calling or Response Class, you should make your Function(Tool) and Data Class is LLM-Friendly.  
+
+Let's take a look at the following python code:
+
+```python
+def compute_date_range(count:int, unit:str)->List[str]:                   
+    now = datetime.datetime.now()
+    ....
+```
+
+This code is not LLM-Friendly Function since it's difficult to know the usage of this funciton and 
+what's the meaning of the input parameters.
+
+The LLM just like human, it's hard to let the LLM know when or how to invoke this function. Especially the parameter `unit`
+actually is enum value but the LLM no way to get this message.
+
+So, in order to make the LLM knows more about this function in Byzer-LLM, you should 
+follow some requirments:
+
+1. Adding pythonic function comment 
+2. Use annotated to provide type and comment for every parameter, if the parameter is a enum, then provide enum values.
+
+Here is the LLM-Friendly fuction definision.
+
+```python
+def compute_date_range(count:Annotated[int,"时间跨度，数值类型"],
+                       unit:Annotated[str,"时间单位，字符串类型",{"enum":["day","week","month","year"]}])->List[str]:
+    '''
+    计算日期范围
+
+    Args:
+        count: 时间跨度，数值类型
+        unit: 时间单位，字符串类型，可选值为 day,week,month,year
+    '''        
+    now = datetime.datetime.now()
+    ....
+```
+
+If the LLM make something wrong to your function (e.g. provide the bad parameters), try to optimize the function comment 
+and the parameter Annotated comment.
 
 
 
