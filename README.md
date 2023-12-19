@@ -222,6 +222,9 @@ If the model deployed with the backend vLLM, then it also support `stream chat`ï
 the `stream_chat_oai` will return a generator, you can use the generator to get the output text.
 
 ```python
+
+llm.setup_default_model_name(chat_model_name) 
+
 t = llm.stream_chat_oai(conversations=[{
     "role":"user",
     "content":"Hello, how are you?"
