@@ -52,7 +52,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
-- 0.1.20： Function Calling support/ Response with pydantic class
+- 0.1.22： Function Calling support/ Response with pydantic class
 - 0.1.19： Fix embedding bugs
 - 0.1.18： Support stream chat/ Support Model Template
 - 0.1.17： None
