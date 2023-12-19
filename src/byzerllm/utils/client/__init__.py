@@ -402,7 +402,7 @@ class ByzerLLM:
              return request.instruction
          
          conversations = [{"role":"system","content":role_mapping["system_msg"]}]
-         conversations += [{"role":item.role,"content":item.content} for item in request.extra_params.history]
+         # conversations += [{"role":item.role,"content":item.content} for item in request.extra_params.history]
          
          conversations += [{
                         "role":"user",
@@ -414,8 +414,8 @@ class ByzerLLM:
          return final_ins
     
     def _to_openai_format(self,request:LLMRequest):
-        conversations = [{"role":"system","content":request.extra_params.system_msg}]
-        conversations += [{"role":item.role,"content":item.content} for item in request.extra_params.history]
+        # conversations = [{"role":"system","content":request.extra_params.system_msg}]
+        # conversations += [{"role":item.role,"content":item.content} for item in request.extra_params.history]
         
         conversations += [{
                     "role":"user",
@@ -615,7 +615,7 @@ class ByzerLLM:
             v = []
             for x in request.instruction:
                 
-                new_request = LLMRequest(instruction=x,extra_params=request.extra_params,
+                new_request = LLMRequest(instruction=x,
                                          embedding=request.embedding,max_length=request.max_length,top_p=request.top_p,
                                          temperature=request.temperature,
                                          )
