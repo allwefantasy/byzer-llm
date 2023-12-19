@@ -486,10 +486,18 @@ class ByzerLLM:
                  tool_choice:Callable=None,
                  execute_tool:bool=False,  
                  response_class:Optional[pydantic.BaseModel] = None, 
-                 response_after_chat:Optional[pydantic.BaseModel] = False, 
+                 response_after_chat:Optional[pydantic.BaseModel] = False,
+                 model:Optional[str] = None,
                  role_mapping=None,**llm_config)->Union[List[LLMResponse],List[LLMFunctionCallResponse],List[LLMClassResponse]]:        
+        
+        if not self.default_model_name and not model:
+            raise Exception("Use llm.setup_default_model_name to setup default model name or setup the model parameter")
+        
+        if not model:
+            model = self.default_model_name
+            
         if role_mapping is None:
-            role_mapping = self.mapping_role_mapping.get(self.default_model_name, self.default_role_mapping)
+            role_mapping = self.mapping_role_mapping.get(model, self.default_role_mapping)
         
         if response_class and (tools or tool_choice):
             raise Exception("function calling is enabled,response_class should be set.")
@@ -504,10 +512,10 @@ class ByzerLLM:
 
         final_ins = self.generate_instruction_from_history(conversations, role_mapping)         
 
-        default_config = self.mapping_extra_generation_params.get(self.default_model_name,{})
+        default_config = self.mapping_extra_generation_params.get(model,{})
         v = [{"instruction":final_ins,**default_config,**llm_config }]         
-        res = self._query(self.default_model_name,v) 
-        clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)        
+        res = self._query(model,v) 
+        clean_func = self.mapping_clean_func.get(model,lambda s: s)        
         responses = [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]        
 
         temp_result = responses    
@@ -541,10 +549,14 @@ class ByzerLLM:
             return final_result
 
         
-    def stream_chat_oai(self,conversations,role_mapping=None,**llm_config): 
-        v = self.chat_oai(conversations,role_mapping,**{**llm_config,**{"generation.stream":True}})       
+    def stream_chat_oai(self,conversations, model:Optional[str]=None, role_mapping=None,**llm_config): 
+        
+        if not model:
+            model = self.default_model_name
+
+        v = self.chat_oai(conversations,model=model,role_mapping = role_mapping,**{**llm_config,**{"generation.stream":True}})       
         request_id = v[0].metadata["request_id"]
-        server = ray.get_actor("VLLM_STREAM_SERVER")                
+        server = ray.get_actor("VLLM_STREAM_SERVER")                        
         
         while True:                 
             final_output = ray.get(server.get_item.remote(request_id))
@@ -556,12 +568,16 @@ class ByzerLLM:
                 break
             
             text_outputs = [output for output in final_output.outputs]
-            clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)
+            clean_func = self.mapping_clean_func.get(model,lambda s: s)
             generated_text = text_outputs[0].text                                
             yield clean_func(generated_text)
 
     async def async_stream_chat_oai(self,conversations,role_mapping=None,**llm_config): 
-        v = self.chat_oai(conversations,role_mapping,**{**llm_config,**{"generation.stream":True}})       
+        
+        if not model:
+            model = self.default_model_name
+
+        v = self.chat_oai(conversations,model=model,role_mapping=role_mapping,**{**llm_config,**{"generation.stream":True}})       
         request_id = v[0].metadata["request_id"]
         server = ray.get_actor("VLLM_STREAM_SERVER")                
         
@@ -575,7 +591,7 @@ class ByzerLLM:
                 break
             
             text_outputs = [output for output in final_output.outputs]
-            clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)
+            clean_func = self.mapping_clean_func.get(model,lambda s: s)
             generated_text = text_outputs[0].text                                
             yield clean_func(generated_text)        
     
@@ -631,7 +647,7 @@ class ByzerLLM:
                 **extract_params
                 })
         res = self._query(model,v) 
-        clean_func = self.mapping_clean_func.get(self.default_model_name,lambda s: s)
+        clean_func = self.mapping_clean_func.get(model,lambda s: s)
         return [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]
     
     def apply_sql_func(self,sql:str,data:List[Dict[str,Any]],owner:str="admin",url:str="http://127.0.0.1:9003/model/predict"):
