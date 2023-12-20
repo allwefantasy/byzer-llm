@@ -237,6 +237,7 @@ def sft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Di
     detached = train_params.get("detached","true") == "true"
     
     if detached:
+        print_flush(f"[{sft_name}] Detached mode is enabled. ")
         train_actor = SFT.options(name=sft_name,lifetime="detached", **train_worker_conf).remote(data_refs,sft_config,train_params,sys_conf)
         train_actor.train.remote([])
         return [] 

@@ -663,6 +663,7 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     trainer = worker_cls(name=sft_name)
 
     if detached:
+        print_flush(f"[{sft_name}] Detached mode is enabled. ")
         trainer.sfft_train.remote(data_refs,train_params,sys_conf)        
         return []
         
