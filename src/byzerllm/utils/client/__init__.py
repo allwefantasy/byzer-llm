@@ -322,7 +322,9 @@ class ByzerLLM:
     
     def raw_sft(self,train_params:Dict[str,Any],sys_conf:Dict[str,Any]={}):                   
         model_type = train_params["pretrainedModelType"] .split("/")[-1]      
-        train_module = importlib.import_module(f'byzerllm.{model_type}')
+        from byzerllm import llama2 as train_module
+        # train_module =  importlib.import_module(f'byzerllm.{model_type}')
+
         train_module.sft_train([],train_params,sys_conf)
             
 
