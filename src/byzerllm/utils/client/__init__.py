@@ -277,6 +277,7 @@ class ByzerLLM:
     def sft(self,sft_name:str,
             local_data_dir_path:str,
             local_model_path:str,
+            local_stage_path:str,
             pretrained_model_type:str,            
             num_cpus:int,
             num_gpus:int,
@@ -292,6 +293,7 @@ class ByzerLLM:
             sft_name (str): the uniq name of this finetune task
             local_data_dir_path (str): the local data dir path, which should contains `data.jsonl` file
             local_model_path (str): the local model path, which should contains `config.json` file
+            local_stage_path (str): the local stage path which store the temp data and model
             pretrained_model_type (str): the pretrained model type, e.g. "sft/llama2","sft/baichuan"
             num_cpus (int): the number of cpus
             num_gpus (int): the number of gpus
@@ -307,6 +309,7 @@ class ByzerLLM:
         train_params["pretrainedModelType"] = pretrained_model_type
         train_params["config"] = json_config
         train_params["detached"] = detached
+        train_params["localPathPrefix"] = local_stage_path
         
         for k,v in model_params.items():
             train_params[k] = v
@@ -320,15 +323,13 @@ class ByzerLLM:
     def raw_sft(self,train_params:Dict[str,Any],sys_conf:Dict[str,Any]={}):                   
         model_type = train_params["pretrainedModelType"] .split("/")[-1]      
         train_module = importlib.import_module(f'byzerllm.{model_type}')
-        sft_train = getattr(train_module,"sft_train")
-        sft_train([],train_params,sys_conf)
+        train_module.sft_train([],train_params,sys_conf)
             
 
     def raw_pretrain(self,train_params:Dict[str,Any]):                  
         model_type = train_params["pretrainedModelType"][-1]      
-        train_module = importlib.import_module(f'byzerllm.{model_type}')
-        sfft_train = getattr(train_module,"sfft_train")
-        sfft_train([],train_params,self.sys_conf)
+        train_module = importlib.import_module(f'byzerllm.{model_type}')        
+        train_module.sfft_train([],train_params,self.sys_conf)
 
     def raw_merge_lora(self,train_params:Dict[str,Any]):                
         from byzerllm.utils.sft.merge_lora import merge_lora_to_base_model    
