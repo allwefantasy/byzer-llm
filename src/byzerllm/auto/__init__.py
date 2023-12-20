@@ -139,7 +139,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         
     results_generator = model.generate(ins, sampling_params,request_id) 
     final_output = None
-    first_token_time = None
+    first_token_time = current_time_milliseconds
     async for request_output in results_generator:  
         if first_token_time is None and request_output.outputs and len(request_output.outputs[0].token_ids)>0:
             first_token_time = int(time.time() * 1000)      

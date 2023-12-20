@@ -121,8 +121,7 @@ class Templates:
                         "system_msg":"<|im_start|>system\n{system_msg}<|im_end|>",
                         "system_msg_func":sys_format
                         },
-                        generation_config={
-                            "generation.early_stopping":False,
+                        generation_config={                            
                             "generation.repetition_penalty":1.1,
                             "generation.stop_token_ids":[151643,151645]},                  
                         clean_func=clean_func) 
