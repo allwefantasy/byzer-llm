@@ -308,7 +308,7 @@ class ByzerLLM:
         train_params["localModelDir"] = local_model_path
         train_params["pretrainedModelType"] = pretrained_model_type
         train_params["config"] = json_config
-        train_params["detached"] = detached
+        train_params["detached"] = "true" if detached else "false"
         train_params["localPathPrefix"] = local_stage_path
         
         for k,v in model_params.items():

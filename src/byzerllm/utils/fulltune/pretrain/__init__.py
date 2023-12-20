@@ -654,14 +654,7 @@ def sfft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: D
     formatted_time = current_time.strftime("%Y%m%d-%H-%M-%S")
     sft_name = train_params["name"] if "name" in train_params else f"sft-{sys_conf['OWNER']}-{formatted_time}"        
 
-    detached = False
-    if "detached" in train_params:
-        temp_v = train_params["detached"]
-        if isinstance(temp_v,str): 
-            detached = temp_v == "true"
-        elif isinstance(temp_v,bool):
-            detached = temp_v 
-            
+    detached = train_params.get("detached","true") == "true"
     options = {"name":sft_name}
     if detached:        
         options["lifetime"] = "detached"

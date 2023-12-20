@@ -234,13 +234,7 @@ def sft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Di
        }
     }         
     
-    detached = False
-    if "detached" in train_params:
-        temp_v = train_params["detached"]
-        if isinstance(temp_v,str): 
-            detached = temp_v == "true"
-        elif isinstance(temp_v,bool):
-            detached = temp_v 
+    detached = train_params.get("detached","true") == "true"
     
     if detached:
         train_actor = SFT.options(name=sft_name,lifetime="detached", **train_worker_conf).remote(data_refs,sft_config,train_params,sys_conf)
