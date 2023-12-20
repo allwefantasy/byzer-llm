@@ -35,6 +35,7 @@ The unique features of Byzer-LLM are:
 * [Versions](#Versions)
 * [Installation](#Installation)
 * [Quick Start](#Quick-Start)
+* [Embedding Model](#Embedding-Model)
 * [Quatization](#Quatization)
 * [Supported Models](#Supported-Models)
 * [vLLM Support](#vLLM-Support)
