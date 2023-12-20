@@ -318,7 +318,10 @@ class ByzerLLM:
         sys_conf["num_gpus"] = num_gpus
         sys_conf["num_cpus"] = num_cpus    
 
-        return self.raw_sft(train_params=train_params,sys_conf=sys_conf)
+        r = self.raw_sft(train_params=train_params,sys_conf=sys_conf)
+        if detached:
+           return [i for i in r]
+        return r
     
     def raw_sft(self,train_params:Dict[str,Any],sys_conf:Dict[str,Any]={}):                   
         model_type = train_params["pretrainedModelType"] .split("/")[-1]              
