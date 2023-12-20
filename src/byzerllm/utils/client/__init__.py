@@ -323,20 +323,67 @@ class ByzerLLM:
            return [i for i in r]
         return r
     
+    def merge_lora(self,name:str,
+                   local_model_path:str,
+                   local_adpator_model_path:str,
+                   local_target_path:str
+                   ):
+        train_params = {}
+        train_params["name"] = name
+        train_params["modelNameOrPath"] = local_model_path
+        train_params["adapterNameOrPath"] = local_adpator_model_path
+        train_params["savePath"] = local_target_path
+        self.raw_merge_lora(train_params=train_params,sys_conf={})
+        return local_target_path
+    
+    def pretrain(self,name:str,
+            local_data_dir_path:str,
+            local_model_path:str,
+            local_stage_path:str,
+            pretrained_model_type:str,            
+            num_cpus:int,
+            num_gpus:int,
+            detached:bool=True,
+            json_config:str="{}",
+            model_params:Dict[str,Any]={},
+            **kwargs):
+        train_params = {}
+        train_params["name"] = name
+        train_params["localDataDir"] = local_data_dir_path
+        train_params["localModelDir"] = local_model_path
+        train_params["pretrainedModelType"] = pretrained_model_type
+        train_params["deepspeedConfig"] = json_config
+        train_params["detached"] = "true" if detached else "false"
+        train_params["localPathPrefix"] = local_stage_path
+        
+        for k,v in model_params.items():
+            train_params[k] = v
+
+        sys_conf = {}
+        sys_conf["num_gpus"] = num_gpus
+        sys_conf["num_cpus"] = num_cpus    
+
+        r = self.raw_pretrain(train_params=train_params,sys_conf=sys_conf)
+        if detached:
+           return [i for i in r]
+        return r
+    
+    
+    
     def raw_sft(self,train_params:Dict[str,Any],sys_conf:Dict[str,Any]={}):                   
         model_type = train_params["pretrainedModelType"] .split("/")[-1]              
         train_module =  importlib.import_module(f'byzerllm.{model_type}')
         return train_module.sft_train([],train_params,sys_conf)                
             
 
-    def raw_pretrain(self,train_params:Dict[str,Any]):                  
+    def raw_pretrain(self,train_params:Dict[str,Any],sys_conf:Dict[str,Any]={}):                  
         model_type = train_params["pretrainedModelType"][-1]      
         train_module = importlib.import_module(f'byzerllm.{model_type}')        
-        train_module.sfft_train([],train_params,self.sys_conf)
+        return train_module.sfft_train([],train_params,sys_conf)
 
-    def raw_merge_lora(self,train_params:Dict[str,Any]):                
+    def raw_merge_lora(self,train_params:Dict[str,Any],sys_conf:Dict[str,Any]):                
         from byzerllm.utils.sft.merge_lora import merge_lora_to_base_model    
-        merge_lora_to_base_model([],train_params,self.sys_conf) 
+        merge_lora_to_base_model([],train_params,sys_conf) 
 
     def raw_deepspeed_to_huggingface(self,train_params:Dict[str,Any]):
         from byzerllm.utils.fulltune.pretrain.convert_to_transformers import convert
