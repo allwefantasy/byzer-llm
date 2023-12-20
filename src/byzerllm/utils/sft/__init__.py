@@ -178,6 +178,10 @@ def sft_train(data_refs:List[DataServer],train_params:Dict[str,str],sys_conf: Di
     output_dir = os.path.join(localPathPrefix,rd,"finetune_model")
     logging_dir = os.path.join(localPathPrefix,rd,"logging")
     data_dir = os.path.join(localPathPrefix,rd,"finetune_data")
+    
+    if "data_dir" in train_params:
+        data_dir = train_params["data_dir"]
+
     data_file = os.path.join(data_dir,"data.jsonl")
 
     train_worker_conf = {}

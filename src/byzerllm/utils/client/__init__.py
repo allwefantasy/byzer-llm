@@ -273,12 +273,55 @@ class ByzerLLM:
         self.mapping_extra_generation_params[model] = template.generation_config
         self.mapping_clean_func[model] = template.clean_func
         return self
+
+    def sft(self,sft_name:str,
+            local_data_dir_path:str,
+            local_model_path:str,
+            pretrained_model_type:str,            
+            num_cpus:int,
+            num_gpus:int,
+            detached:bool=True,
+            json_config:str="{}",
+            model_params:Dict[str,Any]={},
+            **kwargs
+            ):
+        '''
+        finetune a pretrained model
+
+        Args:
+            sft_name (str): the uniq name of this finetune task
+            local_data_dir_path (str): the local data dir path, which should contains `data.jsonl` file
+            local_model_path (str): the local model path, which should contains `config.json` file
+            pretrained_model_type (str): the pretrained model type, e.g. "sft/llama2","sft/baichuan"
+            num_cpus (int): the number of cpus
+            num_gpus (int): the number of gpus
+            detached (bool, optional): whether to run this task in detached mode. Defaults to True.
+            json_config (str, optional): the json config string. Defaults to "{}".
+            model_params (Dict[str,Any], optional): the model params. Defaults to {}. The key should like this style `sft.int.logging_steps`, `sft.int.max_seq_length`
+                                                    which contains the `sft` prefix and the type of the value.
+        '''
+        train_params = {}
+        train_params["name"] = sft_name
+        train_params["data_dir"] = local_data_dir_path
+        train_params["localModelDir"] = local_model_path
+        train_params["pretrainedModelType"] = pretrained_model_type
+        train_params["config"] = json_config
+        train_params["detached"] = detached
+        
+        for k,v in model_params.items():
+            train_params[k] = v
+
+        sys_conf = {}
+        sys_conf["num_gpus"] = num_gpus
+        sys_conf["num_cpus"] = num_cpus    
+
+        self.raw_sft(train_params=train_params,sys_conf=sys_conf)
     
-    def raw_sft(self,train_params:Dict[str,Any]):                   
+    def raw_sft(self,train_params:Dict[str,Any],sys_conf:Dict[str,Any]={}):                   
         model_type = train_params["pretrainedModelType"] .split("/")[-1]      
         train_module = importlib.import_module(f'byzerllm.{model_type}')
         sft_train = getattr(train_module,"sft_train")
-        sft_train([],train_params,self.sys_conf)
+        sft_train([],train_params,sys_conf)
             
 
     def raw_pretrain(self,train_params:Dict[str,Any]):                  
