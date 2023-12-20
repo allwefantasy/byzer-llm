@@ -12,6 +12,7 @@ from pyjava.api.mlsql import DataServer
 from byzerllm import BlockRow
 import os
 import time
+from ..utils.sft import sft_train as common_sft_train
 
 def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],  
         max_length:int=4090, 
@@ -144,8 +145,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
 
 def sft_train(data_refs:List[DataServer],
               train_params:Dict[str,str],
-              conf: Dict[str, str])->Generator[BlockRow,Any,Any]:
-    from ..utils.sft import sft_train as common_sft_train
+              conf: Dict[str, str])->Generator[BlockRow,Any,Any]:    
     return common_sft_train(data_refs,train_params,conf) 
 
 
