@@ -127,6 +127,41 @@ Notice that the SaaS model does not need GPU, so we set the `setup_gpus_per_work
 to control max concurrency,how ever, the SaaS model has its own max concurrency limit, the `setup_num_workers` only control the max
 concurrency accepted by the Byzer-LLM.
 
+## Embedding Model
+
+The following code is a example of deploying BGE embedding model
+
+```python
+import ray
+from byzerllm.utils.client import ByzerLLM,LLMRequest,InferBackend
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)
+llm = ByzerLLM()
+
+llm.setup_gpus_per_worker(0.4).setup_num_workers(2).setup_infer_backend(InferBackend.Transformers)
+llm.deploy(
+    model_path="/home/byzerllm/models/bge-large-zh",
+    pretrained_model_type="custom/bge",
+    udf_name="emb",
+    infer_params={}
+)   
+```
+
+Then you can convert any text to vector :
+
+```python
+t = llm.emb("emb",LLMRequest(instruction="wow"))
+t[0].output
+#output: [-0.005588463973253965,
+ -0.01747054047882557,
+ -0.040633779019117355,
+...
+ -0.010880181565880775,
+ -0.01713103987276554,
+ 0.017675869166851044,
+ -0.010260719805955887,
+ ...]
+```
+
 ## Quatization
 
 For now, only the `InferBackend.transformers` backend support `Quatization` configuration. Here is the baichuan2 example:
