@@ -95,34 +95,35 @@ class SFT:
         
         
         # prepare data
-        with open(train_file,"w") as f: 
-            count = 0
-            for item in RayContext.collect_from(self.data_refs):                
-                if "conversation" in item:
-                    item["conversation"] = item["conversation"].tolist()
-                    s = json.dumps(item,ensure_ascii=False)               
-                    f.write(s+"\n")                    
-                elif "instruction" in item and "output" in item :
-                    # support alpaca format data
-                    history = item.get("history",[]) 
-                    
-                    if hasattr(history,"tolist"):
-                        history = history.tolist()
+        if self.data_refs:
+            with open(train_file,"w") as f: 
+                count = 0
+                for item in RayContext.collect_from(self.data_refs):                
+                    if "conversation" in item:
+                        item["conversation"] = item["conversation"].tolist()
+                        s = json.dumps(item,ensure_ascii=False)               
+                        f.write(s+"\n")                    
+                    elif "instruction" in item and "output" in item :
+                        # support alpaca format data
+                        history = item.get("history",[]) 
+                        
+                        if hasattr(history,"tolist"):
+                            history = history.tolist()
 
-                    input = item.get("input","")
-                    conversation = [sub.tolist() for sub in history]
-                    conversation = [{"human":x[0],"assistant":x[1]} for x in conversation]
-                    latest_conversation = [{"human":item["instruction"]+"\n"+input,"assistant":item["output"]}] if "instruction" in item and item["instruction"] else []
-                    s = json.dumps({
-                        "category":"",
-                        "conversation":conversation + latest_conversation,
-                        "conversation_id":count,
-                        "dataset":"",                
-                    },ensure_ascii=False)               
-                    f.write(s+"\n") 
-                else:
-                    raise Exception(f"Unknown data format: {item}")                                            
-                count += 1       
+                        input = item.get("input","")
+                        conversation = [sub.tolist() for sub in history]
+                        conversation = [{"human":x[0],"assistant":x[1]} for x in conversation]
+                        latest_conversation = [{"human":item["instruction"]+"\n"+input,"assistant":item["output"]}] if "instruction" in item and item["instruction"] else []
+                        s = json.dumps({
+                            "category":"",
+                            "conversation":conversation + latest_conversation,
+                            "conversation_id":count,
+                            "dataset":"",                
+                        },ensure_ascii=False)               
+                        f.write(s+"\n") 
+                    else:
+                        raise Exception(f"Unknown data format: {item}")                                            
+                    count += 1       
         
         ip,port = self.setup_tensorboard()
         print_flush(f"[{sft_name}] Tensorboard is running at: {ip}:{port}")
