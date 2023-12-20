@@ -5,6 +5,7 @@ import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 from byzerllm.utils.client import code_utils 
 from byzerllm.utils import function_calling_format,response_class_format,response_class_format_after_chat,FunctionCallList
+from langchain.prompts import PromptTemplate
 import json
 import dataclasses
 import importlib  
@@ -85,13 +86,21 @@ class ExecuteCodeResponse:
       variables: Dict[str,Any]=dataclasses.field(default_factory=dict)
 
 class Template:
-    def __init__(self,role_mapping:Dict[str,str],generation_config:Dict[str,Any],clean_func:Callable[[str],str]=lambda s: s ) -> None:
+    def __init__(self,
+                 role_mapping:Dict[str,str],
+                 generation_config:Dict[str,Any],
+                 clean_func:Callable[[str],str]=lambda s: s ) -> None:
         self.role_mapping = role_mapping
         self.generation_config = generation_config
-        self.clean_func = clean_func
+        self.clean_func = clean_func        
 
 
 class Templates:
+
+    def default_format(t,v):
+        return f"{t}{v}"
+
+
     @staticmethod
     def qwen():
         def clean_func(v):            
@@ -99,15 +108,49 @@ class Templates:
                 v = v.split("<|im_end|>")[0]
             if "<|endoftext|>" in v:
                 v = v.split("<|endoftext|>")[0]            
-            return v    
-        return Template({
-                    "user_role":"<|im_start|>user\n",
-                    "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
-                    "system_msg":"<|im_start|>system\nYou are a helpful assistant. Think it over and answer the user question correctly.<|im_end|>"
-                    },{
-                        "generation.early_stopping":False,
-                        "generation.repetition_penalty":1.1,
-                        "generation.stop_token_ids":[151643,151645]},clean_func) 
+            return v   
+
+        def sys_format(t,v):
+            m = PromptTemplate.from_template(t)
+            return m.format(system_msg=v)
+
+
+        return Template(role_mapping={
+                        "user_role":"<|im_start|>user\n",
+                        "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
+                        "system_msg":"<|im_start|>system\n{system_msg}<|im_end|>",
+                        "system_msg_func":sys_format
+                        },
+                        generation_config={
+                            "generation.early_stopping":False,
+                            "generation.repetition_penalty":1.1,
+                            "generation.stop_token_ids":[151643,151645]},                  
+                        clean_func=clean_func) 
+    
+    @staticmethod
+    def llama():
+        def sys_format(t,v):
+            m = PromptTemplate.from_template(t)
+            return m.format(system_msg=v)
+        
+        def user_format(t,v):
+            return f"<s>[INST] {v} [/INST]"
+        
+        def assistant_format(t,v):
+            return f" {v} </s>"
+        
+        return Template(
+            role_mapping={
+               "user_role":"",
+               "assistant_role": "",
+               "system_msg":"<s>[INST] <<SYS>>\n{system_msg}\n<</SYS>>\n[/INST]</s>",
+               "system_msg_func":sys_format,
+               "user_role_func": user_format,
+               "assistant_role_func": assistant_format
+            },            
+            generation_config={},
+            clean_func=lambda s: s
+        )
          
 
 class ByzerLLM:
@@ -268,10 +311,23 @@ class ByzerLLM:
         new_his = []    
         for item in conversations:
             if item["role"] == "system":
-                new_his.append(item["content"])
-                continue        
-            k = item['role']+"_role"            
-            new_his.append(f"{role_mapping[k]}{item['content']}")            
+                value = item["content"]
+                if "system_msg_func" in role_mapping:
+                    value = role_mapping["system_msg_func"](t=role_mapping["system_msg"],v=item["content"])
+                new_his.append(value)
+                continue
+            
+            if item["role"] == "user":
+                value =  f"{role_mapping['user_role']}{item['content']}"
+                if "user_role_func" in role_mapping:
+                        value = role_mapping["user_role_func"](t=role_mapping["user_role"],v=item["content"])         
+                new_his.append(value)  
+            
+            if item["role"] == "assistant":
+                value =  f"{role_mapping['assistant_role']}{item['content']}"
+                if "user_role_func" in role_mapping:
+                        value = role_mapping["assistant_role_func"](t=role_mapping["assistant_role"],v=item["content"])         
+                new_his.append(value)              
         
         if conversations[-1]["role"] == "user":            
             new_his.append(f"{role_mapping['assistant_role']}")
@@ -401,26 +457,31 @@ class ByzerLLM:
          if not role_mapping["user_role"]:
              return request.instruction
          
-         conversations = [{"role":"system","content":role_mapping["system_msg"]}]
+         sys_msg = role_mapping["system_msg"]
+         if "system_msg_func" in role_mapping:
+             sys_msg = "You are a helpful assistant. Think it over and answer the user question correctly."
+         
+         conversations = [{"role":"system","content":sys_msg}]
          # conversations += [{"role":item.role,"content":item.content} for item in request.extra_params.history]
          
-         conversations += [{
-                        "role":"user",
-                        "content":request.instruction
-                 }]
+         conversations += self._to_openai_format(request=request)
          
          final_ins = self.generate_instruction_from_history(conversations,role_mapping)                      
              
          return final_ins
     
-    def _to_openai_format(self,request:LLMRequest):
-        # conversations = [{"role":"system","content":request.extra_params.system_msg}]
-        # conversations += [{"role":item.role,"content":item.content} for item in request.extra_params.history]
-        
-        conversations += [{
-                    "role":"user",
-                    "content":request.instruction
-                }]
+    def _to_openai_format(self,request:LLMRequest): 
+        conversations = []
+        if isinstance(request.instruction,str):       
+            conversations += [{
+                        "role":"user",
+                        "content":request.instruction
+                    }]
+        else:
+            conversations += [{
+                        "role":"user",
+                        "content":x
+                    } for x in request.instruction]    
         return conversations
 
     def execute_function_calling(self,response:LLMResponse,tools:List[Callable])-> LLMFunctionCallResponse:            

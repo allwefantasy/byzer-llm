@@ -9,7 +9,7 @@ class TestByzerLLM(object):
 
     def setup_class(self):
         ray.init(address="auto",namespace="default")
-        self.llm = ByzerLLM()
+        self.llm = ByzerLLM(verbose=True)
 
         if self.llm.is_model_exist("chat"):
             self.llm.undeploy("chat")
@@ -34,3 +34,4 @@ class TestByzerLLM(object):
             "role":"user"
         }])
         print(t)
+    
