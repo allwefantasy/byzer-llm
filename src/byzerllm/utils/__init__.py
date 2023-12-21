@@ -249,7 +249,7 @@ def serialize_function_to_json(func):
 
         
 
-    return json.dumps(function_info, indent=2)
+    return json.dumps(function_info,ensure_ascii=False, indent=2)
 
 
 class FunctionCall(pydantic.BaseModel):
@@ -323,7 +323,7 @@ def response_class_format(prompt:str,cls:pydantic.BaseModel)->str:
 下面是使用 OpenAPI 3.1. 规范描述了你需如何进行json格式的生成。
 
 ```json
-{cls.schema_json()}
+{cls.schema_json(ensure_ascii=False)}
 ```
 
 现在用户的问题是：{prompt}
