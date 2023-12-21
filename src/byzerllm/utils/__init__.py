@@ -222,7 +222,7 @@ def serialize_function_to_json(func):
         "returns": type_hints.get('return', 'void').__name__
     }
 
-    for name, _ in signature.parameters.items():
+    for name, parameter in signature.parameters.items():
         param_type = get_type_name(type_hints.get(name, type(None)))
         param_annotated= func.__annotations__.get(name, '')
 
@@ -246,8 +246,9 @@ def serialize_function_to_json(func):
 
         properties["type"] = param_type
         properties["description"] = param_desc
-
         
+        if parameter.default is not inspect.Parameter.empty:
+            properties["default"] = parameter.default                            
 
     return json.dumps(function_info,ensure_ascii=False, indent=2)
 
