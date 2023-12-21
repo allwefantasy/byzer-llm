@@ -270,7 +270,7 @@ class FunctionCallList(pydantic.BaseModel):
     id: str = pydantic.Field(description="工具调用的唯一标识符,无需生成")
     type: str = pydantic.Field("function",description="工具调用的类型，固定为 function，无需生成")
 
-FUNCTION_CALLING_SCHEMA = FunctionCallList.schema_json() 
+FUNCTION_CALLING_SCHEMA = FunctionCallList.schema_json(ensure_ascii=False, indent=2) 
 
 
 def function_calling_format(prompt:str,tools:List[Callable],tool_choice:Callable)->str:
@@ -339,7 +339,7 @@ def response_class_format_after_chat(cls:pydantic.BaseModel)->str:
 下面是使用 OpenAPI 3.1. 规范描述了你需如何进行json格式的生成。
 
 ```json
-{cls.schema_json()}
+{cls.schema_json(ensure_ascii=False)}
 ```
 
 请根据描述生成 json 并发送给我。
