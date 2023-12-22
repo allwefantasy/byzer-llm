@@ -17,6 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
+- [2023/12] Release Byzer-LLM 0.1.23
 - [2023/12] Release Byzer-LLM 0.1.22
 - [2023/11] Release Byzer-LLM 0.1.16
 
@@ -53,6 +54,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.23： Fintune with python API/ Fix some bugs
 - 0.1.22： Function Calling support/ Response with pydantic class
 - 0.1.19： Fix embedding bugs
 - 0.1.18： Support stream chat/ Support Model Template
