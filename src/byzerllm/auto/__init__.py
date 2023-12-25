@@ -48,6 +48,13 @@ def ray_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     ),request=None))
     return [(response.generated_text,"")]
 
+
+async def async_get_meta(model,tokenizer):
+     from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs     
+     model:AsyncLLMEngine = model
+     config = await model.get_model_config()
+     return [{"model_deploy_type":"proprietary",**config.__dict__}]
+
 async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
         top_p:float=0.95,
@@ -296,9 +303,9 @@ For example:
             max_model_len=max_model_len,
             ** ohter_params
         )
-        llm = AsyncLLMEngine.from_engine_args(engine_args)                       
-        # llm.stream_chat = types.MethodType(vllm_chat, llm) 
+        llm = AsyncLLMEngine.from_engine_args(engine_args)                               
         llm.async_stream_chat = types.MethodType(async_vllm_chat, llm) 
+        llm.async_get_meta = types.MethodType(async_get_meta,llm)
         return (llm,llm.engine.tokenizer)  
 
     if  infer_mode == "ray/deepspeed":

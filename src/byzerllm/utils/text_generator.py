@@ -45,6 +45,11 @@ class ByzerLLMGenerator:
         if not self.model:
             raise Exception("This model do not support text generation service")
 
+        if query.get("meta",False):
+            if hasattr(self.model,"get_meta"):
+                return self.model.get_meta()
+            return [{"model_deploy_type":"proprietary"}]    
+
         his = self.extract_history(query) 
         
         # notice that not all parameters in query are used in model stream_chat function
@@ -94,10 +99,17 @@ class ByzerLLMGenerator:
                 if hasattr(self.embedding.model,"embed_query"):
                     return self.embedding.model.embed_query(ins,extract_params=new_params)
                 
-                return self.embedding.embed_query(ins,extract_params=new_params)
-            
+                return self.embedding.embed_query(ins,extract_params=new_params)                        
+
             if not self.model:
                 raise Exception("This model do not support text generation service")
+            
+            if query.get("meta",False):
+                if hasattr(self.model,"async_get_meta"):
+                    return await self.model.async_get_meta()
+                elif hasattr(self.model,"get_meta"):
+                    return self.model.get_meta()
+                return [{"model_deploy_type":"proprietary"}]    
 
             his = self.extract_history(query) 
             

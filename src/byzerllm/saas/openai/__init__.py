@@ -16,6 +16,12 @@ class CustomSaasAPI:
 
         self.max_retries = 10
 
+    # saas/proprietary
+    def get_meta(self):
+        return [{
+            "model_deploy_type": "saas"
+        }]
+
     def stream_chat(self, tokenizer, ins: str, his: List[Tuple[str, str]] = [],
                     max_length: int = 4096,
                     top_p: float = 0.7,

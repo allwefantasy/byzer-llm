@@ -36,6 +36,12 @@ class LLMResponse:
     metadata: Dict[str,Any] = dataclasses.field(default_factory=dict)
 
 
+class FCResponseClass(pydantic.BaseModel):
+    function_calling_format:Callable[[str,List[Callable],Callable],str]=function_calling_format
+    response_class_format:Callable[[str,pydantic.BaseModel],str]=response_class_format
+    response_class_format_after_chat:[[str,pydantic.BaseModel],str]=response_class_format_after_chat
+
+
 class LLMFunctionCallResponse(pydantic.BaseModel):
     response:LLMResponse
     values:List[Any]
