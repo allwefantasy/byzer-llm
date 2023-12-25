@@ -274,15 +274,24 @@ For example:
         tensor_parallel_size: int = num_gpus
         block_size: int = int(infer_params.get("backend.block_size",16))
         swap_space: int = int(infer_params.get("backend.swap_space",4))  # GiB
-        gpu_memory_utilization: float = float(infer_params.get("backend.gpu_memory_utilization",0.90))
-        max_num_batched_tokens: int = int(infer_params.get("backend.max_num_batched_tokens",32768))
-        max_model_len: int = int(infer_params.get("backend.max_model_len",32768))
-        max_num_seqs: int = int(infer_params.get("backend.max_num_seqs",256))
+        gpu_memory_utilization: float = float(infer_params.get("backend.gpu_memory_utilization",0.90))        
+        
         disable_log_stats: bool = infer_params.get("backend.disable_log_stats","false") == "true"
         quantization = infer_params.get("backend.quantization",None)
+        
+
         ohter_params = {}
         if quantization is not None:
             ohter_params["quantization"] = quantization
+
+        if "backend.max_num_batched_tokens" not in infer_params:
+            ohter_params["max_num_batched_tokens"] = int(infer_params["backend.max_num_batched_tokens"])
+
+        if "backend.max_model_len" not in infer_params:
+            ohter_params["max_model_len"] = int(infer_params["backend.max_model_len"])
+
+        if "backend.max_num_seqs" not in infer_params:
+            ohter_params["max_num_seqs"] = int(infer_params["backend.max_num_seqs"])        
         
 
         from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs     
@@ -299,11 +308,8 @@ For example:
             tensor_parallel_size=tensor_parallel_size,
             block_size=block_size,
             swap_space=swap_space,
-            gpu_memory_utilization=gpu_memory_utilization,
-            max_num_batched_tokens=max_num_batched_tokens,
-            max_num_seqs=max_num_seqs,
-            disable_log_stats=disable_log_stats,
-            max_model_len=max_model_len,
+            gpu_memory_utilization=gpu_memory_utilization,            
+            disable_log_stats=disable_log_stats,            
             ** ohter_params
         )
         llm = AsyncLLMEngine.from_engine_args(engine_args)                               
