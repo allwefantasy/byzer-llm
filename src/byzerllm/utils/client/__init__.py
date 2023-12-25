@@ -89,10 +89,17 @@ class Template:
     def __init__(self,
                  role_mapping:Dict[str,str],
                  generation_config:Dict[str,Any],
-                 clean_func:Callable[[str],str]=lambda s: s ) -> None:
+                 clean_func:Callable[[str],str]=lambda s: s,
+                 function_calling_format_func=function_calling_format,
+                 response_class_format_func=response_class_format,
+                 response_class_format_after_chat_func=response_class_format_after_chat
+                 ) -> None:
         self.role_mapping = role_mapping
         self.generation_config = generation_config
         self.clean_func = clean_func        
+        self.function_calling_format_func = function_calling_format_func
+        self.response_class_format_func = response_class_format_func
+        self.response_class_format_after_chat_func = response_class_format_after_chat_func
 
 
 class Templates:
@@ -178,6 +185,10 @@ class ByzerLLM:
         self.mapping_role_mapping = {}
         self.mapping_extra_generation_params = {}
         self.mapping_clean_func = {}
+   
+        self.mapping_function_calling_format_func = {}
+        self.mapping_response_class_format_func = {}
+        self.mapping_response_class_format_after_chat_func = {}
 
         self.byzer_engine_url = None
         if "byzer_engine_url" in kwargs:
@@ -272,6 +283,9 @@ class ByzerLLM:
         self.mapping_role_mapping[model] = template.role_mapping
         self.mapping_extra_generation_params[model] = template.generation_config
         self.mapping_clean_func[model] = template.clean_func
+        self.mapping_function_calling_format_func[model] = template.function_calling_format_func
+        self.mapping_response_class_format_after_chat_func[model] = template.response_class_format_after_chat_func
+        self.mapping_response_class_format_func[model] = template.response_class_format_func
         return self
 
     def setup_auto(self,model:Optional[str])->'ByzerLLM':
@@ -695,10 +709,12 @@ class ByzerLLM:
         last_message = conversations[-1]
         
         if tools or tool_choice:
-            last_message["content"] = function_calling_format(last_message["content"],tools,tool_choice)
+            f = self.mapping_function_calling_format_func.get(model,function_calling_format)
+            last_message["content"] = f(last_message["content"],tools,tool_choice)
 
         if response_class and not response_after_chat:
-            last_message["content"] = response_class_format(last_message["content"],cls = response_class)
+            f = self.mapping_response_class_format_func.get(model,response_class_format)
+            last_message["content"] = f(last_message["content"],cls = response_class)
 
         final_ins = self.generate_instruction_from_history(conversations, role_mapping)         
 
@@ -711,12 +727,13 @@ class ByzerLLM:
         temp_result = responses    
         if response_class and response_after_chat: 
             temp_result = []
+            f = self.mapping_response_class_format_after_chat_func.get(model,response_class_format_after_chat)
             for response in responses:
                 new_conversations = conversations + [{
                                         "content":response.output,
                                         "role":"assistant"
                                     },{
-                                        "content":response_class_format_after_chat(response_class),
+                                        "content":f(response_class),
                                         "role":"user"
                                     }]
                 temp_result.append(self.chat_oai(new_conversations,role_mapping=role_mapping,**llm_config)[0])            
