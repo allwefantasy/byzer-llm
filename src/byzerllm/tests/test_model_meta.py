@@ -34,8 +34,8 @@ class TestByzerLLMVLLMDeploy(object):
             self.llm.undeploy("chat")
     
     def test_get_meta(self):
-        t = self.llm.chat(None,request=LLMRequest(""),extract_params={"meta":True})
-        print(t)
+        t = self.llm.get_meta("chat")
+        assert t["model_deploy_type"] == "proprietary"
 
 
 

@@ -274,6 +274,24 @@ class ByzerLLM:
         self.mapping_clean_func[model] = template.clean_func
         return self
 
+    def setup_auto(self,model:Optional[str])->'ByzerLLM':
+        if not model:
+            model = self.default_model_name            
+        meta = self.get_meta(model=model)  
+        # {'model_deploy_type': 'proprietary','backend':'ray/vllm','max_model_len': 8192, 'architectures': ['QWenLMHeadModel']}  
+        if meta.get("model_deploy_type",None) != "proprietary":
+           logger.info(f"model({model}) is not proprietary, skip auto setup")
+           return self
+        
+        if "architectures" in meta:
+            if "QWenLMHeadModel" in meta["architectures"]:
+                self.setup_template(model,Templates.qwen())
+                if "max_model_len" in meta:
+                    self.setup_max_model_length(model,meta["max_model_len"])
+
+        return self        
+
+
     def sft(self,sft_name:str,
             local_data_dir_path:str,
             local_model_path:str,
@@ -497,6 +515,24 @@ class ByzerLLM:
         
         UDFBuilder.build(self.ray_context,init_model,getattr(predict_module,predict_func))
 
+    def get_meta(self,model:str,llm_config:Dict[str,Any]={}):        
+        if not model and not self.default_model_name:
+            raise Exception("model name is required")
+        
+        if not model:
+            model = self.default_model_name
+
+        default_config = self.mapping_extra_generation_params.get(model,{})
+
+        v = [{"instruction":"","meta":True, **{**default_config,**llm_config} }]        
+        res = self._query(model,v) 
+        
+        t = [LLMResponse(output=item["predict"],metadata=item.get("metadata",{}),input=item["input"]) for item in res]        
+        
+        if len(t) == 0 or len(t[0].output) == 0 :
+            return {}
+        return t[0].output[0]
+        
     def tokenize(self,model:str,s:str,llm_config:Dict[str,Any]={})->List[str]:
         
         if not model and not self.default_model_name:

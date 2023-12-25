@@ -35,7 +35,6 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     answer = tokenizer.decode(response[0][tokens["input_ids"].shape[1]:], skip_special_tokens=True)
     return [(answer,"")]
 
-
 def ray_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
         top_p:float=0.95,
@@ -48,12 +47,12 @@ def ray_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     ),request=None))
     return [(response.generated_text,"")]
 
-
 async def async_get_meta(model):
      from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs     
      model:AsyncLLMEngine = model
      config = await model.get_model_config()
      return [{"model_deploy_type":"proprietary",
+              "backend":"ray/vllm",
               "max_model_len":config.max_model_len,
               "architectures":getattr(config.hf_config, "architectures", [])
               }]
@@ -359,7 +358,14 @@ For example:
     if quatization:
         model = torch.compile(model)   
 
-    model.stream_chat = types.MethodType(stream_chat, model)     
+    def get_meta(self):
+        return [{
+            "model_deploy_type": "proprietary",
+            "backend":"transformers"
+        }]    
+
+    model.stream_chat = types.MethodType(stream_chat, model)
+    model.get_meta = types.MethodType(get_meta, model)     
     return (model,tokenizer)
 
 

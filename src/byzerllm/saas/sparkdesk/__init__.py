@@ -26,7 +26,7 @@ class SparkDeskAPIParams(object):
         self.APISecret = APISecret
         self.host = urlparse(gpt_url).netloc
         self.path = urlparse(gpt_url).path
-        self.gpt_url = gpt_url
+        self.gpt_url = gpt_url            
 
     # 生成url
     def create_url(self):
@@ -127,6 +127,13 @@ class SparkDeskAPI:
                 ws.close()
     
 
+    # saas/proprietary
+    def get_meta(self):
+        return [{
+            "model_deploy_type": "saas",
+            "backend":"saas"
+        }]
+    
     def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
         top_p:float=0.7,

@@ -16,6 +16,13 @@ class ChatGLMAPI:
         self.engine_type = "chatGLM"
         self.temp_token = None
 
+     # saas/proprietary
+    def get_meta(self):
+        return [{
+            "model_deploy_type": "saas",
+            "backend":"saas"
+        }]    
+
     def get_token_or_refresh(self):
         token_result = getToken(self.api_key, self.public_key)
         if token_result and token_result["code"] == 200:

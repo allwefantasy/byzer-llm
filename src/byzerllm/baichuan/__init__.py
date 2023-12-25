@@ -5,6 +5,12 @@ import os
 from typing import Any,Any,Dict, List,Tuple,Generator
 from .. import BlockRow
 
+def get_meta(self):
+    return [{
+        "model_deploy_type": "proprietary",
+        "backend":"transformers"
+    }]
+
 def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
         top_p:float=0.95,
@@ -68,7 +74,8 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         model = AutoModelForCausalLM.from_pretrained(pretrained_model_dir,trust_remote_code=True,
                                                 device_map='auto',                                                
                                                 torch_dtype=torch.bfloat16                                                
-                                                )    
+                                                )         
+           
     
     model.generation_config = GenerationConfig.from_pretrained(pretrained_model_dir)
     
@@ -78,7 +85,9 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
 
     model.eval() 
     import types
+    
     model.stream_chat = types.MethodType(stream_chat, model)     
+    model.get_meta = types.MethodType(get_meta, model)
     return (model,tokenizer)
 
 def sft_train(data_refs:List[DataServer],

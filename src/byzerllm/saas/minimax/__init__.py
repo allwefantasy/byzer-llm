@@ -50,6 +50,13 @@ class MiniMaxError(Exception):
         self.status_code = status_code
         self.request_id = self.headers.get("request-id", request_id)
 
+     # saas/proprietary
+    def get_meta(self):
+        return [{
+            "model_deploy_type": "saas",
+            "backend":"saas"
+        }]    
+
     def __str__(self):
         msg = self._status_msg or "<empty message>"
         if self.request_id is not None:
