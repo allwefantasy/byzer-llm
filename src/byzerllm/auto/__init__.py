@@ -53,7 +53,10 @@ async def async_get_meta(model):
      from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs     
      model:AsyncLLMEngine = model
      config = await model.get_model_config()
-     return [{"model_deploy_type":"proprietary",**config.__dict__}]
+     return [{"model_deploy_type":"proprietary",
+              "max_model_len":config.max_model_len,
+              "architectures":getattr(config.hf_config, "architectures", [])
+              }]
 
 async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
