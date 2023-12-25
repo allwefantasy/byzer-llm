@@ -156,7 +156,7 @@ async def simple_predict_func(model,v):
     for item in data:        
         v = await llm.async_predict(item)
         
-        if item.get("tokenizer",False) or item.get("embedding",False):
+        if item.get("tokenizer",False) or item.get("embedding",False) or item.get("meta",False):
             results.append({
             "predict":v,
             "metadata":{},
@@ -185,7 +185,7 @@ def chatglm_predict_func(model,v):
             item["instruction"] = f'{item["system"]}\n{item["instruction"]}'
         v = llm.predict(item)
 
-        if item.get("tokenizer",False) or item.get("embedding",False):
+        if item.get("tokenizer",False) or item.get("embedding",False) or item.get("meta",False):
             results.append({
             "predict":v,
             "metadata":{},
