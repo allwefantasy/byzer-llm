@@ -49,7 +49,7 @@ def ray_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     return [(response.generated_text,"")]
 
 
-async def async_get_meta(model,tokenizer):
+async def async_get_meta(model):
      from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs     
      model:AsyncLLMEngine = model
      config = await model.get_model_config()
