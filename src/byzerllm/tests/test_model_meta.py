@@ -23,7 +23,7 @@ class TestByzerLLMVLLMDeploy(object):
             model_path=model_path,
             pretrained_model_type="custom/auto",
             udf_name="chat",
-            infer_params={"backend.max_num_batched_tokens":8192,"backend.max_model_len":8192}
+            infer_params={}
         )
         self.llm.setup_default_model_name("chat")
         self.llm.setup_template("chat",Templates.qwen())

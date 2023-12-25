@@ -284,13 +284,13 @@ For example:
         if quantization is not None:
             ohter_params["quantization"] = quantization
 
-        if "backend.max_num_batched_tokens" not in infer_params:
+        if "backend.max_num_batched_tokens" in infer_params:
             ohter_params["max_num_batched_tokens"] = int(infer_params["backend.max_num_batched_tokens"])
 
-        if "backend.max_model_len" not in infer_params:
+        if "backend.max_model_len" in infer_params:
             ohter_params["max_model_len"] = int(infer_params["backend.max_model_len"])
 
-        if "backend.max_num_seqs" not in infer_params:
+        if "backend.max_num_seqs" in infer_params:
             ohter_params["max_num_seqs"] = int(infer_params["backend.max_num_seqs"])        
         
 
