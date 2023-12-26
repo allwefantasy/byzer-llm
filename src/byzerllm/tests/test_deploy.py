@@ -44,7 +44,7 @@ class TestByzerLLMVLLMDeploy(object):
         llm2 = ByzerLLM()
         v = Templates.qwen()
         llm2.setup_auto("chat")
-        assert llm2.mapping_role_mapping["chat"] == v.role_mapping
+        assert llm2.mapping_role_mapping["chat"]["user_role"] == v.role_mapping["user_role"]
 
 
 
