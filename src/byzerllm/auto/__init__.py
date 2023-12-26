@@ -34,6 +34,8 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
 
     stopping_criteria = None
     
+    import math
+
     if "stopping_sequences" in kwargs:        
         stopping_sequences = [torch.tensor(word).to(device) for word in tokenize_stopping_sequences(tokenizer,kwargs["stopping_sequences"].split(","))]    
         input_length = tokens["input_ids"].shape[1]
@@ -43,10 +45,10 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
             input_start=input_length,
             skip_check_min_length=skip_check_min_length
             )])
-    
+
     config = self.config
-    
-    max_new_tokens = compute_max_new_tokens(tokens,math.min(max_length,getattr(config, "model_max_length", max_length))) 
+
+    max_new_tokens = compute_max_new_tokens(tokens, min(max_length, getattr(config, "model_max_length", max_length))) 
 
     other_params = {}  
     if "early_stopping" in kwargs:
