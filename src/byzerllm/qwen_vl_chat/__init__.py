@@ -13,7 +13,14 @@ from pyjava.api.mlsql import DataServer
 from .. import BlockRow
 from .. import parse_params
 
-
+def get_meta(self): 
+    config = self.config   
+    return [{
+        "model_deploy_type": "proprietary",
+        "backend":"transformers",
+        "max_model_len":getattr(config, "model_max_length", -1),
+        "architectures":getattr(config, "architectures", [])
+    }]
 
 def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
@@ -92,6 +99,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     model.generation_config = GenerationConfig.from_pretrained(pretrained_model_dir, trust_remote_code=True)       
     import types
     model.stream_chat = types.MethodType(stream_chat, model)     
+    model.get_meta = types.MethodType(get_meta, model)
     return (model,tokenizer)
 
 

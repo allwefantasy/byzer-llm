@@ -9,7 +9,7 @@ from pyjava.api.mlsql import DataServer
 from .. import BlockRow
 from .. import parse_params
 
-
+model.get_meta = types.MethodType(get_meta, model)    
 
 def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 
