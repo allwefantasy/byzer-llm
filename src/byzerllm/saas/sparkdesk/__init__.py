@@ -10,7 +10,7 @@ from datetime import datetime
 from time import mktime
 from urllib.parse import urlencode
 from wsgiref.handlers import format_date_time
-from typing import List, Tuple,Dict
+from typing import List, Tuple,Dict,Any
 import time
 import queue
 
@@ -134,18 +134,12 @@ class SparkDeskAPI:
             "backend":"saas"
         }]
     
-    def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
+    def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,Any]]=[],  
         max_length:int=4096, 
         top_p:float=0.7,
-        temperature:float=0.9): 
+        temperature:float=0.9):         
 
-        q = [] 
-        for item in his:
-           q.append({"role": "user", "content": item[0]})
-           q.append({"role": "assistant", "content": item[1]})
-
-
-        q.append({"role": "user", "content": ins})        
+        q = his + [{"role": "user", "content": ins}]
         websocket.enableTrace(False)
         wsUrl = self.config.create_url()
         ws = websocket.WebSocketApp(wsUrl, 

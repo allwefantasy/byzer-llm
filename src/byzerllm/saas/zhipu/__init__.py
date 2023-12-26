@@ -2,7 +2,7 @@ import json
 import zhipuai
 import time
 import traceback
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict,Any
 from retrying import retry
 
 
@@ -45,16 +45,12 @@ class CustomSaasAPI:
             "backend":"saas"
         }]    
 
-    def stream_chat(self, tokenizer, ins: str, his: List[Tuple[str, str]] = [],
+    def stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
                     max_length: int = 4096,
                     top_p: float = 0.7,
                     temperature: float = 0.9, **kwargs):
-        his_message = []
-
-        for item in his:
-            his_message.append({"role": "user", "content": item[0]})
-            his_message.append({"role": "assistant", "content": item[1]})
-        messages = his_message + [{"role": "user", "content": ins}]
+        
+        messages = his + [{"role": "user", "content": ins}]
 
         zhipuai.api_key = self.api_key
 

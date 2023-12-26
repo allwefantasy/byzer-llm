@@ -3,7 +3,7 @@ from random import randint
 import time
 import uuid
 
-from typing import Union, List, Tuple, Optional, Dict
+from typing import Union, List, Tuple, Optional, Dict,Any
 
 def randomTaskCode():
     return "%019d" % randint(0, 10**19)
@@ -32,15 +32,15 @@ class ChatGLMAPI:
             raise Exception("Fail to get token from ChatGLMAPI. Check api_key/public_key")    
         return self.temp_token    
     
-    def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
+    def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,Any]]=[],  
         max_length:int=4096, 
         top_p:float=0.7,
         temperature:float=0.9,**kwargs): 
 
         q = []
         for item in his:    
-            q.append(item[0])
-            q.append(item[1])
+            q.append(item["user"])
+            q.append(item["assistant"])
 
         data = {
                     "top_p": top_p,

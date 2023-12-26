@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict,Any
 
 import openai
 from byzerllm.utils.openai_utils import completion_with_retry
@@ -25,7 +25,7 @@ class CustomSaasAPI:
             "backend":"saas"
         }]    
 
-    def stream_chat(self, tokenizer, ins: str, his: List[Tuple[str, str]] = [],
+    def stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
                     max_length: int = 4096,
                     top_p: float = 0.7,
                     temperature: float = 0.9, **kwargs):

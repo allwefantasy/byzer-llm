@@ -5,7 +5,7 @@ import traceback
 from enum import Enum
 from dataclasses import dataclass
 
-from typing import Optional, List, Dict, Union, Any
+from typing import Optional, List, Dict, Union, Any,str,Any
 
 import tenacity
 from tenacity import (
@@ -110,7 +110,7 @@ class CustomSaasAPI:
             self,
             tokenizer,
             ins: str,
-            his: List[Dict],
+            his: List[Dict[str,Any]],
             max_length: int = 4096,
             top_p: float = 0.7,
             temperature: float = 0.9,
