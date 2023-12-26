@@ -17,9 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2023/12] Release Byzer-LLM 0.1.23
-- [2023/12] Release Byzer-LLM 0.1.22
-- [2023/11] Release Byzer-LLM 0.1.16
+- [2023/12] Release Byzer-LLM 0.1.24
 
 ---
 
@@ -55,6 +53,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.24： Support get meta from model instance and auto setup template
 - 0.1.23： Fintune with python API/ Fix some bugs
 - 0.1.22： Function Calling support/ Response with pydantic class
 - 0.1.19： Fix embedding bugs
@@ -243,7 +242,7 @@ llm.deploy(
     model_path="/home/byzerllm/models/openbuddy-zephyr-7b-v14.1",
     pretrained_model_type="custom/auto",
     udf_name="zephyr_chat"",
-    infer_params={"backend.max_num_batched_tokens":32768}
+    infer_params={}
 )
 
 llm.chat("zephyr_chat",LLMRequest(instruction="hello world"))[0].output
