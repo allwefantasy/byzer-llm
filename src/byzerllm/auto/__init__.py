@@ -18,6 +18,7 @@ import asyncio
 INFERENCE_NAME = "auto"
 INFER_TOKEN_METRICS = Metric()
 
+
 def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=1024, 
         top_p:float=0.95,
@@ -34,18 +35,6 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     )
     answer = tokenizer.decode(response[0][tokens["input_ids"].shape[1]:], skip_special_tokens=True)
     return [(answer,"")]
-
-def ray_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
-        max_length:int=4096, 
-        top_p:float=0.95,
-        temperature:float=0.1,**kwargs):
-    from aviary.backend.server.models import Prompt
-    model = self
-    response = ray.get(model.generate_text.remote(prompt=Prompt(
-        prompt=ins,
-        use_prompt_format=False
-    ),request=None))
-    return [(response.generated_text,"")]
 
 async def async_get_meta(model):
      from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs     
@@ -334,10 +323,13 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     if quatization:
         model = torch.compile(model)   
 
-    def get_meta(self):
+    def get_meta(self): 
+        config = self.config   
         return [{
             "model_deploy_type": "proprietary",
-            "backend":"transformers"
+            "backend":"transformers",
+            "max_model_len":getattr(config, "model_max_length", -1),
+            "architectures":getattr(config, "architectures", [])
         }]    
 
     model.stream_chat = types.MethodType(stream_chat, model)
