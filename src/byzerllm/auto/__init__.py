@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig
+from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig,StoppingCriteriaList
 import ray
 import torch
 import os
@@ -6,34 +6,69 @@ import ray
 import time
 from typing import Any,Any,Dict, List,Tuple,Generator,Optional,Union
 import types
+import math
 
 from pyjava.api.mlsql import DataServer
 from byzerllm.utils.metrics import Metric
 from .. import BlockRow
 from byzerllm.utils import VLLMStreamServer
-import threading
 import asyncio
+from byzerllm.utils import compute_max_new_tokens,tokenize_stopping_sequences,StopSequencesCriteria
+
 
 
 INFERENCE_NAME = "auto"
 INFER_TOKEN_METRICS = Metric()
 
 
-def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
-        max_length:int=1024, 
+def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],  
+        max_length:int=4090, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
         
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
+    timeout_s = float(kwargs.get("timeout_s",60*5)) 
+    skip_check_min_length = int(kwargs.get("stopping_sequences_skip_check_min_length",0))       
+    
     tokens = tokenizer(ins, return_token_type_ids=False,return_tensors="pt").to(device)
+
+    stopping_criteria = None
+    
+    if "stopping_sequences" in kwargs:        
+        stopping_sequences = [torch.tensor(word).to(device) for word in tokenize_stopping_sequences(tokenizer,kwargs["stopping_sequences"].split(","))]    
+        input_length = tokens["input_ids"].shape[1]
+        stopping_criteria=StoppingCriteriaList([StopSequencesCriteria(
+            tokenizer=tokenizer,
+            stops=stopping_sequences,
+            input_start=input_length,
+            skip_check_min_length=skip_check_min_length
+            )])
+    
+    config = self.config
+    
+    max_new_tokens = compute_max_new_tokens(tokens,math.min(max_length,getattr(config, "model_max_length", max_length))) 
+
+    other_params = {}  
+    if "early_stopping" in kwargs:
+        other_params["early_stopping"] = bool(kwargs["early_stopping"])
+
+    if "repetition_penalty" in kwargs:
+        other_params["repetition_penalty"] = float(kwargs["repetition_penalty"])
+    
+    start_time = time.monotonic()        
     response = self.generate(
         input_ids=tokens["input_ids"],
-        max_new_tokens=max_length,
-        repetition_penalty=1.05,
+        max_new_tokens= max_new_tokens,        
         temperature=temperature,
-        attention_mask=tokens.attention_mask        
-    )
-    answer = tokenizer.decode(response[0][tokens["input_ids"].shape[1]:], skip_special_tokens=True)
+        top_p=top_p,        
+        max_time=timeout_s,
+        stopping_criteria=stopping_criteria,
+        **other_params
+    )    
+    time_taken = time.monotonic() - start_time    
+    new_tokens = response[0][tokens["input_ids"].shape[1]:]
+    print(f"generate took {time_taken} s to complete. tokens/s:{len(new_tokens)/time_taken}",flush=True)
+    answer = tokenizer.decode(new_tokens, skip_special_tokens=True)
     return [(answer,"")]
 
 async def async_get_meta(model):
@@ -296,18 +331,32 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
 
     tokenizer = AutoTokenizer.from_pretrained(pretrained_model_dir,trust_remote_code=True)    
 
-    if quatization:
-        nf4_config = BitsAndBytesConfig(
+    quatization = infer_params.get("quatization", "false")
+
+    if quatization in ["4", "8", "true"]:
+        print(f"enable [{quatization}] quatization.", flush=True)
+        load_in_8bit = quatization == "8"
+        # default using int4
+        quantization_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
             bnb_4bit_use_double_quant=False,
             bnb_4bit_compute_dtype=torch.bfloat16,
         )
+        if load_in_8bit:
+            llm_int8_threshold = infer_params.get("llm_int8_threshold", 6.0)
+            quantization_config = BitsAndBytesConfig(
+                load_in_8bit=True,
+                llm_int8_threshold=llm_int8_threshold,
+                llm_int8_skip_modules=None,
+                llm_int8_enable_fp32_cpu_offload=False,
+                llm_int8_has_fp16_weight=False,
+            )
         model = AutoModelForCausalLM.from_pretrained(
             pretrained_model_dir,
-            trust_remote_code=True,            
+            trust_remote_code=True,
             device_map="auto",
-            quantization_config=nf4_config,
+            quantization_config=quantization_config,
         )
 
     else:
