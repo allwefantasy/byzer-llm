@@ -9,6 +9,12 @@ compute_max_new_tokens,tokenize_stopping_sequences,StopSequencesCriteria)
 import os
 import time
 
+def get_meta(self):
+    return [{
+        "model_deploy_type": "proprietary",
+        "backend":"transformers"
+    }]
+
 def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],  
         max_length:int=4090, 
         top_p:float=0.95,
@@ -131,7 +137,8 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     if quatization:
         model = torch.compile(model)      
     import types
-    model.stream_chat = types.MethodType(stream_chat, model)     
+    model.stream_chat = types.MethodType(stream_chat, model) 
+    model.get_meta = types.MethodType(get_meta, model)    
     return (model,tokenizer)
 
 def sft_train(data_refs:List[DataServer],

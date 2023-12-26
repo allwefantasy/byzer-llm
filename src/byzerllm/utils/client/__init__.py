@@ -217,9 +217,7 @@ class ByzerLLM:
             ) 
             self.context.have_fetched = True
             self.ray_context = self.context.rayContext         
-
-            
-    
+        
     def setup_reset(self):
         self.sys_conf = self.default_sys_conf.copy()
         self.context.conf = self.sys_conf
@@ -237,6 +235,18 @@ class ByzerLLM:
         # update the context conf
         self.context.conf = self.sys_conf
         return self
+
+    def setup_function_calling_format_func(self,model:str,func)->'ByzerLLM':
+        self.mapping_function_calling_format_func[model] = func
+        return self
+
+    def setup_response_class_format_func(self,model:str,func)->'ByzerLLM':
+        self.mapping_response_class_format_func[model] = func
+        return self
+
+    def setup_response_class_format_after_chat_func(self,model:str,func)->'ByzerLLM':
+        self.mapping_response_class_format_after_chat_func[model] = func
+        return self    
     
     def setup_infer_backend(self,backend:str)->'ByzerLLM':
         self.sys_conf["infer_backend"] = backend
@@ -706,6 +716,11 @@ class ByzerLLM:
         if response_class and (tools or tool_choice):
             raise Exception("function calling is enabled,response_class should be set.")
         
+        # todo: try to cache the meta
+        meta = self.get_meta(model=model)        
+        is_saas_model =  meta.get("model_deploy_type",None) == "saas"
+
+        
         last_message = conversations[-1]
         
         if tools or tool_choice:
@@ -715,11 +730,16 @@ class ByzerLLM:
         if response_class and not response_after_chat:
             f = self.mapping_response_class_format_func.get(model,response_class_format)
             last_message["content"] = f(last_message["content"],cls = response_class)
-
-        final_ins = self.generate_instruction_from_history(conversations, role_mapping)         
+        
+        if is_saas_model:
+            final_ins = last_message["content"]
+            history = conversations[:-1]
+        else:
+            final_ins = self.generate_instruction_from_history(conversations, role_mapping)         
+            history = []
 
         default_config = self.mapping_extra_generation_params.get(model,{})
-        v = [{"instruction":final_ins,**default_config,**llm_config }]         
+        v = [{"instruction":final_ins,"history":history,**default_config,**llm_config }]         
         res = self._query(model,v) 
         clean_func = self.mapping_clean_func.get(model,lambda s: s)        
         responses = [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]        
