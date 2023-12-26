@@ -44,6 +44,7 @@ The unique features of Byzer-LLM are:
 * [Function Calling](#Function-Calling)
 * [Respond with pydantic class](#Respond-with-pydantic-class)
 * [LLM-Friendly Function/DataClass](#LLM-Friendly-Function/DataClass)
+* [Model Meta](Model-Meta)
 * [SQL Support](#SQL-Support)
 * [SaaS Models](#SaaS-Models)
 * [Pretrain](#Pretrain)
@@ -326,9 +327,11 @@ llm.deploy(
 )
 
 llm.setup_default_model_name("chat")
-llm.setup_max_model_length("chat",max_model_len)
-llm.setup_template("chat",Templates.qwen()) 
-
+# setup_auto can be replaced by the following setup:
+# llm.setup_max_model_length("chat",max_model_len)
+# llm.setup_template("chat",Templates.qwen()) 
+# from 0.1.24
+llm.setup_auto("chat")
 ```
 
 Try to create some Python functions:
@@ -510,6 +513,21 @@ def compute_date_range(count:Annotated[int,"时间跨度，数值类型"],
 If the LLM make something wrong to your function (e.g. provide the bad parameters), try to optimize the function comment 
 and the parameter Annotated comment.
 
+## Model Meta (from 0.1.24)
+
+The Byzer-llm also support get the model meta information. The following code will get the meta information of model instance called `chat`:
+
+```python
+
+```python
+llm.get_meta(model="chat")
+
+#output:
+# {'model_deploy_type': 'proprietary',
+#  'backend': 'ray/vllm',
+#  'max_model_len': 32768,
+#  'architectures': ['QWenLMHeadModel']}
+```
 
 
 ## SQL Support
