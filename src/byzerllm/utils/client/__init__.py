@@ -190,6 +190,8 @@ class ByzerLLM:
         self.mapping_response_class_format_func = {}
         self.mapping_response_class_format_after_chat_func = {}
 
+        self.meta_cache = {}
+
         self.byzer_engine_url = None
         if "byzer_engine_url" in kwargs:
             self.byzer_engine_url = kwargs["byzer_engine_url"]  
@@ -538,13 +540,16 @@ class ByzerLLM:
             return model
         
         UDFBuilder.build(self.ray_context,init_model,getattr(predict_module,predict_func))
-
+  
     def get_meta(self,model:str,llm_config:Dict[str,Any]={}):        
         if not model and not self.default_model_name:
             raise Exception("model name is required")
         
         if not model:
             model = self.default_model_name
+
+        if model in self.meta_cache:
+            return self.meta_cache[model]    
 
         default_config = self.mapping_extra_generation_params.get(model,{})
 
@@ -553,9 +558,12 @@ class ByzerLLM:
         
         t = [LLMResponse(output=item["predict"],metadata=item.get("metadata",{}),input=item["input"]) for item in res]        
         
-        if len(t) == 0 or len(t[0].output) == 0 :
-            return {}
-        return t[0].output[0]
+        res = {}
+        if len(t) != 0 and len(t[0].output) != 0 :
+            res = t[0].output[0]
+
+        self.meta_cache[model] = res            
+        return self.meta_cache[model]
         
     def tokenize(self,model:str,s:str,llm_config:Dict[str,Any]={})->List[str]:
         
@@ -780,6 +788,10 @@ class ByzerLLM:
         
         if not model:
             model = self.default_model_name
+
+        meta = self.get_meta(model=model)
+        if meta.get("backend",None) != "ray/vllm":
+            raise Exception(f"stream_chat_oai of model({model}) only support ray/vllm backend")
 
         v = self.chat_oai(conversations,model=model,role_mapping = role_mapping,**{**llm_config,**{"generation.stream":True}})       
         request_id = v[0].metadata["request_id"]
