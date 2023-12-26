@@ -36,6 +36,7 @@ class TestByzerLLMVLLMDeploy(object):
     def test_get_meta(self):
         t = self.llm.get_meta("chat")
         assert t["model_deploy_type"] == "proprietary"
+        assert t["backend"] == "ray/vllm"
 
 
 
