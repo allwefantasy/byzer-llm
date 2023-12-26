@@ -227,31 +227,7 @@ def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
 
 def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}): 
     infer_mode = sys_conf.get("infer_backend","transformers")
-    quatization = infer_params.get("quatization","false") == "true"
-    
-    if infer_mode == "transformers":
-        raise Exception('''
-transformers backend is not supported in pretrainedModelType: auto.
-Try to use ray/tgi or ray/deepspeed or ray/vllm.
-
-For example:
-
-!byzerllm setup "infer_backend=ray/vllm";
-''')
-    
-
-    if infer_mode == "tgi":
-        import byzerllm.utils.inference as TGI
-        return TGI.init_model(model_dir,infer_params)                
-    
-    if infer_mode in ["aviary/deepspeed","aviary/devicemap"]:   
-        num_workers = int(sys_conf.get("num_gpus",1))   
-        udfName = infer_params["udfName"]
-        mode = infer_mode.split("/")[1]
-        from byzerllm.utils.rayinfer import build_model_serving
-        model = build_model_serving(udfName,model_dir, mode=mode, num_workers=num_workers)        
-        model.stream_chat = types.MethodType(ray_chat, model) 
-        return (model,None) 
+    quatization = infer_params.get("quatization","false") == "true"         
 
     if infer_mode == "ray/vllm":        
         num_gpus = int(sys_conf.get("num_gpus",1))
