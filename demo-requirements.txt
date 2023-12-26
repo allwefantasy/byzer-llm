@@ -28,6 +28,7 @@ fastapi
 uvicorn
 retrying
 zhipuai
+retrying
 
 # dependencies only for sparkdesk
 websockets
