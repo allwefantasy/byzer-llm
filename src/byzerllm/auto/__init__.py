@@ -305,7 +305,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     if not is_adaptor_model:        
         pretrained_model_dir = model_dir
 
-    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_dir)    
+    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_dir,trust_remote_code=True)    
 
     if quatization:
         nf4_config = BitsAndBytesConfig(
