@@ -314,23 +314,21 @@ ray.init(address="auto",namespace="default")
 llm = ByzerLLM()
 
 model_location="/home/byzerllm/models/Qwen-72B-Chat"
-max_model_len = 24000
 
 llm.setup_gpus_per_worker(8).setup_num_workers(1).setup_infer_backend(InferBackend.VLLM)
 llm.deploy(
     model_path=model_location,
     pretrained_model_type="custom/auto",
     udf_name=chat_model_name,
-    infer_params={"backend.max_num_batched_tokens":24000,
-                  "backend.max_model_len":max_model_len}
+    infer_params={}
 )
 
 llm.setup_default_model_name("chat")
-# setup_auto can be replaced by the following setup:
-# llm.setup_max_model_length("chat",max_model_len)
-# llm.setup_template("chat",Templates.qwen()) 
-# from 0.1.24
-llm.setup_auto("chat")
+# from 0.1.24 
+# llm.setup_auto("chat")
+meta = llm.get_meta()
+llm.setup_max_model_length("chat",meta.get("max_model_len",32000))
+lm.setup_template("chat",Templates.qwen()) 
 ```
 
 Try to create some Python functions:
@@ -424,6 +422,17 @@ else:
 ## output: '您好，我是一个人工智能语言模型，暂时无法吃饭。'
 ```
 
+You can check the default prompt template function in `from byzerllm.utils import function_calling_format`.
+If the model is not work well with the default function, you can setup your custom function:
+
+```python
+def custom_function_calling_format(prompt:str,tools:List[Callable],tool_choice:Callable)->str:
+.....
+
+
+llm.setup_function_calling_format_func("chat",custom_function_calling_format)
+```
+
 ## Respond with pydantic class
 
 When you chat with LLM, you can specify the reponse class, 
@@ -467,6 +476,17 @@ t = llm.chat_oai([
 
 t[0].value
 ## output: Story(title='月光下的守护者', body='在一个遥远的古老村庄里，住着一位名叫阿明的年轻人。阿明是个孤儿，从小在村里长大，以种田为生。他善良、勤劳，深受村民们喜爱。\n\n村子里有个传说，每当满月时分，月亮女神会在村子后山的古树下出现，赐福给那些善良的人们。然而，只有最纯洁的心才能看到她。因此，每年的这个时候，阿明都会独自一人前往后山，希望能得到女神的祝福。\n\n这一年，村子遭受了严重的旱灾，庄稼枯黄，人们生活困苦。阿明决定向月亮女神祈求降雨，拯救村子。他在月光下虔诚地祈祷，希望女神能听到他的呼唤。\n\n就在这个时刻，月亮女神出现了。她被阿明的善良和执着所感动，答应了他的请求。第二天早晨，天空乌云密布，大雨倾盆而下，久旱的土地得到了滋润，庄稼重新焕发生机。\n\n从此以后，每年的满月之夜，阿明都会去后山等待月亮女神的出现，他成为了村民心中的守护者，用他的善良和执着，守护着整个村庄。而他也终于明白，真正的守护者，并非需要超凡的力量，只需要一颗充满爱与善良的心。')
+```
+
+You can check the default prompt template function in `from byzerllm.utils import response_class_format,response_class_format_after_chat`.
+If the model is not work well with the default function, you can setup your custom function:
+
+```python
+def custom_response_class_format(prompt:str,cls:pydantic.BaseModel)->str:
+.....
+
+
+llm.setup_response_class_format_func("chat",custom_response_class_format)
 ```
 
 ## LLM-Friendly Function/DataClass
