@@ -266,6 +266,10 @@ class ByzerLLM:
     def setup_gpus_per_worker(self,num_gpus:int)->'ByzerLLM':
         self.sys_conf["num_gpus"] = num_gpus
         return self
+    
+    def setup_worker_concurrency(self,num:int)->'ByzerLLM':        
+        self.sys_conf["workerMaxConcurrency"] = num
+        return self        
 
     def setup_num_workers(self,num_workers:int)->'ByzerLLM':
         self.sys_conf["maxConcurrency"] = num_workers
