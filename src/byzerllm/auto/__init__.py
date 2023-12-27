@@ -183,6 +183,8 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     
     text_outputs = [output for output in final_output.outputs]
     generated_text = text_outputs[0].text
+    prob = text_outputs[0].cumulative_logprob
+
     current_time_milliseconds2 = int(time.time() * 1000)
         
     input_tokens_count = len(final_output.prompt_token_ids)
@@ -200,7 +202,8 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         "generated_tokens_count":generated_tokens_count,
         "time_cost":time_cost,
         "first_token_time":first_token_time-current_time_milliseconds,
-        "speed":float(generated_tokens_count)/time_cost*1000
+        "speed":float(generated_tokens_count)/time_cost*1000,
+        "prob":prob
     }})]   
 
 def block_vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
