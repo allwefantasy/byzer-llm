@@ -167,7 +167,7 @@ t[0].output
 
 ## Quatization
 
-For now, only the `InferBackend.transformers` backend support `Quatization` configuration. Here is the baichuan2 example:
+If the backend is `InferBackend.transformers`, here is the baichuan2 example:
 
 ```python
 llm.setup_gpus_per_worker(2).setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
@@ -185,6 +185,24 @@ The available `quatization` values:
 3. true/false
 
 When it's set true, the int4 will be choosed.
+
+If the bakcend is `InferBackend.VLLM`, here is the Yi example:
+
+```
+If you need to deploy model with Quantization, you can set the `infer_params` as the following code:
+
+```python
+llm.setup_gpus_per_worker(1).setup_num_workers(1).setup_infer_backend(InferBackend.VLLM)
+llm.deploy(
+    model_path="/home/winubuntu/models/Yi-6B-Chat-4bits",
+    pretrained_model_type="custom/auto",
+    udf_name="chat",
+    infer_params={"backend.quantization":"AWQ"}
+)
+```
+
+The parameter `backend.quantization` can be GPTQ/AWQ.
+
 
 ## Supported Models
 
@@ -252,7 +270,7 @@ There are some tiny differences between the vLLM and the transformers backend.
 
 1. The `pretrained_model_type` is fixed to `custom/auto` for vLLM, since the vLLM will auto detect the model type.
 2. Use `setup_infer_backend` to specify `InferBackend.VLLM` as the inference backend.
-
+ 
 
 ### Stream Chat
 
