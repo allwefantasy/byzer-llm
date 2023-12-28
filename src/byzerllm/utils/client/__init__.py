@@ -211,7 +211,7 @@ class Templates:
     @staticmethod
     def deepseek_code_insertion():        
         def sys_format(t,v):
-            if "<｜fim▁hole｜>" not in t:
+            if "<｜fim▁hole｜>" not in v:
                 raise Exception("the system message should contains <｜fim▁hole｜>")
             m = PromptTemplate.from_template(t)
             return m.format(system_msg=v)
@@ -259,7 +259,41 @@ class Templates:
             generation_config={},
             clean_func=lambda s: s
         )
-         
+    @staticmethod
+    def yi():
+        def clean_func(v):                    
+            return v   
+
+        def sys_format(t,v):
+            m = PromptTemplate.from_template(t)
+            return m.format(system_msg=v)
+
+
+        return Template(role_mapping={
+                        "user_role":"<|im_start|>user\n",
+                        "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
+                        "system_msg":"<|im_start|>system\n{system_msg}<|im_end|>",
+                        "system_msg_func":sys_format
+                        },
+                        generation_config={},                  
+                        clean_func=clean_func) 
+
+    @staticmethod
+    def default():
+        def clean_func(v):                    
+            return v   
+
+        def sys_format(t,v):
+            return v
+
+        return Template(role_mapping={
+                        "user_role":"User:",
+                        "assistant_role": "Assistant:",
+                        "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly.",
+                        "system_msg_func":sys_format
+                        },
+                        generation_config={},                  
+                        clean_func=clean_func)    
 
 class ByzerLLM:
    
@@ -426,10 +460,11 @@ class ByzerLLM:
            return self
         
         if "architectures" in meta:
+            
             if "QWenLMHeadModel" in meta["architectures"]:
                 self.setup_template(model,Templates.qwen())
                 if "max_model_len" in meta:
-                    self.setup_max_model_length(model,meta["max_model_len"])
+                    self.setup_max_model_length(model,meta["max_model_len"])                        
 
         return self        
 
@@ -1102,54 +1137,6 @@ async def async_stream_qwen_chat_wrapper(llm:"ByzerLLM",conversations: Optional[
                         "generation.early_stopping":False,
                         "generation.repetition_penalty":1.1,
                         "generation.stop_token_ids":[151643,151645]}})       
-    return t
-
-def stream_qwen_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
-    for conv in conversations:
-        if conv["role"] == "system":
-            if "<|im_start|>" not in conv["content"]:
-                conv["content"] = "<|im_start|>system\n" + conv["content"] + "<|im_end|>"
-            
-    t = llm.stream_chat_oai(conversations=conversations,role_mapping={
-                    "user_role":"<|im_start|>user\n",
-                    "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
-                    "system_msg":"<|im_start|>system\nYou are a helpful assistant. Think it over and answer the user question correctly.<|im_end|>"
-                    },  **{**{
-                        "max_length":1024*16,
-                        "top_p":0.95,
-                        "temperature":0.01,
-                    },**llm_config,**{
-                        "generation.early_stopping":False,
-                        "generation.repetition_penalty":1.1,
-                        "generation.stop_token_ids":[151643,151645]}})       
-    return t
-
-def qwen_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
-    
-    
-    for conv in conversations:
-        if conv["role"] == "system":
-            if "<|im_start|>" not in conv["content"]:
-                conv["content"] = "<|im_start|>system\n" + conv["content"] + "<|im_end|>"
-            
-    t = llm.chat_oai(conversations=conversations,role_mapping={
-                    "user_role":"<|im_start|>user\n",
-                    "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
-                    "system_msg":"<|im_start|>system\nYou are a helpful assistant. Think it over and answer the user question correctly.<|im_end|>"
-                    },  **{**{
-                        "max_length":1024*16,
-                        "top_p":0.95,
-                        "temperature":0.01,
-                    },**llm_config,**{
-                        "generation.early_stopping":False,
-                        "generation.repetition_penalty":1.1,
-                        "generation.stop_token_ids":[151643,151645]}})       
-    v = t[0].output
-    if "<|im_end|>" in v:
-        v = v.split("<|im_end|>")[0]
-    if "<|endoftext|>" in v:
-        v = v.split("<|endoftext|>")[0]
-    t[0].output = v    
     return t
 
 

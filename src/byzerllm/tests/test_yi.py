@@ -2,7 +2,7 @@ from byzerllm.utils.client import ByzerLLM,InferBackend,Templates
 import ray
 import pytest
 
-model_path = "/home/winubuntu/models/deepseek-coder-1.3b-base"
+model_path = "/home/winubuntu/models/Yi-6B-Chat-4bits"
 model_name = "chat"
 
 class TestByzerLLMVLLMDeploy(object):
@@ -24,7 +24,7 @@ class TestByzerLLMVLLMDeploy(object):
             model_path=model_path,
             pretrained_model_type="custom/auto",
             udf_name=model_name,
-            infer_params={}
+            infer_params={"backend.quantization":"AWQ"}
         )
         self.llm.setup_default_model_name(model_name)        
         
@@ -34,7 +34,7 @@ class TestByzerLLMVLLMDeploy(object):
             self.llm.undeploy(model_name)
     
     def test_chat_oai(self):
-        self.llm.setup_template(model_name,Templates.deepseek_code_chat())
+        self.llm.setup_template(model_name,Templates.yi())
         t = self.llm.chat_oai([{
             "content":"You are an AI programming assistant, utilizing the DeepSeek Coder model, developed by DeepSeek Company, and you only answer questions related to computer science. For politically sensitive questions, security and privacy issues, and other non-computer science questions, you will refuse to answer.",
             "role":"system"        
@@ -45,36 +45,7 @@ class TestByzerLLMVLLMDeploy(object):
         }])
         print("======",t)
 
-    def test_insert(self):
-        self.llm.setup_template(model_name,Templates.deepseek_code_insertion())
-        t = self.llm.chat_oai([{
-            "content":'''
-def quick_sort(arr):
-    if len(arr) <= 1:
-        return arr
-    pivot = arr[0]
-    left = []
-    right = []
-<｜fim▁hole｜>
-        if arr[i] < pivot:
-            left.append(arr[i])
-        else:
-            right.append(arr[i])
-    return quick_sort(left) + [pivot] + quick_sort(right)
-''',
-            "role":"system"        
-        }])
-        print("======",t)  
-
-    def test_completion(self):
-        self.llm.setup_template(model_name,Templates.deepseek_code_completion())
-        t = self.llm.chat_oai([{
-            "content":'''
-#write a quick sort algorithm
-''',
-            "role":"system"        
-        }])
-        print("======",t)      
+       
     
 
 
