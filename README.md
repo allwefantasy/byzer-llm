@@ -188,7 +188,6 @@ When it's set true, the int4 will be choosed.
 
 If the bakcend is `InferBackend.VLLM`, here is the Yi example:
 
-```
 If you need to deploy model with Quantization, you can set the `infer_params` as the following code:
 
 ```python
