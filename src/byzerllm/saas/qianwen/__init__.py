@@ -96,7 +96,7 @@ class CustomSaasAPI:
                         ),flush=True) 
                 await server.mark_done.remote(request_id)
 
-            asyncio.create_task(writer())
+            asyncio.to_thread(writer)
                                
             time_count= 10*100
             while request_id is None and time_count > 0:
