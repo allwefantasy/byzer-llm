@@ -78,18 +78,18 @@ class CustomSaasAPI:
             request_id = None
 
             async def writer(): 
-                for response in res_data:
+                async for response in res_data:
                     if response.status_code == HTTPStatus.OK:
                         v = response.output.choices[0]['message']['content']
                         request_id = response.request_id
-                        print("async chat:",request_id)
+                        print(f"async chat:{request_id}",flush=True)
                         await server.add_item.remote(response.request_id, v)
                         
                     else:
                         print('Request id: %s, Status code: %s, error code: %s, error message: %s' % (
                             response.request_id, response.status_code,
                             response.code, response.message
-                        )) 
+                        ),flush=True) 
                 await server.mark_done.remote(request_id)
 
             asyncio.create_task(writer())
@@ -230,3 +230,4 @@ class CustomSaasAPI:
             print(s)
             raise Exception(s)
         
+
