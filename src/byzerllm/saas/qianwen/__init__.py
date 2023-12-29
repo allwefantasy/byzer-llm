@@ -79,13 +79,12 @@ class CustomSaasAPI:
             request_id = None
 
             def writer(): 
-                for response in res_data:
-                    
-                    print(response.status_code,flush=True)
+                for response in res_data:                                        
 
                     if response.status_code == HTTPStatus.OK:
-                        v = response.output.choices[0]['message']['content']
+                        v = response.output.choices[0]['message']['content']                        
                         request_id = response.request_id
+                        print("===request id:",request_id,flush=True)
                         ray.get(server.add_item.remote(response.request_id, v))
                         
                     else:
@@ -95,7 +94,7 @@ class CustomSaasAPI:
                         ),flush=True) 
                 ray.get(server.mark_done.remote(request_id))
 
-            threading.Thread(target=writer,daemon=True).start()
+            threading.Thread(target=writer,daemon=True).start()            
                                
             time_count= 10*100
             while request_id is None and time_count > 0:
@@ -105,7 +104,8 @@ class CustomSaasAPI:
             if request_id is None:
                 raise Exception("Failed to get request id")
             
-            await server.add_item.remote(request_id, "RUNNING")             
+            print("final===request id:",request_id,flush=True)
+            ray.get(server.add_item.remote(request_id, "RUNNING"))
             return [("",{"metadata":{"request_id":request_id}})]  
               
         time_cost = time.monotonic() - start_time
