@@ -74,11 +74,13 @@ class CustomSaasAPI:
                                             result_format='message',**other_params)
         
         if stream:
+            print("streaming mode",flush=True)
             server = ray.get_actor("VLLM_STREAM_SERVER")
             request_id = None
 
             async def writer(): 
                 for response in res_data:
+                    print(response.status_code)
                     if response.status_code == HTTPStatus.OK:
                         v = response.output.choices[0]['message']['content']
                         request_id = response.request_id
