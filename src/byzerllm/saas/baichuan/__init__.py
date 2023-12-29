@@ -79,7 +79,7 @@ class CustomSaasAPI:
         "generated_tokens_count":generated_tokens_count,
         "time_cost":time_cost,
         "first_token_time":0,
-        "speed":float(generated_tokens_count)/time_cost*1000,        
+        "speed":float(generated_tokens_count)/time_cost,        
     }})]                 
         
 
