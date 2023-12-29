@@ -203,7 +203,7 @@ class ByzerRetrieval:
             raise Exception(f"Table {tableSettings.database}.{tableSettings.table} already exists in cluster {cluster_name}")
 
         cluster = self.cluster(cluster_name)
-        return ray.get(cluster.createTable.remote(tableSettings.json()))    
+        return ray.get(cluster.createTable.remote(tableSettings.json()))     
 
     def build(self, cluster_name:str, database:str, table:str, object_refs:List[ObjectRef[str]])-> bool:
         
@@ -224,6 +224,14 @@ class ByzerRetrieval:
             data_refs.append(itemref)
         
         return self.build(cluster_name,database,table,data_refs)
+
+    def delete_by_ids(self,cluster_name:str, database:str, table:str,ids:List[Any])-> bool:
+
+        if not self.check_table_exists(cluster_name,database,table):
+            raise Exception(f"Table {database}.{table} not exists in cluster {cluster_name}")
+
+        cluster = self.cluster(cluster_name)
+        return ray.get(cluster.deleteByIds.remote(database,table,json.dumps(ids,ensure_ascii=False)))
     
     def get_tables(self,cluster_name:str) -> List[TableSettings]:
         cluster_info = self.cluster_info(cluster_name)
