@@ -944,7 +944,7 @@ class ByzerLLM:
             model = self.default_model_name
 
         meta = self.get_meta(model=model)
-        if meta.get("support_stream",False):
+        if not meta.get("support_stream",False):
             raise Exception(f"The model({model}) is not support stream chat for now.")
 
         v = self.chat_oai(conversations,model=model,role_mapping = role_mapping,**{**llm_config,**{"generation.stream":True}})       
