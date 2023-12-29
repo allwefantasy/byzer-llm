@@ -93,7 +93,7 @@ class CustomSaasAPI:
             writer_thread = threading.Thread(target=writer, daemon=True)  
             writer_thread.start()
             
-            time_count= 10
+            time_count= 10*100
             while request_id is None and time_count > 0:
                 time.sleep(0.01)
                 time_count -= 1
