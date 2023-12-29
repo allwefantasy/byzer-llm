@@ -74,7 +74,7 @@ class CustomSaasAPI:
                                             result_format='message',**other_params)
         
         if stream:
-            print("streaming mode",flush=True)
+            
             server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
             request_id = [None]
 
