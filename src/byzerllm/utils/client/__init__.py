@@ -970,10 +970,15 @@ class ByzerLLM:
         
         if not model:
             model = self.default_model_name
+        
+        meta = self.get_meta(model=model)
+        if not meta.get("support_stream",False):
+            raise Exception(f"The model({model}) is not support stream chat for now.")    
 
         v = self.chat_oai(conversations,model=model,role_mapping=role_mapping,llm_config={**llm_config,**{"generation.stream":True}})       
         request_id = v[0].metadata["request_id"]
-        server = ray.get_actor("VLLM_STREAM_SERVER")                
+        stream_server = v[0].metadata.get("stream_server","VLLM_STREAM_SERVER")
+        server = ray.get_actor(stream_server)                        
         
         while True:                 
             final_output = await server.get_item.remote(request_id)
