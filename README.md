@@ -648,6 +648,42 @@ print(t)
 
 Since the different SaaS models have different parameters, here we provide some templates for the SaaS models to help you deploy the SaaS models.
 
+Here is quick example with Python:
+
+```python
+
+import ray
+from byzerllm.utils.client import ByzerLLM
+
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)   
+
+llm = ByzerLLM(verbose=True)
+
+llm.setup_num_workers(1).setup_gpus_per_worker(0)
+
+chat_name = "baichuan_chat2"
+if llm.is_model_exist(chat_name):
+    llm.undeploy(udf_name=chat_name)
+
+llm.deploy(model_path="",
+           pretrained_model_type="saas/baichuan",
+           udf_name=chat_name,
+           infer_params={
+            "saas.api_key":"xxxxxxx",
+            "saas.secret_key":"xxxxx",
+            "saas.baichuan_api_url":"https://api.baichuan-ai.com/v1/chat",
+            "saas.model":"Baichuan2-53B"
+           })
+
+llm.chat_oai(model=chat_name,conversations=[{
+    "role":"user",
+    "content":"你好",
+}])           
+```
+
+Since we use SaaS model, There is no need to specify the gpus, so we set `setup_gpus_per_worker` to 0. However, the SaaS model has its own max concurrency limit, the `setup_num_workers` only control the max concurrency accepted by the Byzer-LLM.
+
+
 ### qianfan
 
 
