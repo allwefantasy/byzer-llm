@@ -106,7 +106,7 @@ class CustomSaasAPI:
                 return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
                         
             await asyncio.to_thread(write_running)
-            return [("",{"metadata":{"request_id":request_id[0]},"stream_server":"BLOCK_VLLM_STREAM_SERVER"})]  
+            return [("",{"metadata":{"request_id":request_id[0],"stream_server":"BLOCK_VLLM_STREAM_SERVER"}})]  
               
         time_cost = time.monotonic() - start_time
         
