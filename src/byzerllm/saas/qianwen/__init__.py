@@ -82,6 +82,7 @@ class CustomSaasAPI:
                     if response.status_code == HTTPStatus.OK:
                         v = response.output.choices[0]['message']['content']
                         request_id = response.request_id
+                        print("async chat:",request_id)
                         await server.add_item.remote(response.request_id, v)
                         
                     else:
@@ -181,6 +182,7 @@ class CustomSaasAPI:
                     if response.status_code == HTTPStatus.OK:
                         v = response.output.choices[0]['message']['content']
                         request_id = response.request_id
+                        print("chat:",request_id)
                         ray.get(server.add_item.remote(response.request_id, v))
                         
                     else:
