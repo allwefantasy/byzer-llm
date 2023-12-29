@@ -944,8 +944,8 @@ class ByzerLLM:
             model = self.default_model_name
 
         meta = self.get_meta(model=model)
-        if meta.get("backend",None) != "ray/vllm":
-            raise Exception(f"stream_chat_oai of model({model}) only support ray/vllm backend")
+        if meta.get("support_stream",False):
+            raise Exception(f"The model({model}) is not support stream chat for now.")
 
         v = self.chat_oai(conversations,model=model,role_mapping = role_mapping,**{**llm_config,**{"generation.stream":True}})       
         request_id = v[0].metadata["request_id"]

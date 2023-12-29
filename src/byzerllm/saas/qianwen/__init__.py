@@ -22,7 +22,8 @@ class CustomSaasAPI:
     def get_meta(self):
         return [{
             "model_deploy_type": "saas",
-            "backend":"saas"
+            "backend":"saas",
+            "support_stream": True
         }]    
 
     def stream_chat(

@@ -79,6 +79,7 @@ async def async_get_meta(model):
      config = await model.get_model_config()
      return [{"model_deploy_type":"proprietary",
               "backend":"ray/vllm",
+              "support_stream": True,
               "max_model_len":config.max_model_len,
               "architectures":getattr(config.hf_config, "architectures", [])
               }]
