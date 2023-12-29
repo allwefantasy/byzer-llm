@@ -949,7 +949,8 @@ class ByzerLLM:
 
         v = self.chat_oai(conversations,model=model,role_mapping = role_mapping,llm_config={**llm_config,**{"generation.stream":True}})       
         request_id = v[0].metadata["request_id"]
-        server = ray.get_actor("VLLM_STREAM_SERVER")                        
+        stream_server = v[0].metadata.get("stream_server","VLLM_STREAM_SERVER")
+        server = ray.get_actor(stream_server)                        
         
         while True:                 
             final_output = ray.get(server.get_item.remote(request_id))

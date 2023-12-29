@@ -102,8 +102,8 @@ class CustomSaasAPI:
             if request_id[0] is None:
                 raise Exception("Failed to get request id")
                         
-            ray.get(server.add_item.remote(request_id[0], "RUNNING"))
-            return [("",{"metadata":{"request_id":request_id[0]}})]  
+            await asyncio.to_task(server.add_item.remote(request_id[0], "RUNNING"))
+            return [("",{"metadata":{"request_id":request_id[0]},"stream_server":"BLOCK_VLLM_STREAM_SERVER"})]  
               
         time_cost = time.monotonic() - start_time
         

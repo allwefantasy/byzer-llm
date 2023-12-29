@@ -171,7 +171,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
             await server.mark_done.remote(request_output.request_id)
         asyncio.create_task(writer())
         await server.add_item.remote(request_id, "RUNNING")        
-        return [("",{"metadata":{"request_id":request_id}})]
+        return [("",{"metadata":{"request_id":request_id,"stream_server":"VLLM_STREAM_SERVER"}})]
         
     results_generator = model.generate(ins, sampling_params,request_id) 
     final_output = None
