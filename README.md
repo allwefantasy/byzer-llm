@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2023/12] Release Byzer-LLM 0.1.24
+- [2023/12] Release Byzer-LLM 0.1.26
 
 ---
 
@@ -43,8 +43,8 @@ The unique features of Byzer-LLM are:
 * [Respond with pydantic class](#Respond-with-pydantic-class)
 * [LLM-Friendly Function/DataClass](#LLM-Friendly-Function/DataClass)
 * [Model Meta](Model-Meta)
-* [SQL Support](#SQL-Support)
 * [SaaS Models](#SaaS-Models)
+* [SQL Support](#SQL-Support)
 * [Pretrain](#Pretrain)
 * [Finetune](#Finetune)
 * [Stream Chat](#Stream-Chat)
@@ -53,6 +53,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.26： Support QianWen Saas/ Support stream chat in QianWenSaas/ Fix some Saas model bugs
 - 0.1.24： Support get meta from model instance and auto setup template
 - 0.1.23： Fintune with python API/ Fix some bugs
 - 0.1.22： Function Calling support/ Response with pydantic class
@@ -681,6 +682,39 @@ llm.chat_oai(model=chat_name,conversations=[{
 ```
 
 Since we use SaaS model, There is no need to specify the gpus, so we set `setup_gpus_per_worker` to 0. However, the SaaS model has its own max concurrency limit, the `setup_num_workers` only control the max concurrency accepted by the Byzer-LLM.
+
+
+For now, only QianWen Saas support stream chat, here is the example:
+
+```python
+from byzerllm.utils.client import ByzerLLM
+llm = ByzerLLM(verbose=True)
+
+llm.setup_num_workers(1).setup_gpus_per_worker(0)
+
+chat_name = "qianwen_chat"
+if llm.is_model_exist(chat_name):
+    llm.undeploy(udf_name=chat_name)
+
+llm.deploy(model_path="",
+           pretrained_model_type="saas/qianwen",
+           udf_name=chat_name,
+           infer_params={
+            "saas.api_key":"xxxxxxx",            
+            "saas.model":"qwen-turbo"
+           })
+
+## here you can use `stream_chat_oai`
+v = llm.stream_chat_oai(model=chat_name,conversations=[{
+    "role":"user",
+    "content":"你好，你是谁",
+}],llm_config={"gen.incremental_output":False})
+
+for t in v:
+    print(t,flush=True)           
+```
+
+To check if a model the support of stream chat, you can check [Model Meta](Model-Meta).
 
 
 ### qianfan
