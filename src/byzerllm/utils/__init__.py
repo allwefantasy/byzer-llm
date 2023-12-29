@@ -162,6 +162,14 @@ def generate_str_md5(s: str) -> str:
     md5_hash.update(s.encode("utf-8"))
     return md5_hash.hexdigest() 
 
+class SingleOutput:
+    def __init__(self, text:str):
+        self.text = text
+        
+class StreamOutputs: 
+    def __init__(self, outputs:List[SingleOutput]):
+        self.outputs = outputs        
+
 class BlockVLLMStreamServer:
     def __init__(self):
         self.cache = {}

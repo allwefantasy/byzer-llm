@@ -961,7 +961,7 @@ class ByzerLLM:
             if final_output is None:
                 break
             
-            text_outputs = [output for output in final_output.outputs]
+            text_outputs = final_output.outputs
             clean_func = self.mapping_clean_func.get(model,lambda s: s)
             generated_text = text_outputs[0].text                                
             yield clean_func(generated_text)

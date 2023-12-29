@@ -92,6 +92,6 @@ def log_to_file(msg:str,file_path:str):
     with open(file_path,"a") as f:
         f.write(msg)
         f.write("\n")
-        
+
        
     

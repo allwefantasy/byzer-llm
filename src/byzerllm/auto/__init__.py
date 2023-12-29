@@ -6,12 +6,11 @@ import ray
 import time
 from typing import Any,Any,Dict, List,Tuple,Generator,Optional,Union
 import types
-import math
 
 from pyjava.api.mlsql import DataServer
 from byzerllm.utils.metrics import Metric
 from .. import BlockRow
-from byzerllm.utils import VLLMStreamServer
+from byzerllm.utils import VLLMStreamServer,StreamOutputs,SingleOutput
 import asyncio
 from byzerllm.utils import compute_max_new_tokens,tokenize_stopping_sequences,StopSequencesCriteria
 
@@ -165,8 +164,9 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         server = ray.get_actor("VLLM_STREAM_SERVER")
         async def writer():
             results_generator = model.generate(ins, sampling_params,request_id) 
-            async for request_output in results_generator:              
-                await server.add_item.remote(request_output.request_id, request_output)
+            async for request_output in results_generator:     
+                v = StreamOutputs(outputs=[SingleOutput(text=item.text) for item in request_output.outputs])         
+                await server.add_item.remote(request_output.request_id, v)
             # mark the request is done
             await server.mark_done.remote(request_output.request_id)
         asyncio.create_task(writer())
