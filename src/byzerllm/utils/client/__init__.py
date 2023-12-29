@@ -864,7 +864,7 @@ class ByzerLLM:
                  response_class:Optional[pydantic.BaseModel] = None, 
                  response_after_chat:Optional[pydantic.BaseModel] = False,
                  model:Optional[str] = None,
-                 role_mapping=None,**llm_config)->Union[List[LLMResponse],List[LLMFunctionCallResponse],List[LLMClassResponse]]:        
+                 role_mapping=None,llm_config:Dict[str,Any]={})->Union[List[LLMResponse],List[LLMFunctionCallResponse],List[LLMClassResponse]]:        
         
         if not self.default_model_name and not model:
             raise Exception("Use llm.setup_default_model_name to setup default model name or setup the model parameter")
@@ -918,7 +918,7 @@ class ByzerLLM:
                                         "content":f(response_class),
                                         "role":"user"
                                     }]
-                temp_result.append(self.chat_oai(new_conversations,role_mapping=role_mapping,**llm_config)[0])            
+                temp_result.append(self.chat_oai(new_conversations,role_mapping=role_mapping,llm_config=llm_config)[0])            
 
         if response_class:
             final_result = []
@@ -938,7 +938,7 @@ class ByzerLLM:
             return final_result
 
         
-    def stream_chat_oai(self,conversations, model:Optional[str]=None, role_mapping=None,**llm_config): 
+    def stream_chat_oai(self,conversations, model:Optional[str]=None, role_mapping=None,llm_config:Dict[str,Any]={}): 
         
         if not model:
             model = self.default_model_name
@@ -947,7 +947,7 @@ class ByzerLLM:
         if not meta.get("support_stream",False):
             raise Exception(f"The model({model}) is not support stream chat for now.")
 
-        v = self.chat_oai(conversations,model=model,role_mapping = role_mapping,**{**llm_config,**{"generation.stream":True}})       
+        v = self.chat_oai(conversations,model=model,role_mapping = role_mapping,llm_config={**llm_config,**{"generation.stream":True}})       
         request_id = v[0].metadata["request_id"]
         server = ray.get_actor("VLLM_STREAM_SERVER")                        
         
@@ -965,12 +965,12 @@ class ByzerLLM:
             generated_text = text_outputs[0].text                                
             yield clean_func(generated_text)
 
-    async def async_stream_chat_oai(self,conversations,role_mapping=None,**llm_config): 
+    async def async_stream_chat_oai(self,conversations,role_mapping=None,model:Optional[str]=None,llm_config:Dict[str,Any]={}): 
         
         if not model:
             model = self.default_model_name
 
-        v = self.chat_oai(conversations,model=model,role_mapping=role_mapping,**{**llm_config,**{"generation.stream":True}})       
+        v = self.chat_oai(conversations,model=model,role_mapping=role_mapping,llm_config={**llm_config,**{"generation.stream":True}})       
         request_id = v[0].metadata["request_id"]
         server = ray.get_actor("VLLM_STREAM_SERVER")                
         
@@ -1118,34 +1118,3 @@ class ByzerLLM:
         finally:
             ray.get(udf_master.give_back.remote(index)) 
 
-
-def default_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
-    return llm.chat_oai(conversations=conversations,**llm_config)
-
-async def async_stream_qwen_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
-    for conv in conversations:
-        if conv["role"] == "system":
-            if "<|im_start|>" not in conv["content"]:
-                conv["content"] = "<|im_start|>system\n" + conv["content"] + "<|im_end|>"
-            
-    t = llm.async_stream_chat_oai(conversations=conversations,role_mapping={
-                    "user_role":"<|im_start|>user\n",
-                    "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
-                    "system_msg":"<|im_start|>system\nYou are a helpful assistant. Think it over and answer the user question correctly.<|im_end|>"
-                    },  **{**{
-                        "max_length":1024*16,
-                        "top_p":0.95,
-                        "temperature":0.01,
-                    },**llm_config,**{
-                        "generation.early_stopping":False,
-                        "generation.repetition_penalty":1.1,
-                        "generation.stop_token_ids":[151643,151645]}})       
-    return t
-
-
-            
-
-
-
-
-            
