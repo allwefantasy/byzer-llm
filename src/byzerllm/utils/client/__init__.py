@@ -647,13 +647,16 @@ class ByzerLLM:
         
         if pretrained_model_type.startswith("saas/"):
             model_type = pretrained_model_type.split("/")[-1]                       
-            infer_module = importlib.import_module(f'byzerllm.saas.{model_type}',"CustomSaasAPI")
+            
+            infer_module = importlib.import_module(f'byzerllm.saas.{model_type}')
             from byzerllm.utils.text_generator import simple_predict_func
+            
             def init_model(model_refs: List[ClientObjectRef], conf: Dict[str, str]) -> Any:
                 from byzerllm import consume_model
                 consume_model(conf)                
-                infer = infer_module(infer_params)
+                infer = infer_module.CustomSaasAPI(infer_params)
                 return (infer,None)
+            
             UDFBuilder.build(self.ray_context,init_model,simple_predict_func)
             return 
 
