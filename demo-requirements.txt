@@ -20,7 +20,7 @@ xformers
 tqdm==4.62.3
 loguru
 tensorboard
-pyjava==0.6.13
+pyjava==0.6.14
 tiktoken
 transformers_stream_generator==0.0.4
 optimum
