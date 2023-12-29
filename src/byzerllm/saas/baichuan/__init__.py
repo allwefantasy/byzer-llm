@@ -62,7 +62,7 @@ class CustomSaasAPI:
             "messages": messages,
             "temperature": temperature,
             "top_p": top_p,
-            "stream": False
+            "stream": False,
             **other_params
         }        
         
