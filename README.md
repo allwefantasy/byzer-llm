@@ -669,10 +669,9 @@ llm.deploy(model_path="",
            pretrained_model_type="saas/baichuan",
            udf_name=chat_name,
            infer_params={
-            "saas.api_key":"xxxxxxx",
-            "saas.secret_key":"xxxxx",
-            "saas.baichuan_api_url":"https://api.baichuan-ai.com/v1/chat",
-            "saas.model":"Baichuan2-53B"
+            "saas.api_key":"xxxxxxx",            
+            "saas.baichuan_api_url":"https://api.baichuan-ai.com/v1/chat/completions",
+            "saas.model":"Baichuan2-Turbo"
            })
 
 llm.chat_oai(model=chat_name,conversations=[{

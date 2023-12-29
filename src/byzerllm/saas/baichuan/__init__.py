@@ -32,9 +32,9 @@ BaiChuanErrorCodes = {
 class CustomSaasAPI:
     def __init__(self, infer_params: Dict[str, str]) -> None:
         self.api_key = infer_params["saas.api_key"]
-        self.secret_key = infer_params["saas.secret_key"]
-        self.api_url = infer_params.get("saas.baichuan_api_url", "https://api.baichuan-ai.com/v1/chat")
-        self.model = infer_params.get("saas.model", "Baichuan2-53B")
+        self.secret_key = infer_params.get("saas.secret_key","")
+        self.api_url = infer_params.get("saas.baichuan_api_url", "https://api.baichuan-ai.com/v1/chat/completions")
+        self.model = infer_params.get("saas.model", "Baichuan2-Turbo")
 
      # saas/proprietary
     def get_meta(self):
