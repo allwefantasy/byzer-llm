@@ -4,7 +4,7 @@ import dashscope
 from dashscope.api_entities.dashscope_response import Message
 import time
 import ray
-from byzerllm.utils import VLLMStreamServer
+from byzerllm.utils import BlockVLLMStreamServer
 import threading
 import asyncio
 
@@ -15,9 +15,9 @@ class CustomSaasAPI:
         self.api_key: str = infer_params["saas.api_key"]  
         self.model = infer_params.get("saas.model", "qwen-turbo") 
         try:
-            ray.get_actor("VLLM_STREAM_SERVER")
+            ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
         except ValueError:            
-            ray.remote(VLLMStreamServer).options(name="VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()     
+            ray.remote(BlockVLLMStreamServer).options(name="VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()     
 
      # saas/proprietary
     def get_meta(self):
@@ -75,10 +75,10 @@ class CustomSaasAPI:
         
         if stream:
             print("streaming mode",flush=True)
-            server = ray.get_actor("VLLM_STREAM_SERVER")
+            server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
             request_id = None
 
-            async def writer(): 
+            def writer(): 
                 for response in res_data:
                     
                     print(response.status_code,flush=True)
@@ -86,17 +86,16 @@ class CustomSaasAPI:
                     if response.status_code == HTTPStatus.OK:
                         v = response.output.choices[0]['message']['content']
                         request_id = response.request_id
-                        print(f"async chat:{request_id}",flush=True)
-                        await server.add_item.remote(response.request_id, v)
+                        ray.get(server.add_item.remote(response.request_id, v))
                         
                     else:
                         print('Request id: %s, Status code: %s, error code: %s, error message: %s' % (
                             response.request_id, response.status_code,
                             response.code, response.message
                         ),flush=True) 
-                await server.mark_done.remote(request_id)
+                ray.get(server.mark_done.remote(request_id))
 
-            asyncio.to_thread(writer)
+            threading.Thread(target=writer,daemon=True).start()
                                
             time_count= 10*100
             while request_id is None and time_count > 0:

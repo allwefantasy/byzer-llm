@@ -160,7 +160,37 @@ def generate_file_md5(file_path: str) -> str:
 def generate_str_md5(s: str) -> str:
     md5_hash = hashlib.md5()
     md5_hash.update(s.encode("utf-8"))
-    return md5_hash.hexdigest()  
+    return md5_hash.hexdigest() 
+
+class BlockVLLMStreamServer:
+    def __init__(self):
+        self.cache = {}
+        self.cache_status = {} 
+        self.lock = threading.Lock()
+
+    def add_item(self, request_id, item):
+        with self.lock:            
+            self.cache[request_id]=item
+            self.cache_status[request_id]=int(time.time()*1000)
+    
+    def mark_done(self, request_id):
+        if len(self.cache_status) > 30:
+            now = int(time.time()*1000)
+            with self.lock:
+                for k in list(self.cache_status.keys()):
+                    if now - self.cache_status[k] > 10*60*60*1000:
+                        del self.cache_status[k]
+                        del self.cache[k] 
+        with self.lock:            
+            self.cache_status[request_id] = 0
+
+    def get_item(self, request_id):                
+        with self.lock:
+            v = self.cache.get(request_id, None)     
+            if request_id in self.cache_status and self.cache_status[request_id] == 0:
+                del self.cache[request_id]
+                del self.cache_status[request_id]
+            return v     
 
 class VLLMStreamServer:
     def __init__(self):
