@@ -80,7 +80,9 @@ class CustomSaasAPI:
 
             async def writer(): 
                 for response in res_data:
-                    print(response.status_code)
+                    
+                    print(response.status_code,flush=True)
+
                     if response.status_code == HTTPStatus.OK:
                         v = response.output.choices[0]['message']['content']
                         request_id = response.request_id
