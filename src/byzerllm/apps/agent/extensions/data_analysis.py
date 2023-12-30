@@ -176,6 +176,11 @@ class DataAnalysisPipelineManager:
         self.pipelines = {}
         self.lasted_updated = {}
 
+    def remove_pipeline(self,name:str):
+        if name in self.pipelines:
+            del self.pipelines[name]
+            del self.lasted_updated[name]    
+
     def get_or_create_pipeline( self,
                                 name:str,
                                 llm:ByzerLLM,retrieval:ByzerRetrieval,
@@ -210,7 +215,7 @@ class DataAnalysis:
                  llm:ByzerLLM,
                  retrieval:ByzerRetrieval,
                  use_shared_disk:bool=False, 
-                 chat_wrapper:Optional[Callable[[ByzerLLM,Optional[List[Dict]],Dict],List[LLMResponse]]] = default_chat_wrapper               
+                 chat_wrapper = default_chat_wrapper               
                  ):
         self.chat_name = chat_name
         self.owner = owner
@@ -275,8 +280,11 @@ class DataAnalysis:
         # while o[-10:] == "\nTERMINATE":
         #     o = o[:-10]
         
-        return self.output()    
-        
+        return self.output()   
+
+    def close(self):
+        ray.kill(ray.get_actor("user_{self.name}"))
+        ray.get(self.manager.remove_pipeline.remote(self.name))                        
     
     def output(self):
         return ray.get(self.data_analysis_pipeline.last_message.remote(get_agent_name(self.client)))        

@@ -1110,8 +1110,13 @@ class ByzerLLM:
                 input["max_length"] = input_size + max_output_length
 
 
-        udf_master = ray.get_actor(model)        
-        new_input_value = [json.dumps(x,ensure_ascii=False) for x in input_value]
+        udf_master = ray.get_actor(model)     
+        
+        try:   
+            new_input_value = [json.dumps(x,ensure_ascii=False) for x in input_value]
+        except Exception as inst:
+            raise Exception(f"input_value should be json serializable, got {input_value}") 
+           
         if self.verbose:
             print(f"Send to model[{model}]:{new_input_value}")
       
