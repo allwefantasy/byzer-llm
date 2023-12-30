@@ -96,7 +96,7 @@ you should reply exactly `UPDATE CONTEXT`.
         }
 
     def get_agent_chat_messages(self,agent_name:str):
-        return ray.get(self.agents[agent_name].get_chat_messages())    
+        return self.agents[agent_name].get_chat_messages()
 
     def preview_file(self):
         self.preview_file_agent._prepare_chat(self.python_interpreter, True)        
