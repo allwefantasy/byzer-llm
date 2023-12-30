@@ -899,7 +899,8 @@ class ByzerLLM:
             for item in conversations[:-1]:
                 # clean metadata field in conversation 
                 # which may used by agent.
-                del item["metadata"]
+                if "metadata" in item:
+                    del item["metadata"]
                 history.append(item)
             
         else:
