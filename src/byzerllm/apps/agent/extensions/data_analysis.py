@@ -287,9 +287,17 @@ class DataAnalysis:
     def get_chat_messages(self):
         return ray.get(self.data_analysis_pipeline.get_chat_messages.remote())   
 
-    def close(self):
-        ray.kill(ray.get_actor(f"user_{self.name}"))
-        ray.get(self.manager.remove_pipeline.remote(self.name))  
+    def close(self):        
+        try:
+            ray.kill(ray.get_actor(f"user_{self.name}"))
+        except Exception:
+            pass
+        
+        try:
+            ray.get(self.manager.remove_pipeline.remote(self.name))  
+        except Exception:
+            pass
+
         self.data_analysis_pipeline = None                      
     
     def output(self):
