@@ -15,6 +15,7 @@ from byzerllm.apps.agent.extensions.python_codesandbox_agent import PythonSandbo
 from byzerllm.apps.agent.extensions.visualization_agent import VisualizationAgent
 from byzerllm.apps.agent.user_proxy_agent import UserProxyAgent
 from byzerllm.apps.agent.assistant_agent import AssistantAgent
+from byzerllm.apps.agent.common_agent import CommonAgent
 from byzerllm.utils import generate_str_md5
 import os
 class DataAnalysisPipeline(ConversableAgent):  
@@ -24,8 +25,9 @@ is plan the data analysis pipeline.
 
 You have some tools like the following:
 
-1. visualization_agent, this agent will help you to visualize the data.
-2. assistant_agent, this agent will help you to analyze the data but not visualize it.
+1. visualization_agent, this agent will generate python code help you to visualize the data.
+2. assistant_agent, this agent will generate code help you to analyze the data but not visualize it.
+3. common_agent, this agent will analyze the data based on the conversation, it can't generate any code.
 
 Please check the user's question and decide which tool you need to use. And then reply the tool name only.
 If there is no tool can help you, 
@@ -88,11 +90,16 @@ you should reply exactly `UPDATE CONTEXT`.
         self.assistant_agent = Agents.create_local_agent(AssistantAgent,"assistant_agent",llm,retrieval,
                                         max_consecutive_auto_reply=100,
                                         code_agent = self.python_interpreter,**params
-                                        )                 
+                                        )  
+        self.common_agent = Agents.create_local_agent(CommonAgent,"common_agent",llm,retrieval,
+                                        max_consecutive_auto_reply=100,
+                                        code_agent = self.python_interpreter,**params
+                                        )                    
         
         self.agents = {
             "assistant_agent":self.assistant_agent,
-            "visualization_agent":self.visualization_agent
+            "visualization_agent":self.visualization_agent,
+            "common_agent":self.common_agent
         }
 
     def get_agent_chat_messages(self,agent_name:str):
