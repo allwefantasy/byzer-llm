@@ -95,6 +95,9 @@ you should reply exactly `UPDATE CONTEXT`.
             "visualization_agent":self.visualization_agent
         }
 
+    def get_agent_chat_messages(self,agent_name:str):
+        return ray.get(self.agents[agent_name].get_chat_messages())    
+
     def preview_file(self):
         self.preview_file_agent._prepare_chat(self.python_interpreter, True)        
         self.max_consecutive_auto_reply = 0          
