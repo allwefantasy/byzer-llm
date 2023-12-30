@@ -895,7 +895,13 @@ class ByzerLLM:
         
         if is_saas_model:
             final_ins = last_message["content"]
-            history = conversations[:-1]
+            history = []
+            for item in conversations[:-1]:
+                # clean metadata field in conversation 
+                # which may used by agent.
+                del item["metadata"]
+                history.append(item)
+            
         else:
             final_ins = self.generate_instruction_from_history(conversations, role_mapping)         
             history = []
