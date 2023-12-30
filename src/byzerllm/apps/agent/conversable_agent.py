@@ -427,18 +427,18 @@ class ConversableAgent(Agent):
                 last_role = None                
                 for message in data:            
                     if (last_role is None) and (message['role'] == 'assistant'):
-                        padded_data.append({'content': '', 'role': 'user'})
+                        padded_data.append({'content': 'continue', 'role': 'user'})
                         padded_data.append(message)
 
                     elif (last_role is None) and (message['role'] == 'user'):                
                         padded_data.append(message)    
 
                     elif (last_role == message['role']) and (message['role'] == 'assistant'):
-                        padded_data.append({'content': '', 'role': 'user'})
+                        padded_data.append({'content': 'continue', 'role': 'user'})
                         padded_data.append(message)
 
                     elif (last_role == message['role']) and (message['role'] == 'user'):
-                        padded_data.append({'content': '', 'role': 'assistant'})
+                        padded_data.append({'content': 'continue', 'role': 'assistant'})
                         padded_data.append(message)
 
                     elif (last_role == message['role']) and (message['role'] == 'user'):                                        
@@ -450,7 +450,7 @@ class ConversableAgent(Agent):
                     last_role = message['role']
                 
                 if last_role == 'assistant':
-                    padded_data.append({'content': '', 'role': 'user'})
+                    padded_data.append({'content': 'continue', 'role': 'user'})
 
                 return padded_data
 
