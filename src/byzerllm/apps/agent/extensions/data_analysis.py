@@ -283,8 +283,9 @@ class DataAnalysis:
         return self.output()   
 
     def close(self):
-        ray.kill(ray.get_actor("user_{self.name}"))
-        ray.get(self.manager.remove_pipeline.remote(self.name))                        
+        ray.kill(ray.get_actor(f"user_{self.name}"))
+        ray.get(self.manager.remove_pipeline.remote(self.name))  
+        self.data_analysis_pipeline = None                      
     
     def output(self):
         return ray.get(self.data_analysis_pipeline.last_message.remote(get_agent_name(self.client)))        
