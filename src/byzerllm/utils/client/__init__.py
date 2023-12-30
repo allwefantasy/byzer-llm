@@ -1124,3 +1124,5 @@ class ByzerLLM:
         finally:
             ray.get(udf_master.give_back.remote(index)) 
 
+def default_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
+    return llm.chat_oai(conversations=conversations,llm_config=llm_config)
