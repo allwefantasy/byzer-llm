@@ -282,7 +282,10 @@ class DataAnalysis:
         # while o[-10:] == "\nTERMINATE":
         #     o = o[:-10]
         
-        return self.output()   
+        return self.output()
+
+    def get_chat_messages(self):
+        return ray.get(self.data_analysis_pipeline.get_chat_messages.remote())   
 
     def close(self):
         ray.kill(ray.get_actor(f"user_{self.name}"))
