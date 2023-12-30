@@ -102,6 +102,7 @@ you should reply exactly `UPDATE CONTEXT`.
         self.preview_file_agent,
         message={
             "content":f"We have a file, the file path is: {self.file_path} , please preview this file",
+            "role":"user",
             "metadata":{
                 "file_path":self.file_path,
                 "file_ref":self.file_ref
@@ -270,8 +271,9 @@ class DataAnalysis:
                 self.data_analysis_pipeline,
                 message={
                     "content":content,
+                    "role":"user",
                     "metadata":{                        
-                    }
+                    }                    
                 },
            ) 
         )
