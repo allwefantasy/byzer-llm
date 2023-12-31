@@ -100,11 +100,25 @@ you should reply exactly `UPDATE CONTEXT`.
         self.agents = {
             "assistant_agent":self.assistant_agent,
             "visualization_agent":self.visualization_agent,
-            "common_agent":self.common_agent
+            "common_agent":self.common_agent,
+            "privew_file_agent":self.preview_file_agent,
+            "python_interpreter":self.python_interpreter
         }
 
     def get_agent_chat_messages(self,agent_name:str):
         return self.agents[agent_name].get_chat_messages()
+    
+    def update_system_message_by_agent(self, agent_name:str,system_message: str):
+        if agent_name in self.agents:
+            self.agents[agent_name].update_system_message(system_message)
+            return True
+        return False    
+
+    def get_agent_names(self):
+        return list(self.agents.keys())  
+
+    def get_agent_system_message(self,agent_name:str):
+        return self.agents[agent_name].system_message      
 
     def preview_file(self):
         self.preview_file_agent._prepare_chat(self.python_interpreter, True)        
@@ -227,7 +241,8 @@ class DataAnalysis:
                  llm:ByzerLLM,
                  retrieval:ByzerRetrieval,
                  use_shared_disk:bool=False, 
-                 chat_wrapper = default_chat_wrapper               
+                 chat_wrapper = default_chat_wrapper ,
+                 skip_preview_file:bool=False              
                  ):
         self.chat_name = chat_name
         self.owner = owner
@@ -261,7 +276,8 @@ class DataAnalysis:
                 )) 
 
             # trigger file preview manually
-            ray.get(self.data_analysis_pipeline.preview_file.remote()) 
+            if not skip_preview_file:
+                ray.get(self.data_analysis_pipeline.preview_file.remote()) 
         else:
             self.data_analysis_pipeline = ray.get(self.manager.get_pipeline.remote(self.name))
 
@@ -312,7 +328,34 @@ class DataAnalysis:
         self.data_analysis_pipeline = None                      
     
     def output(self):
-        return ray.get(self.data_analysis_pipeline.last_message.remote(get_agent_name(self.client)))        
+        return ray.get(self.data_analysis_pipeline.last_message.remote(get_agent_name(self.client)))  
+
+    def update_pipeline_system_message(self,system_message:str)->bool: 
+        if self.data_analysis_pipeline is None:
+            return False           
+        ray.get(self.data_analysis_pipeline.update_system_message.remote(system_message))
+        return True
+
+    def update_agent_system_message(self,agent_name:str,system_message:str)->bool:
+        if self.data_analysis_pipeline is None:
+            return False 
+        return ray.get(self.data_analysis_pipeline.update_system_message_by_agent.remote(agent_name,system_message))        
+    
+    def get_agent_system_message(self,agent_name:str)->str:
+        if self.data_analysis_pipeline is None:
+            return ""
+        return ray.get(self.data_analysis_pipeline.get_agent_system_message.remote(agent_name))
+    
+    def get_pipeline_system_message(self)->str:
+        if self.data_analysis_pipeline is None:
+            return ""
+        return ray.get(self.data_analysis_pipeline.get_system_message.remote())
+    
+    def get_agent_names(self):
+        if self.data_analysis_pipeline is None:
+            return []
+        return ray.get(self.data_analysis_pipeline.get_agent_names.remote())
+
     
     def get_pipeline_manager(self)->ClientActorHandle:
         name = "DATA_ANALYSIS_PIPELINE_MANAGER"
