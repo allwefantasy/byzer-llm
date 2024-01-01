@@ -2,7 +2,7 @@ from byzerllm.utils.client import ByzerLLM,InferBackend,Templates
 import ray
 import pytest
 
-model_path = "/home/winubuntu/models/deepseek-coder-1.3b-base"
+model_path = "/home/winubuntu/models/deepseek-coder-1.3b-instruct"
 model_name = "chat"
 
 class TestByzerLLMVLLMDeploy(object):
@@ -32,6 +32,20 @@ class TestByzerLLMVLLMDeploy(object):
     def teardown_class(self):
         if self.llm.is_model_exist(model_name):
             self.llm.undeploy(model_name)
+
+    def test_template(self):
+        import json
+        meta = self.llm.get_meta(model=model_name)        
+        assert meta.get("support_chat_template",False) == True
+        m = self.llm.apply_chat_template(model_name,json.dumps([{
+            "content":"You are an AI programming assistant, utilizing the DeepSeek Coder model, developed by DeepSeek Company, and you only answer questions related to computer science. For politically sensitive questions, security and privacy issues, and other non-computer science questions, you will refuse to answer.",
+            "role":"system"        
+        },
+            {
+            "content":"写个冒泡算法",
+            "role":"user"
+        }],ensure_ascii=False))
+        print(m,flush=True)
     
     def test_chat_oai(self):
         self.llm.setup_template(model_name,Templates.deepseek_code_chat())

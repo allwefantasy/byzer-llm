@@ -27,6 +27,12 @@ class ByzerLLMGenerator:
                 raise Exception("This model do not support text tokenizer service")
             return self.tokenizer(ins,return_token_type_ids=False,return_tensors="pt")["input_ids"].tolist()
         
+        if query.get("apply_chat_template",False):
+                if not self.tokenizer:
+                    raise Exception("This model do not support tokenizer service")
+                messages = json.loads(ins)
+                return self.tokenizer.apply_chat_template(messages,tokenize=False, add_generation_prompt=False)
+        
         if query.get("embedding",False):
             if not self.embedding:
                 raise Exception("This model do not support text emedding service")
@@ -85,6 +91,12 @@ class ByzerLLMGenerator:
                 if not self.tokenizer:
                     raise Exception("This model do not support text tokenizer service")
                 return self.tokenizer(ins,return_token_type_ids=False,return_tensors="pt")["input_ids"].tolist()
+
+            if query.get("apply_chat_template",False):
+                if not self.tokenizer:
+                    raise Exception("This model do not support tokenizer service")
+                messages = json.loads(ins)
+                return self.tokenizer.apply_chat_template(messages,tokenize=False, add_generation_prompt=False)
 
             if query.get("embedding",False):
                 if not self.embedding:
@@ -156,7 +168,7 @@ async def simple_predict_func(model,v):
     for item in data:        
         v = await llm.async_predict(item)
         
-        if item.get("tokenizer",False) or item.get("embedding",False) or item.get("meta",False):
+        if item.get("tokenizer",False) or item.get("embedding",False) or item.get("meta",False) or item.get("apply_chat_template",False):
             results.append({
             "predict":v,
             "metadata":{},
@@ -185,7 +197,7 @@ def chatglm_predict_func(model,v):
             item["instruction"] = f'{item["system"]}\n{item["instruction"]}'
         v = llm.predict(item)
 
-        if item.get("tokenizer",False) or item.get("embedding",False) or item.get("meta",False):
+        if item.get("tokenizer",False) or item.get("embedding",False) or item.get("meta",False) or item.get("apply_chat_template",False):
             results.append({
             "predict":v,
             "metadata":{},

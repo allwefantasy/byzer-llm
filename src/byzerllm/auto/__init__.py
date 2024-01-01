@@ -74,11 +74,15 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
 
 async def async_get_meta(model):
      from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs     
-     model:AsyncLLMEngine = model
+     model:AsyncLLMEngine = model     
      config = await model.get_model_config()
+     tokenizer = model.engine.tokenizer
+     support_chat_template = hasattr(tokenizer,"apply_chat_template") and hasattr(tokenizer,"chat_template") and tokenizer.chat_template is not None
+         
      return [{"model_deploy_type":"proprietary",
               "backend":"ray/vllm",
               "support_stream": True,
+              "support_chat_template": support_chat_template,
               "max_model_len":config.max_model_len,
               "architectures":getattr(config.hf_config, "architectures", [])
               }]

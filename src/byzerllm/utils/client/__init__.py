@@ -429,17 +429,7 @@ class ByzerLLM:
     
     def setup_extra_generation_params(self,model:str,extra_generation_params:Dict[str,Any])->'ByzerLLM':
         self.mapping_extra_generation_params[model] = extra_generation_params
-        return self
-    
-    def generate_llm_template(self,example:str,llm_template:Optional[str]=None)->Template:
-        from byzerllm.utils.client.templates import LLM_TEMPALTE
-        template = llm_template if llm_template else LLM_TEMPALTE
-        m = template.replace("{example}",example)
-        self.setup_max_output_length("chat",3000)
-        t = self.chat_oai(conversations=[{"role":"user","content":m}])
-        [(_,code)] = code_utils.extract_code(t[0].output)
-        exec(code)
-        return tpl()
+        return self       
     
     def setup_template(self,model:str,template:Union[Template,str])->'ByzerLLM':
         self.mapping_role_mapping[model] = template.role_mapping
@@ -591,11 +581,14 @@ class ByzerLLM:
         except ValueError:
             pass
 
-    def generate_instruction_from_history(self,conversations:List[Dict[str,str]],role_mapping:Dict[str,str]={        
+    def generate_instruction_from_history(self,model:str,conversations:List[Dict[str,str]],role_mapping:Dict[str,str]={        
         "user_role":"User:",        
         "assistant_role":"Assistant:",
-    }):
-        
+    }):                
+        meta = self.get_meta(model=model)
+        if meta.get("support_chat_template",False):
+            return self.apply_chat_template(model,json.dumps(conversations,ensure_ascii=False))
+
         new_his = []    
         for item in conversations:
             if item["role"] == "system":
@@ -732,6 +725,21 @@ class ByzerLLM:
         v = [{"instruction":s,"tokenizer":True, **{**default_config,**llm_config} }]        
         res = self._query(model,v) 
         return [LLMResponse(output=item["predict"],metadata=item.get("metadata",{}),input=item["input"]) for item in res]
+    
+    def apply_chat_template(self,model:str,s:str,llm_config:Dict[str,Any]={}):
+        if not model and not self.default_model_name:
+            raise Exception("model name is required")
+        
+        if not model:
+            model = self.default_model_name
+        
+        default_config = self.mapping_extra_generation_params.get(model,{})
+        v = [{"instruction":s,"apply_chat_template":True, **{**default_config,**llm_config} }]        
+        res = self._query(model,v) 
+        
+        t = [LLMResponse(output=item["predict"],metadata=item.get("metadata",{}),input=item["input"]) for item in res]  
+        return t[0].output      
+
         
     def emb(self, model, request:LLMRequest ,extract_params:Dict[str,Any]={})->List[List[float]]:
         
@@ -768,7 +776,7 @@ class ByzerLLM:
       
         return [LLMResponse(output=item["predict"],metadata=item.get("metadata",{}),input=item["input"]) for item in res]
             
-    def _generate_ins(self,request:LLMRequest,role_mapping:Dict[str,str]):
+    def _generate_ins(self,model:str,request:LLMRequest,role_mapping:Dict[str,str]):
          if not role_mapping["user_role"]:
              return request.instruction
          
@@ -781,7 +789,7 @@ class ByzerLLM:
          
          conversations += self._to_openai_format(request=request)
          
-         final_ins = self.generate_instruction_from_history(conversations,role_mapping)                      
+         final_ins = self.generate_instruction_from_history(model,conversations,role_mapping)                      
              
          return final_ins
     
@@ -877,8 +885,7 @@ class ByzerLLM:
         
         if response_class and (tools or tool_choice):
             raise Exception("function calling is enabled,response_class should be set.")
-        
-        # todo: try to cache the meta
+                
         meta = self.get_meta(model=model)        
         is_saas_model =  meta.get("model_deploy_type",None) == "saas"
 
@@ -904,7 +911,7 @@ class ByzerLLM:
                 history.append(item)
             
         else:
-            final_ins = self.generate_instruction_from_history(conversations, role_mapping)         
+            final_ins = self.generate_instruction_from_history(model,conversations, role_mapping)         
             history = []
 
         default_config = self.mapping_extra_generation_params.get(model,{})
@@ -1024,7 +1031,7 @@ class ByzerLLM:
 
         if isinstance(request.instruction,str):
             
-            final_input = self._generate_ins(request,default_role_mapping)                         
+            final_input = self._generate_ins(model,request,default_role_mapping)                         
             
             v = [{
             "instruction":final_input,
@@ -1042,7 +1049,7 @@ class ByzerLLM:
                                          temperature=request.temperature,
                                          )
                                
-                final_input = self._generate_ins(new_request,default_role_mapping)                                    
+                final_input = self._generate_ins(model,new_request,default_role_mapping)                                    
                 
                 v.append({
                 "instruction":final_input, 
