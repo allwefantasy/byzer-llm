@@ -314,6 +314,8 @@ class ByzerLLM:
         self.force_skip_context_length_check = False
         if "force_skip_context_length_check" in kwargs:
             self.force_skip_context_length_check = kwargs["force_skip_context_length_check"]
+
+        self.auto_use_apply_chat_template = False
         
         self.mapping_max_input_length = {}
         self.mapping_max_output_length = {}
@@ -586,7 +588,7 @@ class ByzerLLM:
         "assistant_role":"Assistant:",
     }):                
         meta = self.get_meta(model=model)
-        if meta.get("support_chat_template",False):
+        if self.auto_use_apply_chat_template and meta.get("support_chat_template",False) :
             return self.apply_chat_template(model,json.dumps(conversations,ensure_ascii=False))
 
         new_his = []    
