@@ -275,7 +275,7 @@ class Templates:
                         "system_msg":"<|im_start|>system\n{system_msg}<|im_end|>",
                         "system_msg_func":sys_format
                         },
-                        generation_config={},                  
+                        generation_config={"generation.stop_token_ids":[7]},                  
                         clean_func=clean_func) 
 
     @staticmethod

@@ -44,6 +44,7 @@ The unique features of Byzer-LLM are:
 * [LLM-Friendly Function/DataClass](#LLM-Friendly-Function/DataClass)
 * [Model Meta](#Model-Meta)
 * [Chat Template](#Chat-Template)
+* [LLM Default Generation Parameters](#LLM-Default-Generation-Parameters)
 * [SaaS Models](#SaaS-Models)
 * [SQL Support](#SQL-Support)
 * [Pretrain](#Pretrain)
@@ -587,7 +588,36 @@ llm.setup_template("chat","auto")
 
 If the model is not work well with the `tokeninzer.apply_chat_template`, this function will raise an exception. In this case, you can use the `llm.setup_template` to setup the chat template manually.
 
+You can also use the `llm.get_meta` to check if the model support the `apply_chat_template`:
+
+```python
+llm.get_meta(model="chat")
+```
+
+The output:
+
+```json
+{'model_deploy_type': 'proprietary',
+ 'backend': 'ray/vllm',
+ 'support_stream': True,
+ 'support_chat_template': True,
+ 'max_model_len': 4096,
+ 'architectures': ['LlamaForCausalLM']}
+```
+
 Notice that this feature will cause additional RPC call, so it will bring some performance penalty.
+
+## LLM Default Generation Parameters
+
+The Byzer-llm also support setup the default generation parameters for the model. The following code will setup the default generation parameters for the model instance called `chat`:
+
+```python
+llm.setup_extra_generation_params("chat",{
+    "generation.stop_token_ids":[7]
+})
+```
+
+In this case, the `generation.stop_token_ids` will be set to `[7]` for the model instance `chat`. Every time you call the `chat` model, the `generation.stop_token_ids` will be set to `[7]` automatically.
  
 ## SQL Support
 
