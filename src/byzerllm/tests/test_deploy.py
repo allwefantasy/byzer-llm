@@ -40,11 +40,7 @@ class TestByzerLLMVLLMDeploy(object):
         }])
         assert len(t[0].output) > 1
 
-    def test_setup_auto(self):
-        llm2 = ByzerLLM()
-        v = Templates.qwen()
-        llm2.setup_auto("chat")
-        assert llm2.mapping_role_mapping["chat"]["user_role"] == v.role_mapping["user_role"]
+
 
 
 

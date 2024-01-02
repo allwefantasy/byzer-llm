@@ -42,7 +42,8 @@ The unique features of Byzer-LLM are:
 * [Function Calling](#Function-Calling)
 * [Respond with pydantic class](#Respond-with-pydantic-class)
 * [LLM-Friendly Function/DataClass](#LLM-Friendly-Function/DataClass)
-* [Model Meta](Model-Meta)
+* [Model Meta](#Model-Meta)
+* [Chat Template](#Chat-Template)
 * [SaaS Models](#SaaS-Models)
 * [SQL Support](#SQL-Support)
 * [Pretrain](#Pretrain)
@@ -553,7 +554,7 @@ def compute_date_range(count:Annotated[int,"时间跨度，数值类型"],
 If the LLM make something wrong to your function (e.g. provide the bad parameters), try to optimize the function comment 
 and the parameter Annotated comment.
 
-## Model Meta (from 0.1.24)
+## Model Meta
 
 The Byzer-llm also support get the model meta information. The following code will get the meta information of model instance called `chat`:
 
@@ -569,7 +570,25 @@ llm.get_meta(model="chat")
 #  'architectures': ['QWenLMHeadModel']}
 ```
 
+## Chat Template
 
+The different models have different chat templates, the Byzer-LLM have provide some chat templates for the models. You can use the following code to setup the chat template:
+
+```python
+from byzerllm.utils.client import Templates
+llm.setup_template("chat",Templates.qwen()) 
+```
+
+However, we also support the `tokeninzer.apply_chat_template`, you can use the following code to apply the chat template:
+
+```python
+llm.setup_template("chat","auto") 
+```
+
+If the model is not work well with the `tokeninzer.apply_chat_template`, this function will raise an exception. In this case, you can use the `llm.setup_template` to setup the chat template manually.
+
+Notice that this feature will cause additional RPC call, so it will bring some performance penalty.
+ 
 ## SQL Support
 
 In addition to the Python API, Byzer-llm also support SQL API. In order to use the SQL API, you should install Byzer-SQL language first.

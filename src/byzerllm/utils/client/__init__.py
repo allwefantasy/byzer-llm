@@ -315,7 +315,7 @@ class ByzerLLM:
         if "force_skip_context_length_check" in kwargs:
             self.force_skip_context_length_check = kwargs["force_skip_context_length_check"]
 
-        self.auto_use_apply_chat_template = False
+        self.mapping_auto_use_apply_chat_template = {}
         
         self.mapping_max_input_length = {}
         self.mapping_max_output_length = {}
@@ -434,6 +434,14 @@ class ByzerLLM:
         return self       
     
     def setup_template(self,model:str,template:Union[Template,str])->'ByzerLLM':
+        if template == "auto":
+            meta = self.get_meta(model=model)
+            if not meta.get("support_chat_template",False):
+                raise Exception(f"The model({model}) is not support auto(apply chat template) for now.")
+            
+            self.mapping_auto_use_apply_chat_template[model] = True
+            return self
+
         self.mapping_role_mapping[model] = template.role_mapping
         self.mapping_extra_generation_params[model] = template.generation_config
         self.mapping_clean_func[model] = template.clean_func
@@ -441,25 +449,7 @@ class ByzerLLM:
         self.mapping_response_class_format_after_chat_func[model] = template.response_class_format_after_chat_func
         self.mapping_response_class_format_func[model] = template.response_class_format_func
         return self
-
-    def setup_auto(self,model:Optional[str])->'ByzerLLM':
-        if not model:
-            model = self.default_model_name            
-        meta = self.get_meta(model=model)  
-        # {'model_deploy_type': 'proprietary','backend':'ray/vllm','max_model_len': 8192, 'architectures': ['QWenLMHeadModel']}  
-        if meta.get("model_deploy_type",None) != "proprietary":
-           logger.info(f"model({model}) is not proprietary, skip auto setup")
-           return self
-        
-        if "architectures" in meta:
-            
-            if "QWenLMHeadModel" in meta["architectures"]:
-                self.setup_template(model,Templates.qwen())
-                if "max_model_len" in meta:
-                    self.setup_max_model_length(model,meta["max_model_len"])                        
-
-        return self        
-
+           
 
     def sft(self,sft_name:str,
             local_data_dir_path:str,
@@ -588,7 +578,7 @@ class ByzerLLM:
         "assistant_role":"Assistant:",
     }):                
         meta = self.get_meta(model=model)
-        if self.auto_use_apply_chat_template and meta.get("support_chat_template",False) :
+        if self.mapping_auto_use_apply_chat_template.get(model,False) and meta.get("support_chat_template",False) :
             return self.apply_chat_template(model,json.dumps(conversations,ensure_ascii=False))
 
         new_his = []    
