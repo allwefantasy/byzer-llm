@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2023/12] Release Byzer-LLM 0.1.29
+- [2023/12] Release Byzer-LLM 0.1.30
 
 ---
 
@@ -55,6 +55,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.30： Apply chat template for vLLM backend
 - 0.1.29： Enhance DataAnalysis Agent
 - 0.1.28： Bug fix
 - 0.1.27： Bug fix
