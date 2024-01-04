@@ -1,6 +1,4 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer,GenerationConfig
-import transformers
-import torch
 import json
 import os
 import io
@@ -8,10 +6,6 @@ from typing import Any,Any,Dict, List,Tuple,Generator
 import base64
 import uuid
 import tempfile
-
-from pyjava.api.mlsql import DataServer
-from .. import BlockRow
-from .. import parse_params
 
 def get_meta(self): 
     config = self.config   
@@ -57,13 +51,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         {'text': ins},])
         response, history = self.chat(tokenizer, query=query, history=None)                            
     else:        
-        response, history = self.chat(tokenizer, ins, history=input_history)         
-        # try:
-        #     import matplotlib.pyplot as plt
-        #     plt.clf() 
-        #     plt.close()
-        # except:
-        #     pass
+        response, history = self.chat(tokenizer, ins, history=input_history)                 
 
         new_image = tokenizer.draw_bbox_on_latest_picture(response, history)        
         if new_image:
