@@ -988,7 +988,7 @@ class ByzerLLM:
             text_outputs = final_output.outputs
             clean_func = self.mapping_clean_func.get(model,lambda s: s)
             generated_text = text_outputs[0].text                                
-            yield clean_func(generated_text)
+            yield (clean_func(generated_text),text_outputs[0].metadata)
 
     async def async_stream_chat_oai(self,conversations,role_mapping=None,model:Optional[str]=None,llm_config:Dict[str,Any]={}): 
         
@@ -1016,7 +1016,7 @@ class ByzerLLM:
             text_outputs = [output for output in final_output.outputs]
             clean_func = self.mapping_clean_func.get(model,lambda s: s)
             generated_text = text_outputs[0].text                                
-            yield clean_func(generated_text)        
+            yield (clean_func(generated_text),text_outputs[0].metadata)     
     
 
     def raw_chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
