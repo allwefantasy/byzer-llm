@@ -44,8 +44,11 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
     input_history = None
     if "history" in kwargs:
         input_history = []
-        input_history = json.loads(kwargs["history"])                                   
-
+        temp_input_history = json.loads(kwargs["history"]) 
+        temp_input_history_length = len(temp_input_history)
+        for i in range(0,temp_input_history_length,2):
+            input_history.append((temp_input_history[i]["content"],temp_input_history[i+1]["content"]))
+            
     if not input_history:           
         query = tokenizer.from_list_format([
         {'image': image_file}, 
