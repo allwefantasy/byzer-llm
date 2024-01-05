@@ -293,7 +293,24 @@ class Templates:
                         "system_msg_func":sys_format
                         },
                         generation_config={},                  
-                        clean_func=clean_func)    
+                        clean_func=clean_func)   
+
+    @staticmethod
+    def empty():
+        def clean_func(v):                    
+            return v   
+
+        def sys_format(t,v):
+            return v
+
+        return Template(role_mapping={
+                        "user_role":"",
+                        "assistant_role": "",
+                        "system_msg":"",
+                        "system_msg_func":sys_format
+                        },
+                        generation_config={},                  
+                        clean_func=clean_func)   
 
 class ByzerLLM:
    
@@ -880,6 +897,7 @@ class ByzerLLM:
                 
         meta = self.get_meta(model=model)        
         is_saas_model =  meta.get("model_deploy_type",None) == "saas"
+        is_message_format = meta.get("message_format",False)
 
         
         last_message = conversations[-1]
@@ -892,7 +910,7 @@ class ByzerLLM:
             f = self.mapping_response_class_format_func.get(model,response_class_format)
             last_message["content"] = f(last_message["content"],cls = response_class)
         
-        if is_saas_model:
+        if is_saas_model or is_message_format:
             final_ins = last_message["content"]
             history = []
             for item in conversations[:-1]:

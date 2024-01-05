@@ -13,10 +13,11 @@ def get_meta(self):
         "model_deploy_type": "proprietary",
         "backend":"transformers",
         "max_model_len":getattr(config, "model_max_length", -1),
-        "architectures":getattr(config, "architectures", [])
+        "architectures":getattr(config, "architectures", []),
+        "message_format":True,
     }]
 
-def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
+def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],  
         max_length:int=4096, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
@@ -39,11 +40,11 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         f.write(image_b)
 
     # history format [('Picture 1:<img>https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen-VL/assets/demo.jpeg</img>\n这是什么?',
-    # '图中是一名女子和她的狗在沙滩上玩耍，狗的品种应该是一只拉布拉多犬。')] 
-    base64_new_image = None
+    # '图中是一名女子和她的狗在沙滩上玩耍，狗的品种应该是一只拉布拉多犬。')]     
     input_history = None
     if "history" in kwargs:
-        input_history = json.loads(kwargs["history"])
+        input_history = []
+        input_history = json.loads(kwargs["history"])                                   
 
     if not input_history:           
         query = tokenizer.from_list_format([
@@ -51,17 +52,18 @@ def stream_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         {'text': ins},])
         response, history = self.chat(tokenizer, query=query, history=None)                            
     else:        
-        response, history = self.chat(tokenizer, ins, history=input_history)                 
-
-        new_image = tokenizer.draw_bbox_on_latest_picture(response, history)        
-        if new_image:
-            byte_io = io.BytesIO()
-            new_image.save(byte_io)
-            base64_new_image = base64.b64encode(byte_io.getvalue()).decode('utf-8')
-        else:
-            print("no new image",flush=True)    
+        response, history = self.chat(tokenizer, ins, history=input_history)                            
     
-    output = json.dumps({"response":response,"history":history,"image":base64_new_image,"input_image":image,"input_image_path":image_file})
+    temp_history = []
+    for item in history:
+        temp_history.append(
+            {"role":"user","content":item[0]},
+        )
+        temp_history.append(
+            {"role":"assistant","content":item[1]},
+        )
+        
+    output = json.dumps({"response":response,"history":temp_history})
     return [(output,"")]
 
 
