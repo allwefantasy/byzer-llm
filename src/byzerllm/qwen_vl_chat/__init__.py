@@ -66,8 +66,8 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
             {"role":"assistant","content":item[1]},
         )
         
-    output = json.dumps({"response":response,"history":temp_history})
-    return [(output,"")]
+    output = json.dumps({"response":response,"history":temp_history},ensure_ascii=False)
+    return [(output,{"metadata":{}})] 
 
 
 def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}): 
