@@ -162,9 +162,15 @@ def generate_str_md5(s: str) -> str:
     md5_hash.update(s.encode("utf-8"))
     return md5_hash.hexdigest() 
 
+class SingleOutputMeta:
+    def __init__(self, input_tokens_count:int=0, generated_tokens_count:int=0):        
+        self.input_tokens_count = input_tokens_count
+        self.generated_tokens_count = generated_tokens_count
+
 class SingleOutput:
-    def __init__(self, text:str):
+    def __init__(self, text:str,metadata:SingleOutputMeta=SingleOutputMeta()):
         self.text = text
+        self.metadata = metadata
         
 class StreamOutputs: 
     def __init__(self, outputs:List[SingleOutput]):

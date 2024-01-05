@@ -4,7 +4,7 @@ import dashscope
 from dashscope.api_entities.dashscope_response import Message
 import time
 import ray
-from byzerllm.utils import BlockVLLMStreamServer,StreamOutputs,SingleOutput
+from byzerllm.utils import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
 import threading
 import asyncio
 
@@ -83,7 +83,12 @@ class CustomSaasAPI:
                     if response.status_code == HTTPStatus.OK:
                         v = response.output.choices[0]['message']['content']                        
                         request_id[0] = response.request_id                        
-                        ray.get(server.add_item.remote(request_id[0], StreamOutputs(outputs=[SingleOutput(text=v)])))
+                        ray.get(server.add_item.remote(request_id[0], 
+                                                       StreamOutputs(outputs=[SingleOutput(text=v,metadata=SingleOutputMeta(
+                                                           input_tokens_count=response["usage"]["input_tokens"],
+                                                           generated_tokens_count=response["usage"]["output_tokens"],
+                                                       ))])
+                                                       ))
                         
                     else:
                         print('Request id: %s, Status code: %s, error code: %s, error message: %s' % (

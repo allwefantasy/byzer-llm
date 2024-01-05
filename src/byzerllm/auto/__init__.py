@@ -10,7 +10,7 @@ import types
 from pyjava.api.mlsql import DataServer
 from byzerllm.utils.metrics import Metric
 from .. import BlockRow
-from byzerllm.utils import VLLMStreamServer,StreamOutputs,SingleOutput
+from byzerllm.utils import VLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
 import asyncio
 from byzerllm.utils import compute_max_new_tokens,tokenize_stopping_sequences,StopSequencesCriteria
 
@@ -169,7 +169,10 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         async def writer():
             results_generator = model.generate(ins, sampling_params,request_id) 
             async for request_output in results_generator:     
-                v = StreamOutputs(outputs=[SingleOutput(text=item.text) for item in request_output.outputs])         
+                v = StreamOutputs(outputs=[SingleOutput(text=item.text,metadata=SingleOutputMeta(
+                    input_tokens_count=len(item.prompt_token_ids),
+                    generated_tokens_count=len(item.token_ids),
+                )) for item in request_output.outputs])         
                 await server.add_item.remote(request_output.request_id, v)
             # mark the request is done
             await server.mark_done.remote(request_output.request_id)
