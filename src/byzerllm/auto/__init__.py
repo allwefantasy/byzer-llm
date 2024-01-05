@@ -170,7 +170,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
             results_generator = model.generate(ins, sampling_params,request_id) 
             async for request_output in results_generator:     
                 v = StreamOutputs(outputs=[SingleOutput(text=item.text,metadata=SingleOutputMeta(
-                    input_tokens_count=len(item.prompt_token_ids),
+                    input_tokens_count=len(request_output.prompt_token_ids),
                     generated_tokens_count=len(item.token_ids),
                 )) for item in request_output.outputs])         
                 await server.add_item.remote(request_output.request_id, v)
