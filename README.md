@@ -47,7 +47,7 @@ The unique features of Byzer-LLM are:
 * [Chat Template](#Chat-Template)
 * [LLM Default Generation Parameters](#LLM-Default-Generation-Parameters)
 * [SaaS Models](#SaaS-Models)
-* [Multi Modal](#MultiModal)
+* [Multi Modal](#Multi-Modal)
 * [SQL Support](#SQL-Support)
 * [Pretrain](#Pretrain)
 * [Finetune](#Finetune)
