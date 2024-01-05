@@ -46,6 +46,7 @@ The unique features of Byzer-LLM are:
 * [Chat Template](#Chat-Template)
 * [LLM Default Generation Parameters](#LLM-Default-Generation-Parameters)
 * [SaaS Models](#SaaS-Models)
+* [Multi Modal](#MultiModal)
 * [SQL Support](#SQL-Support)
 * [Pretrain](#Pretrain)
 * [Finetune](#Finetune)
@@ -619,7 +620,65 @@ llm.setup_extra_generation_params("chat",{
 ```
 
 In this case, the `generation.stop_token_ids` will be set to `[7]` for the model instance `chat`. Every time you call the `chat` model, the `generation.stop_token_ids` will be set to `[7]` automatically.
- 
+
+## Multi Modal 
+
+The Byzer-llm also support multi modal. The following code will deploy a multi modal model and then use the model to infer the input text.
+
+```python
+import ray
+from byzerllm.utils.client import ByzerLLM,InferBackend
+
+ray.init(address="auto",namespace="default")   
+
+llm = ByzerLLM()
+chat_model_name = "qwen_vl_chat"
+model_location = "/home/byzerllm/models/Qwen-VL-Chat"
+
+llm.setup_gpus_per_worker(1).setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
+llm.deploy(
+    model_path=model_location,
+    pretrained_model_type="custom/qwen_vl_chat",
+    udf_name=chat_model_name,
+    infer_params={}
+)    
+```
+
+Then you can use the model to chat:
+
+```python
+import base64
+image_path = "/home/byzerllm/projects/jupyter-workspace/1.jpg"
+with open(image_path, "rb") as f:
+    image_content = base64.b64encode(f.read()).decode("utf-8")
+
+t = llm.chat_oai(conversations=[{
+    "role": "user",
+    "content": "这是什么"
+}],model=chat_model_name,llm_config={"image":image_content})
+
+t[0].output
+
+# '{"response": "图中是一名女子在沙滩上和狗玩耍，旁边的狗是一只拉布拉多犬，它坐在沙滩上，面对着一名身穿格子衬衫的女子。女子的腿有些残疾，但是她依然坚持坐在沙滩上和狗玩耍。她的右手拿着一个小玩具，这个玩具上面有两行黑色字母，具体是什么内容看不清楚。她打算把玩具扔给拉布拉多犬。", "history": [{"role": "user", "content": "Picture 1: <img>/tmp/byzerllm/visualglm/images/23eb4cea-cb6e-4f55-8adf-3179ca92ab42.jpg</img>\\n这是什么"}, {"role": "assistant", "content": "图中是一名女子在沙滩上和狗玩耍，旁边的狗是一只拉布拉多犬，它坐在沙滩上，面对着一名身穿格子衬衫的女子。女子的腿有些残疾，但是她依然坚持坐在沙滩上和狗玩耍。她的右手拿着一个小玩具，这个玩具上面有两行黑色字母，具体是什么内容看不清楚。她打算把玩具扔给拉布拉多犬。"}]}'
+```
+
+You can chat multi rounds with the following code:
+
+```python
+import json
+history = json.loads(t[0].output)["history"]
+
+llm.chat_oai(conversations=history+[{
+    "role": "user",
+    "content": "能圈出狗么？"
+}],model=chat_model_name,llm_config={"image":image_content})
+
+# [LLMResponse(output='{"response": "<ref>狗</ref><box>(221,425),(511,889)</box>", "history": [{"role"
+```
+
+Get the history from the previous chat, then add the hisotry to new conversation, then chat again.
+
+
 ## SQL Support
 
 In addition to the Python API, Byzer-llm also support SQL API. In order to use the SQL API, you should install Byzer-SQL language first.
