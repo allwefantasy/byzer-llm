@@ -80,7 +80,7 @@ def stream_chat(
         strength=strength,
     )
     flatten = lambda l: [item for sublist in l for item in sublist]
-    content = json.dumps(flatten(images))
+    content = json.dumps(flatten(images),ensure_ascii=False)
     return [(content, "")]
 
 
