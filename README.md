@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2024/01] Release Byzer-LLM 0.1.31
+- [2024/01] Release Byzer-LLM 0.1.32
 - [2023/12] Release Byzer-LLM 0.1.30
 
 ---
@@ -48,6 +48,7 @@ The unique features of Byzer-LLM are:
 * [LLM Default Generation Parameters](#LLM-Default-Generation-Parameters)
 * [SaaS Models](#SaaS-Models)
 * [Multi Modal](#Multi-Modal)
+* [StableDiffusion](#StableDiffusion)
 * [SQL Support](#SQL-Support)
 * [Pretrain](#Pretrain)
 * [Finetune](#Finetune)
@@ -57,6 +58,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.32： StableDiffusion optimization
 - 0.1.31： Stream Chat with token count information / Optimize multi modal model chat
 - 0.1.30： Apply chat template for vLLM backend
 - 0.1.29： Enhance DataAnalysis Agent
@@ -679,6 +681,83 @@ llm.chat_oai(conversations=history+[{
 ```
 
 Get the history from the previous chat, then add the hisotry to new conversation, then chat again.
+
+## StableDiffusion
+
+The Byzer-llm also support StableDiffusion as the inference backend. The following code will deploy a StableDiffusion model and then use the model to infer the input text.
+
+```python
+import ray
+from byzerllm.utils.client import ByzerLLM,InferBackend
+
+ray.init(address="auto",namespace="default")   
+
+llm = ByzerLLM()
+chat_model_name = "sd_chat"
+model_location = "/home/byzerllm/models/stable-diffusion-v1-5"
+
+llm.setup_gpus_per_worker(2).setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
+llm.deploy(
+    model_path=model_location,
+    pretrained_model_type="custom/stable_diffusion",
+    udf_name=chat_model_name,
+    infer_params={}
+)
+
+def show_image(content):
+    from IPython.display import display, Image
+    import base64             
+    img = Image(base64.b64decode(content))
+    display(img)    
+    
+```
+
+Then you can chat with the model:
+
+```python
+import json
+t = llm.chat_oai(
+    conversations=[
+        {
+            "role":"user",
+            "content":"画一只猫"
+        }
+    ],model=chat_model_name,llm_config={"gen.batch_size":3}
+)
+
+cats = json.loads(t[0].output)
+for res in cats:
+    show_image(res["img64"])
+```
+
+The output:
+
+![](./images/cat2.png)
+
+The parameters:
+
+| 参数                        | 含义                                                         | 默认值   |
+| --------------------------- | ------------------------------------------------------------ | -------- |
+| Instruction                 | prompt                                                       | 非空     |
+| generation.negative_prompt  | 反向的prompt                                                 | ""       |
+| generation.sampler_name     | 调度名(unpic, euler_a,euler,ddim,ddpm,deis,dpm2,dpm2-a,dpm++_2m,dpm++_2m_karras,heun,heun_karras,lms,pndm:w) | euler_a  |
+| generation.sampling_steps   | 生成的步骤数                                                 | 25       |
+| generation.batch_size       | 一次生成几张                                                 | 1        |
+| generation.batch_count      | 生成几次                                                     | 1        |
+| generation.cfg_scale        | 随机或贴合程度值,值越小生成的图片离你的Tags描述的内容差距越大 | 7.5      |
+| generation.seed             | 随机种子                                                     | -1       |
+| generation.width            | 图片宽度                                                     | 768      |
+| generation.height           | 图片高度                                                     | 768      |
+| generation.enable_hires     | 开启高分辨率修复功能(和下面两个一组)                         | false    |
+| generation.upscaler_mode    | 放大算法(bilinear, bilinear-antialiased,bicubic,bicubic-antialiased,nearest,nearest-exact) | bilinear |
+| generation.scale_slider     | 放大比例                                                     | 1.5      |
+| generation.enable_multidiff | 图片分割处理(减少显存销耗)(和下面3个一组)                    | false    |
+| generation.views_batch_size | 分批处理规模                                                 | 4        |
+| generation.window_size      | 切割大小，宽，高                                             | 64       |
+| generation.stride           | 步长                                                         | 16       |
+| generation.init_image       | 初始化图片，基于这个图片处理(必须传输base64加密的图片) (和下面的一组) | None     |
+| generation.strength         | 重绘幅度: 图像模仿自由度，越高越自由发挥，越低和参考图像越接近，通常小于0.3基本就是加滤镜 | 0.5      |
+
 
 
 ## SQL Support
