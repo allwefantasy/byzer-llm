@@ -975,7 +975,8 @@ class ByzerLLM:
         request_id = v[0].metadata["request_id"]
         stream_server = v[0].metadata.get("stream_server","VLLM_STREAM_SERVER")
         server = ray.get_actor(stream_server)                        
-        
+
+        pre_generated_text = None
         while True:                 
             final_output = ray.get(server.get_item.remote(request_id))
             if isinstance(final_output,str):
@@ -987,7 +988,10 @@ class ByzerLLM:
             
             text_outputs = final_output.outputs
             clean_func = self.mapping_clean_func.get(model,lambda s: s)
-            generated_text = text_outputs[0].text                                
+            generated_text = text_outputs[0].text
+            if pre_generated_text is not None and generated_text == pre_generated_text:
+                continue
+            pre_generated_text=generated_text
             yield (clean_func(generated_text),text_outputs[0].metadata)
 
     async def async_stream_chat_oai(self,conversations,role_mapping=None,model:Optional[str]=None,llm_config:Dict[str,Any]={}): 
@@ -1002,8 +1006,9 @@ class ByzerLLM:
         v = self.chat_oai(conversations,model=model,role_mapping=role_mapping,llm_config={**llm_config,**{"generation.stream":True}})       
         request_id = v[0].metadata["request_id"]
         stream_server = v[0].metadata.get("stream_server","VLLM_STREAM_SERVER")
-        server = ray.get_actor(stream_server)                        
-        
+        server = ray.get_actor(stream_server)
+
+        pre_generated_text = None
         while True:                 
             final_output = await server.get_item.remote(request_id)
             if isinstance(final_output,str):
@@ -1015,7 +1020,10 @@ class ByzerLLM:
             
             text_outputs = [output for output in final_output.outputs]
             clean_func = self.mapping_clean_func.get(model,lambda s: s)
-            generated_text = text_outputs[0].text                                
+            generated_text = text_outputs[0].text
+            if pre_generated_text is not None and generated_text == pre_generated_text:
+                continue
+            pre_generated_text=generated_text
             yield (clean_func(generated_text),text_outputs[0].metadata)     
     
 
