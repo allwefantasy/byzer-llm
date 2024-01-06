@@ -16,6 +16,15 @@ from byzerllm.stable_diffusion.utils import b642img
 
 # model_name = "runwayml/stable-diffusion-v1-5"
 
+def get_meta(self): 
+    config = self.config   
+    return [{
+        "model_deploy_type": "proprietary",
+        "backend":"transformers",
+        "max_model_len":getattr(config, "model_max_length", -1),
+        "architectures":getattr(config, "architectures", []),
+        "message_format":True,
+    }]
 
 def stream_chat(
     self,
@@ -102,6 +111,7 @@ def init_model(
     import types
 
     model.stream_chat = types.MethodType(stream_chat, model)
+    model.get_meta = types.MethodType(get_meta, model)
     return (model, None)
 
 
