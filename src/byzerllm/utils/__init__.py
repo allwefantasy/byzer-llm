@@ -353,31 +353,33 @@ def exec_capture_output(code: str,target_names:Dict[str,Any]={}) -> Tuple[int,st
 def function_impl_format(prompt:str,func:Optional[Union[Callable,str]],
                              cls:Union[pydantic.BaseModel,str])->str:
     
-    tool_choice_ser = serialize_function_to_json(func)
+    tool_choice_ser = serialize_function_to_json(func)    
     _cls = ""
     if isinstance(cls, str):
         _cls = cls
     else:
         _cls = cls.schema_json(ensure_ascii=False)
     
-    msg = f''''你必须实现一个Python函数来解决用户的问题。
-用户的问题是：{prompt}
+    msg = f''''生成一个python函数，给出详细的思考逻辑，对最后生成的函数不要进行示例说明。
 
-该函数的名字以及参数需要满足如下约束：
+生成的函数的名字以及参数需要满足如下约束：
 
 ```json
 {tool_choice_ser}
 ```
 
-该函数的返回值必须是 Json 格式。
+生成的函数的返回值必须是 Json 格式。
+
 下面是使用 OpenAPI 3.1. 规范描述了你需如何进行json格式的生成。
 
 ```json
 {_cls}
 ```
-请根据描述生成 json 作为函数的返回值。
-''' 
-    
+
+根据用的户问题,{func.__doc__}。用户的问题是：{prompt}
+
+请你实现这个函数。
+'''
     return msg  
 
 
