@@ -4,7 +4,13 @@ from pyjava.udf import UDFBuilder
 import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 from byzerllm.utils.client import code_utils 
-from byzerllm.utils import function_calling_format,response_class_format,response_class_format_after_chat,FunctionCallList
+from byzerllm.utils import (function_calling_format,
+                            response_class_format,
+                            response_class_format_after_chat,
+                            FunctionCallList,
+                            function_impl_format,
+                            exec_capture_output
+                            )
 from langchain.prompts import PromptTemplate
 import json
 import dataclasses
@@ -344,6 +350,8 @@ class ByzerLLM:
         self.mapping_function_calling_format_func = {}
         self.mapping_response_class_format_func = {}
         self.mapping_response_class_format_after_chat_func = {}
+
+        self.mapping_impl_func_format_func = {}
 
         self.meta_cache = {}
 
@@ -848,6 +856,39 @@ class ByzerLLM:
 
         return r
     
+    def execute_generate_func(self,                              
+                              func_name:str,
+                              impl_func_params:Optional[Dict[str,Any]],
+                              response:LLMResponse,
+                              response_class:pydantic.BaseModel)-> LLMClassResponse:
+        codes = code_utils.extract_code(response.output)
+        
+        r = LLMClassResponse(response=response,value=None,metadata={"reason":""})
+        
+        if len(codes) == 0:
+            r.metadata["reason"] = "No Python block found"
+            return r 
+        
+        lang,code = codes[0]
+
+        if lang != "python":
+            r.metadata["reason"] = "No Python block found"
+            return r
+                
+        (status,output,variables) = exec_capture_output(code,{func_name:True})
+        if status != 0:
+            r.metadata["reason"] = output
+            return r
+        
+        try:
+            res_json = variables[func_name](**impl_func_params)
+            r.value=response_class.parse_obj(res_json)
+        except Exception as inst:
+            r.metadata["reason"] = str(inst)
+            return r                                                       
+
+        return r
+    
     def execute_response_format(self,response:LLMResponse,response_class:pydantic.BaseModel):
         codes = code_utils.extract_code(response.output)
         
@@ -872,12 +913,16 @@ class ByzerLLM:
         r.value=ms
 
         return r
+        
 
     def chat_oai(self,
                  conversations,
                  tools:List[Union[Callable,str]]=[], 
                  tool_choice:Optional[Union[Callable,str]]=None,
                  execute_tool:bool=False,  
+                 impl_func:Optional[Callable]=None,
+                 execute_impl_func:bool=False,
+                 impl_func_params:Optional[Dict[str,Any]]=None,
                  response_class:Optional[Union[pydantic.BaseModel,str]] = None, 
                  response_after_chat:Optional[Union[pydantic.BaseModel,str]] = False,
                  model:Optional[str] = None,
@@ -893,7 +938,10 @@ class ByzerLLM:
             role_mapping = self.mapping_role_mapping.get(model, self.default_role_mapping)
         
         if response_class and (tools or tool_choice):
-            raise Exception("function calling is enabled,response_class should be set.")
+            raise Exception("function calling is enabled,response_class should not be set.")
+        
+        if impl_func and not response_class:
+            raise Exception("impl_func is enabled,response_class should be set.")
                 
         meta = self.get_meta(model=model)        
         is_saas_model =  meta.get("model_deploy_type",None) == "saas"
@@ -902,13 +950,20 @@ class ByzerLLM:
         
         last_message = conversations[-1]
         
+        # function calling
         if tools or tool_choice:
             f = self.mapping_function_calling_format_func.get(model,function_calling_format)
             last_message["content"] = f(last_message["content"],tools,tool_choice)
 
+        # generate response class 
         if response_class and not response_after_chat:
             f = self.mapping_response_class_format_func.get(model,response_class_format)
             last_message["content"] = f(last_message["content"],cls = response_class)
+        
+        # implement function and the function should return a response class
+        if impl_func and response_class:
+            f = self.mapping_impl_func_format_func.get(model,function_impl_format)
+            last_message["content"] = f(last_message["content"],impl_func,cls = response_class)            
         
         if is_saas_model or is_message_format:
             final_ins = last_message["content"]
@@ -929,6 +984,16 @@ class ByzerLLM:
         res = self._query(model,v) 
         clean_func = self.mapping_clean_func.get(model,lambda s: s)        
         responses = [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]        
+
+        if impl_func and response_class and execute_impl_func:
+            final_result = []
+            for response in responses:
+                final_result.append(self.execute_generate_func(
+                    func_name=impl_func.__name__,
+                    impl_func_params=impl_func_params,
+                    response=response,
+                    response_class=response_class))
+            return final_result
 
         temp_result = responses    
         if response_class and response_after_chat: 

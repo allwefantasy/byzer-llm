@@ -6,11 +6,14 @@ from transformers import PreTrainedTokenizer,StoppingCriteria
 import torch
 import hashlib
 import threading
-from typing import TYPE_CHECKING,TypeVar,Dict, List, Optional, Union,Any,get_type_hints,Annotated,get_args,Callable
+from typing import TYPE_CHECKING,TypeVar,Dict, List, Optional, Union,Any,Tuple,get_type_hints,Annotated,get_args,Callable
 import typing
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import inspect
 import pydantic
+import sys
+import traceback
+import io
 
 T = TypeVar("T")
 
@@ -325,6 +328,57 @@ class FunctionCallList(pydantic.BaseModel):
     type: str = pydantic.Field("function",description="工具调用的类型，固定为 function，无需生成")
 
 FUNCTION_CALLING_SCHEMA = FunctionCallList.schema_json(ensure_ascii=False, indent=2) 
+
+
+def exec_capture_output(code: str,target_names:Dict[str,Any]={}) -> Tuple[int,str,Any]:
+    buffer = io.StringIO()
+    sys.stdout = buffer
+    sys.stderr = buffer
+
+    try:
+        variables = {}
+        exec(code,variables)
+        response = {}
+        for name,v in target_names.items():
+            if name in variables:
+                response[name] = variables[name]
+    except Exception:
+        return 1,traceback.format_exc(),{}
+
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__
+
+    return 0,buffer.getvalue(),response
+
+def function_impl_format(prompt:str,func:Optional[Union[Callable,str]],
+                             cls:Union[pydantic.BaseModel,str])->str:
+    
+    tool_choice_ser = serialize_function_to_json(func)
+    _cls = ""
+    if isinstance(cls, str):
+        _cls = cls
+    if isinstance(cls, pydantic.BaseModel):
+        _cls = cls.schema_json(ensure_ascii=False)
+    
+    msg = f''''你必须实现一个Python函数来解决用户的问题,该函数要解决的问题在函数的注释中有描述。
+该函数的名字以及参数需要满足如下约束：
+
+```json
+{tool_choice_ser}
+```
+
+该函数的返回值必须是 Json 格式。
+下面是使用 OpenAPI 3.1. 规范描述了你需如何进行json格式的生成。
+
+```json
+{_cls}
+```
+请根据描述生成 json 作为函数的返回值。
+''' 
+    
+    return msg  
+
+
 
 
 def function_calling_format(prompt:str,tools:List[Union[Callable,str]],tool_choice:Optional[Union[Callable,str]])->str:
