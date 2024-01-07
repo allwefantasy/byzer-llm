@@ -360,7 +360,9 @@ def function_impl_format(prompt:str,func:Optional[Union[Callable,str]],
     if isinstance(cls, pydantic.BaseModel):
         _cls = cls.schema_json(ensure_ascii=False)
     
-    msg = f''''你必须实现一个Python函数来解决用户的问题,该函数要解决的问题在函数的注释中有描述。
+    msg = f''''你必须实现一个Python函数来解决用户的问题。
+用户的问题是：{prompt}
+
 该函数的名字以及参数需要满足如下约束：
 
 ```json
