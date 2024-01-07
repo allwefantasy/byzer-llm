@@ -357,7 +357,7 @@ def function_impl_format(prompt:str,func:Optional[Union[Callable,str]],
     _cls = ""
     if isinstance(cls, str):
         _cls = cls
-    if isinstance(cls, pydantic.BaseModel):
+    else:
         _cls = cls.schema_json(ensure_ascii=False)
     
     msg = f''''你必须实现一个Python函数来解决用户的问题。
@@ -432,8 +432,9 @@ def response_class_format(prompt:str,cls:Union[pydantic.BaseModel,str])->str:
     _cls = ""
     if isinstance(cls, str):
         _cls = cls
-    if isinstance(cls, pydantic.BaseModel):
+    else:
         _cls = cls.schema_json(ensure_ascii=False)    
+        
     
     msg = f'''当你回答用户问题的时候，你的输出需要是 Json 格式。
 下面是使用 OpenAPI 3.1. 规范描述了你需如何进行json格式的生成。
@@ -454,7 +455,7 @@ def response_class_format_after_chat(cls:Union[pydantic.BaseModel,str])->str:
     _cls = ""
     if isinstance(cls, str):
         _cls = cls
-    if isinstance(cls, pydantic.BaseModel):
+    else:
         _cls = cls.schema_json(ensure_ascii=False)
         
     msg = f'''请你把刚才的回复使用 json 进行格式化。
