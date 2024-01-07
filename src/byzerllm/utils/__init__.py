@@ -259,6 +259,12 @@ def serialize_function_to_json(func):
     signature = inspect.signature(func)
     type_hints = get_type_hints(func)
 
+    # return_type = type_hints.get('return', 'void')
+    # if return_type is None:
+    #     return_type_str = 'void'
+    # else:
+    #     return_type_str = return_type.__name__
+
     function_info = {
         "name": func.__name__,
         "description": func.__doc__,
@@ -266,7 +272,7 @@ def serialize_function_to_json(func):
             "type": "object",
             "properties": {}
         },
-        "returns": type_hints.get('return', 'void').__name__
+        # "returns": return_type_str
     }
 
     for name, parameter in signature.parameters.items():
