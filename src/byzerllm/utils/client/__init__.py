@@ -884,7 +884,7 @@ class ByzerLLM:
             if impl_func_params is None:
                 impl_func_params = {}
             res_json = variables[func_name](**impl_func_params)
-            r.value=response_class.parse_obj(res_json)
+            r.value=response_class.parse_obj(json.loads(res_json))
         except Exception as inst:
             r.metadata["reason"] = str(inst)
             return r                                                       
