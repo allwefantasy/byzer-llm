@@ -408,6 +408,10 @@ class ByzerLLM:
     def setup_response_class_format_func(self,model:str,func)->'ByzerLLM':
         self.mapping_response_class_format_func[model] = func
         return self
+    
+    def setup_impl_func_format_func(self,model:str,func)->'ByzerLLM':
+        self.mapping_impl_func_format_func[model] = func
+        return self
 
     def setup_response_class_format_after_chat_func(self,model:str,func)->'ByzerLLM':
         self.mapping_response_class_format_after_chat_func[model] = func
@@ -957,15 +961,17 @@ class ByzerLLM:
             f = self.mapping_function_calling_format_func.get(model,function_calling_format)
             last_message["content"] = f(last_message["content"],tools,tool_choice)
 
+        # implement function and the function should return a response class
+        elif impl_func and response_class:
+            f = self.mapping_impl_func_format_func.get(model,function_impl_format)
+            last_message["content"] = f(last_message["content"],impl_func,cls = response_class) 
+
         # generate response class 
-        if response_class and not response_after_chat:
+        elif response_class and not response_after_chat:
             f = self.mapping_response_class_format_func.get(model,response_class_format)
             last_message["content"] = f(last_message["content"],cls = response_class)
         
-        # implement function and the function should return a response class
-        if impl_func and response_class:
-            f = self.mapping_impl_func_format_func.get(model,function_impl_format)
-            last_message["content"] = f(last_message["content"],impl_func,cls = response_class)            
+                   
         
         if is_saas_model or is_message_format:
             final_ins = last_message["content"]
@@ -986,7 +992,8 @@ class ByzerLLM:
         res = self._query(model,v) 
         clean_func = self.mapping_clean_func.get(model,lambda s: s)        
         responses = [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]        
-
+        
+        ## handle impl_func response
         if impl_func and response_class and execute_impl_func:
             final_result = []
             for response in responses:
@@ -996,7 +1003,11 @@ class ByzerLLM:
                     response=response,
                     response_class=response_class))
             return final_result
+        
+        if impl_func and response_class:
+            return responses
 
+        ## handle response_class response 
         temp_result = responses    
         if response_class and response_after_chat: 
             temp_result = []
@@ -1016,17 +1027,16 @@ class ByzerLLM:
             for response in temp_result:
                 final_result.append(self.execute_response_format(response,response_class))
             return final_result    
-
-
-        if not execute_tool:
-            return responses
-        
+                             
+        ## handle function calling response
         if execute_tool:
             final_result = []
             for response in responses:
                 final_result.append(self.execute_function_calling(response,tools))
 
             return final_result
+        
+        return responses
 
         
     def stream_chat_oai(self,conversations, model:Optional[str]=None, role_mapping=None,llm_config:Dict[str,Any]={}): 
