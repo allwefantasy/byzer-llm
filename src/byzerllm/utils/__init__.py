@@ -253,6 +253,9 @@ def is_annotated_type(hint):
         return False    
     
 def serialize_function_to_json(func):
+    if isinstance(func, str):
+        return func
+    
     signature = inspect.signature(func)
     type_hints = get_type_hints(func)
 
@@ -318,7 +321,7 @@ class FunctionCallList(pydantic.BaseModel):
 FUNCTION_CALLING_SCHEMA = FunctionCallList.schema_json(ensure_ascii=False, indent=2) 
 
 
-def function_calling_format(prompt:str,tools:List[Callable],tool_choice:Callable)->str:
+def function_calling_format(prompt:str,tools:List[Union[Callable,str]],tool_choice:Optional[Union[Callable,str]])->str:
     tool_serializes = []
     for v in tools:
         tool_serializes.append(serialize_function_to_json(v))
@@ -362,13 +365,19 @@ You are a helpful assistant with access to the following functions:
     return msg  
 
 
-def response_class_format(prompt:str,cls:pydantic.BaseModel)->str:
+def response_class_format(prompt:str,cls:Union[pydantic.BaseModel,str])->str:
+
+    _cls = ""
+    if isinstance(cls, str):
+        _cls = cls
+    if isinstance(cls, pydantic.BaseModel):
+        _cls = cls.schema_json(ensure_ascii=False)    
     
     msg = f'''当你回答用户问题的时候，你的输出需要是 Json 格式。
 下面是使用 OpenAPI 3.1. 规范描述了你需如何进行json格式的生成。
 
 ```json
-{cls.schema_json(ensure_ascii=False)}
+{_cls}
 ```
 
 现在用户的问题是：{prompt}
@@ -378,13 +387,19 @@ def response_class_format(prompt:str,cls:pydantic.BaseModel)->str:
     return msg 
 
 
-def response_class_format_after_chat(cls:pydantic.BaseModel)->str:
-    
+def response_class_format_after_chat(cls:Union[pydantic.BaseModel,str])->str:
+ 
+    _cls = ""
+    if isinstance(cls, str):
+        _cls = cls
+    if isinstance(cls, pydantic.BaseModel):
+        _cls = cls.schema_json(ensure_ascii=False)
+        
     msg = f'''请你把刚才的回复使用 json 进行格式化。
 下面是使用 OpenAPI 3.1. 规范描述了你需如何进行json格式的生成。
 
 ```json
-{cls.schema_json(ensure_ascii=False)}
+{_cls}
 ```
 
 请根据描述生成 json 并发送给我。

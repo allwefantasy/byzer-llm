@@ -875,11 +875,11 @@ class ByzerLLM:
 
     def chat_oai(self,
                  conversations,
-                 tools:List[Callable]=[], 
-                 tool_choice:Callable=None,
+                 tools:List[Union[Callable,str]]=[], 
+                 tool_choice:Optional[Union[Callable,str]]=None,
                  execute_tool:bool=False,  
-                 response_class:Optional[pydantic.BaseModel] = None, 
-                 response_after_chat:Optional[pydantic.BaseModel] = False,
+                 response_class:Optional[Union[pydantic.BaseModel,str]] = None, 
+                 response_after_chat:Optional[Union[pydantic.BaseModel,str]] = False,
                  model:Optional[str] = None,
                  role_mapping=None,llm_config:Dict[str,Any]={})->Union[List[LLMResponse],List[LLMFunctionCallResponse],List[LLMClassResponse]]:        
         
