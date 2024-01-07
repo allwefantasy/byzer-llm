@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2024/01] Release Byzer-LLM 0.1.32
+- [2024/01] Release Byzer-LLM 0.1.33
 - [2023/12] Release Byzer-LLM 0.1.30
 
 ---
@@ -42,6 +42,7 @@ The unique features of Byzer-LLM are:
 * [DeepSpeed Support](#DeepSpeed-Support)
 * [Function Calling](#Function-Calling)
 * [Respond with pydantic class](#Respond-with-pydantic-class)
+* [Function Implementation](#Function-Implementation)
 * [LLM-Friendly Function/DataClass](#LLM-Friendly-Function/DataClass)
 * [Model Meta](#Model-Meta)
 * [Chat Template](#Chat-Template)
@@ -58,6 +59,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.33： Fix Response Class bugs/ Add function implementation
 - 0.1.32： StableDiffusion optimization
 - 0.1.31： Stream Chat with token count information / Optimize multi modal model chat
 - 0.1.30： Apply chat template for vLLM backend
@@ -517,6 +519,108 @@ def custom_response_class_format(prompt:str,cls:pydantic.BaseModel)->str:
 
 llm.setup_response_class_format_func("chat",custom_response_class_format)
 ```
+
+## Function Implementation
+
+The Byzer-llm also support function implementation. You can define a empty function, and combine the doc in the function/the user's quesion to guide the LLM to implement the function. 
+
+Here is a simple example:
+
+```python
+class TimeRange(pydantic.BaseModel):
+    '''
+    时间区间
+    格式需要如下： yyyy-MM-dd
+    '''  
+    
+    start: str = pydantic.Field(...,description="开始时间.时间格式为 yyyy-MM-dd")
+    end: str = pydantic.Field(...,description="截止时间.时间格式为 yyyy-MM-dd")
+
+
+def calculate_time_range():
+    '''
+    计算时间区间，时间格式为 yyyy-MM-dd. 
+    '''
+    pass 
+    
+t = llm.chat_oai([{
+    "content":"去年三月到七月",
+    "role":"user"    
+}],impl_func=calculate_time_range,response_class=TimeRange,execute_impl_func=True)
+```
+
+The above code , we define a function called `calculate_time_range`, and the function is empty, then we discribe the function in the doc string, and define the response class `TimeRange`, to make sure the return value is a `TimeRange` instance. Since the function should be used to resolve the user's question, so the implementation of the function should be related to the user's question. Instead try to implement a common use function, we can just implement a function which can only resolve the user's current question.
+
+After the execution, you can get the output like this:
+
+```python
+t[0].value
+# start='2023-03-01' end='2023-07-31'
+```
+
+If the value is None or not correct, you can get the error message:
+
+```python
+t[0].metadata.get("resason","")
+```
+
+If your function has parameters, you can pass the parameters to the function by `impl_func_params`:
+
+```python
+t = llm.chat_oai([{
+    "content":"xxxxx",
+    "role":"user"    
+}],
+impl_func=calculate_time_range,
+impl_func_params={},
+response_class=TimeRange,execute_impl_func=True)
+```
+
+If you want to replace the default prompt template function, here is a example:
+
+```python
+import pydantic
+from typing import List,Optional,Union,Callable
+from byzerllm.utils import serialize_function_to_json
+
+def function_impl_format2(prompt:str,func:Optional[Union[Callable,str]],
+                             cls:Union[pydantic.BaseModel,str])->str:
+    
+    tool_choice_ser = serialize_function_to_json(func)    
+    _cls = ""
+    if isinstance(cls, str):
+        _cls = cls
+    else:
+        _cls = cls.schema_json(ensure_ascii=False)
+    
+    msg = f''''生成一个python函数，给出详细的思考逻辑，对最后生成的函数不要进行示例说明。
+
+生成的函数的名字以及参数需要满足如下约束：
+
+\```json
+{tool_choice_ser}
+\```
+
+生成的函数的返回值必须是 Json 格式。
+
+下面是使用 OpenAPI 3.1. 规范描述了你需如何进行json格式的生成。
+
+\```json
+{_cls}
+\```
+
+根据用的户问题,{func.__doc__}。用户的问题是：{prompt}
+
+请你实现这个函数。
+''' 
+    
+    return msg
+
+llm.setup_impl_func_format_func(chat_model_name,function_impl_format2)
+```
+
+The default prompt template function is `function_impl_format`, you can check the source code in `from byzerllm.utils import function_impl_format`.
+
 
 ## LLM-Friendly Function/DataClass
 
