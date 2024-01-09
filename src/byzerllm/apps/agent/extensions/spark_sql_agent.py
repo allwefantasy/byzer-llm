@@ -1,5 +1,5 @@
 from ..conversable_agent import ConversableAgent
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,Annotated
 from ....utils.client import ByzerLLM,code_utils
 from byzerllm.utils.retrieval import ByzerRetrieval
 from ..agent import Agent
@@ -70,6 +70,7 @@ The last but most important, let me know if you have any areas of confusion. If 
         max_consecutive_auto_reply: Optional[int] = None,
         human_input_mode: Optional[str] = "NEVER",
         code_execution_config: Optional[Union[Dict, bool]] = False,
+        byzer_url="http:://127.0.0.1:9003/run/script",
         **kwargs,
     ):       
         super().__init__(
@@ -83,9 +84,10 @@ The last but most important, let me know if you have any areas of confusion. If 
             **kwargs,
         )
 
+        self.byzer_url = byzer_url
         self.code_agent = code_agent
         self.sql_reviewer_agent = sql_reviewer_agent
-        self._reply_func_list = []
+        self._reply_func_list = []                
         # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
         self.register_reply([Agent, ClientActorHandle,str], SparkSQLAgent.generate_reply_for_reviview)
         self.register_reply([Agent, ClientActorHandle,str], SparkSQLAgent.generate_sql_reply) 
@@ -104,8 +106,7 @@ The last but most important, let me know if you have any areas of confusion. If 
         
         if messages is None:
             messages = self._messages[get_agent_name(sender)]
-
-        # give the response to    
+           
         _,v = self.generate_llm_reply(raw_message,messages,sender)
         codes = code_utils.extract_code(v)
         has_sql_code = False
@@ -120,10 +121,20 @@ The last but most important, let me know if you have any areas of confusion. If 
                     "content":v
                 },self.sql_reviewer_agent)
             
-            reply = self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-2]["content"]
-            # reply = run_agent_func(self.sql_reviewer_agent,"get_chat_messages")[get_agent_name(self.sql_reviewer_agent)][-2]        
+            # 获取倒数最后一条有SQL代码的消息
+            conversations = self.chat_messages[get_agent_name(self.sql_reviewer_agent)][:-10].reverse()
+            last_sql = None
+            for conversation in conversations:
+                code = code_utils.extract_code(conversation["content"])[0]
+                if code[0]!="unknown":
+                    last_sql = code[1]
+                    break
+
+            if last_sql is not None:
+                reply = self.execute_spark_sql(last_sql)
             return True, {"content":reply,"metadata":{"TERMINATE":True}}             
         
+
         return True,  {"content":v,"metadata":{"TERMINATE":True}}
         
     def generate_reply_for_reviview(
@@ -140,9 +151,18 @@ The last but most important, let me know if you have any areas of confusion. If 
         if messages is None:
             messages = self._messages[get_agent_name(sender)] 
 
-        _,v = self.generate_llm_reply(raw_message,messages,sender)
-        
+        _,v = self.generate_llm_reply(raw_message,messages,sender)        
         return True, {"content":v,"metadata":{}}
+    
+    def execute_spark_sql(self,sql:Annotated[str,"Spark SQL 语句"])->str:
+        '''
+        执行 Spark SQL 语句
+        '''
+        v = self.llm._rest_byzer_script(sql,url=self.byzer_url)
+        return json.dumps(v)
+
+        
+    
         
         
 

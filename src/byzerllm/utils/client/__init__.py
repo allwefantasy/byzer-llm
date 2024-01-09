@@ -1165,6 +1165,24 @@ class ByzerLLM:
             url = self.byzer_engine_url
         res = self._rest_byzer_engine(sql,data,owner,url)
         return res
+    
+    def _rest_byzer_script(self, sql:str,owner:str,url:str="http://127.0.0.1:9003/run/script"):
+        import requests
+        import json        
+        data = {
+                'sessionPerUser': 'true',
+                'sessionPerRequest': 'true',
+                'owner': owner,                
+                'sql': sql,
+                "includeSchema":True               
+            }
+        response = requests.post(url, data=data)
+        
+        if response.status_code != 200:
+            raise Exception(f"{self.url} status:{response.status_code} content: {response.text} request: json/{json.dumps(data,ensure_ascii=False)}")
+        res = json.loads(response.text)        
+        return res
+
                    
     def _rest_byzer_engine(self, sql:str,table:List[Dict[str,Any]],owner:str,url:str):
         import requests

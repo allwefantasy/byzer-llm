@@ -37,7 +37,8 @@ class ConversableAgent(Agent):
         function_map: Optional[Dict[str, Callable]] = None,
         code_execution_config: Optional[Union[Dict, bool]] = None,        
         default_auto_reply: Optional[Union[str, Dict, None]] = "",
-        chat_wrapper:Optional[Callable[[ByzerLLM,Optional[List[Dict]],Dict],List[LLMResponse]]] = default_chat_wrapper
+        chat_wrapper:Optional[Callable[[ByzerLLM,Optional[List[Dict]],Dict],List[LLMResponse]]] = default_chat_wrapper,
+        description:str = "ConversableAgent",
         
     ):
         super().__init__(name)
@@ -65,6 +66,7 @@ class ConversableAgent(Agent):
         self._default_auto_reply = default_auto_reply
         self._reply_func_list = []
         self.reply_at_receive = defaultdict(bool)
+        self._agent_description = description
         
         self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
         self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply)             
@@ -75,7 +77,12 @@ class ConversableAgent(Agent):
     def get_function_map(self):
         """Get the function map."""
         return self._function_map
-                       
+    
+    def get_agent_description(self):
+        return self._agent_description
+    
+    def update_agent_description(self,description:str):
+        self._agent_description = description                       
     
     def register_reply(
         self,
@@ -402,7 +409,7 @@ class ConversableAgent(Agent):
                 return reply
                          
         return self._default_auto_reply 
-
+        
     def generate_llm_reply(
             self,
             raw_message: Optional[Union[Dict,str,ChatResponse]] = None,

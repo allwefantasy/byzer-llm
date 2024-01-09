@@ -16,6 +16,7 @@ from byzerllm.apps.agent.extensions.visualization_agent import VisualizationAgen
 from byzerllm.apps.agent.user_proxy_agent import UserProxyAgent
 from byzerllm.apps.agent.assistant_agent import AssistantAgent
 from byzerllm.apps.agent.common_agent import CommonAgent
+from byzerllm.apps.agent.extensions.spark_sql_agent import SparkSQLAgent
 from byzerllm.utils import generate_str_md5
 import os
 class DataAnalysisPipeline(ConversableAgent):  
@@ -23,14 +24,15 @@ class DataAnalysisPipeline(ConversableAgent):
 You don't need to write code, or anwser the question. The only thing you need to do 
 is plan the data analysis pipeline.
 
-You have some tools like the following:
+You have following agents to use:
 
 1. visualization_agent, 这个 Agent 可以帮助你对数据进行可视化。
 2. assistant_agent, 这个 Agent 可以帮你生成代码对数据进行分析，统计。
 3. common_agent, 这个Agent 只会根据对话来帮助用户分析数据。他不会生成任何代码去分析数据。
+4. spark_sql_agent, 这个Agent 可以根据用户对话帮助用户作分析，它主要生成 Spark SQL 代码对数据进行分析。
 
 
-Please check the user's question and decide which tool you need to use. And then reply the tool name only.
+Please check the user's question and decide which agent you need to use. And then reply the agent name only.
 If there is no tool can help you, 
 you should reply exactly `UPDATE CONTEXT`.
 ''' 
@@ -95,15 +97,19 @@ you should reply exactly `UPDATE CONTEXT`.
         self.common_agent = Agents.create_local_agent(CommonAgent,"common_agent",llm,retrieval,
                                         max_consecutive_auto_reply=100,
                                         code_agent = self.python_interpreter,**params
-                                        )                    
+                                        ) 
+        self.spark_sql_agent = Agents.create_local_agent(SparkSQLAgent,"spark_sql_agent",llm,retrieval,
+                                        max_consecutive_auto_reply=100,**params
+                                        )                   
         
         self.agents = {
             "assistant_agent":self.assistant_agent,
             "visualization_agent":self.visualization_agent,
             "common_agent":self.common_agent,
             "privew_file_agent":self.preview_file_agent,
-            "python_interpreter":self.python_interpreter
-        }
+            "python_interpreter":self.python_interpreter,
+            "spark_sql_agent":self.spark_sql_agent
+        }        
 
     def get_agent_chat_messages(self,agent_name:str):
         return self.agents[agent_name].get_chat_messages()
