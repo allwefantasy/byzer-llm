@@ -6,7 +6,7 @@ import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
-
+from byzerllm.utils.client.message_utils import padding_messages_expand
 from .agent import Agent
 from ...utils.retrieval import ByzerRetrieval
 from ...utils.client import ByzerLLM,default_chat_wrapper,LLMResponse
@@ -427,41 +427,8 @@ class ConversableAgent(Agent):
             # padding the messages to user/assistant pair
             # [{'content': '', 'role': 'assistant'},{'content': '', 'role': 'user'}, {'content': '', 'role': 'assistant'},{'content': '', 'role': 'assistant'}]    
             # should be converted to
-            # [{'content': '', 'role': 'user'},{'content': '', 'role': 'assistant'},{'content': '', 'role': 'user'}, {'content': '', 'role': 'assistant'},{'content': '', 'role': 'user'},{'content': '', 'role': 'assistant'},{'content': '', 'role': 'user'}]        
-                                                
-            def pad_messages(data):
-                padded_data = []        
-                last_role = None                
-                for message in data:            
-                    if (last_role is None) and (message['role'] == 'assistant'):
-                        padded_data.append({'content': 'continue', 'role': 'user'})
-                        padded_data.append(message)
-
-                    elif (last_role is None) and (message['role'] == 'user'):                
-                        padded_data.append(message)    
-
-                    elif (last_role == message['role']) and (message['role'] == 'assistant'):
-                        padded_data.append({'content': 'continue', 'role': 'user'})
-                        padded_data.append(message)
-
-                    elif (last_role == message['role']) and (message['role'] == 'user'):
-                        padded_data.append({'content': 'continue', 'role': 'assistant'})
-                        padded_data.append(message)
-
-                    elif (last_role == message['role']) and (message['role'] == 'user'):                                        
-                        padded_data.append(message)
-
-                    else:
-                        padded_data.append(message)    
-                    
-                    last_role = message['role']
-                
-                if last_role == 'assistant':
-                    padded_data.append({'content': 'continue', 'role': 'user'})
-
-                return padded_data
-
-            temp_messages = pad_messages(messages)
+            # [{'content': '', 'role': 'user'},{'content': '', 'role': 'assistant'},{'content': '', 'role': 'user'}, {'content': '', 'role': 'assistant'},{'content': '', 'role': 'user'},{'content': '', 'role': 'assistant'},{'content': '', 'role': 'user'}]                
+            temp_messages = padding_messages_expand(messages)
                        
             response = self.chat_wrapper(self.llm,self._system_message + temp_messages)
             return True, response[0].output    
