@@ -47,6 +47,9 @@ class DataAnalysis:
                                                         retrieval_db=self.retrieval_db,
                                                         )     
         
+        self.file_ref = None
+        self.file_path = None
+        
         if not ray.get(self.manager.check_pipeline_exists.remote(self.name)):
             if self.file_path and not self.use_shared_disk:
                 base_name = os.path.basename(file_path)
