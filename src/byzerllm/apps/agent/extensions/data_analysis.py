@@ -11,7 +11,7 @@ from ray.util.client.common import ClientActorHandle, ClientObjectRef
 from byzerllm.apps.agent import Agent,Agents,get_agent_name,run_agent_func,ChatResponse,modify_message_metadata,modify_message_content
 
 from byzerllm.apps.agent.user_proxy_agent import UserProxyAgent
-from byzerllm.apps.agent.extensions.da_pipeline import DataAnalysisPipeline,DataAnalysisPipelineManager
+from byzerllm.apps.agent.extensions.data_analysis_pipeline_agent import DataAnalysisPipeline,DataAnalysisPipelineManager
 from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient
 
 
