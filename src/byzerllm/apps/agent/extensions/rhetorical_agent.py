@@ -16,10 +16,7 @@ from langchain import PromptTemplate
 
 class RhetoricalAgent(ConversableAgent): 
     
-    DEFAULT_SYSTEM_MESSAGE = '''对用户的问题，你只做两件事：
-    1. 如果对于用户的提问，有什么不理解的地方么？如果有，请不要生成代码，用中文询问我，并且给我可能的解决方案。
-    2. 如果没有不理解的地方，请在最后直接回复 "TERMINATE"。
-    '''
+    DEFAULT_SYSTEM_MESSAGE = '''你是一个非常善于反思和总结的AI助手。'''
     
     def __init__(
         self,
@@ -84,11 +81,15 @@ class RhetoricalAgent(ConversableAgent):
 
         m = messages[-1]
         
-        old_conversations = self.simple_retrieval_client.search_memory(chat_name=self.chat_name,owner=self.owner,q=m["content"])
-        last_conversation = []
-        # last_conversation = [{"role":"user","content":"首先先回答，你有什么不理解的地方么？如果有，请不要生成代码，用中文询问我，并且给我可能的解决方案。"}]
+        old_conversations = self.simple_retrieval_client.search_memory(chat_name=self.chat_name,owner=self.owner,q=m["content"])        
 
+        last_conversation = [{"role":"user","content":"首先先回答，你有什么不理解的地方么？如果有，请不要生成代码，用中文询问我，并且给我可能的解决方案。"}]
         _,v = self.generate_llm_reply(raw_message,old_conversations + messages + last_conversation,sender)
+
+        last_conversation = [{"role":"user","content":"回顾前面我们对话，找到那些你说你有不理解的地方，然后用户对我们我们问题做了澄清部分，然后对这些内容做个总结。"}]
+        _,v2 = self.generate_llm_reply(raw_message,old_conversations + messages + last_conversation,sender)
+        self.simple_retrieval_client.save_text_content(owner=self.owner,title="",content=v2,auth_tag="rhetorical",auto_chunking=False,url="")
+
         return True, {"content":v}
                 
         

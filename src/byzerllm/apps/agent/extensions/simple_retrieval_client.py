@@ -121,7 +121,7 @@ field(chunk_vector,array(float))
         return chat_history    
 
 
-    def save_text_content(self,owner:str,title:str,content:str,url:str,auth_tag:str=""):
+    def save_text_content(self,owner:str,title:str,content:str,url:str,auth_tag:str="",auto_chunking:bool=True):
 
         if not self.retrieval:
             raise Exception("retrieval is not setup")
@@ -139,18 +139,19 @@ field(chunk_vector,array(float))
             }]
         self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content",text_content)
         
-        content_chunks= self.split_text_into_chunks(content)
-        
-        
-        text_content_chunks = [{"_id":f'''{text_content[0]["_id"]}_{i}''',
-            "doc_id":text_content[0]["_id"],
-            "owner":owner,
-            "chunk":self.search_tokenize(item),
-            "raw_chunk":item,
-            "chunk_vector":self.emb(item)
-            } for i,item in enumerate(content_chunks)]
-        
-        self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content_chunk",text_content_chunks)    
+        if auto_chunking:            
+            content_chunks= self.split_text_into_chunks(content)
+                        
+            text_content_chunks = [{"_id":f'''{text_content[0]["_id"]}_{i}''',
+                "doc_id":text_content[0]["_id"],
+                "owner":owner,
+                "chunk":self.search_tokenize(item),
+                "raw_chunk":item,
+                "chunk_vector":self.emb(item)
+                } for i,item in enumerate(content_chunks)]
+            
+            self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content_chunk",text_content_chunks)    
+
     
     def _owner_filter(self,owner:str):
         return {"field":"owner","value":owner}
@@ -158,6 +159,20 @@ field(chunk_vector,array(float))
     def search_content_chunks(self,q:str,owner:str,limit:int=4,return_json:bool=True):   
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content_chunk",
+                                         filters={"and":[self._owner_filter(owner)]},
+                                        keyword=self.search_tokenize(q),fields=["content"],
+                                        vector=self.emb(q),vectorField="content_vector",
+                                        limit=limit)])
+
+        if return_json:
+            context = json.dumps([{"content":x["raw_chunk"]} for x in docs],ensure_ascii=False,indent=4)    
+            return context 
+        else:
+            return docs
+
+    def search_content(self,q:str,owner:str,limit:int=4,return_json:bool=True): 
+        docs = self.retrieval.search(self.retrieval_cluster,
+                            [SearchQuery(self.retrieval_db,"text_content",
                                          filters={"and":[self._owner_filter(owner)]},
                                         keyword=self.search_tokenize(q),fields=["chunk"],
                                         vector=self.emb(q),vectorField="chunk_vector",
@@ -167,7 +182,7 @@ field(chunk_vector,array(float))
             context = json.dumps([{"content":x["raw_chunk"]} for x in docs],ensure_ascii=False,indent=4)    
             return context 
         else:
-            return docs
+            return docs  
         
     def get_doc(self,doc_id:str,owner:str):
         docs = self.retrieval.search(self.retrieval_cluster,
