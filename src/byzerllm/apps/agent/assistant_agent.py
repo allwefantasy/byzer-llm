@@ -27,6 +27,8 @@ When you find an answer, verify the answer carefully. Include verifiable evidenc
         name: str,
         llm: ByzerLLM,
         retrieval: ByzerRetrieval,
+        chat_name:str,
+        owner:str,
         code_agent: Union[Agent, ClientActorHandle,str],
         system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,        
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,

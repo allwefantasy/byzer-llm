@@ -37,6 +37,9 @@ class DataAnalysis:
         self.use_shared_disk = use_shared_disk
         self.llm = llm
         self.retrieval = retrieval
+        
+        self.retrieval_cluster = retrieval_cluster
+        self.retrieval_db = retrieval_db
 
         self.simple_retrieval_client = SimpleRetrievalClient(llm=self.llm,
                                                         retrieval=self.retrieval,

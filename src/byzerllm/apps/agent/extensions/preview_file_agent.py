@@ -32,6 +32,8 @@ execute the code to preview the file. If the code is correct, the file will be l
         name: str,
         llm: ByzerLLM,
         retrieval: ByzerRetrieval,
+        chat_name:str,
+        owner:str,
         code_agent: Union[Agent, ClientActorHandle,str],
         system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,        
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,

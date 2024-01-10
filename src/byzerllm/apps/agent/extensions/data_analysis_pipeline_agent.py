@@ -15,6 +15,7 @@ from byzerllm.apps.agent.extensions.visualization_agent import VisualizationAgen
 from byzerllm.apps.agent.assistant_agent import AssistantAgent
 from byzerllm.apps.agent.common_agent import CommonAgent
 from byzerllm.apps.agent.extensions.spark_sql_agent import SparkSQLAgent
+from byzerllm.apps.agent.extensions.rhetorical_agent import RhetoricalAgent
 
 class DataAnalysisPipeline(ConversableAgent):  
     DEFAULT_SYSTEM_MESSAGE = '''You are a helpful data analysis assistant.
@@ -39,11 +40,13 @@ you should reply exactly `UPDATE CONTEXT`.
 
     def __init__(
         self,
-        name: str,
+        name: str,        
         llm: ByzerLLM,
         retrieval: ByzerRetrieval, 
         file_path:str,
-        file_ref:ClientObjectRef ,
+        file_ref:ClientObjectRef ,        
+        chat_name:str,
+        owner:str,
         system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,        
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         max_consecutive_auto_reply: Optional[int] = None,
@@ -61,6 +64,8 @@ you should reply exactly `UPDATE CONTEXT`.
             code_execution_config=code_execution_config,            
             **kwargs,
         )
+        self.chat_name = chat_name
+        self.owner = owner
         self.file_path = file_path
         self.file_ref = file_ref        
         self._reply_func_list = []
@@ -74,30 +79,43 @@ you should reply exactly `UPDATE CONTEXT`.
 
         self.python_interpreter = Agents.create_local_agent(PythonSandboxAgent,"python_interpreter",
                                                 llm,retrieval,
+                                                chat_name=self.chat_name,
+                                                owner=self.owner,
                                                 max_consecutive_auto_reply=100,
                                                 system_message="you are a code sandbox",**params
                                                 )
 
         self.preview_file_agent = Agents.create_local_agent(PreviewFileAgent,"privew_file_agent",llm,retrieval,
-                                        max_consecutive_auto_reply=100,
-                                        code_agent = self.python_interpreter,**params
+                                                                chat_name=self.chat_name,
+                                                                owner=self.owner,
+                                                                max_consecutive_auto_reply=100,
+                                                                code_agent = self.python_interpreter,**params
                                         )
         
         self.visualization_agent = Agents.create_local_agent(VisualizationAgent,"visualization_agent",llm,retrieval,
-                                        max_consecutive_auto_reply=100,                                        
-                                        code_agent = self.python_interpreter,**params
+                                                            chat_name=self.chat_name,
+                                                            owner=self.owner,
+                                                            max_consecutive_auto_reply=100,                                        
+                                                            code_agent = self.python_interpreter,**params
                                         ) 
         self.assistant_agent = Agents.create_local_agent(AssistantAgent,"assistant_agent",llm,retrieval,
-                                        max_consecutive_auto_reply=100,
-                                        code_agent = self.python_interpreter,**params
-                                        )  
+                                                        chat_name=self.chat_name,
+                                                        owner=self.owner,
+                                                        max_consecutive_auto_reply=100,
+                                                        code_agent = self.python_interpreter,**params)  
         self.common_agent = Agents.create_local_agent(CommonAgent,"common_agent",llm,retrieval,
-                                        max_consecutive_auto_reply=100,
-                                        code_agent = self.python_interpreter,**params
-                                        ) 
+                                                       chat_name=self.chat_name,
+                                                        owner=self.owner,
+                                                        max_consecutive_auto_reply=100,
+                                                        code_agent = self.python_interpreter,**params) 
         self.spark_sql_agent = Agents.create_local_agent(SparkSQLAgent,"spark_sql_agent",llm,retrieval,
-                                        max_consecutive_auto_reply=100,**params
-                                        )                   
+                                                        chat_name=self.chat_name,
+                                                        owner=self.owner,
+                                                        max_consecutive_auto_reply=100,**params)   
+        self.rhetoorical_agent = Agents.create_local_agent(RhetoricalAgent,"rhetoorical_agent",llm,retrieval,
+                                                            chat_name=self.chat_name,
+                                                            owner=self.owner,
+                                                            max_consecutive_auto_reply=100,**params)                
         
         self.agents = {
             "assistant_agent":self.assistant_agent,
@@ -105,7 +123,8 @@ you should reply exactly `UPDATE CONTEXT`.
             "common_agent":self.common_agent,
             "privew_file_agent":self.preview_file_agent,
             "python_interpreter":self.python_interpreter,
-            "spark_sql_agent":self.spark_sql_agent
+            "spark_sql_agent":self.spark_sql_agent,
+            "rhetoorical_agent":self.rhetoorical_agent,
         }        
 
     def get_agent_chat_messages(self,agent_name:str):
@@ -215,7 +234,9 @@ class DataAnalysisPipelineManager:
                                 llm:ByzerLLM,retrieval:ByzerRetrieval,
                                 file_path:str,
                                 file_ref:ClientObjectRef,
-                                chat_wrapper:Optional[Callable[[ByzerLLM,Optional[List[Dict]],Dict],List[LLMResponse]]] = default_chat_wrapper,
+                                chat_name:str,
+                                owner:str,
+                                chat_wrapper:Optional[Callable[[ByzerLLM,Optional[List[Dict]],Dict],List[LLMResponse]]] = None,
                                 num_gpus:int=0,num_cpus:int=0):
         self.lasted_updated[name] = time.time()
         self.check_pipeline_timeout()
@@ -232,7 +253,9 @@ class DataAnalysisPipelineManager:
                 retrieval = retrieval,
                 file_path=file_path,
                 file_ref=file_ref,
-                chat_wrapper=chat_wrapper
+                chat_wrapper=chat_wrapper,
+                chat_name=chat_name,
+                owner=owner                
                 )
         self.pipelines[name] = pipeline
         return pipeline
