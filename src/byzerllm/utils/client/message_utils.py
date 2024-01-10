@@ -1,6 +1,6 @@
 from typing import List, Dict,Any
 
-def padding_meesages_merge(data:List[Dict[str,Any]]):
+def padding_messages_merge(data:List[Dict[str,Any]]):
     '''
     merge the neighbor messages with the same role
     '''
@@ -18,7 +18,7 @@ def padding_meesages_merge(data:List[Dict[str,Any]]):
         last_message = message
     return padded_data
 
-def padding_meesages_expand(data:Dict[str,Any]):
+def padding_messages_expand(data:Dict[str,Any]):
     '''
     padding the message between the neighbor messages with the same role
     '''
