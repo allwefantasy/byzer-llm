@@ -64,8 +64,7 @@ The last but most important, let me know if you have any areas of confusion. If 
         llm: ByzerLLM,        
         retrieval: ByzerRetrieval, 
         chat_name:str,
-        owner:str,       
-        code_agent: Union[Agent, ClientActorHandle,str],  
+        owner:str,               
         sql_reviewer_agent: Union[Agent, ClientActorHandle,str],      
         system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,        
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
@@ -86,8 +85,7 @@ The last but most important, let me know if you have any areas of confusion. If 
             **kwargs,
         )
 
-        self.byzer_url = byzer_url
-        self.code_agent = code_agent
+        self.byzer_url = byzer_url        
         self.sql_reviewer_agent = sql_reviewer_agent
         self._reply_func_list = []                
         # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   

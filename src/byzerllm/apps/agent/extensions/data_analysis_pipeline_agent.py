@@ -16,6 +16,7 @@ from byzerllm.apps.agent.assistant_agent import AssistantAgent
 from byzerllm.apps.agent.common_agent import CommonAgent
 from byzerllm.apps.agent.extensions.spark_sql_agent import SparkSQLAgent
 from byzerllm.apps.agent.extensions.rhetorical_agent import RhetoricalAgent
+from byzerllm.apps.agent.extensions.sql_reviewer_agent import SQLReviewerAgent
 
 class DataAnalysisPipeline(ConversableAgent):  
     DEFAULT_SYSTEM_MESSAGE = '''You are a helpful data analysis assistant.
@@ -84,6 +85,7 @@ you should reply exactly `UPDATE CONTEXT`.
                                                 max_consecutive_auto_reply=100,
                                                 system_message="you are a code sandbox",**params
                                                 )
+        
 
         self.preview_file_agent = Agents.create_local_agent(PreviewFileAgent,"privew_file_agent",llm,retrieval,
                                                                 chat_name=self.chat_name,
@@ -108,7 +110,13 @@ you should reply exactly `UPDATE CONTEXT`.
                                                         owner=self.owner,
                                                         max_consecutive_auto_reply=100,
                                                         code_agent = self.python_interpreter,**params) 
+        
+        self.sql_reviewer_agent = Agents.create_local_agent(SQLReviewerAgent,"sql_reviewer_agent",llm,retrieval,chat_name=self.chat_name,
+                                                        owner=self.owner,max_consecutive_auto_reply=100,**params
+                                                            )
+        
         self.spark_sql_agent = Agents.create_local_agent(SparkSQLAgent,"spark_sql_agent",llm,retrieval,
+                                                         sql_reviewer_agent=self.sql_reviewer_agent,
                                                         chat_name=self.chat_name,
                                                         owner=self.owner,
                                                         max_consecutive_auto_reply=100,**params)   
