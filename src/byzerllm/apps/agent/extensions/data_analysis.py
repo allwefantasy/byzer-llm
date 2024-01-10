@@ -49,7 +49,7 @@ class DataAnalysis:
         
         self.file_ref = None
         self.file_path = None
-        
+
         if not ray.get(self.manager.check_pipeline_exists.remote(self.name)):
             if self.file_path and not self.use_shared_disk:
                 base_name = os.path.basename(file_path)
@@ -67,6 +67,8 @@ class DataAnalysis:
                 retrieval =retrieval,
                 file_path=self.file_path,
                 file_ref=self.file_ref,
+                chat_name = self.chat_name,
+                owner = self.owner,
                 chat_wrapper = self.chat_wrapper
                 )) 
 
