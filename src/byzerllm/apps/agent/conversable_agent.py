@@ -37,7 +37,7 @@ class ConversableAgent(Agent):
         function_map: Optional[Dict[str, Callable]] = None,
         code_execution_config: Optional[Union[Dict, bool]] = None,        
         default_auto_reply: Optional[Union[str, Dict, None]] = "",
-        chat_wrapper:Optional[Callable[[ByzerLLM,Optional[List[Dict]],Dict],List[LLMResponse]]] = default_chat_wrapper,
+        chat_wrapper:Optional[Callable[[ByzerLLM,Optional[List[Dict]],Dict],List[LLMResponse]]] = None,
         description:str = "ConversableAgent",
         
     ):
@@ -429,7 +429,13 @@ class ConversableAgent(Agent):
             # should be converted to
             # [{'content': '', 'role': 'user'},{'content': '', 'role': 'assistant'},{'content': '', 'role': 'user'}, {'content': '', 'role': 'assistant'},{'content': '', 'role': 'user'},{'content': '', 'role': 'assistant'},{'content': '', 'role': 'user'}]                
             temp_messages = padding_messages_expand(messages)
-                       
+
+            if self.chat_wrapper is None:
+                response = self.llm.chat_oai(conversations=self._system_message + temp_messages,llm_config={
+                    "temperature":0.1,"top_p":0.95
+                })
+                return True, response[0].output
+                        
             response = self.chat_wrapper(self.llm,self._system_message + temp_messages)
             return True, response[0].output    
 
