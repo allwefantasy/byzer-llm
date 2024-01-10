@@ -16,8 +16,8 @@ from langchain import PromptTemplate
 
 class RhetoricalAgent(ConversableAgent): 
     
-    DEFAULT_SYSTEM_MESSAGE = '''你只做两件事：
-    1. 对我的提问，你有什么不理解的地方么？如果有，请不要生成代码，用中文询问我，并且给我可能的解决方案。
+    DEFAULT_SYSTEM_MESSAGE = '''对用户的问题，你只做两件事：
+    1. 如果对于用户的提问，有什么不理解的地方么？如果有，请不要生成代码，用中文询问我，并且给我可能的解决方案。
     2. 如果没有不理解的地方，请在最后直接回复 "TERMINATE"。
     '''
     
