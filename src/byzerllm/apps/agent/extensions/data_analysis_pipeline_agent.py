@@ -78,13 +78,15 @@ you should reply exactly `UPDATE CONTEXT`.
 
         params = {}
         if "chat_wrapper" in kwargs:
-            params["chat_wrapper"] = kwargs["chat_wrapper"]        
+            params["chat_wrapper"] = kwargs["chat_wrapper"]
+
+        max_consecutive_auto_reply = 100000;            
 
         self.python_interpreter = Agents.create_local_agent(PythonSandboxAgent,"python_interpreter",
                                                 llm,retrieval,
                                                 chat_name=self.chat_name,
                                                 owner=self.owner,
-                                                max_consecutive_auto_reply=100,
+                                                max_consecutive_auto_reply=max_consecutive_auto_reply,
                                                 system_message="you are a code sandbox",**params
                                                 )
         
@@ -92,40 +94,40 @@ you should reply exactly `UPDATE CONTEXT`.
         self.preview_file_agent = Agents.create_local_agent(PreviewFileAgent,"privew_file_agent",llm,retrieval,
                                                                 chat_name=self.chat_name,
                                                                 owner=self.owner,
-                                                                max_consecutive_auto_reply=100,
+                                                                max_consecutive_auto_reply=max_consecutive_auto_reply,
                                                                 code_agent = self.python_interpreter,**params
                                         )
         
         self.visualization_agent = Agents.create_local_agent(VisualizationAgent,"visualization_agent",llm,retrieval,
                                                             chat_name=self.chat_name,
                                                             owner=self.owner,
-                                                            max_consecutive_auto_reply=100,                                        
+                                                            max_consecutive_auto_reply=max_consecutive_auto_reply,                                        
                                                             code_agent = self.python_interpreter,**params
                                         ) 
         self.assistant_agent = Agents.create_local_agent(AssistantAgent,"assistant_agent",llm,retrieval,
                                                         chat_name=self.chat_name,
                                                         owner=self.owner,
-                                                        max_consecutive_auto_reply=100,
+                                                        max_consecutive_auto_reply=max_consecutive_auto_reply,
                                                         code_agent = self.python_interpreter,**params)  
         self.common_agent = Agents.create_local_agent(CommonAgent,"common_agent",llm,retrieval,
                                                        chat_name=self.chat_name,
                                                         owner=self.owner,
-                                                        max_consecutive_auto_reply=100,
+                                                        max_consecutive_auto_reply=max_consecutive_auto_reply,
                                                         code_agent = self.python_interpreter,**params) 
         
         self.sql_reviewer_agent = Agents.create_local_agent(SQLReviewerAgent,"sql_reviewer_agent",llm,retrieval,chat_name=self.chat_name,
-                                                        owner=self.owner,max_consecutive_auto_reply=100,**params
+                                                        owner=self.owner,max_consecutive_auto_reply=max_consecutive_auto_reply,**params
                                                             )
         
         self.spark_sql_agent = Agents.create_local_agent(SparkSQLAgent,"spark_sql_agent",llm,retrieval,
                                                          sql_reviewer_agent=self.sql_reviewer_agent,
                                                         chat_name=self.chat_name,
                                                         owner=self.owner,                                                        
-                                                        max_consecutive_auto_reply=100,**params)   
+                                                        max_consecutive_auto_reply=max_consecutive_auto_reply,**params)   
         self.rhetoorical_agent = Agents.create_local_agent(RhetoricalAgent,"rhetoorical_agent",llm,retrieval,
                                                             chat_name=self.chat_name,
                                                             owner=self.owner,
-                                                            max_consecutive_auto_reply=100,**params)                
+                                                            max_consecutive_auto_reply=max_consecutive_auto_reply,**params)                
         
         self.agents = {
             "assistant_agent":self.assistant_agent,

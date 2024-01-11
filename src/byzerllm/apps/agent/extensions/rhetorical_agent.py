@@ -46,8 +46,8 @@ class RhetoricalAgent(ConversableAgent):
             code_execution_config=code_execution_config,            
             **kwargs,
         )
-        self.chat_name = name
-        self.owner = name
+        self.chat_name = chat_name
+        self.owner = owner
         
         self.update_context_retry = update_context_retry
         self.chunk_size_in_context = chunk_size_in_context
@@ -78,6 +78,8 @@ class RhetoricalAgent(ConversableAgent):
             messages = self._messages[get_agent_name(sender)]  
 
         m = messages[-1]
+
+        print(f"rhetorical====",flush=True)
         
         old_conversations = self.simple_retrieval_client.search_content(q=m["content"],owner=self.owner,url="rhetorical",limit=3)
         if len(old_conversations) != 0:
