@@ -125,7 +125,9 @@ class SparkSQLAgent(ConversableAgent):
             
             def calculate_time_range():
                 '''
-                根据计算用户提到的时间计算时间的区间，注意这个函数没有参数。                       
+                计算时间的区间，注意这个函数没有参数。 请使用dateutil库。
+                如果用户提到的是单一日期，那么都是按天为单位来进行区间计算。
+                比如说：上个月，那么就是上个月的第一天到最后一天。
                 '''
                 pass 
 
