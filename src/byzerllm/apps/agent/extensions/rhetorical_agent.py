@@ -55,7 +55,7 @@ class RhetoricalAgent(ConversableAgent):
         self._reply_func_list = []
         # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
         self.register_reply([Agent, ClientActorHandle,str], RhetoricalAgent.generate_reply) 
-        self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply) 
+        self.register_reply([Agent, ClientActorHandle,str], RhetoricalAgent.check_termination_and_human_reply) 
                 
         self.retrieval_cluster = retrieval_cluster
         self.retrieval_db = retrieval_db 
