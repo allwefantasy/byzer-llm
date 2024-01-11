@@ -213,11 +213,17 @@ you should reply exactly `UPDATE CONTEXT`.
         if messages is None:
             messages = self._messages[get_agent_name(sender)]
         
-        ori_message = messages[-1]  
+        ori_message = messages[-1]
+        specified_agent = ori_message.get("metadata",{}).get("agent",None)  
           
         self.send(message=ori_message,recipient=self.rhetoorical_agent)
-                
-        _,agent_name = "spark_sql_agent" # self.select_agent(raw_message,messages,sender)
+
+        agent_name = None
+        if specified_agent:
+            agent_name = specified_agent
+        else:        
+            _,_agent_name = self.select_agent(raw_message,messages,sender)
+            agent_name = _agent_name
         print(f"Select agent: {agent_name} to answer the question: {ori_message['content'][0:20]}",flush=True)
         
         if agent_name and agent_name in self.agents:
