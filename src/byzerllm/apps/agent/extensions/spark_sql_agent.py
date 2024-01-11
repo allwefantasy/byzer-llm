@@ -22,22 +22,6 @@ except ImportError:
 
     def colored(x, *args, **kwargs):
         return x
-
-class TimeRange(pydantic.BaseModel):
-    '''
-    时间区间
-    格式需要如下： yyyy-MM-dd
-    '''  
-    
-    start: str = pydantic.Field(...,description="开始时间.时间格式为 yyyy-MM-dd")
-    end: str = pydantic.Field(...,description="截止时间.时间格式为 yyyy-MM-dd")  
-
-def calculate_time_range():
-    '''
-    根据计算用户提到的时间计算时间的区间，注意这个函数没有参数。
-    如果用户没有提到时间，那么返回 None
-    '''
-    pass 
     
 
 class SparkSQLAgent(ConversableAgent): 
@@ -137,6 +121,22 @@ class SparkSQLAgent(ConversableAgent):
             "role":"user"    
         }],response_class=Item) 
         
+        def calculate_time_range():
+            '''
+            根据计算用户提到的时间计算时间的区间，注意这个函数没有参数。
+            如果用户没有提到时间，那么返回 None            
+            '''
+            pass 
+
+        class TimeRange(pydantic.BaseModel):
+            '''
+            时间区间
+            格式需要如下： yyyy-MM-dd
+            '''  
+            
+            start: str = pydantic.Field(...,description="开始时间.时间格式为 yyyy-MM-dd")
+            end: str = pydantic.Field(...,description="截止时间.时间格式为 yyyy-MM-dd") 
+
         if t[0].value.time:                     
             t = self.llm.chat_oai([{
                 "content":t[0].value.time,
@@ -170,7 +170,7 @@ class SparkSQLAgent(ConversableAgent):
                             execute_tool=True)
 
         if t[0].values:     
-            v = print(t[0].values[0])
+            v = t[0].values[0]
             if isinstance(v,str):
                 return True,{"content":v,"metadata":{"TERMINATE":True}}
             
