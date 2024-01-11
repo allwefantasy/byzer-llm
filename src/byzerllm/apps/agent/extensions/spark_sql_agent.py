@@ -116,7 +116,7 @@ class SparkSQLAgent(ConversableAgent):
         # we will chagne the message content
         def calculate_time_range():
             '''
-            计算时间区间，时间格式为 yyyy-MM-dd. 
+            计算时间区间,几号到几号
             '''
             pass 
             

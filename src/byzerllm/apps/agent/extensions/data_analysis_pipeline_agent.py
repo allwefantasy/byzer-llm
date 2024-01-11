@@ -216,10 +216,10 @@ you should reply exactly `UPDATE CONTEXT`.
             messages = self._messages[get_agent_name(sender)]
         
         ori_message = messages[-1]
-        specified_agent = ori_message.get("metadata",{}).get("agent",None)  
-          
-        print(f"send message to {get_agent_name(self.rhetoorical_agent)}: {ori_message}",flush=True)  
+                         
         self.send(message=ori_message,recipient=self.rhetoorical_agent)
+
+        specified_agent = ori_message.get("metadata",{}).get("agent",None)  
 
         agent_name = None
         if specified_agent:
