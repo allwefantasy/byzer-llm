@@ -32,7 +32,7 @@ You have following agents to use:
 
 
 Please check the user's question and decide which agent you need to use. And then reply the agent name only.
-If there is no tool can help you, 
+If there is no agent can help you, 
 you should reply exactly `UPDATE CONTEXT`.
 ''' 
 

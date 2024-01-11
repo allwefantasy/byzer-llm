@@ -101,17 +101,17 @@ class SparkSQLAgent(ConversableAgent):
             
         def reply_with_clarify(content:Annotated[str,"这个是你反问用户的内容"]):
             '''
-            如果需要用户澄清问题，那么可以调用该函数
+            如果你不理解用户的问题，那么你可以调用这个函数，来反问用户。
             '''
             flag[0] = content            
     
-        last_conversation = [{"role":"user","content":'''首先先回答，你有什么不理解的地方么？如果有，请不要生成代码，用中文询问我，并且给我可能的解决方案，则调用相应的函数。否则不需要调用任何函数。"'''}]        
+        last_conversation = [{"role":"user","content":'''首先先回答，你有什么不理解的地方么？比如问题如果有歧义，或者问题的信息不够，导致你无法回答。
+如果有，请不要生成代码，用中文询问我，给我可能的解决方案，并且调用相应的函数。如果没有什么不理解的地方，则不需要调用任何函数。'''}]        
         self.llm.chat_oai(conversations=messages + last_conversation,
                           tools=[reply_with_clarify],
                           execute_tool=True)
         
-        if flag[0] is not None:
-            print(colored(f"需要用户澄清问题。反问：{flag[0]}",'red'),flush=True)
+        if flag[0] is not None:            
             return True,{"content":flag[0],"metadata":{"TERMINATE":True}}
                 
         # try to awnser the user's question or generate sql

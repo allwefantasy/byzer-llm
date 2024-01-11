@@ -93,7 +93,8 @@ class RhetoricalAgent(ConversableAgent):
 ```  
 你在回答我的问题的时候，可以参考这些内容。''')
                          
-        last_conversation = [{"role":"user","content":"回顾前面我们对话，找到那些你说你有不理解的地方，然后用户对我们问题做了澄清的部分，然后对这些内容做个总结。"}]
+        last_conversation = [{"role":"user","content":'''回顾前面我们对话，我提出了很多问题，但是有些问题你没办法直接回答，让我补充了一些信息，然后你才能回答我的问题。
+找到这些内容，并且做个总结'''}]
         _,v2 = self.generate_llm_reply(raw_message,old_conversations + messages + last_conversation,sender)
         self.simple_retrieval_client.save_text_content(owner=self.owner,title="",content=v2,url="rhetorical",auto_chunking=False)
         return True, None 
