@@ -116,7 +116,7 @@ class SparkSQLAgent(ConversableAgent):
         # we will chagne the message content
         def calculate_time_range():
             '''
-            计算时间区间,几号到几号
+            计算用户提到的时间的区间。注意这个函数没有参数。
             '''
             pass 
             
