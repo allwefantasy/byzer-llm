@@ -119,25 +119,25 @@ class SparkSQLAgent(ConversableAgent):
         t = self.llm.chat_oai([{
             "content":f'''{m["content"]}''',
             "role":"user"    
-        }],response_class=Item) 
-        
-        def calculate_time_range():
-            '''
-            根据计算用户提到的时间计算时间的区间，注意这个函数没有参数。
-            如果用户没有提到时间，那么返回 None            
-            '''
-            pass 
+        }],response_class=Item)                 
 
-        class TimeRange(pydantic.BaseModel):
-            '''
-            时间区间
-            格式需要如下： yyyy-MM-dd
-            '''  
+        if t[0].value.time:     
             
-            start: str = pydantic.Field(...,description="开始时间.时间格式为 yyyy-MM-dd")
-            end: str = pydantic.Field(...,description="截止时间.时间格式为 yyyy-MM-dd") 
+            def calculate_time_range():
+                '''
+                根据计算用户提到的时间计算时间的区间，注意这个函数没有参数。                       
+                '''
+                pass 
 
-        if t[0].value.time:                     
+            class TimeRange(pydantic.BaseModel):
+                '''
+                时间区间
+                格式需要如下： yyyy-MM-dd
+                '''  
+                
+                start: str = pydantic.Field(...,description="开始时间.时间格式为 yyyy-MM-dd")
+                end: str = pydantic.Field(...,description="截止时间.时间格式为 yyyy-MM-dd")                 
+            
             t = self.llm.chat_oai([{
                 "content":t[0].value.time,
                 "role":"user"    
@@ -282,7 +282,7 @@ load csv.`file:///home/byzerllm/projects/jupyter-workspace/nlp2query/h.csv` wher
 {sql}                                        
 ''';
 """,owner="william",url="http://192.168.1.248:9003/run/script")
-        return json.dumps(v)
+        return json.dumps(v,ensure_ascii=False)
 
         
     
