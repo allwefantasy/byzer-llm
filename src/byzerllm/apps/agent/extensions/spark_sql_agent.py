@@ -30,7 +30,7 @@ class SparkSQLAgent(ConversableAgent):
 特别需要注意的是：
 
 1. 你生成的Block需要用sql标注而非vbnet
-2. 生成的 Spark SQL 语句中，所有字段务必需要用 `` 括起来。
+2. 生成的 Spark SQL 语句中，所有字段或者别名务必需要用 `` 括起来。
 '''
     def __init__(
         self,
