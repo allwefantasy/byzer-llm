@@ -99,9 +99,9 @@ class SparkSQLAgent(ConversableAgent):
         # check if the user's question is ambiguous or not, if it is, try to ask the user to clarify the question. 
         flag = [None]      
             
-        def reply_with_clarify(content:Annotated[str,"给到用户的提问，让用户对此进行澄清"]):
+        def reply_with_clarify(content:Annotated[str,"这个是你反问用户的内容"]):
             '''
-            如果需要澄清用户的问题，那么可以调用该函数
+            如果需要用户澄清问题，那么可以调用该函数
             '''
             flag[0] = content            
     
@@ -111,6 +111,7 @@ class SparkSQLAgent(ConversableAgent):
                           execute_tool=True)
         
         if flag[0] is not None:
+            print(colored(f"需要用户澄清问题。反问：{flag[0]}",'red'),flush=True)
             return True,{"content":flag[0],"metadata":{"TERMINATE":True}}
                 
         # try to awnser the user's question or generate sql
