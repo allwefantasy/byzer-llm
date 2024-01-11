@@ -19,6 +19,7 @@ import logging
 import time
 import asyncio
 import pydantic
+import copy
 
 
 logger = logging.getLogger(__name__)
@@ -963,8 +964,8 @@ class ByzerLLM:
         is_saas_model =  meta.get("model_deploy_type",None) == "saas"
         is_message_format = meta.get("message_format",False)
 
-        
-        last_message = conversations[-1]
+        temp_conversations = copy.deepcopy(conversations)
+        last_message = temp_conversations[-1]
         
         # function calling
         if tools or tool_choice:
@@ -986,7 +987,7 @@ class ByzerLLM:
         if is_saas_model or is_message_format:
             final_ins = last_message["content"]
             history = []
-            for item in conversations[:-1]:
+            for item in temp_conversations[:-1]:
                 # clean metadata field in conversation 
                 # which may used by agent.
                 if "metadata" in item:
@@ -994,7 +995,7 @@ class ByzerLLM:
                 history.append(item)
             
         else:
-            final_ins = self.generate_instruction_from_history(model,conversations, role_mapping)         
+            final_ins = self.generate_instruction_from_history(model,temp_conversations, role_mapping)         
             history = []
 
         default_config = self.mapping_extra_generation_params.get(model,{})
@@ -1023,7 +1024,7 @@ class ByzerLLM:
             temp_result = []
             f = self.mapping_response_class_format_after_chat_func.get(model,response_class_format_after_chat)
             for response in responses:
-                new_conversations = conversations + [{
+                new_conversations = temp_conversations + [{
                                         "content":response.output,
                                         "role":"assistant"
                                     },{
