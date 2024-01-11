@@ -828,7 +828,7 @@ class ByzerLLM:
                     } for x in request.instruction]    
         return conversations
 
-    def execute_function_calling(self,response:LLMResponse,tools:List[Callable])-> LLMFunctionCallResponse:            
+    def execute_function_calling(self,response:LLMResponse,tools:List[Callable],func_params:Dict[str,Any])-> LLMFunctionCallResponse:            
         codes = code_utils.extract_code(response.output)
         
         r = LLMFunctionCallResponse(response=response,values=[],metadata={"reason":""})
@@ -850,11 +850,14 @@ class ByzerLLM:
             return r
                     
         _func_maps = dict([(t.__name__,t) for t in tools])
+
+        if func_params is None:
+            func_params = {}
         
         try:
             for m in ms.tool_calls:        
                 if m.function.name in _func_maps:
-                    r.values.append(_func_maps[m.function.name](**m.function.arguments))
+                    r.values.append(_func_maps[m.function.name](**m.function.arguments,**func_params))
         except Exception as inst:
             r.metadata["reason"] = str(inst)            
 
@@ -931,6 +934,7 @@ class ByzerLLM:
                  impl_func:Optional[Callable]=None,
                  execute_impl_func:bool=False,
                  impl_func_params:Optional[Dict[str,Any]]=None,
+                 func_params:Optional[Dict[str,Any]]=None,
                  response_class:Optional[Union[pydantic.BaseModel,str]] = None, 
                  response_after_chat:Optional[Union[pydantic.BaseModel,str]] = False,
                  model:Optional[str] = None,
@@ -1001,7 +1005,7 @@ class ByzerLLM:
             for response in responses:
                 final_result.append(self.execute_generate_func(
                     func_name=impl_func.__name__,
-                    impl_func_params=impl_func_params,
+                    impl_func_params=impl_func_params or func_params,
                     response=response,
                     response_class=response_class))
             return final_result
@@ -1027,14 +1031,14 @@ class ByzerLLM:
         if response_class:
             final_result = []
             for response in temp_result:
-                final_result.append(self.execute_response_format(response,response_class))
+                final_result.append(self.execute_response_format(response=response,response_class=response_class))
             return final_result    
                              
         ## handle function calling response
         if execute_tool:
             final_result = []
             for response in responses:
-                final_result.append(self.execute_function_calling(response,tools))
+                final_result.append(self.execute_function_calling(response=response,tools=tools,func_params=func_params))
 
             return final_result
         

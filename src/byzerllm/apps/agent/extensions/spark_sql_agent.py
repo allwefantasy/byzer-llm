@@ -23,42 +23,7 @@ except ImportError:
     
 class SparkSQLAgent(ConversableAgent): 
     DEFAULT_SYSTEM_MESSAGE='''You are a helpful AI assistant. You are also a Spark SQL expert. 
-
-In the following cases, suggest Spark SQL code (in a sql coding block) for the user to execute.
-    1. When you need to collect info, use the code to output the info you need, for example, browse or search the web, download/read a file, print the content of a webpage or a file, get the current date/time, check the operating system. After sufficient info is printed and the task is ready to be solved based on your language skill, you can solve the task by yourself.
-    2. When you need to perform some task with code, use the code to perform the task and output the result. Finish the task smartly.
-Solve the task step by step if you need to. If a plan is not provided, explain your plan first. Be clear which step uses code, and which step uses your language skill.
-When using code, you must indicate the script type in the code block. The user cannot provide any other feedback or perform any other action beyond executing the code you suggest. The user can't modify your code. So do not suggest incomplete code which requires users to modify. Don't use a code block if it's not intended to be executed by the user.
-If you want the user to save the code in a file before executing it, put -- filename: <filename> inside the code block as the first line. Don't include multiple code blocks in one response. Do not ask users to copy and paste the result. Instead, use 'print' function for the output when relevant. Check the execution result returned by the user.
-If the result indicates there is an error, fix the error and output the code again. Suggest the full code instead of partial code or code changes. If the error can't be fixed or if the task is not solved even after the code is executed successfully, analyze the problem, revisit your assumption, collect additional info you need, and think of a different approach to try.
-When you find an answer, verify the answer carefully. Include verifiable evidence in your response if possible.
-
-既然你是一个 Spark SQL 专家，并且你总是对问题进行拆解，一步一步使用 Spark SQL 完成任务，那么为了能够让SQL之间能够进行衔接，你需要使用 with 语句。
-
-在 Spark SQL 中，WITH 子句通常用于定义临时视图（Temporary Views），这些视图在当前 SQL 查询中是可见的。以下是一个使用 WITH 子句的例子：
-
-假设我们有一个名为 employees 的表，其中包含 id, name, 和 department_id 字段。我们想要计算每个部门的员工数量。
-
-SQL 查询如下：
-
-```sql
-WITH department_count AS (
-  SELECT department_id, COUNT(*) as employee_count
-  FROM employees
-  GROUP BY department_id
-)
-SELECT d.department_id, d.employee_count
-FROM department_count d;
-```
-
-在这个例子中，WITH 子句创建了一个名为 department_count 的临时视图，该视图包含每个部门的 department_id 和相应的 employee_count（员工数量）。随后的 SELECT 语句从这个临时视图中检索数据。
-
-请注意： 生成的 Spark SQL 要避免了手动输入，而是让数据库自动为我们处理，比如 in 查询里，要用子查询，而不是手动输入。
-The last but most important, let me know if you have any areas of confusion. If you do, please don't generate code, ask me, and provide possible solutions.
-
-
-
-    '''
+你总是对问题进行拆解，先给出详细解决问题的思路，最后确保你生成的代码都在一个 SQL Block里。特别需要注意的事，你生成的Block需要用sql标注而非vbnet'''
     def __init__(
         self,
         name: str,
@@ -103,7 +68,7 @@ The last but most important, let me know if you have any areas of confusion. If 
         # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
         self.register_reply([Agent, ClientActorHandle,str], SparkSQLAgent.generate_reply_for_reviview)
         self.register_reply([Agent, ClientActorHandle,str], SparkSQLAgent.generate_sql_reply) 
-        self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply) 
+        self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply)         
 
     def generate_sql_reply(
         self,
@@ -120,40 +85,55 @@ The last but most important, let me know if you have any areas of confusion. If 
             messages = self._messages[get_agent_name(sender)]
          
         m = messages[-1]
-        old_conversations = self.simple_retrieval_client.search_content(q=m["content"],owner=self.owner,url="rhetorical",limit=3)
-        if len(old_conversations) != 0:
-            c = json.dumps(old_conversations,ensure_ascii=False)
+
+        # recall old memory and update the system prompt
+        old_memory = self.simple_retrieval_client.search_content(q=m["content"],owner=self.owner,url="rhetorical",limit=3)
+        if len(old_memory) != 0:
+            c = json.dumps(old_memory,ensure_ascii=False)
             self.update_system_message(f'''{self.DEFAULT_SYSTEM_MESSAGE}\n下面是我们以前对话的内容总结:
 ```json
 {c}                                       
 ```  
-你在回答我的问题的时候，可以参考这些内容。''')    
-           
+你在回答我的问题的时候，可以参考这些内容。''') 
+
+        # check if the user's question is ambiguous or not, if it is, try to ask the user to clarify the question. 
+        flag = [None]      
+            
+        def reply_with_clarify(content:Annotated[str,"给到用户的提问，让用户对此进行澄清"]):
+            '''
+            询问用户是否需要澄清
+            '''
+            flag[0] = content            
+    
+        last_conversation = [{"role":"user","content":'''首先先回答，你有什么不理解的地方么？如果有，请不要生成代码，用中文询问我，并且给我可能的解决方案。如果没有不清楚的，则无需做任何回应。"'''}]        
+        self.llm.chat_oai(conversations=messages + last_conversation,
+                          tools=[reply_with_clarify],
+                          execute_tool=True)
+        
+        if flag[0] is not None:
+            return True,{"content":flag[0],"metadata":{"TERMINATE":True}}
+                
+        # try to awnser the user's question or generate sql
         _,v = self.generate_llm_reply(raw_message,messages,sender)
         codes = code_utils.extract_code(v)
-        has_sql_code = False
+        has_sql_code = code_utils.check_target_codes_exists(codes,["sql"])  
 
-        for code in codes:                  
-            if code[0]!="unknown":                
-                has_sql_code = True           
-
-        if has_sql_code:                
+        # if we have sql code, ask the sql reviewer to review the code     
+        if has_sql_code: 
+            # sync the question to the sql reviewer               
             self.send(messages[-1],self.sql_reviewer_agent,request_reply=False)
+            # send the sql code to the sql reviewer to review
             self.send({
-                    "content":v
+                    "content":code_utils.get_target_codes(codes,["sql"])[0],
                 },self.sql_reviewer_agent)
             
-            # 获取倒数最后一条有SQL代码的消息
-            conversations = self.chat_messages[get_agent_name(self.sql_reviewer_agent)][:-10].reverse()
-            last_sql = None
-            for conversation in conversations:
-                code = code_utils.extract_code(conversation["content"])[0]
-                if code[0]!="unknown":
-                    last_sql = code[1]
-                    break
-
-            if last_sql is not None:
-                reply = self.execute_spark_sql(last_sql)
+            # get the sql reviewer reviewed.             
+            conversation = self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-1]
+            codes = code_utils.extract_code(conversation["content"])
+            sql_codes = code_utils.get_target_codes(codes,["sql"])
+            
+            if sql_codes:
+                reply = self.execute_spark_sql(sql_codes[0])
             return True, {"content":reply,"metadata":{"TERMINATE":True}}             
         
 
@@ -173,8 +153,33 @@ The last but most important, let me know if you have any areas of confusion. If 
         if messages is None:
             messages = self._messages[get_agent_name(sender)] 
 
-        _,v = self.generate_llm_reply(raw_message,messages,sender)        
-        return True, {"content":v,"metadata":{}}
+        target_message = {
+            "content":"",
+            "metadata":{"TERMINATE":True},
+        }    
+
+        def reply_with_review_success(sql:Annotated[str,"我们刚刚给到reviewer的sql代码"]):
+            '''
+            如果reviewer觉得代码没问题，那么可以调用该函数
+            '''            
+            target_message["content"] = messages[-2]["content"]
+
+        def reply_with_review_fail(content:Annotated[str,"根据用户反馈的问题，我们修正后的SQL代码"]):
+            '''
+            如果reviewer觉得代码还有问题，那么可以调用该函数
+            '''
+            target_message["content"] = content
+            target_message["metadata"]["TERMINATE"] = False    
+
+
+        self.llm.chat_oai(conversations=messages,
+                          tools=[reply_with_review_success,reply_with_review_fail],
+                          execute_tool=True)
+        if target_message["metadata"]["TERMINATE"]:
+            target_message = None
+
+        ## make sure the last message is the reviewed sql code    
+        return True, target_message
     
     def execute_spark_sql(self,sql:Annotated[str,"Spark SQL 语句"])->str:
         '''

@@ -69,6 +69,38 @@ def infer_lang(code):
         return UNKNOWN
 
 
+def check_target_codes_exists(codes: List[Tuple[str, str]], langs: List[str]) -> bool:
+    """Check if there is code in a specific language in the code list.
+
+    Args:
+        codes (list): The list of code blocks.
+        langs (list): The language to check.
+
+    Returns:
+        bool: True if there is code in the specified language; False otherwise.
+    """
+    for l, _ in codes:
+        if l in langs:
+            return True
+    return False
+
+def get_target_codes(codes: List[Tuple[str, str]], langs: List[str]) -> List[str]:
+    """Get code in a specific language from the code list.
+
+    Args:
+        codes (list): The list of code blocks.
+        langs (list): The language to check.
+
+    Returns:
+        str: The code in the specified language.
+    """
+    target_codes = []
+    for l, code in codes:
+        if l in langs:
+            target_codes.append(code)
+    return target_codes
+
+
 def extract_code(
     text: Union[str, List], pattern: str = CODE_BLOCK_PATTERN, detect_single_line_code: bool = False
 ) -> List[Tuple[str, str]]:

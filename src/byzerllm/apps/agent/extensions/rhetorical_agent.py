@@ -93,8 +93,7 @@ class RhetoricalAgent(ConversableAgent):
 ```  
 你在回答我的问题的时候，可以参考这些内容。''')     
 
-        last_conversation = [{"role":"user","content":'''首先先回答，你有什么不理解的地方么？如果有，请不要生成代码，用中文询问我，并且给我可能的解决方案。如果没有，请回复"UPDATE_CONTEXT"'''}]
-        _,v = self.generate_llm_reply(raw_message,old_conversations + messages + last_conversation,sender)
+        
         if self.is_update_context(v):
             last_conversation = [{"role":"user","content":"回顾前面我们对话，找到那些你说你有不理解的地方，然后用户对我们问题做了澄清部分，然后对这些内容做个总结。"}]
             _,v2 = self.generate_llm_reply(raw_message,old_conversations + messages + last_conversation,sender)
