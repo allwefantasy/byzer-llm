@@ -1,6 +1,6 @@
 from ..conversable_agent import ConversableAgent
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
-from ....utils.client import ByzerLLM
+from ....utils.client import ByzerLLM,message_utils
 from byzerllm.utils.retrieval import ByzerRetrieval
 from ..agent import Agent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
@@ -33,7 +33,7 @@ class SQLReviewerAgent(ConversableAgent):
 结束对话方式为：你觉得当前的代码没有什么问题了。
 
 注意：
-1. 整个review过程，仅仅指出问题和给出建议，不要尝试生成任何SQL代码。
+1. 整个review过程，仅仅给出建议，不要尝试生成任何SQL代码。
 '''
     def __init__(
         self,
@@ -76,7 +76,7 @@ class SQLReviewerAgent(ConversableAgent):
         if messages is None:
             messages = self._messages[get_agent_name(sender)]
                         
-        _,v = self.generate_llm_reply(raw_message,messages,sender)
+        _,v = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages))
         
         return True, {"content":v,"metadata":{}}
 

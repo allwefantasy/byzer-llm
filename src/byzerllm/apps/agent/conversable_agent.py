@@ -6,7 +6,7 @@ import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
-from byzerllm.utils.client.message_utils import padding_messages_expand
+from byzerllm.utils.client import message_utils
 from .agent import Agent
 from ...utils.retrieval import ByzerRetrieval
 from ...utils.client import ByzerLLM,default_chat_wrapper,LLMResponse
@@ -428,7 +428,7 @@ class ConversableAgent(Agent):
             # [{'content': '', 'role': 'assistant'},{'content': '', 'role': 'user'}, {'content': '', 'role': 'assistant'},{'content': '', 'role': 'assistant'}]    
             # should be converted to
             # [{'content': '', 'role': 'user'},{'content': '', 'role': 'assistant'},{'content': '', 'role': 'user'}, {'content': '', 'role': 'assistant'},{'content': '', 'role': 'user'},{'content': '', 'role': 'assistant'},{'content': '', 'role': 'user'}]                
-            temp_messages = padding_messages_expand(messages)
+            temp_messages = message_utils.padding_messages_merge(messages)
 
             if self.chat_wrapper is None:
                 response = self.llm.chat_oai(conversations=self._system_message + temp_messages,llm_config={
