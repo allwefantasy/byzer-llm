@@ -1,6 +1,6 @@
 from ..conversable_agent import ConversableAgent
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,Annotated
-from ....utils.client import ByzerLLM,code_utils
+from ....utils.client import ByzerLLM,code_utils,message_utils
 from byzerllm.utils.retrieval import ByzerRetrieval
 from ..agent import Agent
 import ray
@@ -14,6 +14,7 @@ import json
 from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient
 from langchain import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter,Document
+
 try:
     from termcolor import colored
 except ImportError:
@@ -101,13 +102,12 @@ class SparkSQLAgent(ConversableAgent):
             
         def reply_with_clarify(content:Annotated[str,"这个是你反问用户的内容"]):
             '''
-            如果你不理解我的问题，那么可以调用这个函数。
+            如果你不理解用户的问题，那么你可以调用这个函数，来反问用户。
             '''
-            flag[0] = content            
+            flag[0] = content             
     
-        last_conversation = [{"role":"user","content":'''在回答我的问题前，先思考，你有什么不理解的地方么？比如我的问题如果有歧义，或者问题的信息不够，导致你无法回答。
-如果有相关的问题，请不要去生成代码，用中文询问我，获取更多信息。'''}]        
-        self.llm.chat_oai(conversations=messages + last_conversation,
+        last_conversation = [{"role":"user","content":""}]        
+        self.llm.chat_oai(conversations=message_utils.padding_messages_merge(messages + last_conversation),
                           tools=[reply_with_clarify],
                           execute_tool=True)
         
@@ -184,7 +184,12 @@ class SparkSQLAgent(ConversableAgent):
         '''
         执行 Spark SQL 语句
         '''
-        v = self.llm._rest_byzer_script(sql,url=self.byzer_url)
+        v = self.llm._rest_byzer_script(f"""
+load csv.`/home/byzerllm/projects/jupyter-workspace/nlp2query/哈弗国内零售量.csv` where header="true" as test_table;
+!profiler sql '''
+{sql}                                        
+''';
+""",url=self.byzer_url)
         return json.dumps(v)
 
         
