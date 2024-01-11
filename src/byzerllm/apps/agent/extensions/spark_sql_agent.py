@@ -111,23 +111,7 @@ class SparkSQLAgent(ConversableAgent):
 {c}                                       
 ```  
 你在回答我的问题的时候，可以参考这些内容。''') 
-
-        # check if the user's question is ambiguous or not, if it is, try to ask the user to clarify the question.                        
-        def reply_with_clarify(content:Annotated[str,"这个是你反问用户的内容"]):
-            '''
-            如果你不理解用户的问题，那么你可以调用这个函数，来反问用户。
-            '''
-            return content             
-    
-        last_conversation = [{"role":"user","content":"\n请对我上面的问题进行思考，尝试理解。只有确实有歧义或者不明确的地方，才去调用上面的函数。"}]        
-        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + last_conversation),
-                          tools=[reply_with_clarify],
-                          execute_tool=True)
-        
-        if t[0].values:               
-            return True,{"content":t[0].values[0],"metadata":{"TERMINATE":True}}
-        
-        
+            
         # to compute the real time range, notice that 
         # we will chagne the message content
         def calculate_time_range():
@@ -143,7 +127,23 @@ class SparkSQLAgent(ConversableAgent):
 
         if t[0].value:
             time_range:TimeRange = t[0].value
-            m["content"] = f'''时间区间是：{time_range.start} 至 {time_range.end} {m["content"]}''' 
+            m["content"] = f'''时间区间是：{time_range.start} 至 {time_range.end} {m["content"]}'''            
+
+        # check if the user's question is ambiguous or not, if it is, try to ask the user to clarify the question.                        
+        def reply_with_clarify(content:Annotated[str,"这个是你反问用户的内容"]):
+            '''
+            如果你不理解用户的问题，那么你可以调用这个函数，来反问用户。
+            '''
+            return content             
+    
+        last_conversation = [{"role":"user","content":"\n请对我上面的问题进行思考，尝试理解。只有确实有歧义或者不明确的地方，才去调用上面的函数。"}]        
+        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + last_conversation),
+                          tools=[reply_with_clarify],
+                          execute_tool=True)
+        
+        if t[0].values:               
+            return True,{"content":t[0].values[0],"metadata":{"TERMINATE":True}}
+                         
         
         # try to awnser the user's question or generate sql
         _,v = self.generate_llm_reply(raw_message,messages,sender)
