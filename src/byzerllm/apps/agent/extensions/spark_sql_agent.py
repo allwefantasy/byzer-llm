@@ -14,6 +14,7 @@ import json
 from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient
 from langchain import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter,Document
+import pydantic
 
 try:
     from termcolor import colored
@@ -21,6 +22,15 @@ except ImportError:
 
     def colored(x, *args, **kwargs):
         return x
+
+class TimeRange(pydantic.BaseModel):
+    '''
+    时间区间
+    格式需要如下： yyyy-MM-dd
+    '''  
+    
+    start: str = pydantic.Field(...,description="开始时间.时间格式为 yyyy-MM-dd")
+    end: str = pydantic.Field(...,description="截止时间.时间格式为 yyyy-MM-dd")        
     
 class SparkSQLAgent(ConversableAgent): 
     DEFAULT_SYSTEM_MESSAGE='''You are a helpful AI assistant. You are also a Spark SQL expert. 
@@ -116,6 +126,24 @@ class SparkSQLAgent(ConversableAgent):
         
         if t[0].values:               
             return True,{"content":t[0].values[0],"metadata":{"TERMINATE":True}}
+        
+        
+        # to compute the real time range, notice that 
+        # we will chagne the message content
+        def calculate_time_range():
+            '''
+            计算时间区间，时间格式为 yyyy-MM-dd. 
+            '''
+            pass 
+            
+        t = self.llm.chat_oai([{
+            "content":m["content"],
+            "role":"user"    
+        }],impl_func=calculate_time_range,response_class=TimeRange,execute_impl_func=True)
+
+        if t[0].value:
+            time_range:TimeRange = t[0].value
+            m["content"] = f'''时间区间是：{time_range.start} 至 {time_range.end} {m["content"]}''' 
         
         # try to awnser the user's question or generate sql
         _,v = self.generate_llm_reply(raw_message,messages,sender)

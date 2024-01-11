@@ -1,13 +1,15 @@
 from typing import List, Dict,Any
+import copy
 
 def padding_messages_merge(data:List[Dict[str,Any]]):
     '''
     merge the neighbor messages with the same role
     '''
+    temp_data = copy.deepcopy(data)
     padded_data = []
     last_role = None
     last_message = None
-    for message in data:
+    for message in temp_data:
         if last_role is None:
             padded_data.append(message)
         elif last_role == message['role']:
@@ -22,9 +24,10 @@ def padding_messages_expand(data:Dict[str,Any]):
     '''
     padding the message between the neighbor messages with the same role
     '''
+    temp_data = copy.deepcopy(data)
     padded_data = []        
     last_role = None                
-    for message in data:            
+    for message in temp_data:            
         if (last_role is None) and (message['role'] == 'assistant'):
             padded_data.append({'content': 'continue', 'role': 'user'})
             padded_data.append(message)
