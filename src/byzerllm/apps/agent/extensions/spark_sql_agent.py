@@ -129,8 +129,13 @@ class SparkSQLAgent(ConversableAgent):
                 },self.sql_reviewer_agent)
             
             # get the sql reviewed.             
-            conversation = self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-1]                        
-            reply = self.execute_spark_sql(conversation["content"])
+            conversation = self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-1]   
+            try:                     
+                reply = self.execute_spark_sql(conversation["content"])
+            except Exception as e:
+                # get full exception
+                import traceback
+                reply = f"执行代码出错：{traceback.format_exc()} {e}"                
             return True, {"content":reply,"metadata":{"TERMINATE":True}}
                              
         
