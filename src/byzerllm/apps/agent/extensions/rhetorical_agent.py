@@ -65,12 +65,7 @@ class RhetoricalAgent(ConversableAgent):
                                                              retrieval_cluster=self.retrieval_cluster,
                                                              retrieval_db=self.retrieval_db,
                                                              )         
-        
-
-    def is_update_context(self,v:str):
-        update_context_case = "UPDATE CONTEXT" in v[-20:].upper() or "UPDATE CONTEXT" in v[:20].upper()                                    
-        return update_context_case
-
+          
     def generate_reply(
         self,
         raw_message: Optional[Union[Dict,str,ChatResponse]] = None,
@@ -97,6 +92,7 @@ class RhetoricalAgent(ConversableAgent):
 找到这些内容，并且做个总结'''}]
                 
         _,v2 = self.generate_llm_reply(raw_message,message_utils.padding_messages_merge(old_conversations + messages + last_conversation),sender)
+        print(f"rhetorical: {v2}",flush=True)
         self.simple_retrieval_client.save_text_content(owner=self.owner,title="",content=v2,url="rhetorical",auto_chunking=False)
         return True, None 
                 
