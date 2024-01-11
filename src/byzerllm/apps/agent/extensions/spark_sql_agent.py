@@ -101,7 +101,7 @@ class SparkSQLAgent(ConversableAgent):
             
         def reply_with_clarify(content:Annotated[str,"给到用户的提问，让用户对此进行澄清"]):
             '''
-            询问用户是否需要澄清
+            如果需要澄清用户的问题，那么可以调用该函数
             '''
             flag[0] = content            
     
