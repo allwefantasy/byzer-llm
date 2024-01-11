@@ -105,7 +105,7 @@ class DataAnalysis:
         ) 
         output = self.output()       
         self.simple_retrieval_client.save_conversation(owner=self.owner,chat_name=self.chat_name,role="user",content=content)
-        self.simple_retrieval_client.save_conversation(owner=self.owner,chat_name=self.chat_name,role="assistant",content=output)
+        self.simple_retrieval_client.save_conversation(owner=self.owner,chat_name=self.chat_name,role="assistant",content=output["content"])
         return output
 
     def get_chat_messages(self):
