@@ -194,7 +194,7 @@ load csv.`file:///home/byzerllm/projects/jupyter-workspace/nlp2query/哈弗国�
 !profiler sql '''
 {sql}                                        
 ''';
-""",owner="william")
+""",owner="william",url="http://192.168.1.248:9003/run/script")
         return json.dumps(v)
 
         
