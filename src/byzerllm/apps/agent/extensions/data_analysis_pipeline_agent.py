@@ -217,7 +217,7 @@ you should reply exactly `UPDATE CONTEXT`.
           
         self.send(message=ori_message,recipient=self.rhetoorical_agent)
                 
-        _,agent_name = self.select_agent(raw_message,messages,sender)
+        _,agent_name = "spark_sql_agent" # self.select_agent(raw_message,messages,sender)
         print(f"Select agent: {agent_name} to answer the question: {ori_message['content'][0:20]}",flush=True)
         
         if agent_name and agent_name in self.agents:
