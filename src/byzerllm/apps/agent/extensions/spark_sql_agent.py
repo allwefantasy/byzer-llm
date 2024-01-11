@@ -127,7 +127,7 @@ class SparkSQLAgent(ConversableAgent):
                     "content":code_utils.get_target_codes(codes,["sql"])[0],
                 },self.sql_reviewer_agent)
             
-            # get the sql reviewer reviewed.             
+            # get the sql reviewed.             
             conversation = self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-1]
             codes = code_utils.extract_code(conversation["content"])
             sql_codes = code_utils.get_target_codes(codes,["sql"])
@@ -174,9 +174,7 @@ class SparkSQLAgent(ConversableAgent):
 
         self.llm.chat_oai(conversations=messages,
                           tools=[reply_with_review_success,reply_with_review_fail],
-                          execute_tool=True)
-        if target_message["metadata"]["TERMINATE"]:
-            target_message = None
+                          execute_tool=True)                
 
         ## make sure the last message is the reviewed sql code    
         return True, target_message
