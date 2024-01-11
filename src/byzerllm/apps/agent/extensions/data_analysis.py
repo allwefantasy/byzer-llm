@@ -90,7 +90,7 @@ class DataAnalysis:
                                 human_input_mode="NEVER",
                                 max_consecutive_auto_reply=0,chat_wrapper=self.chat_wrapper)
         
-    def analyze(self,content:str):        
+    def analyze(self,content:str,metadata:Dict[str,Any]={}):        
         ray.get(self.data_analysis_pipeline.update_max_consecutive_auto_reply.remote(1))
         ray.get(           
            self.client.initiate_chat.remote(
@@ -98,7 +98,8 @@ class DataAnalysis:
                 message={
                     "content":content,
                     "role":"user",
-                    "metadata":{                        
+                    "metadata":{  
+                        **metadata                      
                     }                    
                 },
            ) 
