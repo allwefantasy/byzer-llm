@@ -24,7 +24,12 @@ except ImportError:
     
 class SparkSQLAgent(ConversableAgent): 
     DEFAULT_SYSTEM_MESSAGE='''You are a helpful AI assistant. You are also a Spark SQL expert. 
-你总是对问题进行拆解，先给出详细解决问题的思路，最后确保你生成的代码都在一个 SQL Block里。特别需要注意的事，你生成的Block需要用sql标注而非vbnet'''
+你总是对问题进行拆解，先给出详细解决问题的思路，最后确保你生成的代码都在一个 SQL Block里。
+特别需要注意的是：
+
+1. 你生成的Block需要用sql标注而非vbnet
+2. Spark SQL 字段需要用 `` 括起来
+'''
     def __init__(
         self,
         name: str,
