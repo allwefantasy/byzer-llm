@@ -121,16 +121,34 @@ class SparkSQLAgent(ConversableAgent):
 你在回答我的问题的时候，可以参考这些内容。''') 
             
         # to compute the real time range, notice that 
-        # we will chagne the message content                    
-        t = self.llm.chat_oai([{
-            "content":m["content"],
-            "role":"user"    
-        }],impl_func=calculate_time_range,response_class=TimeRange,execute_impl_func=True)
+        # we will chagne the message content  
 
-        if t[0].value:
-            time_range:TimeRange = t[0].value
-            m["content"] = f'''时间区间是：{time_range.start} 至 {time_range.end} {m["content"]}'''  
-            print(f'compute the time range:{m["content"]}',flush=True)          
+        class Item(pydantic.BaseModel):
+            '''
+            查询参数    
+            如果对应的参数不符合字段要求，那么设置为空即可
+            '''
+            other: str = pydantic.Field(...,description="其他参数，比如用户的名字，或者其他的一些信息")
+            time:  str = pydantic.Field(...,description="时间信息,比如内容里会提到天， 月份，年等相关词汇")
+
+
+        t = self.llm.chat_oai([{
+            "content":'''m["content"]''',
+            "role":"user"    
+        }],response_class=Item) 
+        
+        if t[0].value.time:                     
+            t = self.llm.chat_oai([{
+                "content":t[0].value.time,
+                "role":"user"    
+            }],impl_func=calculate_time_range,response_class=TimeRange,execute_impl_func=True)
+
+            if t[0].value:
+                time_range:TimeRange = t[0].value
+                m["content"] = f'''时间区间是：{time_range.start} 至 {time_range.end} {m["content"]}'''  
+                print(f'compute the time range:{m["content"]}\n\n',flush=True) 
+
+
 
         # check if the user's question is ambiguous or not, if it is, try to ask the user to clarify the question.                        
         def reply_with_clarify(content:Annotated[str,"这个是你反问用户的内容"]):
