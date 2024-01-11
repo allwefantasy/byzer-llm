@@ -11,6 +11,7 @@ from ....utils import generate_str_md5
 from byzerllm.utils.client import LLMHistoryItem,LLMRequest
 import uuid
 import json
+from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient
 from langchain import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter,Document
 try:
@@ -64,8 +65,10 @@ The last but most important, let me know if you have any areas of confusion. If 
         llm: ByzerLLM,        
         retrieval: ByzerRetrieval, 
         chat_name:str,
-        owner:str,               
+        owner:str,                            
         sql_reviewer_agent: Union[Agent, ClientActorHandle,str],      
+        retrieval_cluster:str="data_analysis",
+        retrieval_db:str="data_analysis",   
         system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,        
         is_termination_msg: Optional[Callable[[Dict], bool]] = None,
         max_consecutive_auto_reply: Optional[int] = None,
@@ -84,7 +87,16 @@ The last but most important, let me know if you have any areas of confusion. If 
             code_execution_config=code_execution_config,            
             **kwargs,
         )
-
+        
+        self.retrieval_cluster = retrieval_cluster
+        self.retrieval_db = retrieval_db
+        self.chat_name = chat_name
+        self.owner = owner
+        self.simple_retrieval_client = SimpleRetrievalClient(llm=self.llm,
+                                                        retrieval=self.retrieval,
+                                                        retrieval_cluster=self.retrieval_cluster,
+                                                        retrieval_db=self.retrieval_db,
+                                                        ) 
         self.byzer_url = byzer_url        
         self.sql_reviewer_agent = sql_reviewer_agent
         self._reply_func_list = []                

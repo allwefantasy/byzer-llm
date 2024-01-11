@@ -119,7 +119,7 @@ you should reply exactly `UPDATE CONTEXT`.
         self.spark_sql_agent = Agents.create_local_agent(SparkSQLAgent,"spark_sql_agent",llm,retrieval,
                                                          sql_reviewer_agent=self.sql_reviewer_agent,
                                                         chat_name=self.chat_name,
-                                                        owner=self.owner,
+                                                        owner=self.owner,                                                        
                                                         max_consecutive_auto_reply=100,**params)   
         self.rhetoorical_agent = Agents.create_local_agent(RhetoricalAgent,"rhetoorical_agent",llm,retrieval,
                                                             chat_name=self.chat_name,
