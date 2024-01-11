@@ -105,7 +105,7 @@ class SparkSQLAgent(ConversableAgent):
             '''
             flag[0] = content            
     
-        last_conversation = [{"role":"user","content":'''首先先回答，你有什么不理解的地方么？如果有，请不要生成代码，用中文询问我，并且给我可能的解决方案。如果没有不清楚的，则无需做任何回应。"'''}]        
+        last_conversation = [{"role":"user","content":'''首先先回答，你有什么不理解的地方么？如果有，请不要生成代码，用中文询问我，并且给我可能的解决方案，则调用相应的函数。否则不需要调用任何函数。"'''}]        
         self.llm.chat_oai(conversations=messages + last_conversation,
                           tools=[reply_with_clarify],
                           execute_tool=True)
