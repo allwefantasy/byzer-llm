@@ -109,9 +109,10 @@ class SparkSQLAgent(ConversableAgent):
                           tools=[reply_with_clarify],
                           execute_tool=True)
         
-        if t[0].values:            
+        if t[0].values:   
+            print("==========",flush=True)         
             return True,{"content":t[0].values[0],"metadata":{"TERMINATE":True}}
-                
+        print("==========2",flush=True)        
         # try to awnser the user's question or generate sql
         _,v = self.generate_llm_reply(raw_message,messages,sender)
         codes = code_utils.extract_code(v)
