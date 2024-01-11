@@ -459,7 +459,8 @@ class ByzerLLM:
         return self
     
     def setup_extra_generation_params(self,model:str,extra_generation_params:Dict[str,Any])->'ByzerLLM':
-        self.mapping_extra_generation_params[model] = extra_generation_params
+        v = self.mapping_extra_generation_params.get(model,{}) 
+        self.mapping_extra_generation_params[model] = {**v,**extra_generation_params}
         return self       
     
     def setup_template(self,model:str,template:Union[Template,str])->'ByzerLLM':
@@ -472,7 +473,10 @@ class ByzerLLM:
             return self
 
         self.mapping_role_mapping[model] = template.role_mapping
-        self.mapping_extra_generation_params[model] = template.generation_config
+        
+        v = self.mapping_extra_generation_params.get(model,{}) 
+        self.mapping_extra_generation_params[model] = {**v,**template.generation_config}
+
         self.mapping_clean_func[model] = template.clean_func
         self.mapping_function_calling_format_func[model] = template.function_calling_format_func
         self.mapping_response_class_format_after_chat_func[model] = template.response_class_format_after_chat_func
