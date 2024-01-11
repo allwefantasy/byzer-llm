@@ -134,7 +134,7 @@ class SparkSQLAgent(ConversableAgent):
             
             if sql_codes:
                 reply = self.execute_spark_sql(sql_codes[0])
-            return True, {"content":reply,"metadata":{"TERMINATE":True}}             
+                return True, {"content":reply,"metadata":{"TERMINATE":True}}             
         
 
         return True,  {"content":v,"metadata":{"TERMINATE":True}}
