@@ -170,10 +170,16 @@ field(chunk_vector,array(float))
         else:
             return docs
 
-    def search_content(self,q:str,owner:str,auth_tag:str,limit:int=4,return_json:bool=True): 
+    def search_content(self,q:str,owner:str,url:str,auth_tag:str=None,limit:int=4,return_json:bool=True): 
+        filters = [self._owner_filter(owner)]
+        if auth_tag:
+            filters.append({"field":"auth_tag","value":self.search_tokenize(auth_tag)})
+        if url:
+            filters.append({"field":"url","value":url})    
+
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content",
-                                         filters={"and":[self._owner_filter(owner)]},
+                                         filters={"and":filters},
                                         keyword=self.search_tokenize(q),fields=["content"],
                                         vector=self.emb(q),vectorField="content_vector",
                                         limit=limit)])
