@@ -176,7 +176,7 @@ class SparkSQLAgent(ConversableAgent):
             
             if isinstance(v,list):
                 v = " ".join(v)          
-            m["content"] = f'''时间区间是：{time_range.start} 至 {time_range.end} {v} {m["content"]}'''  
+            m["content"] = f'''{v} {m["content"]}'''  
             print(f'compute the key info:{m["content"]}\n\n',flush=True)
 
 
