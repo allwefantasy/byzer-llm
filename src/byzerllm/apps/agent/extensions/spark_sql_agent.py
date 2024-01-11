@@ -129,15 +129,10 @@ class SparkSQLAgent(ConversableAgent):
                 },self.sql_reviewer_agent)
             
             # get the sql reviewed.             
-            conversation = self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-1]
-
-            print(f'获取review后的sql代码:{conversation["content"]}',flush=True)
-            codes = code_utils.extract_code(conversation["content"])
-            sql_codes = code_utils.get_target_codes(codes,["sql"])
-            
-            if sql_codes:
-                reply = self.execute_spark_sql(sql_codes[0])
-                return True, {"content":reply,"metadata":{"TERMINATE":True}}             
+            conversation = self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-1]                        
+            reply = self.execute_spark_sql(conversation["content"])
+            return True, {"content":reply,"metadata":{"TERMINATE":True}}
+                             
         
 
         return True,  {"content":v,"metadata":{"TERMINATE":True}}
