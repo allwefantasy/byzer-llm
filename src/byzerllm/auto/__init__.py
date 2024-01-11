@@ -293,7 +293,16 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         ohter_params = {}
         
         for k,v in infer_params.items():
-            if k.startswith("backend."):
+            if k.startswith("backend.") and k not in ["backend.dtype",
+                                                      "backend.seed",
+                                                      "backend.worker_use_ray",
+                                                      "backend.pipeline_parallel_size",
+                                                      "backend.tensor_parallel_size",
+                                                      "backend.block_size",
+                                                      "backend.swap_space",
+                                                      "backend.gpu_memory_utilization",
+                                                      "backend.disable_log_stats",
+                                                      "backend.quantization"]:
                 ohter_params[k[len("backend."):]] = v
 
         if quantization is not None:
