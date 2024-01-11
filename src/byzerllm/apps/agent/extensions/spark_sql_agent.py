@@ -97,22 +97,20 @@ class SparkSQLAgent(ConversableAgent):
 ```  
 你在回答我的问题的时候，可以参考这些内容。''') 
 
-        # check if the user's question is ambiguous or not, if it is, try to ask the user to clarify the question. 
-        flag = [None]      
-            
+        # check if the user's question is ambiguous or not, if it is, try to ask the user to clarify the question.                        
         def reply_with_clarify(content:Annotated[str,"这个是你反问用户的内容"]):
             '''
             如果你不理解用户的问题，那么你可以调用这个函数，来反问用户。
             '''
-            flag[0] = content             
+            return content             
     
         last_conversation = [{"role":"user","content":""}]        
-        self.llm.chat_oai(conversations=message_utils.padding_messages_merge(messages + last_conversation),
+        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(messages + last_conversation),
                           tools=[reply_with_clarify],
                           execute_tool=True)
         
-        if flag[0] is not None:            
-            return True,{"content":flag[0],"metadata":{"TERMINATE":True}}
+        if t[0].values:            
+            return True,{"content":t[0].values[0],"metadata":{"TERMINATE":True}}
                 
         # try to awnser the user's question or generate sql
         _,v = self.generate_llm_reply(raw_message,messages,sender)
