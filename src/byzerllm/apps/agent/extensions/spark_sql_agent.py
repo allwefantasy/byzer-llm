@@ -105,7 +105,7 @@ class SparkSQLAgent(ConversableAgent):
             return content             
     
         last_conversation = [{"role":"user","content":""}]        
-        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(messages + last_conversation),
+        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + last_conversation),
                           tools=[reply_with_clarify],
                           execute_tool=True)
         
@@ -171,7 +171,7 @@ class SparkSQLAgent(ConversableAgent):
             target_message["metadata"]["TERMINATE"] = False    
 
 
-        self.llm.chat_oai(conversations=messages,
+        self.llm.chat_oai(conversations=self._system_message+messages,
                           tools=[reply_with_review_success,reply_with_review_fail],
                           execute_tool=True)                
 
