@@ -133,7 +133,7 @@ class SparkSQLAgent(ConversableAgent):
 
 
         t = self.llm.chat_oai([{
-            "content":'''m["content"]''',
+            "content":f'''{m["content"]}''',
             "role":"user"    
         }],response_class=Item) 
         
@@ -148,22 +148,52 @@ class SparkSQLAgent(ConversableAgent):
                 m["content"] = f'''时间区间是：{time_range.start} 至 {time_range.end} {m["content"]}'''  
                 print(f'compute the time range:{m["content"]}\n\n',flush=True) 
 
+        
+        ## extract key messages is the user want to generate sql code
+        def reply_with_clarify(content:Annotated[str,"不理解问题，反问用户的内容"]): 
+            '''
+            对问题如果不清晰，无法抽取出有效的关键信息，那么可以调用该函数，反问用户。
+            '''
+            return content 
+
+        def reply_with_key_messages(content:Annotated[list[str],"列表形式的关键信息,诸如过滤条件，指标"]):  
+            '''
+            如果你能抽取出有效的关键信息，那么可以调用该函数
+            '''      
+            return content 
+
+            
+        last_conversation = [{"role":"user","content":f'''
+        首先根据我的问题，以列表形式罗列我问题中的关键信息,诸如过滤条件，指标。不需要生成SQL。'''}]        
+        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(c + last_conversation),
+                            tools=[reply_with_clarify,reply_with_key_messages],
+                            execute_tool=True)
+
+        if t[0].values:     
+            v = print(t[0].values[0])
+            if isinstance(v,str):
+                return True,{"content":v,"metadata":{"TERMINATE":True}}
+            
+            if isinstance(v,list):
+                v = " ".join(v)          
+            m["content"] = f'''时间区间是：{time_range.start} 至 {time_range.end} {v} {m["content"]}'''  
+            print(f'compute the key info:{m["content"]}\n\n',flush=True)
 
 
         # check if the user's question is ambiguous or not, if it is, try to ask the user to clarify the question.                        
-        def reply_with_clarify(content:Annotated[str,"这个是你反问用户的内容"]):
-            '''
-            如果你不理解用户的问题，那么你可以调用这个函数，来反问用户。
-            '''
-            return content             
+        # def reply_with_clarify(content:Annotated[str,"这个是你反问用户的内容"]):
+        #     '''
+        #     如果你不理解用户的问题，那么你可以调用这个函数，来反问用户。
+        #     '''
+        #     return content             
     
-        last_conversation = [{"role":"user","content":"\n请对我上面的问题进行思考，尝试理解。只有确实有歧义或者不明确的地方，才去调用上面的函数。"}]        
-        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + last_conversation),
-                          tools=[reply_with_clarify],
-                          execute_tool=True)
+        # last_conversation = [{"role":"user","content":"\n请对我上面的问题进行思考，尝试理解。只有确实有歧义或者不明确的地方，才去调用上面的函数。"}]        
+        # t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + last_conversation),
+        #                   tools=[reply_with_clarify],
+        #                   execute_tool=True)
         
-        if t[0].values:               
-            return True,{"content":t[0].values[0],"metadata":{"TERMINATE":True}}
+        # if t[0].values:               
+        #     return True,{"content":t[0].values[0],"metadata":{"TERMINATE":True}}
                          
         
         # try to awnser the user's question or generate sql
