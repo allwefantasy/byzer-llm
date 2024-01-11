@@ -30,15 +30,23 @@ class TimeRange(pydantic.BaseModel):
     '''  
     
     start: str = pydantic.Field(...,description="开始时间.时间格式为 yyyy-MM-dd")
-    end: str = pydantic.Field(...,description="截止时间.时间格式为 yyyy-MM-dd")        
+    end: str = pydantic.Field(...,description="截止时间.时间格式为 yyyy-MM-dd")  
+
+def calculate_time_range():
+    '''
+    根据计算用户提到的时间计算时间的区间，注意这个函数没有参数。
+    如果用户没有提到时间，那么返回 None
+    '''
+    pass 
     
+
 class SparkSQLAgent(ConversableAgent): 
     DEFAULT_SYSTEM_MESSAGE='''You are a helpful AI assistant. You are also a Spark SQL expert. 
 你总是对问题进行拆解，先给出详细解决问题的思路，最后确保你生成的代码都在一个 SQL Block里。
 特别需要注意的是：
 
 1. 你生成的Block需要用sql标注而非vbnet
-2. 生成的 Spark SQL 字段务必需要用 `` 括起来
+2. 生成的 Spark SQL 语句中，所有字段务必需要用 `` 括起来。
 '''
     def __init__(
         self,
@@ -113,13 +121,7 @@ class SparkSQLAgent(ConversableAgent):
 你在回答我的问题的时候，可以参考这些内容。''') 
             
         # to compute the real time range, notice that 
-        # we will chagne the message content
-        def calculate_time_range():
-            '''
-            计算用户提到的时间的区间。注意这个函数没有参数。
-            '''
-            pass 
-            
+        # we will chagne the message content                    
         t = self.llm.chat_oai([{
             "content":m["content"],
             "role":"user"    
