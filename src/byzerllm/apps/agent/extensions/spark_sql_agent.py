@@ -104,7 +104,7 @@ class SparkSQLAgent(ConversableAgent):
             '''
             return content             
     
-        last_conversation = [{"role":"user","content":""}]        
+        last_conversation = [{"role":"user","content":"\n请对我上面的问题进行思考，尝试理解。只有确实有歧义或者不明确的地方，才去调用上面的函数。"}]        
         t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + last_conversation),
                           tools=[reply_with_clarify],
                           execute_tool=True)

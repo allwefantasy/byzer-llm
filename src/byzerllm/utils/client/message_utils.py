@@ -11,7 +11,7 @@ def padding_messages_merge(data:List[Dict[str,Any]]):
         if last_role is None:
             padded_data.append(message)
         elif last_role == message['role']:
-            last_message['content'] += message['content']
+            last_message['content'] += f"\n{message['content']}"
         else:
             padded_data.append(message)
         last_role = message['role']
