@@ -67,8 +67,8 @@ class SparkSQLAgent(ConversableAgent):
         self.sql_reviewer_agent = sql_reviewer_agent
         self._reply_func_list = []                
         # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
-        self.register_reply([Agent, ClientActorHandle,str], SparkSQLAgent.generate_reply_for_reviview)
         self.register_reply([Agent, ClientActorHandle,str], SparkSQLAgent.generate_sql_reply) 
+        self.register_reply([Agent, ClientActorHandle,str], SparkSQLAgent.generate_reply_for_reviview)        
         self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply)         
 
     def generate_sql_reply(
@@ -120,16 +120,18 @@ class SparkSQLAgent(ConversableAgent):
         # if we have sql code, ask the sql reviewer to review the code         
         if has_sql_code: 
             # sync the question to the sql reviewer               
-            print(f"同步信息reviewer： {messages[-1]}",flush=True)    
+            
             self.send(messages[-1],self.sql_reviewer_agent,request_reply=False)
             # send the sql code to the sql reviewer to review
-            print(f"发送代码给reviewer",flush=True)
+            
             self.send({
                     "content":code_utils.get_target_codes(codes,["sql"])[0],
                 },self.sql_reviewer_agent)
             
             # get the sql reviewed.             
             conversation = self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-1]
+
+            print(f'获取review后的sql代码:{conversation["content"]}',flush=True)
             codes = code_utils.extract_code(conversation["content"])
             sql_codes = code_utils.get_target_codes(codes,["sql"])
             
@@ -177,6 +179,7 @@ class SparkSQLAgent(ConversableAgent):
         self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + last_conversation),
                           tools=[reply_with_review_success,reply_with_review_fail],
                           execute_tool=True)  
+        
         print(target_message,flush=True)              
 
         ## make sure the last message is the reviewed sql code    
