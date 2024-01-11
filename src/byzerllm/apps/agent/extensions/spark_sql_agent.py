@@ -185,11 +185,11 @@ class SparkSQLAgent(ConversableAgent):
         执行 Spark SQL 语句
         '''
         v = self.llm._rest_byzer_script(f"""
-load csv.`/home/byzerllm/projects/jupyter-workspace/nlp2query/哈弗国内零售量.csv` where header="true" as test_table;
+load csv.`file:///home/byzerllm/projects/jupyter-workspace/nlp2query/哈弗国内零售量.csv` where header="true" as test_table;
 !profiler sql '''
 {sql}                                        
 ''';
-""",url=self.byzer_url)
+""",owner="william")
         return json.dumps(v)
 
         
