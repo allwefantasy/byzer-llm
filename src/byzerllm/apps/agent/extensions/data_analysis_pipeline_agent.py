@@ -197,7 +197,7 @@ you should reply exactly `UPDATE CONTEXT`.
         sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
         config: Optional[Any] = None,
     ) -> Tuple[bool, Union[str, Dict, None,ChatResponse]]:
-        if get_agent_name(sender) in self.agents:
+        if get_agent_name(sender) not in self.agents:
             return False,None                            
         return True,None
                     
