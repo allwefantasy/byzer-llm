@@ -127,7 +127,8 @@ class SparkSQLAgent(ConversableAgent):
 
         if t[0].value:
             time_range:TimeRange = t[0].value
-            m["content"] = f'''时间区间是：{time_range.start} 至 {time_range.end} {m["content"]}'''            
+            m["content"] = f'''时间区间是：{time_range.start} 至 {time_range.end} {m["content"]}'''  
+            print(f'compute the time range:{m["content"]}',flush=True)          
 
         # check if the user's question is ambiguous or not, if it is, try to ask the user to clarify the question.                        
         def reply_with_clarify(content:Annotated[str,"这个是你反问用户的内容"]):
