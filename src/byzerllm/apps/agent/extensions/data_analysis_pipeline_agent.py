@@ -72,6 +72,7 @@ you should reply exactly `UPDATE CONTEXT`.
         self._reply_func_list = []
         # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
         self.register_reply([Agent, ClientActorHandle,str], DataAnalysisPipeline.run_pipeline) 
+        self.register_reply([Agent, ClientActorHandle,str], DataAnalysisPipeline.reply_reheorical_agent) 
         self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply) 
 
         params = {}
@@ -131,9 +132,9 @@ you should reply exactly `UPDATE CONTEXT`.
             "common_agent":self.common_agent,
             "privew_file_agent":self.preview_file_agent,
             "python_interpreter":self.python_interpreter,
-            "spark_sql_agent":self.spark_sql_agent,
-            "rhetoorical_agent":self.rhetoorical_agent,
-        }        
+            "spark_sql_agent":self.spark_sql_agent,            
+        } 
+        self.reply_from_agent = {}       
 
     def get_agent_chat_messages(self,agent_name:str):
         return self.agents[agent_name].get_chat_messages()
@@ -176,6 +177,24 @@ you should reply exactly `UPDATE CONTEXT`.
             return True, None
         else:
             return True,llm_reply.strip()
+        
+    def reply_reheorical_agent(
+        self,
+        raw_message: Optional[Union[Dict,str,ChatResponse]] = None,
+        messages: Optional[List[Dict]] = None,
+        sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
+        config: Optional[Any] = None,
+    ) -> Tuple[bool, Union[str, Dict, None,ChatResponse]]:
+        if get_agent_name(sender) == "rhetoorical_agent":
+            if messages is None:
+                messages = self._messages[get_agent_name(sender)]
+            m = messages[-1]
+            metadata = m.get("metadata",{})
+            if metadata.get("ask_user",False):
+                self.reply_from_agent["rhetoorical_agent"] = m["content"]
+                
+            return True,None
+        return False,None
 
     def run_pipeline(
         self,
@@ -188,7 +207,13 @@ you should reply exactly `UPDATE CONTEXT`.
         if messages is None:
             messages = self._messages[get_agent_name(sender)]
         
-        ori_message = messages[-1]                             
+        ori_message = messages[-1]  
+          
+        self.send(message=ori_message,recipient=self.rhetoorical_agent)
+        if self.reply_from_agent.get("rhetoorical_agent",None) is not None:
+            v = self.reply_from_agent["rhetoorical_agent"]
+            self.reply_from_agent["rhetoorical_agent"] = None
+            return True, v
 
         _,agent_name = self.select_agent(raw_message,messages,sender)
         print(f"Select agent: {agent_name} to answer the question: {ori_message['content'][0:20]}",flush=True)

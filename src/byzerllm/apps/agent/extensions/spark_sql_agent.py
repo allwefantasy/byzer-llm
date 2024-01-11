@@ -106,6 +106,16 @@ The last but most important, let me know if you have any areas of confusion. If 
         
         if messages is None:
             messages = self._messages[get_agent_name(sender)]
+         
+        m = messages[-1]
+        old_conversations = self.simple_retrieval_client.search_content(q=m["content"],owner=self.owner,url="rhetorical",limit=3)
+        if len(old_conversations) != 0:
+            c = json.dumps(old_conversations,ensure_ascii=False)
+            self.update_system_message(f'''{self.DEFAULT_SYSTEM_MESSAGE}\n下面是我们以前对话的内容总结:
+```json
+{c}                                       
+```  
+你在回答我的问题的时候，可以参考这些内容。''')    
            
         _,v = self.generate_llm_reply(raw_message,messages,sender)
         codes = code_utils.extract_code(v)

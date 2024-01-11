@@ -170,12 +170,12 @@ field(chunk_vector,array(float))
         else:
             return docs
 
-    def search_content(self,q:str,owner:str,limit:int=4,return_json:bool=True): 
+    def search_content(self,q:str,owner:str,auth_tag:str,limit:int=4,return_json:bool=True): 
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content",
                                          filters={"and":[self._owner_filter(owner)]},
-                                        keyword=self.search_tokenize(q),fields=["chunk"],
-                                        vector=self.emb(q),vectorField="chunk_vector",
+                                        keyword=self.search_tokenize(q),fields=["content"],
+                                        vector=self.emb(q),vectorField="content_vector",
                                         limit=limit)])
 
         if return_json:
@@ -235,6 +235,8 @@ field(chunk_vector,array(float))
         seg_list = jieba.cut(s, cut_all=False)
         # return self.llm.apply_sql_func("select mkString(' ',parse(value)) as value",[
         # {"value":s}],url=self.byzer_engine_url)["value"]
-        return " ".join(seg_list)               
+        return " ".join(seg_list) 
+    
+               
     
 

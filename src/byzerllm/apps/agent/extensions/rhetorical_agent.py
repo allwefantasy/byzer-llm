@@ -66,7 +66,10 @@ class RhetoricalAgent(ConversableAgent):
                                                              retrieval_db=self.retrieval_db,
                                                              )         
         
-                        
+
+    def is_update_context(self,v:str):
+        update_context_case = "UPDATE CONTEXT" in v[-20:].upper() or "UPDATE CONTEXT" in v[:20].upper()                                    
+        return update_context_case
 
     def generate_reply(
         self,
@@ -81,16 +84,24 @@ class RhetoricalAgent(ConversableAgent):
 
         m = messages[-1]
         
-        old_conversations = self.simple_retrieval_client.search_memory(chat_name=self.chat_name,owner=self.owner,q=m["content"])        
+        old_conversations = self.simple_retrieval_client.search_content(q=m["content"],owner=self.owner,url="rhetorical",limit=3)
+        if len(old_conversations) != 0:
+            c = json.dumps(old_conversations,ensure_ascii=False)
+            self.update_system_message(f'''{self.DEFAULT_SYSTEM_MESSAGE}\n下面是我们以前对话的内容总结:
+```json
+{c}                                       
+```  
+你在回答我的问题的时候，可以参考这些内容。''')     
 
-        last_conversation = [{"role":"user","content":"首先先回答，你有什么不理解的地方么？如果有，请不要生成代码，用中文询问我，并且给我可能的解决方案。"}]
+        last_conversation = [{"role":"user","content":'''首先先回答，你有什么不理解的地方么？如果有，请不要生成代码，用中文询问我，并且给我可能的解决方案。如果没有，请回复"UPDATE_CONTEXT"'''}]
         _,v = self.generate_llm_reply(raw_message,old_conversations + messages + last_conversation,sender)
+        if self.is_update_context(v):
+            last_conversation = [{"role":"user","content":"回顾前面我们对话，找到那些你说你有不理解的地方，然后用户对我们问题做了澄清部分，然后对这些内容做个总结。"}]
+            _,v2 = self.generate_llm_reply(raw_message,old_conversations + messages + last_conversation,sender)
+            self.simple_retrieval_client.save_text_content(owner=self.owner,title="",content=v2,url="rhetorical",auto_chunking=False)
+            return True, {"content":v,"metadata":{"TERMINATE":True}}        
 
-        last_conversation = [{"role":"user","content":"回顾前面我们对话，找到那些你说你有不理解的地方，然后用户对我们我们问题做了澄清部分，然后对这些内容做个总结。"}]
-        _,v2 = self.generate_llm_reply(raw_message,old_conversations + messages + last_conversation,sender)
-        self.simple_retrieval_client.save_text_content(owner=self.owner,title="",content=v2,auth_tag="rhetorical",auto_chunking=False,url="")
-
-        return True, {"content":v}
+        return True, {"content":v,"metadata":{"TERMINATE":True,"ask_user":True}}
                 
         
                     
