@@ -77,7 +77,7 @@ class SQLReviewerAgent(ConversableAgent):
         if messages is None:
             messages = self._messages[get_agent_name(sender)]
                         
-        v = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages))
+        v = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages[-1:]))
         
         return True, {"content":v[0].output,"metadata":{}}
 
