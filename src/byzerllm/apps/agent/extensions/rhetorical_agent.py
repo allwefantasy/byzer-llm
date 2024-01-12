@@ -40,9 +40,7 @@ class RhetoricalAgent(ConversableAgent):
             code_execution_config=code_execution_config,            
             **kwargs,
         )
-        
-        print("init rhetorical agent",flush=True)
-        
+                        
         self.chat_name = chat_name
         self.owner = owner
         
@@ -70,9 +68,7 @@ class RhetoricalAgent(ConversableAgent):
         messages: Optional[List[Dict]] = None,
         sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
         config: Optional[Any] = None,
-    ) -> Tuple[bool, Union[str, Dict, None,ChatResponse]]:  
-
-        print(f"rhetorical====",flush=True)
+    ) -> Tuple[bool, Union[str, Dict, None,ChatResponse]]:          
 
         if messages is None:
             messages = self._messages[get_agent_name(sender)]  
@@ -91,7 +87,7 @@ class RhetoricalAgent(ConversableAgent):
         last_conversation = [{"role":"user","content":'''回顾前面我们对话，我提出了很多问题，但是有些问题你没办法直接回答，让我补充了一些信息，然后你才能回答我的问题。
 找到这些内容，并且做个总结'''}]
                 
-        _,v2 = self.generate_llm_reply(raw_message,message_utils.padding_messages_merge(old_conversations + messages + last_conversation),sender)
+        _,v2 = self.generate_llm_reply(raw_message,message_utils.padding_messages_merge(self._system_message + messages + last_conversation),sender)
         print(f"rhetorical: {v2}",flush=True)
         self.simple_retrieval_client.save_text_content(owner=self.owner,title="",content=v2,url="rhetorical",auto_chunking=False)
         return True, None 
