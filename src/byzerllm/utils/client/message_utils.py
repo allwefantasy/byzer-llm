@@ -9,7 +9,12 @@ def padding_messages_merge(data:List[Dict[str,Any]]):
     padded_data = []
     last_role = None    
     for message in temp_data:
+        if message["role"] == "system":
+            padded_data.append(message)
+            continue
         if last_role is None:
+            if message["role"] == "assistant":
+                padded_data.append({'content': 'continue', 'role': 'user'})                            
             padded_data.append(message)            
             last_role = message['role']
         elif last_role == message['role']:
@@ -17,7 +22,8 @@ def padding_messages_merge(data:List[Dict[str,Any]]):
         else:
             padded_data.append(message)            
             last_role = message['role']        
-        
+    if padded_data[-1]["role"] == "assistant":
+        padded_data.append({'content': 'continue', 'role': 'user'})    
     return padded_data
 
 def padding_messages_expand(data:Dict[str,Any]):
@@ -27,7 +33,10 @@ def padding_messages_expand(data:Dict[str,Any]):
     temp_data = copy.deepcopy(data)
     padded_data = []        
     last_role = None                
-    for message in temp_data:            
+    for message in temp_data:   
+        if message["role"] == "system":
+            padded_data.append(message)
+            continue         
         if (last_role is None) and (message['role'] == 'assistant'):
             padded_data.append({'content': 'continue', 'role': 'user'})
             padded_data.append(message)
