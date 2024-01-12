@@ -294,7 +294,7 @@ class SparkSQLAgent(ConversableAgent):
             messages = self._messages[get_agent_name(sender)] 
 
         target_message = {
-            "content":"",
+            "content":"FAIL TO GENERATE SQL CODE",
             "metadata":{"TERMINATE":True},
         }    
         
