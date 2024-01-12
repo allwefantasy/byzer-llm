@@ -26,9 +26,15 @@ except ImportError:
 
 class SparkSQLAgent(ConversableAgent): 
     DEFAULT_SYSTEM_MESSAGE='''You are a helpful AI assistant. You are also a Spark SQL expert. 
-你总是对问题分析要多联系上下文，同时根据上下文进行问题的拆解，先给出详细解决问题的思路，最后确保你生成的代码都在一个 SQL Block 里。
-特别需要注意的是：
+你总是要多联系上下文对问题做分析，同时根据上下文进行问题的拆解，先给出详细解决问题的思路，最后确保你生成的代码都在一个 SQL Block 里。
 
+联系上下文分析的一个示例:
+1. 用户第一次问： 2023别克君威的销量是多少？
+2. 你通过生成SQL然后回答了用户的问题。
+3. 用户第二次问： 2024年呢？
+4. 这里，你需要结合用户上一次提问的内容，来理解用户的问题，比如用户第二次问的问题，你可以理解为： 2024别克君威的销量是多少？
+
+特别需要注意的是：
 1. 你生成的Block需要用sql标注而非vbnet
 2. 生成的 Spark SQL 语句中，所有字段或者别名务必需要用 `` 括起来。
 '''
@@ -103,6 +109,8 @@ class SparkSQLAgent(ConversableAgent):
 {c}                                       
 ```  
 你在回答我的问题的时候，可以参考这些内容。''') 
+
+        time_msg = ""
             
         # to compute the real time range, notice that 
         # we will chagne the message content  
@@ -150,10 +158,14 @@ class SparkSQLAgent(ConversableAgent):
 
             if t[0].value:
                 time_range:TimeRange = t[0].value
-                m["content"] = f'''时间区间是：{time_range.start} 至 {time_range.end} {m["content"]}'''  
+                time_msg = f'''时间区间是：{time_range.start} 至 {time_range.end}'''  
                 print(f'compute the time range:{m["content"]}\n\n',flush=True) 
-
         
+        old_content = m["content"]
+        if time_msg:
+            m["content"] = f'''补充信息：{time_msg} \n原始问题：{old_content} '''
+
+        key_msg = ""
         ## extract key messages is the user want to generate sql code
         def reply_with_clarify(content:Annotated[str,"不理解问题，反问用户的内容"]): 
             '''
@@ -181,10 +193,12 @@ class SparkSQLAgent(ConversableAgent):
             
             if isinstance(v,list):
                 v = " ".join(v)          
-            m["content"] = f'''{v} {m["content"]}'''  
+            key_msg = v
             print(f'compute the key info:{m["content"]}\n\n',flush=True)
-
-
+        
+        if key_msg:
+            m["content"] = f'''补充信息：{key_msg} \n原始问题：{old_content} '''
+        
         # check if the user's question is ambiguous or not, if it is, try to ask the user to clarify the question.                        
         # def reply_with_clarify(content:Annotated[str,"这个是你反问用户的内容"]):
         #     '''
