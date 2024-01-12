@@ -45,7 +45,8 @@ field(url,string),
 field(raw_content,string),
 field(auth_tag,string,analyze),
 field(title_vector,array(float)),
-field(content_vector,array(float))
+field(content_vector,array(float)),
+field(created_time,long,sort)
 )''',
                 location=f"/tmp/{self.retrieval_cluster}",num_shards=1 
            ))
@@ -58,7 +59,8 @@ field(doc_id,string),
 field(owner,string),
 field(chunk,string,analyze),
 field(raw_chunk,string),
-field(chunk_vector,array(float))
+field(chunk_vector,array(float)),
+field(created_time,long,sort)
 )''',
                 location=f"/tmp/{self.retrieval_cluster}",num_shards=1                
            )) 
@@ -135,7 +137,8 @@ field(chunk_vector,array(float))
             "url":url,
             "auth_tag":self.search_tokenize(auth_tag),
             "title_vector":self.emb(title),
-            "content_vector":self.emb(content[0:10000])
+            "content_vector":self.emb(content[0:10000]),
+            "created_time":int(time.time()*1000),
             }]
         self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content",text_content)
         
@@ -147,7 +150,8 @@ field(chunk_vector,array(float))
                 "owner":owner,
                 "chunk":self.search_tokenize(item),
                 "raw_chunk":item,
-                "chunk_vector":self.emb(item)
+                "chunk_vector":self.emb(item),
+                "created_time":int(time.time()*1000),
                 } for i,item in enumerate(content_chunks)]
             
             self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content_chunk",text_content_chunks)    
