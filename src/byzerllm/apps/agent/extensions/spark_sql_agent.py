@@ -182,7 +182,7 @@ class SparkSQLAgent(ConversableAgent):
             
         last_conversation = [{"role":"user","content":f'''
         首先根据我的问题，关联前面的对话，针对当前的问题以列表形式罗列我问题中的关键信息,诸如过滤条件，指标。不需要生成SQL。'''}]        
-        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(messages + last_conversation),
+        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message  + messages + last_conversation),
                             tools=[reply_with_clarify,reply_with_key_messages],
                             execute_tool=True)
 
