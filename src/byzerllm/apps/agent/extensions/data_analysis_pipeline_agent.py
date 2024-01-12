@@ -147,13 +147,21 @@ you should reply exactly `UPDATE CONTEXT`.
             self.agents[agent_name].update_system_message(system_message)
             return True
         return False  
-
-    def clear_agent_message_box(self,agent_name:str):
-        self.clear_history(agent_name)
-        if agent_name in self.agents:
-            self.agents[agent_name].clear_history(get_agent_name(self))
-            return True
-        return False
+    
+    def clear_agent_message_box(self,agent_name:str,last_n:int=0):
+        '''
+        for debug only
+        remove the last n messages from the agent's message box
+        '''
+        if last_n > 0:
+            self._messages[agent_name] = self._messages[agent_name][:-last_n]
+            if agent_name in self.agents:
+                self.agents[agent_name]._messages[get_agent_name(self)] = self.agents[agent_name]._messages[get_agent_name(self)][:-last_n]
+        else:
+            self.clear_history(agent_name)
+            if agent_name in self.agents:
+                self.agents[agent_name].clear_history(get_agent_name(self))                
+        return True
 
     def get_agent_names(self):
         return list(self.agents.keys())  
