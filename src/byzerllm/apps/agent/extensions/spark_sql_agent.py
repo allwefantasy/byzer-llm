@@ -283,6 +283,7 @@ class SparkSQLAgent(ConversableAgent):
 
         last_conversation = [{"role":"user","content":"请根据我的描述，决定是否调整你的代码。"}]
         
+        print(message_utils.padding_messages_merge(self._system_message + messages + last_conversation))
         self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + last_conversation),
                           tools=[reply_with_review_success,reply_with_review_fail],
                           execute_tool=True)  
