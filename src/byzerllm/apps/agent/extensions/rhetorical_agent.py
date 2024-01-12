@@ -127,8 +127,9 @@ class RhetoricalAgent(ConversableAgent):
                          
         last_conversation = [{"role":"user","content":'''现在，开始回顾我们前面的对话，并且找到我指定你需要记住的一些内容，
 或者我额外补充的一些信息，或者我和你说明的一些名词定义。'''}]
-                
-        _,v2 = self.generate_llm_reply(raw_message,message_utils.padding_messages_merge(self._system_message + messages + last_conversation),sender)
+
+        # always choose the last six messages to generate the reply        
+        _,v2 = self.generate_llm_reply(raw_message,message_utils.padding_messages_merge(self._system_message + messages[-7:-1] + last_conversation),sender)
         print(f"rhetorical: {v2}",flush=True)
         self.simple_retrieval_client.save_text_content(owner=self.owner,title="",content=v2,url="rhetorical",auto_chunking=False)
         return True, None 
