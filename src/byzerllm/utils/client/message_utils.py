@@ -1,6 +1,54 @@
 from typing import List, Dict,Any
 import copy
 
+def termindate_message(message:Dict[str,Any]):
+    if "metadata" not in message:
+        message["metadata"] = {}
+    message["metadata"]["TERMINATE"] = True
+    return message
+
+def un_termindate_message(message:Dict[str,Any]):
+    if "metadata" not in message:
+        message["metadata"] = {}
+    message["metadata"]["TERMINATE"] = False
+    return message
+
+def success_message(message:Dict[str,Any]):
+    if "metadata" not in message:
+        message["metadata"] = {}
+    message["metadata"]["code"] = 0
+    return message
+
+def fail_message(message:Dict[str,Any]):
+    if "metadata" not in message:
+        message["metadata"] = {}
+    message["metadata"]["code"] = 1
+    return message
+
+def is_success(message:Dict[str,Any]):
+    if "metadata" not in message or "code" not in message["metadata"]:
+        return False
+    return message["metadata"]["code"] == 0
+
+def copy_error_count(message:Dict[str,Any],new_message:Dict[str,Any]):
+    if "metadata" not in message:
+        message["metadata"] = {}
+    if "metadata" not in new_message:
+        new_message["metadata"] = {}
+    new_message["metadata"]["error_count"] = message["metadata"].get("error_count",0)
+    return new_message
+
+def inc_error_count(message:Dict[str,Any]):
+    if "metadata" not in message:
+        message["metadata"] = {}
+    message["metadata"]["error_count"] = message["metadata"].get("error_count",0) + 1
+    return message
+
+def check_error_count(message:Dict[str,Any],max_error_count:int=3):
+    if "metadata" not in message:
+        message["metadata"] = {}
+    return message["metadata"].get("error_count",0) >= max_error_count
+
 def padding_messages_merge(data:List[Dict[str,Any]]):
     '''
     merge the neighbor messages with the same role

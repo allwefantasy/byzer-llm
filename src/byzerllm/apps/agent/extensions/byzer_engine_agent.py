@@ -57,8 +57,7 @@ class ByzerEngineAgent(ConversableAgent):
             messages = self._messages[get_agent_name(sender)]
 
         message = messages[-1]    
-        code = message["content"]
-        error_count = message["metadata"].get("error_count",0)
+        code = message["content"]        
         reply = ""
         try :
             reply = self.execute_spark_sql(code)
@@ -66,10 +65,10 @@ class ByzerEngineAgent(ConversableAgent):
             # get full exception
             import traceback
             reply = f"执行代码出错：{traceback.format_exc()} {e}" 
-
-            return True, {"content":reply,"metadata":{"code":1,"error_count":error_count}}
+            new_message = message_utils.fail_message({"content":reply} )
+            return True, message_utils.copy_error_count(message,new_message)
         
-        return True, {"content":reply,"metadata":{"code":0}}
+        return True, message_utils.success_message({"content":reply})
     
     def execute_spark_sql(self,sql:Annotated[str,"Spark SQL 语句"])->str:
         '''

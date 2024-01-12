@@ -244,7 +244,7 @@ class SparkSQLAgent(ConversableAgent):
             self.send(message=conversation,recipient=self.byzer_engine_agent)  
             execute_result = self.chat_messages[get_agent_name(self.byzer_engine_agent)][-1] 
             print(f"execute_result: {execute_result}",flush=True)
-            if execute_result["metadata"].get("code",0) == 0:
+            if message_utils.is_success(execute_result):
                 return True,{"content":execute_result["content"],"metadata":{"TERMINATE":True}}
             else:
                 return True,{"content":f'Fail to execute the analysis. {execute_result["content"]}',"metadata":{"TERMINATE":True}}
@@ -268,15 +268,15 @@ class SparkSQLAgent(ConversableAgent):
         message = messages[-1]
         if message["metadata"]["code"] == 0:
             return True, None
-        
-        error_count = message["metadata"].get("error_count",0)
-        if error_count > 3:
+                
+        if message_utils.check_error_count(message,max_error_count=3):
             return True, None
         
         last_conversation = [{"role":"user","content":'''请根据上面的错误，修正你的代码。'''}]   
         t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + last_conversation))
         _,new_code = code_utils.extract_code(t[0].output)[0]
-        return True, {"content":new_code,"metadata":{"error_count":error_count+1}}
+        new_message = {"content":new_code,"metadata":{}}
+        return True, message_utils.inc_error_count(new_message)
 
         
     def generate_reply_for_reviview(
@@ -319,7 +319,7 @@ class SparkSQLAgent(ConversableAgent):
         
         if t[0].values:               
             if t[0].values[0] == 0:
-                target_message["content"] = messages[-2]["content"]
+                target_message["content"] = messages[-2]["content"]                
             else:                
                 t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(messages+[{
                     "content":'''请根据上面的描述修正你的代码。''',
@@ -328,7 +328,8 @@ class SparkSQLAgent(ConversableAgent):
                 sql_codes = code_utils.get_target_codes(code_utils.extract_code(t[0].output),["sql"])
                 if sql_codes:
                     target_message["content"] = sql_codes[0]
-                    target_message["metadata"]["TERMINATE"] = False 
+                    target_message["metadata"]["TERMINATE"] = False
+                    message_utils.inc_error_count(target_message) 
         
         ## make sure the last message is the reviewed sql code    
         return True, target_message   
