@@ -26,7 +26,7 @@ except ImportError:
 
 class SparkSQLAgent(ConversableAgent): 
     DEFAULT_SYSTEM_MESSAGE='''You are a helpful AI assistant. You are also a Spark SQL expert. 
-你总是对问题进行拆解，先给出详细解决问题的思路，最后确保你生成的代码都在一个 SQL Block里。
+你总是对问题分析要多联系上下文，同时根据上下文进行问题的拆解，先给出详细解决问题的思路，最后确保你生成的代码都在一个 SQL Block 里。
 特别需要注意的是：
 
 1. 你生成的Block需要用sql标注而非vbnet
@@ -169,7 +169,7 @@ class SparkSQLAgent(ConversableAgent):
 
             
         last_conversation = [{"role":"user","content":f'''
-        首先根据我的问题，以列表形式罗列我问题中的关键信息,诸如过滤条件，指标。不需要生成SQL。'''}]        
+        首先根据我的问题，关联前面的对话，针对当前的问题以列表形式罗列我问题中的关键信息,诸如过滤条件，指标。不需要生成SQL。'''}]        
         t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(messages + last_conversation),
                             tools=[reply_with_clarify,reply_with_key_messages],
                             execute_tool=True)
