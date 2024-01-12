@@ -69,7 +69,7 @@ class ByzerEngineAgent(ConversableAgent):
 
             return True, {"content":reply,"metadata":{"code":1,"error_count":error_count}}
         
-        return True, {"content":"","metadata":{"code":0,"error_count":error_count}}
+        return True, {"content":"","metadata":{"code":0}}
     
     def execute_spark_sql(self,sql:Annotated[str,"Spark SQL 语句"])->str:
         '''

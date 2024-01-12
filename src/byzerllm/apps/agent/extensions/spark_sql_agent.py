@@ -275,7 +275,7 @@ class SparkSQLAgent(ConversableAgent):
         last_conversation = [{"role":"user","content":'''请根据上面的错误，修正你的代码。'''}]   
         t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + last_conversation))
         _,new_code = code_utils.extract_code(t[0].output)[0]
-        return True, {"content":new_code,"metadata":{"error_count":1}}
+        return True, {"content":new_code,"metadata":{"error_count":error_count+1}}
 
         
     def generate_reply_for_reviview(
