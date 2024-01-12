@@ -121,7 +121,7 @@ class SparkSQLAgent(ConversableAgent):
             "role":"user"    
         }],response_class=Item)                 
 
-        if t[0].value.time:     
+        if t[0].value and t[0].value.time:     
             
             def calculate_time_range():
                 '''

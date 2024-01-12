@@ -11,9 +11,6 @@ import uuid
 import json
 from langchain import PromptTemplate
    
-
-
-
 class RhetoricalAgent(ConversableAgent): 
     
     DEFAULT_SYSTEM_MESSAGE = '''你是一个非常善于反思和总结的AI助手。'''
@@ -55,7 +52,7 @@ class RhetoricalAgent(ConversableAgent):
         self._reply_func_list = []
         # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
         self.register_reply([Agent, ClientActorHandle,str], RhetoricalAgent.my_reply) 
-        self.register_reply([Agent, ClientActorHandle,str], RhetoricalAgent.check_termination_and_human_reply) 
+        # self.register_reply([Agent, ClientActorHandle,str], RhetoricalAgent.check_termination_and_human_reply) 
                 
         self.retrieval_cluster = retrieval_cluster
         self.retrieval_db = retrieval_db 
