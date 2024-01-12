@@ -198,7 +198,7 @@ field(chunk_vector,array(float))
                                         limit=limit)])
 
         if return_json:
-            context = json.dumps([{"content":x["raw_chunk"]} for x in docs],ensure_ascii=False,indent=4)    
+            context = json.dumps([{"content":x["raw_content"]} for x in docs],ensure_ascii=False,indent=4)    
             return context 
         else:
             return docs  

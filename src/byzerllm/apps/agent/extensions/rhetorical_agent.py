@@ -10,7 +10,48 @@ import json
    
 class RhetoricalAgent(ConversableAgent): 
     
-    DEFAULT_SYSTEM_MESSAGE = '''你是一个非常善于反思和总结的AI助手。'''
+    DEFAULT_SYSTEM_MESSAGE = '''你是一个非常善于反思和总结的AI助手。
+尝试从之前的对话中，找到下面三种内容。
+
+1. 用户指定你需要记住的一些内容。
+2. 用户额外补充的一些信息。
+3. 用户和你说明的一些名词定义。
+
+这些信息是为了方便以后回答我的问题的时候，可以参考这些信息，避免我重复和你确认这些信息。
+
+下面是一些例子，方便你理解。
+
+假设我们有如下的对话：
+
+```
+用户： 上分的销售额是多少？
+助手： 你是指上海分公司的销售额吗？
+用户： 是上海分行的销售额。
+```
+
+你的总结：
+
+```
+上分是指上海分行
+```
+
+下次当我再谈到上分的时候，你看到上面的总结后，可以直接明确我指就是上海分行。
+
+再比如，假设我们有如下的对话：
+
+```
+用户： 奔驰上个月的销量
+助手： 销量是指销售额还是销售量？
+用户： 销售额
+```
+
+你的总结：
+
+```
+询问 奔驰上个月的销量时，销量是指销售额。
+如果在之前总结里，已经有提到的，就无需再次总结。
+```
+'''
     
     def __init__(
         self,
@@ -84,8 +125,8 @@ class RhetoricalAgent(ConversableAgent):
 ```  
 你在回答我的问题的时候，可以参考这些内容。''')
                          
-        last_conversation = [{"role":"user","content":'''回顾前面我们对话，我提出了很多问题，但是有些问题你没办法直接回答，让我补充了一些信息，然后你才能回答我的问题。
-找到这些内容，并且做个总结'''}]
+        last_conversation = [{"role":"user","content":'''现在，开始回顾我们前面的对话，并且找到我指定你需要记住的一些内容，
+或者我额外补充的一些信息，或者我和你说明的一些名词定义。'''}]
                 
         _,v2 = self.generate_llm_reply(raw_message,message_utils.padding_messages_merge(self._system_message + messages + last_conversation),sender)
         print(f"rhetorical: {v2}",flush=True)
