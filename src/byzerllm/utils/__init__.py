@@ -411,20 +411,22 @@ You are a helpful assistant with access to the following functions:
 {tools_str}
 ```
 
-{force_prompt}
-
-当用户的问题可以使用上面的一个或者多个工具解决时,你需要生成json格式进行回复。
-
-下面是使用 OpenAPI 3.1. 规范描述了你需如何进行json格式的生成。
+当用户的问题可以使用上面的一个或者多个工具解决时,你需要符合 OpenAPI 3.1. 规范的json格式进行回复，
+该格式模板如下：
 
 ```json
 {FUNCTION_CALLING_SCHEMA}
 ```
+你需要把你选择的函数的对应信息填充到模板中，而不是直接返回上面的模板（非常重要）。
+
+{force_prompt}
 
 现在用户的问题是：{prompt}
 
 请根据描述生成 json 并发送给我。
-注意：如果你无法使用上述函数解决用户的问题，请如实告诉我你没有办法回答。
+
+注意：
+1. 如果你无法使用上述函数解决用户的问题，请如实告诉我你没有办法回答。
 ''' 
     return msg  
 

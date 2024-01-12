@@ -270,13 +270,13 @@ class SparkSQLAgent(ConversableAgent):
 
         def reply_with_review_success(sql:Annotated[str,"我们刚刚发送给用户的sql代码"]):
             '''
-            不需要调整代码，调用该函数
+            如果用户觉得代码没问题，那么可以调用该函数
             '''            
             target_message["content"] = messages[-2]["content"]
 
         def reply_with_review_fail(content:Annotated[str,"根据用户反馈的问题，我们修正后的SQL代码"]):
             '''
-            需要调整代码，调用该函数
+            如果用户觉得代码还有问题时，调用该函数
             '''
             target_message["content"] = content
             target_message["metadata"]["TERMINATE"] = False    
