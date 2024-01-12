@@ -154,10 +154,10 @@ class DataAnalysis:
             return []
         return ray.get(self.data_analysis_pipeline.get_agent_names.remote())
     
-    def clear_agent_message_box(self,agent_name:str)->bool:
+    def clear_agent_message_box(self,agent_name:str,last_n=0)->bool:
         if self.data_analysis_pipeline is None:
             return False
-        return ray.get(self.data_analysis_pipeline.clear_agent_message_box.remote(agent_name))
+        return ray.get(self.data_analysis_pipeline.clear_agent_message_box.remote(agent_name,last_n))
 
     
     def get_pipeline_manager(self)->ClientActorHandle:
