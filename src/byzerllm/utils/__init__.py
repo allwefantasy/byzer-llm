@@ -368,9 +368,8 @@ def function_impl_format(prompt:str,func:Optional[Union[Callable,str]],
 {tool_choice_ser}
 ```
 
-生成的函数的返回值必须是 Json 格式。
-
-下面是使用 OpenAPI 3.1. 规范描述了你需如何进行json格式的生成。
+你需要使用符合 OpenAPI 3.1 规范的 Json 格式进行回复。
+下面Json模板描述了你需要返回的格式,它符合 OpenAPI 3.1 规范:
 
 ```json
 {_cls}
@@ -412,18 +411,19 @@ You are a helpful assistant with access to the following functions:
 ```
 
 当用户的问题可以使用上面的一个或者多个工具解决时,你需要使用符合 OpenAPI 3.1 规范的 Json 格式进行回复，
-该格式模板如下：
+
+下面Json模板描述了你需要返回的格式,它符合 OpenAPI 3.1 规范:
 
 ```json
 {FUNCTION_CALLING_SCHEMA}
 ```
-你需要把你选择的函数信息填充到模板中，一定不要直接原模原样的返回上面的模板（非常重要）。
+一定不要直接原模原样的返回上面的模板（非常重要）。
 
 {force_prompt}
 
 现在用户的问题是：{prompt}
 
-请根据描述选择函数，并且根据前面提到的模板生成对应的Json 格式并发送给我。
+请生成一个符合上述格式描述的 Json 字符串，然后返回给我。
 
 注意：
 1. 如果你无法使用上述函数解决用户的问题，请如实告诉我你没有办法回答。
@@ -441,7 +441,7 @@ def response_class_format(prompt:str,cls:Union[pydantic.BaseModel,str])->str:
         
     
     msg = f'''当你回答用户问题的时候，你需要使用符合 OpenAPI 3.1 规范的 Json 格式进行回复，
-该格式模板如下：
+下面Json模板描述了你需要返回的格式,它符合 OpenAPI 3.1 规范:
 
 ```json
 {_cls}
@@ -464,7 +464,7 @@ def response_class_format_after_chat(cls:Union[pydantic.BaseModel,str])->str:
         _cls = cls.schema_json(ensure_ascii=False)
         
     msg = f'''当你回答用户问题的时候，你需要使用符合 OpenAPI 3.1 规范的 Json 格式进行回复，
-该格式模板如下：
+下面Json模板描述了你需要返回的格式,它符合 OpenAPI 3.1 规范:
 
 ```json
 {_cls}
