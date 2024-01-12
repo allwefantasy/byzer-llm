@@ -7,17 +7,17 @@ def padding_messages_merge(data:List[Dict[str,Any]]):
     '''
     temp_data = copy.deepcopy(data)
     padded_data = []
-    last_role = None
-    last_message = None
+    last_role = None    
     for message in temp_data:
         if last_role is None:
-            padded_data.append(message)
+            padded_data.append(message)            
+            last_role = message['role']
         elif last_role == message['role']:
-            last_message['content'] += f"\n{message['content']}"
+            padded_data[-1]["content"] += f"\n{message['content']}"
         else:
-            padded_data.append(message)
-        last_role = message['role']
-        last_message = message
+            padded_data.append(message)            
+            last_role = message['role']        
+        
     return padded_data
 
 def padding_messages_expand(data:Dict[str,Any]):

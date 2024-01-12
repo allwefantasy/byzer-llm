@@ -14,7 +14,8 @@ except ImportError:
     
 class SQLReviewerAgent(ConversableAgent): 
     DEFAULT_SYSTEM_MESSAGE='''You are a helpful AI assistant. You are also a Spark SQL expert. 你的任务是检查一段包含了Spark SQL 的文本，该文本
-会使用 ```sql ``` 语法来标记 Spark SQL 代码。你需要检查这段文本中的 Spark SQL 代码是否符合以下要求：    
+可能是完整的 Spark SQL 预计，也可能包含了 ```sql ``` 语法来标记 Spark SQL 的文本。
+你需要检查这段文本中的 Spark SQL 代码是否符合以下要求：    
 
 1. 这段话里不允许提到将一些变量替换成用户输入的内容，或者需要用户手动输入一些内容。
 2. 不允许在SQL 中出现诸如 ?, ?, ..., ? 类似这种参数化查询
@@ -22,7 +23,7 @@ class SQLReviewerAgent(ConversableAgent):
 4. 确保这些 SQL 无需任何修改即可运行，所以不能有取 M 条记录， Top N类，需要去掉这些约束。
 5. SQL 中的所有字段必须都用 `` 括起来了？
 
-如果违反了上述任何一个要求，请给出建议内容，但不要尝试生成任何SQL代码，仅仅给出建议。
+如果违反了上述任何一个要求，请给出建议内容，但不要尝试生成任何SQL代码。
 
 在以下情况，你需要直接结束对话：
 
@@ -32,9 +33,6 @@ class SQLReviewerAgent(ConversableAgent):
 4. 如果用户给的内容是诸如"很高兴能帮到您！如果您还有其他问题或需要进一步的帮助，请随时告诉我。祝您工作顺利！"。
 
 结束对话方式为：你觉得当前的代码没有什么问题了。
-
-注意：
-1. 整个review过程，仅仅给出建议，不要尝试生成任何SQL代码。
 '''
     def __init__(
         self,
