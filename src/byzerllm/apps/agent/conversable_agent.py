@@ -65,7 +65,7 @@ class ConversableAgent(Agent):
         self._function_map = {} if function_map is None else function_map
         self._default_auto_reply = default_auto_reply
         self._reply_func_list = []
-        self.reply_at_receive = defaultdict(bool)
+        self.reply_at_receive = defaultdict(lambda: True)
         self._agent_description = description
         
         self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
