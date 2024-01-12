@@ -229,11 +229,11 @@ class SparkSQLAgent(ConversableAgent):
 
         # if we have sql code, ask the sql reviewer to review the code         
         if has_sql_code: 
-            # sync the question to the sql reviewer               
             
+            # sync the question to the sql reviewer                           
             self.send(messages[-1],self.sql_reviewer_agent,request_reply=False)
-            # send the sql code to the sql reviewer to review
             
+            # send the sql code to the sql reviewer to review            
             self.send({
                     "content":code_utils.get_target_codes(codes,["sql"])[0],
                 },self.sql_reviewer_agent)
@@ -297,28 +297,39 @@ class SparkSQLAgent(ConversableAgent):
             "content":"",
             "metadata":{"TERMINATE":True},
         }    
-
-        def reply_with_review_success(sql:Annotated[str,"我们刚刚发送给用户的sql代码"]):
+        
+        # check if the reviewer has passed the code
+        def run_code():  
             '''
-            如果用户觉得代码没问题，那么可以调用该函数
-            '''            
-            target_message["content"] = messages[-2]["content"]
-
-        def reply_with_review_fail(content:Annotated[str,"根据用户反馈的问题，我们修正后的SQL代码"]):
+            用户表达肯定的观点或者代码没有问题，请调用我
+            '''              
+            return 0        
+    
+        def ignore():  
             '''
-            如果用户觉得代码还有问题时，调用该函数
-            '''
-            target_message["content"] = content
-            target_message["metadata"]["TERMINATE"] = False    
+            用户表达否定或者代码不符合特定规范，可以调用我
+            '''              
+            return 1    
+        
 
-        last_conversation = [{"role":"user","content":"请根据我的描述，决定是否调整你的代码。"}]
-                
-        self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + last_conversation),
-                          tools=[reply_with_review_success,reply_with_review_fail],
+        last_conversation = messages[-1]            
+        t = self.llm.chat_oai(conversations=[last_conversation],
+                          tools=[run_code,ignore],
                           execute_tool=True)  
         
-        print(target_message,flush=True)              
-
+        if t[0].values:               
+            if t[0].values[0] == 0:
+                target_message["content"] = messages[-2]["content"]
+            else:                
+                t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(messages+[{
+                    "content":'''请根据上面的描述修正你的代码。''',
+                    "role":"user"
+                }]))
+                sql_codes = code_utils.get_target_codes(code_utils.extract_code(t[0].output),["sql"])
+                if sql_codes:
+                    target_message["content"] = sql_codes[0]
+                    target_message["metadata"]["TERMINATE"] = False 
+        
         ## make sure the last message is the reviewed sql code    
         return True, target_message   
 
