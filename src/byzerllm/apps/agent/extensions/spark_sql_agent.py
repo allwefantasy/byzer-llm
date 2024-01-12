@@ -87,6 +87,7 @@ class SparkSQLAgent(ConversableAgent):
         self._reply_func_list = []                
         # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
         self.register_reply([Agent, ClientActorHandle,str], SparkSQLAgent.generate_sql_reply) 
+        self.register_reply([Agent, ClientActorHandle,str], SparkSQLAgent.generate_execute_sql_reply)
         self.register_reply([Agent, ClientActorHandle,str], SparkSQLAgent.generate_reply_for_reviview)        
         self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply)         
 
@@ -243,7 +244,7 @@ class SparkSQLAgent(ConversableAgent):
             self.send(message=conversation,recipient=self.byzer_engine_agent)  
             execute_result = self.chat_messages[get_agent_name(self.byzer_engine_agent)][-1] 
             print(f"execute_result: {execute_result}",flush=True)
-            if execute_result["metadata"]["code"] == 0:
+            if execute_result["metadata"].get("code",0) == 0:
                 return True,{"content":execute_result["content"],"metadata":{"TERMINATE":True}}
             else:
                 return True,{"content":f'Fail to execute the analysis. {execute_result["content"]}',"metadata":{"TERMINATE":True}}
