@@ -2,7 +2,7 @@ from ..conversable_agent import ConversableAgent
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,Annotated
 from ....utils.client import ByzerLLM,code_utils,message_utils
 from byzerllm.utils.retrieval import ByzerRetrieval
-from ..agent import Agent
+from ..agent import Agent,Agents
 import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import time
@@ -49,7 +49,8 @@ class SparkSQLAgent(ConversableAgent):
         retrieval: ByzerRetrieval, 
         chat_name:str,
         owner:str,                            
-        sql_reviewer_agent: Union[Agent, ClientActorHandle,str],      
+        sql_reviewer_agent: Union[Agent, ClientActorHandle,str],
+        byzer_engine_agent: Union[Agent, ClientActorHandle,str],      
         retrieval_cluster:str="data_analysis",
         retrieval_db:str="data_analysis",   
         system_message: Optional[str] = DEFAULT_SYSTEM_MESSAGE,        
@@ -82,6 +83,7 @@ class SparkSQLAgent(ConversableAgent):
                                                         ) 
         self.byzer_url = byzer_url        
         self.sql_reviewer_agent = sql_reviewer_agent
+        self.byzer_engine_agent = byzer_engine_agent
         self._reply_func_list = []                
         # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
         self.register_reply([Agent, ClientActorHandle,str], SparkSQLAgent.generate_sql_reply) 
@@ -236,18 +238,45 @@ class SparkSQLAgent(ConversableAgent):
                 },self.sql_reviewer_agent)
             
             # get the sql reviewed.             
-            conversation = self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-1]   
-            try:                     
-                reply = self.execute_spark_sql(conversation["content"])
-            except Exception as e:
-                # get full exception
-                import traceback
-                reply = f"执行代码出错：{traceback.format_exc()} {e}"                
-            return True, {"content":reply,"metadata":{"TERMINATE":True}}
-                             
-        
+            conversation = self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-1] 
+            
+            self.send(message=conversation,recipient=self.byzer_engine_agent)  
+            execute_result = self.chat_messages[get_agent_name(self.byzer_engine_agent)][-1] 
+            print(f"execute_result: {execute_result}",flush=True)
+            if execute_result["metadata"]["code"] == 0:
+                return True,{"content":execute_result["content"],"metadata":{"TERMINATE":True}}
+            else:
+                return True,{"content":f'Fail to execute the analysis. {execute_result["content"]}',"metadata":{"TERMINATE":True}}
 
         return True,  {"content":v,"metadata":{"TERMINATE":True}}
+    
+    def generate_execute_sql_reply(
+        self,
+        raw_message: Optional[Union[Dict,str,ChatResponse]] = None,
+        messages: Optional[List[Dict]] = None,
+        sender: Optional[Union[ClientActorHandle,Agent,str]] = None,
+        config: Optional[Any] = None,
+        ) -> Tuple[bool, Union[str, Dict, None,ChatResponse]]: 
+        
+        if get_agent_name(sender) != get_agent_name(self.byzer_engine_agent):
+            return False, None
+        
+        if messages is None:
+            messages = self._messages[get_agent_name(sender)] 
+
+        message = messages[-1]
+        if message["metadata"]["code"] == 0:
+            return True, None
+        
+        error_count = message["metadata"].get("error_count",0)
+        if error_count > 3:
+            return True, None
+        
+        last_conversation = [{"role":"user","content":'''请根据上面的错误，修正你的代码。'''}]   
+        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + last_conversation))
+        _,new_code = code_utils.extract_code(t[0].output)[0]
+        return True, {"content":new_code,"metadata":{"error_count":1}}
+
         
     def generate_reply_for_reviview(
         self,
@@ -282,8 +311,7 @@ class SparkSQLAgent(ConversableAgent):
             target_message["metadata"]["TERMINATE"] = False    
 
         last_conversation = [{"role":"user","content":"请根据我的描述，决定是否调整你的代码。"}]
-        
-        print(message_utils.padding_messages_merge(self._system_message + messages + last_conversation),flush=True)
+                
         self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + last_conversation),
                           tools=[reply_with_review_success,reply_with_review_fail],
                           execute_tool=True)  
@@ -291,22 +319,7 @@ class SparkSQLAgent(ConversableAgent):
         print(target_message,flush=True)              
 
         ## make sure the last message is the reviewed sql code    
-        return True, target_message
-    
-    def execute_spark_sql(self,sql:Annotated[str,"Spark SQL 语句"])->str:
-        '''
-        执行 Spark SQL 语句
-        '''
-        
-        print(f"execute spark sql: {sql}",flush=True)
-
-        v = self.llm._rest_byzer_script(f"""
-load csv.`file:///home/byzerllm/projects/jupyter-workspace/nlp2query/h.csv` where header="true" as test_table;
-!profiler sql '''
-{sql}                                        
-''';
-""",owner="william",url="http://192.168.1.248:9003/run/script")
-        return json.dumps(v,ensure_ascii=False)
+        return True, target_message   
 
         
     
