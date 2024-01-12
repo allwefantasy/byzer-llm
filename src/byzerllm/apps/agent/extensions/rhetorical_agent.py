@@ -3,13 +3,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 from ....utils.client import ByzerLLM,message_utils
 from byzerllm.utils.retrieval import ByzerRetrieval
 from ..agent import Agent
-import ray
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 from .. import get_agent_name,run_agent_func,ChatResponse
 from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient
-import uuid
 import json
-from langchain import PromptTemplate
    
 class RhetoricalAgent(ConversableAgent): 
     
@@ -43,6 +40,9 @@ class RhetoricalAgent(ConversableAgent):
             code_execution_config=code_execution_config,            
             **kwargs,
         )
+        
+        print("init rhetorical agent",flush=True)
+        
         self.chat_name = chat_name
         self.owner = owner
         
@@ -52,16 +52,17 @@ class RhetoricalAgent(ConversableAgent):
         self._reply_func_list = []
         # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
         self.register_reply([Agent, ClientActorHandle,str], RhetoricalAgent.my_reply) 
-        # self.register_reply([Agent, ClientActorHandle,str], RhetoricalAgent.check_termination_and_human_reply) 
+        self.register_reply([Agent, ClientActorHandle,str], RhetoricalAgent.check_termination_and_human_reply) 
                 
         self.retrieval_cluster = retrieval_cluster
-        self.retrieval_db = retrieval_db 
+        self.retrieval_db = retrieval_db         
 
         self.simple_retrieval_client = SimpleRetrievalClient(llm=self.llm,
                                                              retrieval=self.retrieval,
                                                              retrieval_cluster=self.retrieval_cluster,
                                                              retrieval_db=self.retrieval_db,
-                                                             )         
+                                                             ) 
+                
           
     def my_reply(
         self,
@@ -71,12 +72,12 @@ class RhetoricalAgent(ConversableAgent):
         config: Optional[Any] = None,
     ) -> Tuple[bool, Union[str, Dict, None,ChatResponse]]:  
 
+        print(f"rhetorical====",flush=True)
+
         if messages is None:
             messages = self._messages[get_agent_name(sender)]  
 
-        m = messages[-1]
-
-        print(f"rhetorical====",flush=True)
+        m = messages[-1]        
         
         old_conversations = self.simple_retrieval_client.search_content(q=m["content"],owner=self.owner,url="rhetorical",limit=3)
         if len(old_conversations) != 0:
