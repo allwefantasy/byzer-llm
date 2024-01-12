@@ -146,7 +146,14 @@ you should reply exactly `UPDATE CONTEXT`.
         if agent_name in self.agents:
             self.agents[agent_name].update_system_message(system_message)
             return True
-        return False    
+        return False  
+
+    def clear_agent_message_box(self,agent_name:str):
+        self.clear_history(agent_name)
+        if agent_name in self.agents:
+            self.agents[agent_name].clear_history(get_agent_name(self))
+            return True
+        return False
 
     def get_agent_names(self):
         return list(self.agents.keys())  
@@ -227,6 +234,7 @@ you should reply exactly `UPDATE CONTEXT`.
         else:        
             _,_agent_name = self.select_agent(raw_message,messages,sender)
             agent_name = _agent_name
+        
         print(f"Select agent: {agent_name} to answer the question: {ori_message['content'][0:20]}",flush=True)
         
         if agent_name and agent_name in self.agents:
