@@ -52,7 +52,7 @@ class ConversableAgent(Agent):
         
         self._is_termination_msg = (
             is_termination_msg if is_termination_msg is not None else (
-                lambda x:x.get("content", "").rstrip().endswith("TERMINATE") or "TERMINATE" in x.get("metadata",{}) or x.get("content", "").rstrip().endswith("终止") or "终止" in x.get("metadata",{})
+                lambda x:x.get("content", "").rstrip().endswith("TERMINATE") or x.get("metadata",{}).get("TERMINATE",False)  or x.get("content", "").rstrip().endswith("终止") or x.get("metadata",{}).get("终止",False) 
                                                                        )
         )
         self.human_input_mode = human_input_mode
@@ -379,7 +379,7 @@ class ConversableAgent(Agent):
         if request_reply is False or request_reply is None and self.reply_at_receive[get_agent_name(sender)] is False:            
             return
         reply = self.generate_reply(raw_message=message, messages=self.chat_messages[get_agent_name(sender)], sender=sender)
-        print(f"===={get_agent_name(self)} reply:{reply}",flush=True)
+                
         if reply is not None:                                    
             self.send(reply, sender, silent=silent)
 
