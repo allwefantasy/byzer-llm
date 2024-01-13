@@ -198,7 +198,7 @@ A4
             if new_query != m["content"]:
                 temp1 = self.llm.emb(None,LLMRequest(instruction=new_query))
                 temp2 = self.llm.emb(None,LLMRequest(instruction=m["content"]))
-                sim = np.dot(temp1[0].output,temp2[1].output)
+                sim = np.dot(temp1[0].output,temp2[0].output)
                 if sim > 0.8:
                     m["content"] = new_query
                     print(f'context query rewrite:{m["content"]}\n\n',flush=True)
