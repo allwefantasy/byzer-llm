@@ -365,7 +365,7 @@ new_query: {new_query}
         
         if messages is None:
             messages = self._messages[get_agent_name(sender)] 
-
+                
         message = messages[-1]
         if message["metadata"]["code"] == 0:
             return True, None

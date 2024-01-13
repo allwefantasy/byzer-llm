@@ -65,6 +65,7 @@ class ByzerEngineAgent(ConversableAgent):
             import traceback
             reply = f"执行代码出错：{traceback.format_exc()} {e}" 
             new_message = message_utils.fail_message({"content":reply} )
+            print(f"Byzer Engine execute code error: {message_utils.copy_error_count(message,new_message)}",flush=True)
             return True, message_utils.copy_error_count(message,new_message)
         
         return True, message_utils.success_message({"content":reply})
