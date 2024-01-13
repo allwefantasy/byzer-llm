@@ -356,9 +356,14 @@ new_query: {new_query}
             
             # get the sql reviewed.             
             conversation = message_utils.un_termindate_message(self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-1])            
+            
+            # send the sql code to the byzer engine to execute
+            print(f"send the sql code to the byzer engine to execute {conversation}",flush=True)
             self.send(message=conversation,recipient=self.byzer_engine_agent)  
-            execute_result = self.chat_messages[get_agent_name(self.byzer_engine_agent)][-1] 
+            
+            execute_result = self.chat_messages[get_agent_name(self.byzer_engine_agent)][-1]             
             print(f"execute_result: {execute_result}",flush=True)
+            
             if message_utils.is_success(execute_result):
                 return True,{"content":execute_result["content"],"metadata":{"TERMINATE":True}}
             else:
