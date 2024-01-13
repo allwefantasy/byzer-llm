@@ -156,7 +156,7 @@ A4
         m = messages[-1]
         print("received message:",m,flush=True)
 
-        if m.get("metadata",{}).get("skip_long_memory",False): 
+        if not m.get("metadata",{}).get("skip_long_memory",False): 
             # recall old memory and update the system prompt
             old_memory = self.simple_retrieval_client.search_content(q=m["content"],owner=self.owner,url="rhetorical",limit=3)
             if len(old_memory) != 0:
