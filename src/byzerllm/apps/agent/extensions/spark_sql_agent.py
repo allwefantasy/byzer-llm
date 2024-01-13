@@ -301,14 +301,14 @@ new_query: {new_query}
                 if t[0].value and t[0].value.start and t[0].value.end:
                     time_range:TimeRange = t[0].value
                     time_msg = f'''时间区间是：{time_range.start} 至 {time_range.end}'''  
-                    print(f'compute the time range:{m["content"]}\n\n',flush=True)
+                    print(f'compute the time range:{time_msg} {m["content"]}\n\n',flush=True)
                                 
 
             key_msg = ""
             ## extract key messages is the user want to generate sql code
             def reply_with_clarify(content:Annotated[str,"不理解问题，反问用户的内容"]): 
                 '''
-                对问题如果不清晰，无法抽取出有效的关键信息，那么可以调用该函数，反问用户。
+                对问题如果不清晰(不包括时间问题)，无法抽取出有效的关键信息，那么可以调用该函数，反问用户。
                 '''
                 return content 
 
@@ -322,7 +322,7 @@ new_query: {new_query}
             last_conversation = [{"role":"user","content":f'''
 首先根据我的问题，关联前面的对话，针对当前的问题以列表形式罗列我问题中的关键信息,诸如过滤条件，指标，分组条件。不需要生成SQL。
 注意:
-1. 不要考虑时间问题
+1. 不要考虑时间
 2. 如果补充信息和原始问题有冲突，以原始信息为准
 '''}]        
             t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message  + messages + last_conversation),
