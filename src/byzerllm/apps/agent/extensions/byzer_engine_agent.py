@@ -1,6 +1,6 @@
 from ..conversable_agent import ConversableAgent
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,Annotated
-from ....utils.client import ByzerLLM,message_utils
+from ....utils.client import ByzerLLM,message_utils,code_utils
 from byzerllm.utils.retrieval import ByzerRetrieval
 from ..agent import Agent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
@@ -60,6 +60,8 @@ class ByzerEngineAgent(ConversableAgent):
         code = message["content"]        
         reply = ""
         try :
+            if code_utils.infer_lang(code) != "python":
+                code = code_utils.extract_code(code)[0][1]
             reply = self.execute_spark_sql(code)
         except Exception as e:
             # get full exception

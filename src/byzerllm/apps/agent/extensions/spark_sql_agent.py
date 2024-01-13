@@ -232,8 +232,11 @@ class SparkSQLAgent(ConversableAgent):
             
             # send the sql code to the sql reviewer to review            
             self.send({
-                    "content":code_utils.get_target_codes(codes,["sql"])[0],
-                },self.sql_reviewer_agent)
+                    "content":f'''
+```python
+{code_utils.get_target_codes(codes,["sql"])[0]}
+```
+'''},self.sql_reviewer_agent)
             
             # get the sql reviewed.             
             conversation = self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-1] 
