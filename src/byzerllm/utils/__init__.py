@@ -368,7 +368,9 @@ def function_impl_format(prompt:str,func:Optional[Union[Callable,str]],
 {tool_choice_ser}
 ```
 
-函数的返回值格式需要满足如下约束：
+生成的函数的返回值必须是 Json 格式。
+
+下面是使用 OpenAPI 3.1. 规范描述了你需如何进行json格式的生成。
 
 ```json
 {_cls}
