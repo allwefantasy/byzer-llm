@@ -893,11 +893,11 @@ class ByzerLLM:
         r = LLMClassResponse(response=response,value=None,metadata={"reason":""})
 
         is_python_code = False
-        if code_utils.infer_lang(response.output) == "python"
+        if code_utils.infer_lang(response.output) == "python":
             is_python_code = True
         
         code = response.output
-        
+
         if not is_python_code:
             codes = code_utils.extract_code(response.output)
             
