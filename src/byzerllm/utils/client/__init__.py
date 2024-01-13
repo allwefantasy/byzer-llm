@@ -121,7 +121,9 @@ class Templates:
             if "<|im_end|>" in v:
                 v = v.split("<|im_end|>")[0]
             if "<|endoftext|>" in v:
-                v = v.split("<|endoftext|>")[0]            
+                v = v.split("<|endoftext|>")[0] 
+            if "<|im_start|>" in v:             
+                v = v.split("<|im_start|>")[0]   
             return v   
 
         def sys_format(t,v):

@@ -170,6 +170,18 @@ class SparkSQLAgent(ConversableAgent):
         if time_msg:
             m["content"] = f'''补充信息：{time_msg} \n原始问题：{old_content} '''
 
+        ## context analysis
+        temp_conversation = [{"role":"user","content":f'''
+通过回顾我们前面几条聊天内容，针对我现在的问题，补充一些信息如过滤条件，指标，分组条件。
+
+下面是一个示例：
+我：2023年别克君威的销量是多少？
+你：1000
+我：2024年呢？
+你：时间：2024，品牌：别克君威，指标：销量
+
+'''}]                
+
         key_msg = ""
         ## extract key messages is the user want to generate sql code
         def reply_with_clarify(content:Annotated[str,"不理解问题，反问用户的内容"]): 
@@ -178,7 +190,7 @@ class SparkSQLAgent(ConversableAgent):
             '''
             return content 
 
-        def reply_with_key_messages(content:Annotated[list[str],"列表形式的关键信息,诸如过滤条件，指标"]):  
+        def reply_with_key_messages(content:Annotated[list[str],"列表形式的关键信息,诸如过滤条件，指标，分组条件"]):  
             '''
             如果你能抽取出有效的关键信息，那么可以调用该函数
             '''      
@@ -186,7 +198,7 @@ class SparkSQLAgent(ConversableAgent):
 
             
         last_conversation = [{"role":"user","content":f'''
-        首先根据我的问题，关联前面的对话，针对当前的问题以列表形式罗列我问题中的关键信息,诸如过滤条件，指标。不需要生成SQL。'''}]        
+        首先根据我的问题，关联前面的对话，针对当前的问题以列表形式罗列我问题中的关键信息,诸如过滤条件，指标，分组条件。不需要生成SQL。'''}]        
         t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message  + messages + last_conversation),
                             tools=[reply_with_clarify,reply_with_key_messages],
                             execute_tool=True)
