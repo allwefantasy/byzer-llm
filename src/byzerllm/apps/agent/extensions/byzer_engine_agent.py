@@ -57,11 +57,8 @@ class ByzerEngineAgent(ConversableAgent):
             messages = self._messages[get_agent_name(sender)]
 
         message = messages[-1]    
-        code = message["content"]        
-        reply = ""
-        try :
-            if code_utils.infer_lang(code) != "python":
-                code = code_utils.extract_code(code)[0][1]
+        code = code_utils.extract_code(message["content"])[0][1]
+        try :                            
             reply = self.execute_spark_sql(code)
         except Exception as e:
             # get full exception
