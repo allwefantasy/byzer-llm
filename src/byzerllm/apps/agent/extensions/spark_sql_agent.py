@@ -12,7 +12,7 @@ from byzerllm.utils.client import LLMHistoryItem,LLMRequest
 import json
 from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient
 import pydantic
-
+from datetime import datetime
 try:
     from termcolor import colored
 except ImportError:
@@ -265,7 +265,34 @@ new_query: {new_query}
             
             # old_content = m["content"]
             # if time_msg:
-            #     m["content"] = f'''补充信息：{time_msg} \n原始问题：{old_content} '''                  
+            #     m["content"] = f'''补充信息：{time_msg} \n原始问题：{old_content} ''' 
+                                     
+            now = datetime.now().strftime("%Y-%m-%d")
+            m = {
+                "content":'''去年11月份哈弗品牌的国内零售总数是多少？''',
+                "role":"user"
+            }
+            class TimeRange(pydantic.BaseModel):
+                '''
+                时间区间
+                格式需要如下： yyyy-MM-dd
+                '''  
+                
+                start: str = pydantic.Field(...,description="开始时间.时间格式为 yyyy-MM-dd")
+                end: str = pydantic.Field(...,description="截止时间.时间格式为 yyyy-MM-dd") 
+
+            t = self.llm.chat_oai(conversations=[{
+                "content":f'''当前时间是 {now}。根据用户的问题，计算时间区间。时间格式为 yyyy-MM-dd。用户的问题是：{m["content"]}''',
+                "role":"user"
+            }],response_class=TimeRange)
+
+            if t[0].value and t[0].value.start and t[0].value.end:
+                time_range:TimeRange = t[0].value
+                time_msg = f'''时间区间是：{time_range.start} 至 {time_range.end}'''  
+                print(f'compute the time range:{m["content"]}\n\n',flush=True)
+                old_content = m["content"]
+                if time_msg:
+                    m["content"] = f'''补充信息：{time_msg} \n原始问题：{old_content} '''
 
             key_msg = ""
             ## extract key messages is the user want to generate sql code
