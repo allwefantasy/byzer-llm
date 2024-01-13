@@ -168,7 +168,7 @@ A4
 
         # context query rewrite
                 
-        if len(re.sub(r'\s+', '', m["content"])) < 16:
+        if len(re.sub(r'\s+', '', m["content"])) < 60:
 
             temp_conversation = {"role":"user","content":'''首先，你要先回顾我们前面几条聊天内容，针对我现在的问题，进行一个扩充改写。
         
@@ -208,98 +208,99 @@ the similarity is too low {sim}
 query:  {m["content"]}
 new_query: {new_query}
 \n\n''',flush=True)
-
-        time_msg = ""
-            
-        # to compute the real time range, notice that 
-        # we will chagne the message content  
-
-        class Item(pydantic.BaseModel):
-            '''
-            查询参数    
-            如果对应的参数不符合字段要求，那么设置为空即可
-            '''
-            other: str = pydantic.Field(...,description="其他参数，比如用户的名字，或者其他的一些信息")
-            time:  str = pydantic.Field(...,description="时间信息,比如内容里会提到天， 月份，年等相关词汇")
-
-
-        t = self.llm.chat_oai([{
-            "content":f'''{m["content"]}''',
-            "role":"user"    
-        }],response_class=Item)                 
-
-        if t[0].value and t[0].value.time:     
-            
-            def calculate_time_range():
-                '''
-                计算时间的区间，注意这个函数没有参数。 请使用dateutil库。
-                如果用户提到的是单一日期，那么都是按天为单位来进行区间计算。
-                比如说：上个月，那么就是上个月的第一天到最后一天。
-                去年11月份，那么就是去年11月份的第一天到最后一天。
-                如果用户提到的是一个时间区间，那么就是按照用户提到的时间区间来进行计算。
-                比如 去年三月到五月，那么就是去年三月的第一天到去年五月的最后一天。
-                '''
-                pass 
-
-            class TimeRange(pydantic.BaseModel):
-                '''
-                时间区间
-                格式需要如下： yyyy-MM-dd
-                '''  
+        
+        
+            time_msg = ""
                 
-                start: str = pydantic.Field(...,description="开始时间.时间格式为 yyyy-MM-dd")
-                end: str = pydantic.Field(...,description="截止时间.时间格式为 yyyy-MM-dd")                 
-            
+            # to compute the real time range, notice that 
+            # we will chagne the message content  
+
+            class Item(pydantic.BaseModel):
+                '''
+                查询参数    
+                如果对应的参数不符合字段要求，那么设置为空即可
+                '''
+                other: str = pydantic.Field(...,description="其他参数，比如用户的名字，或者其他的一些信息")
+                time:  str = pydantic.Field(...,description="时间信息,比如内容里会提到天， 月份，年等相关词汇")
+
+
             t = self.llm.chat_oai([{
-                "content":t[0].value.time,
+                "content":f'''{m["content"]}''',
                 "role":"user"    
-            }],impl_func=calculate_time_range,response_class=TimeRange,execute_impl_func=True)
+            }],response_class=Item)                 
 
-            if t[0].value:
-                time_range:TimeRange = t[0].value
-                time_msg = f'''时间区间是：{time_range.start} 至 {time_range.end}'''  
-                print(f'compute the time range:{m["content"]}\n\n',flush=True) 
-        
-        old_content = m["content"]
-        if time_msg:
-            m["content"] = f'''补充信息：{time_msg} \n原始问题：{old_content} '''                  
+            if t[0].value and t[0].value.time:     
+                
+                def calculate_time_range():
+                    '''
+                    计算时间的区间，注意这个函数没有参数。 请使用dateutil库。
+                    如果用户提到的是单一日期，那么都是按天为单位来进行区间计算。
+                    比如说：上个月，那么就是上个月的第一天到最后一天。
+                    去年11月份，那么就是去年11月份的第一天到最后一天。
+                    如果用户提到的是一个时间区间，那么就是按照用户提到的时间区间来进行计算。
+                    比如 去年三月到五月，那么就是去年三月的第一天到去年五月的最后一天。
+                    '''
+                    pass 
 
-        key_msg = ""
-        ## extract key messages is the user want to generate sql code
-        def reply_with_clarify(content:Annotated[str,"不理解问题，反问用户的内容"]): 
-            '''
-            对问题如果不清晰，无法抽取出有效的关键信息，那么可以调用该函数，反问用户。
-            '''
-            return content 
+                class TimeRange(pydantic.BaseModel):
+                    '''
+                    时间区间
+                    格式需要如下： yyyy-MM-dd
+                    '''  
+                    
+                    start: str = pydantic.Field(...,description="开始时间.时间格式为 yyyy-MM-dd")
+                    end: str = pydantic.Field(...,description="截止时间.时间格式为 yyyy-MM-dd")                 
+                
+                t = self.llm.chat_oai([{
+                    "content":t[0].value.time,
+                    "role":"user"    
+                }],impl_func=calculate_time_range,response_class=TimeRange,execute_impl_func=True)
 
-        def reply_with_key_messages(content:Annotated[list[str],"列表形式的关键信息,诸如过滤条件，指标，分组条件"]):  
-            '''
-            如果你能抽取出有效的关键信息，那么可以调用该函数
-            '''      
-            return content 
-
+                if t[0].value:
+                    time_range:TimeRange = t[0].value
+                    time_msg = f'''时间区间是：{time_range.start} 至 {time_range.end}'''  
+                    print(f'compute the time range:{m["content"]}\n\n',flush=True) 
             
-        last_conversation = [{"role":"user","content":f'''
-        首先根据我的问题，关联前面的对话，针对当前的问题以列表形式罗列我问题中的关键信息,诸如过滤条件，指标，分组条件。不需要生成SQL。注意，不要考虑时间问题'''}]        
-        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message  + messages + last_conversation),
-                            tools=[reply_with_clarify,reply_with_key_messages],
-                            execute_tool=True)
+            old_content = m["content"]
+            if time_msg:
+                m["content"] = f'''补充信息：{time_msg} \n原始问题：{old_content} '''                  
 
-        if t[0].values:     
-            v = t[0].values[0]
-            if isinstance(v,str):
-                print("invoke reply_with_clarify",flush=True)
-                return True,{"content":v,"metadata":{"TERMINATE":True}}
+            key_msg = ""
+            ## extract key messages is the user want to generate sql code
+            def reply_with_clarify(content:Annotated[str,"不理解问题，反问用户的内容"]): 
+                '''
+                对问题如果不清晰，无法抽取出有效的关键信息，那么可以调用该函数，反问用户。
+                '''
+                return content 
+
+            def reply_with_key_messages(content:Annotated[list[str],"列表形式的关键信息,诸如过滤条件，指标，分组条件"]):  
+                '''
+                如果你能抽取出有效的关键信息，那么可以调用该函数
+                '''      
+                return content 
+
+                
+            last_conversation = [{"role":"user","content":f'''
+            首先根据我的问题，关联前面的对话，针对当前的问题以列表形式罗列我问题中的关键信息,诸如过滤条件，指标，分组条件。不需要生成SQL。注意，不要考虑时间问题'''}]        
+            t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message  + messages + last_conversation),
+                                tools=[reply_with_clarify,reply_with_key_messages],
+                                execute_tool=True)
+
+            if t[0].values:     
+                v = t[0].values[0]
+                if isinstance(v,str):
+                    print("invoke reply_with_clarify",flush=True)
+                    return True,{"content":v,"metadata":{"TERMINATE":True}}
+                
+                if isinstance(v,list):
+                    print("invoke reply_with_key_messages",flush=True)
+                    v = " ".join(v)          
+                key_msg = v
+                print(f'compute the key info:{m["content"]}\n\n',flush=True)
             
-            if isinstance(v,list):
-                print("invoke reply_with_key_messages",flush=True)
-                v = " ".join(v)          
-            key_msg = v
-            print(f'compute the key info:{m["content"]}\n\n',flush=True)
-        
-        if key_msg:
-            m["content"] = f'''补充信息：{key_msg} \n原始问题：{old_content} '''
-            print(f'final query:{m["content"]}\n\n',flush=True)
+            if key_msg:
+                m["content"] = f'''补充信息：{key_msg} \n原始问题：{old_content} '''
+                print(f'final query:{m["content"]}\n\n',flush=True)
 
         
         # check if the user's question is ambiguous or not, if it is, try to ask the user to clarify the question.                        
