@@ -1,6 +1,6 @@
 from ..conversable_agent import ConversableAgent
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,Annotated
-from ....utils.client import ByzerLLM,code_utils,message_utils
+from ....utils.client import ByzerLLM,code_utils,message_utils,parallel_utils
 from byzerllm.utils.retrieval import ByzerRetrieval
 from ..agent import Agent
 import ray
@@ -9,11 +9,8 @@ import time
 from .. import get_agent_name,run_agent_func,ChatResponse
 from ....utils import generate_str_md5
 from byzerllm.utils.client import LLMHistoryItem,LLMRequest
-import uuid
 import json
 from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient
-from langchain import PromptTemplate
-from langchain.text_splitter import RecursiveCharacterTextSplitter,Document
 import pydantic
 
 try:
@@ -298,7 +295,8 @@ class SparkSQLAgent(ConversableAgent):
             "metadata":{"TERMINATE":True},
         }    
         
-        # check if the reviewer has passed the code
+        # check if code is passed or not by the sql reviewer
+        
         def run_code():  
             '''
             用户表达肯定的观点或者代码没有问题，请调用我
@@ -312,10 +310,22 @@ class SparkSQLAgent(ConversableAgent):
             return 1    
         
 
-        last_conversation = messages[-1]            
-        t = self.llm.chat_oai(conversations=[last_conversation],
-                          tools=[run_code,ignore],
-                          execute_tool=True)  
+        last_conversation = messages[-1]     
+
+        ts= parallel_utils.chat_oai(self.llm,3,
+                                conversations=[last_conversation],
+                                tools=[run_code,ignore],
+                                execute_tool=True)
+        # find the first success result
+        t = None
+        for i in range(len(ts)):
+            if ts[i].values:
+                t = ts[i]
+                break
+
+        # t = self.llm.chat_oai(conversations=[last_conversation],
+        #                   tools=[run_code,ignore],
+        #                   execute_tool=True)  
         
         if t[0].values:               
             if t[0].values[0] == 0:

@@ -140,7 +140,10 @@ you should reply exactly `UPDATE CONTEXT`.
             "common_agent":self.common_agent,
             "privew_file_agent":self.preview_file_agent,
             "python_interpreter":self.python_interpreter,
-            "spark_sql_agent":self.spark_sql_agent,            
+            "sql_reviewer_agent":self.sql_reviewer_agent,
+            "byzer_engine_agent":self.byzer_engine_agent,            
+            "rhetoorical_agent":self.rhetoorical_agent,            
+            "spark_sql_agent":self.spark_sql_agent,
         } 
         self.reply_from_agent = {}       
 

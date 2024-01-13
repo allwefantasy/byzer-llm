@@ -13,15 +13,14 @@ except ImportError:
         return x
     
 class SQLReviewerAgent(ConversableAgent): 
-    DEFAULT_SYSTEM_MESSAGE='''You are a helpful AI assistant. You are also a Spark SQL expert. 你的任务是检查一段包含了Spark SQL 的文本，该文本
-可能是完整的 Spark SQL 预计，也可能包含了 ```sql ``` 语法来标记 Spark SQL 的文本。
+    DEFAULT_SYSTEM_MESSAGE='''你的任务是检查一段包含了Spark SQL 的文本，该文本
+可能是完整的 Spark SQL 语句，也可能包含了 ```sql ``` 语法来标记 Spark SQL 的文本。
 你需要检查这段文本中的 Spark SQL 代码是否符合以下要求：    
 
-1. 这段话里不允许提到将一些变量替换成用户输入的内容，或者需要用户手动输入一些内容。
+1. SQL中不允许提到将一些变量替换成用户输入的内容，或者需要用户手动输入一些内容。
 2. 不允许在SQL 中出现诸如 ?, ?, ..., ? 类似这种参数化查询
-3. SQL 代码必须使用 ```sql ``` 语法来标记，不能出现 ```vbnet ``` 等语法标记
-4. 确保这些 SQL 无需任何修改即可运行，所以不能有取 M 条记录， Top N类，需要去掉这些约束。
-5. SQL 中的所有字段必须都用 `` 括起来了？
+3. 确保这些 SQL 无需任何修改即可运行，所以不能有取 M 条记录， Top N类，需要去掉这些约束。
+4. SQL 中的所有字段和别名必须都用 `` 括起来了？
 
 如果违反了上述任何一个要求，请给出建议内容，但不要尝试生成任何SQL代码。
 
