@@ -22,22 +22,73 @@ except ImportError:
     
 
 class SparkSQLAgent(ConversableAgent): 
-    DEFAULT_SYSTEM_MESSAGE='''You are a helpful AI assistant. You are also a Spark SQL expert. 
-你总是要多联系上下文对问题做分析，同时根据上下文进行问题的拆解，先给出详细解决问题的思路，最后确保你生成的代码都在一个 SQL Block 里。类似下面格式：
+    DEFAULT_SYSTEM_MESSAGE='''你非常精通 Spark SQL, 并且能够根据用户的问题，基于提供的表信息，生成对应的 Spark SQL 语句。
 
-```sql
-你生成的SQL代码
+下面是你具备的一些能力：
+
+### 联系上下文分析
+                                                                                                                               
+当面对用户的问题时，要多回顾过往的对话，根据上下文获取补充信息，去理解用户的需求。
+
+示例:
+1. 用户问题： 2023别克君威的销量是多少？
+2. 回答： 2023年别克君威的销量是 1000 辆
+3. 用户问题： 2024年呢？
+
+此时，无需再询问用户查询什么，结合上一次提问的内容，来理解问题。
+结合上一次用户提的问题，用户的实际问题是： 2024别克君威的销量是多少？
+这个时候再进一步生成SQL语句。
+
+学习我上面的示例，拓展到其他的场景。
+
+### 时刻结合用户给出的表信息来修正查询
+
+通常用户会给出表的信息包括：
+1. 表的名字和结构schema
+2. 表的一些统计信息，比如表的字段枚举值等
+3. 表的示例数据
+
+当用户询问你问题时，你要时刻回顾这些信息。
+
+示例：
+
+表信息:
+
+-------
+我有一张表叫test，对应的schema
+                      
+```json
+{"type":"struct","fields":[{"name":"车型","type":"string","nullable":true,"metadata":{}}]}
 ```
+                      
+test 对应的一些统计数据：
+                                          
+1. 车型枚举值： A1拓展版,A2,A3
+                      
+你可以用来帮助用户纠正查询。                      
+                      
+test_table 样例数据如下:
+                      
+```csv                      
+车型
+A1拓展版
+A3
+A4
+``` 
+-------
 
-下面是联系上下文分析的一个示例:
-1. 当我第一次问： 2023别克君威的销量是多少？
-2. 你通过生成SQL然后回答了我的问题。
-3. 当我再次问： 2024年呢？
-4. 这里，你需要结合我上一次提问的内容，来理解问题，你可以理解为： 2024别克君威的销量是多少？
+用户问题： A1 车型展示下
+
+此时因为 test 的统计信息已经明确，车型只有 A1拓展版,A2,A3，所以你在生成SQL的时候,过滤条件自动用 "A1拓展版" 而不是 "A1"。
+
+### 其他能力
+
+诸如 会根据用户的问题，自动分析出用户的查询意图，然后生成对应的SQL语句。                                                                                                                                                                         
 
 特别需要注意的是：
-1. 你生成的Block需要用sql标注而非vbnet
-2. 生成的 Spark SQL 语句中，所有字段或者别名务必需要用 `` 括起来。
+1. 你生成的代码要用 SQL 代码块包裹，```sql\n你的代码```, 注意一定要Block需要用sql标注而非vbnet。
+3. 生成的 Spark SQL 语句中，所有字段或者别名务必需要用 `` 括起来。
+4. 任何情况下都不要拆分成多段代码输出，请一次性生成完整的代码片段，确保代码的完整性。
 '''
     def __init__(
         self,
@@ -115,6 +166,37 @@ class SparkSQLAgent(ConversableAgent):
     ```  
     你在回答我的问题的时候，可以参考这些内容。''') 
 
+        # context query rewrite
+        temp_conversation = {"role":"user","content":'''
+首先，你要先回顾我们前面几条聊天内容，针对我现在的问题，进行一个扩充改写。
+     
+注意：
+1. 不要询问用户问题          
+2. 不要生成SQL，
+3. 不要额外添加上下文中不存在的信息
+4. 不要关注问题的时间
+5. 如果无需改写，输出原有问题     
+6. 写出你的改写后的问题,用 json 代码块包,格式如下：
+
+```json
+{
+     "content":"你改写后的问题"
+}     
+```        
+'''}
+        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + [temp_conversation]))
+        t1 = code_utils.extract_code(t[0].output)
+        new_query = m["content"]
+        if t1:
+            try:
+                new_query = json.loads(t1[0][1])["content"]
+            except Exception:
+                pass                  
+        
+        if new_query != m["content"]:
+            m["content"] = new_query
+            print(f'context query rewrite:{m["content"]}\n\n',flush=True)
+
         time_msg = ""
             
         # to compute the real time range, notice that 
@@ -168,19 +250,7 @@ class SparkSQLAgent(ConversableAgent):
         
         old_content = m["content"]
         if time_msg:
-            m["content"] = f'''补充信息：{time_msg} \n原始问题：{old_content} '''
-
-        ## context analysis
-        temp_conversation = [{"role":"user","content":f'''
-通过回顾我们前面几条聊天内容，针对我现在的问题，补充一些信息如过滤条件，指标，分组条件。
-
-下面是一个示例：
-我：2023年别克君威的销量是多少？
-你：1000
-我：2024年呢？
-你：时间：2024，品牌：别克君威，指标：销量
-
-'''}]                
+            m["content"] = f'''补充信息：{time_msg} \n原始问题：{old_content} '''                  
 
         key_msg = ""
         ## extract key messages is the user want to generate sql code
@@ -198,7 +268,7 @@ class SparkSQLAgent(ConversableAgent):
 
             
         last_conversation = [{"role":"user","content":f'''
-        首先根据我的问题，关联前面的对话，针对当前的问题以列表形式罗列我问题中的关键信息,诸如过滤条件，指标，分组条件。不需要生成SQL。'''}]        
+        首先根据我的问题，关联前面的对话，针对当前的问题以列表形式罗列我问题中的关键信息,诸如过滤条件，指标，分组条件。不需要生成SQL。注意，不要考虑时间问题'''}]        
         t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message  + messages + last_conversation),
                             tools=[reply_with_clarify,reply_with_key_messages],
                             execute_tool=True)
