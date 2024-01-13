@@ -154,6 +154,7 @@ A4
             messages = self._messages[get_agent_name(sender)]
          
         m = messages[-1]
+        print("received message:",m,flush=True)
 
         if m.get("metadata",{}).get("skip_long_memory",False): 
             # recall old memory and update the system prompt
@@ -185,7 +186,7 @@ A4
 {
      "content":"你改写后的问题"
 }     
-```         
+```             
 '''}
             t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + [temp_conversation]))
             t1 = code_utils.extract_code(t[0].output)
@@ -201,8 +202,8 @@ A4
                 temp2 = self.llm.emb(None,LLMRequest(instruction=m["content"]))
                 sim = np.dot(temp1[0].output,temp2[0].output)
                 if sim > 0.8:
-                    m["content"] = new_query
-                    print(f'context query rewrite:{m["content"]}\n\n',flush=True)
+                    print(f'context query rewrite: {m["content"]} -> {new_query}\n\n',flush=True)
+                    m["content"] = new_query                    
                 else:
                     print(f'''context query rewrite fail. 
 the similarity is too low {sim}
