@@ -359,7 +359,7 @@ new_query: {new_query}
             
             # send the sql code to the byzer engine to execute
             print(f"send the sql code to the byzer engine to execute {conversation}",flush=True)
-            self.send(message=conversation["content"],recipient=self.byzer_engine_agent)  
+            self.send(message=conversation,recipient=self.byzer_engine_agent)  
             
             execute_result = self.chat_messages[get_agent_name(self.byzer_engine_agent)][-1]             
             print(f"execute_result: {execute_result}",flush=True)
