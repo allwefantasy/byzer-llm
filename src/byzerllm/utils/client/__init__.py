@@ -775,11 +775,11 @@ class ByzerLLM:
         
     def emb(self, model, request:LLMRequest ,extract_params:Dict[str,Any]={})->List[List[float]]:
         
-        if not model and not self.default_model_name:
+        if not model and not self.default_emb_model_name:
             raise Exception("model name is required")
         
         if not model:
-            model = self.default_model_name
+            model = self.default_emb_model_name
 
         default_config = self.mapping_extra_generation_params.get(model,{})            
 

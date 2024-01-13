@@ -167,22 +167,21 @@ A4
     你在回答我的问题的时候，可以参考这些内容。''') 
 
         # context query rewrite
-        temp_conversation = {"role":"user","content":'''
-首先，你要先回顾我们前面几条聊天内容，针对我现在的问题，进行一个扩充改写。
+        temp_conversation = {"role":"user","content":'''首先，你要先回顾我们前面几条聊天内容，针对我现在的问题，进行一个扩充改写。
      
 注意：
-1. 不要询问用户问题          
-2. 不要生成SQL，
-3. 不要额外添加上下文中不存在的信息
-4. 不要关注问题的时间
-5. 如果无需改写，输出原有问题     
-6. 写出你的改写后的问题,用 json 代码块包,格式如下：
+* 不要询问用户问题或者反问          
+* 不要生成SQL，
+* 不要额外添加上下文中不存在的信息
+* 不要关注问题的时间
+* 如果无需改写，输出原有问题     
+* 写出你改写后的问题,用 json 代码块包,格式如下：
 
 ```json
 {
      "content":"你改写后的问题"
 }     
-```        
+```         
 '''}
         t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + [temp_conversation]))
         t1 = code_utils.extract_code(t[0].output)
@@ -194,6 +193,7 @@ A4
                 pass                  
         
         if new_query != m["content"]:
+            self.llm.emb(None,LLMRequest(instruction=new_query))
             m["content"] = new_query
             print(f'context query rewrite:{m["content"]}\n\n',flush=True)
 
