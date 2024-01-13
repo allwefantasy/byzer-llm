@@ -359,26 +359,71 @@ def function_impl_format(prompt:str,func:Optional[Union[Callable,str]],
         _cls = cls
     else:
         _cls = cls.schema_json(ensure_ascii=False)
-    
-    msg = f''''生成一个python函数，给出详细的思考逻辑，对最后生成的函数不要进行示例说明。
 
-生成的函数的名字以及参数需要满足如下约束：
+    example = '''{
+  "name": "caculate_current_time",
+  "description": "\n    计算当前时间\n    ",
+  "parameters": {
+    "type": "object",
+    "properties": {}
+  }
+}'''    
+    example_output_format='''
+{"title": "CurrentTime", "description": "当前时间    ", "type": "object", "properties": {"time": {"title": "Time", "description": "开始时间.时间格式为 yyyy-MM-dd", "type": "string"}}, "required": ["time"]}
+'''
+    example_output = '''
+from datetime import datetime
+
+def caculate_current_time():
+    # 获取当前日期和时间
+    now = datetime.now()
+    
+    # 将日期和时间格式化为"yyyy-MM-dd"的形式
+    time_str = now.strftime("%Y-%m-%d")
+    
+    return {"time": time_str}
+'''
+    
+    msg = f''''你非常擅长 Python 语言。根据用户提供的一些信息以及问题，对提供了没有实现空函数函数进行实现。
+
+示例：
+你需要实现的函数的签名如下：
+
+```json
+{example}
+```
+
+生成的函数的返回值必须是 Json 格式，并且满足如下 OpenAPI 3.1. 规范：
+
+```json
+{example_output_format}
+```
+
+最后，你生成的函数的代码如下：
+
+```python
+{example_output}
+```
+
+现在，你需要实现函数的签名如下：
 
 ```json
 {tool_choice_ser}
 ```
 
-生成的函数的返回值必须是 Json 格式。
-
-下面是使用 OpenAPI 3.1. 规范描述了你需如何进行json格式的生成。
+同时，你生成的函数的返回值必须是 Json 格式，并且满足如下 OpenAPI 3.1. 规范：
 
 ```json
 {_cls}
 ```
 
-根据用的户问题,{func.__doc__}。用户的问题是：{prompt}
+用户的问题是：{prompt}
 
-请你实现这个函数。
+在满足上述提及的约束的情况下，请你实现这个函数。
+注意：
+1. 任何情况下都不要拆分成多段代码输出，请一次性生成完整的代码片段，确保代码的完整性
+2. 回复的内容只有一个代码块，且代码块的语言为 Python
+3. 不要演示如何调用你生成的函数的代码
 '''
     return msg  
 
