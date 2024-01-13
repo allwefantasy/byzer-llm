@@ -229,7 +229,7 @@ class SparkSQLAgent(ConversableAgent):
         if has_sql_code: 
             
             # sync the question to the sql reviewer                           
-            self.send(messages[-1],self.sql_reviewer_agent,request_reply=False)
+            self.send(message_utils.un_termindate_message(messages[-1]),self.sql_reviewer_agent,request_reply=False)
             
             # send the sql code to the sql reviewer to review            
             self.send({
@@ -240,8 +240,7 @@ class SparkSQLAgent(ConversableAgent):
 '''},self.sql_reviewer_agent)
             
             # get the sql reviewed.             
-            conversation = self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-1] 
-            
+            conversation = message_utils.un_termindate_message(self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-1])            
             self.send(message=conversation,recipient=self.byzer_engine_agent)  
             execute_result = self.chat_messages[get_agent_name(self.byzer_engine_agent)][-1] 
             print(f"execute_result: {execute_result}",flush=True)
