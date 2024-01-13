@@ -266,7 +266,7 @@ new_query: {new_query}
             # old_content = m["content"]
             # if time_msg:
             #     m["content"] = f'''补充信息：{time_msg} \n原始问题：{old_content} ''' 
-                                     
+            time_msg = ""                         
             now = datetime.now().strftime("%Y-%m-%d")
             m = {
                 "content":'''去年11月份哈弗品牌的国内零售总数是多少？''',
@@ -285,14 +285,13 @@ new_query: {new_query}
                 "content":f'''当前时间是 {now}。根据用户的问题，计算时间区间。时间格式为 yyyy-MM-dd。用户的问题是：{m["content"]}''',
                 "role":"user"
             }],response_class=TimeRange)
-
+            
             if t[0].value and t[0].value.start and t[0].value.end:
                 time_range:TimeRange = t[0].value
                 time_msg = f'''时间区间是：{time_range.start} 至 {time_range.end}'''  
                 print(f'compute the time range:{m["content"]}\n\n',flush=True)
-                old_content = m["content"]
-                if time_msg:
-                    m["content"] = f'''补充信息：{time_msg} \n原始问题：{old_content} '''
+                
+                
 
             key_msg = ""
             ## extract key messages is the user want to generate sql code
@@ -332,7 +331,8 @@ new_query: {new_query}
                     print(f'compute the key info:{m["content"]}\n\n',flush=True)
                 
                 if key_msg:
-                    m["content"] = f'''补充信息：{key_msg} \n原始问题：{old_content} '''
+                    old_content = m["content"]
+                    m["content"] = f'''补充信息：{time_msg} {key_msg} \n原始问题：{old_content} '''
                     print(f'final query:{m["content"]}\n\n',flush=True)                         
         
         # try to awnser the user's question or generate sql

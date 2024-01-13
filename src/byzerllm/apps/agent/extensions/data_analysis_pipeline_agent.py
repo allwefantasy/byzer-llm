@@ -144,6 +144,7 @@ you should reply exactly `UPDATE CONTEXT`.
             "byzer_engine_agent":self.byzer_engine_agent,            
             "rhetoorical_agent":self.rhetoorical_agent,            
             "spark_sql_agent":self.spark_sql_agent,
+            "byzer_engine_agent":self.byzer_engine_agent,
         } 
         self.reply_from_agent = {}       
 
