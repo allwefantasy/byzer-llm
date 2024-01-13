@@ -834,19 +834,28 @@ class ByzerLLM:
         return conversations
 
     def execute_function_calling(self,response:LLMResponse,tools:List[Callable],func_params:Dict[str,Any])-> LLMFunctionCallResponse:            
-        codes = code_utils.extract_code(response.output)
         
         r = LLMFunctionCallResponse(response=response,values=[],metadata={"reason":""})
         
-        if len(codes) == 0:
-            r.metadata["reason"] = "No json block found"
-            return r 
+        is_json = False
+        try:
+            json.loads(response.output)
+            is_json = True
+        except Exception as inst:
+            pass
         
-        lang,code = codes[0]
+        code = response.output
+        if not is_json:
+            codes = code_utils.extract_code(response.output)         
+            if len(codes) == 0:            
+                r.metadata["reason"] = "No json block found"
+                return r 
+            
+            lang,code = codes[0]
 
-        if lang != "json":
-            r.metadata["reason"] = "No json block found"
-            return r
+            if lang != "json":
+                r.metadata["reason"] = "No json block found"
+                return r
         
         try:
             ms = FunctionCallList.parse_obj(json.loads(code))
@@ -873,19 +882,30 @@ class ByzerLLM:
                               impl_func_params:Optional[Dict[str,Any]],
                               response:LLMResponse,
                               response_class:pydantic.BaseModel)-> LLMClassResponse:
-        codes = code_utils.extract_code(response.output)
+        
         
         r = LLMClassResponse(response=response,value=None,metadata={"reason":""})
-        
-        if len(codes) == 0:
-            r.metadata["reason"] = "No Python block found"
-            return r 
-        
-        lang,code = codes[0]
 
-        if lang != "python":
-            r.metadata["reason"] = "No Python block found"
-            return r
+        is_json = False
+        try:
+            json.loads(response.output)
+            is_json = True
+        except Exception as inst:
+            pass
+        
+        code = response.output
+        if not is_json:
+            codes = code_utils.extract_code(response.output)
+            
+            if len(codes) == 0:
+                r.metadata["reason"] = "No Python block found"
+                return r 
+            
+            lang,code = codes[0]
+
+            if lang != "python":
+                r.metadata["reason"] = "No Python block found"
+                return r
                 
         (status,output,variables) = exec_capture_output(code,{func_name:True})
         if status != 0:
@@ -906,19 +926,29 @@ class ByzerLLM:
         return r
     
     def execute_response_format(self,response:LLMResponse,response_class:pydantic.BaseModel):
-        codes = code_utils.extract_code(response.output)
+        
         
         r = LLMClassResponse(response=response,value=None,metadata={"reason":""})
-        
-        if len(codes) == 0:
-            r.metadata["reason"] = "No json block found"
-            return r 
-        
-        lang,code = codes[0]
+        is_json = False
+        try:
+            json.loads(response.output)
+            is_json = True
+        except Exception as inst:
+            pass
+                
+        code = response.output
 
-        if lang != "json":
-            r.metadata["reason"] = "No json block found"
-            return r
+        if not is_json:
+            codes = code_utils.extract_code(response.output)
+            if len(codes) == 0:
+                r.metadata["reason"] = "No json block found"
+                return r 
+            
+            lang,code = codes[0]
+
+            if lang != "json":
+                r.metadata["reason"] = "No json block found"
+                return r
         
         try:
             ms = response_class.parse_obj(json.loads(code))            

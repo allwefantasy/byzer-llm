@@ -384,7 +384,6 @@ def function_impl_format(prompt:str,func:Optional[Union[Callable,str]],
 
 
 
-
 def function_calling_format(prompt:str,tools:List[Union[Callable,str]],tool_choice:Optional[Union[Callable,str]])->str:
     tool_serializes = []
     for v in tools:
@@ -404,21 +403,79 @@ def function_calling_format(prompt:str,tools:List[Union[Callable,str]],tool_choi
         return prompt                   
 
     tools_str = "\n".join(tool_serializes)
-    msg = f'''
-You are a helpful assistant with access to the following functions:
+    
+    function_example = '''
+{
+  "name": "compute_date_range",
+  "description": "\n    计算日期范围\n    ",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "count": {
+        "type": "int",
+        "description": "时间跨度，数值类型,如果用户说的是几天，几月啥的，比较模糊，务必使用默认值",
+        "default": 3
+      },
+      "unit": {
+        "enum": [
+          "day",
+          "week",
+          "month",
+          "year"
+        ],
+        "type": "str",
+        "description": "",
+        "default": "day"
+      }
+    }
+  }
+}
+'''
+    output_example = '''
+{
+  "id": "unique_id_1",
+  "type": "function",
+  "tool_calls": [
+    {
+      "function": {
+        "name": "compute_date_range",
+        "arguments": {
+          "count": 3,
+          "unit": "day"
+        }
+      }
+    }
+  ]
+}
+'''
+
+    msg = f'''You are a helpful assistant with access to the following functions:
 
 ```json
 {tools_str}
 ```
 
-当用户的问题可以使用上面的一个或者多个工具解决时,你需要使用符合 OpenAPI 3.1 规范的 Json 格式进行回复，
+当用户的问题可以使用上面的一个或者多个函数解决时,你需要通过符合 OpenAPI 3.1 规范的 Json 格式告诉我你需要调用哪些函数。
 
 下面Json文本描述了你需要返回的格式,它符合 OpenAPI 3.1 规范:
 
 ```json
 {FUNCTION_CALLING_SCHEMA}
 ```
-一定不要直接原模原样的返回上面的模板（非常重要）。
+
+示例：
+
+当你选择下面的函数时：
+
+```
+{function_example}
+```
+
+你应该使用如下的 Json 格式告诉我你需要调用这个函数：
+
+```json
+{output_example}
+```
 
 {force_prompt}
 
