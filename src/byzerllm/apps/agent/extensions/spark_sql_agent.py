@@ -104,15 +104,16 @@ class SparkSQLAgent(ConversableAgent):
          
         m = messages[-1]
 
-        # recall old memory and update the system prompt
-        old_memory = self.simple_retrieval_client.search_content(q=m["content"],owner=self.owner,url="rhetorical",limit=3)
-        if len(old_memory) != 0:
-            c = json.dumps(old_memory,ensure_ascii=False)
-            self.update_system_message(f'''{self.DEFAULT_SYSTEM_MESSAGE}\n下面是我们以前对话的内容总结:
-```json
-{c}                                       
-```  
-你在回答我的问题的时候，可以参考这些内容。''') 
+        if m.get("metadata",{}).get("skip_long_memory",False): 
+            # recall old memory and update the system prompt
+            old_memory = self.simple_retrieval_client.search_content(q=m["content"],owner=self.owner,url="rhetorical",limit=3)
+            if len(old_memory) != 0:
+                c = json.dumps(old_memory,ensure_ascii=False)
+                self.update_system_message(f'''{self._system_message[0]["content"]}\n下面是我们以前对话的内容总结:
+    ```json
+    {c}                                       
+    ```  
+    你在回答我的问题的时候，可以参考这些内容。''') 
 
         time_msg = ""
             
