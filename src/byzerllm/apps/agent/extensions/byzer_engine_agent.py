@@ -68,6 +68,7 @@ class ByzerEngineAgent(ConversableAgent):
             print(f"Byzer Engine execute code error: {message_utils.copy_error_count(message,new_message)}",flush=True)
             return True, message_utils.copy_error_count(message,new_message)
         
+        print(f"Byzer Engine execute code success: {reply}",flush=True)
         return True, message_utils.success_message({"content":reply})
     
     def execute_spark_sql(self,sql:Annotated[str,"Spark SQL 语句"])->str:

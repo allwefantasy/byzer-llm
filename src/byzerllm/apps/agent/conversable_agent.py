@@ -376,10 +376,10 @@ class ConversableAgent(Agent):
     ):        
         self._process_received_message(message, sender, silent)
 
-        if request_reply is False or request_reply is None and self.reply_at_receive[get_agent_name(sender)] is False:
-            print(f"====== request_reply:{request_reply}  reply_at_receive:{self.reply_at_receive[get_agent_name(sender)]}",flush=True)
+        if request_reply is False or request_reply is None and self.reply_at_receive[get_agent_name(sender)] is False:            
             return
         reply = self.generate_reply(raw_message=message, messages=self.chat_messages[get_agent_name(sender)], sender=sender)
+        print("==== reply:{reply}",flush=True)
         if reply is not None:                                    
             self.send(reply, sender, silent=silent)
 
