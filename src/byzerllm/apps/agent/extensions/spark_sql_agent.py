@@ -3,9 +3,9 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,Annot
 from ....utils.client import ByzerLLM,code_utils,message_utils,parallel_utils
 from byzerllm.utils.retrieval import ByzerRetrieval
 from ..agent import Agent
-import ray
+import numpy as np
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
-import time
+import re
 from .. import get_agent_name,run_agent_func,ChatResponse
 from ....utils import generate_str_md5
 from byzerllm.utils.client import LLMHistoryItem,LLMRequest
@@ -167,8 +167,11 @@ A4
     你在回答我的问题的时候，可以参考这些内容。''') 
 
         # context query rewrite
-        temp_conversation = {"role":"user","content":'''首先，你要先回顾我们前面几条聊天内容，针对我现在的问题，进行一个扩充改写。
-     
+                
+        if len(re.sub(r'\s+', '', m["content"])) < 16:
+
+            temp_conversation = {"role":"user","content":'''首先，你要先回顾我们前面几条聊天内容，针对我现在的问题，进行一个扩充改写。
+        
 注意：
 * 不要询问用户问题或者反问          
 * 不要生成SQL，
@@ -179,23 +182,32 @@ A4
 
 ```json
 {
-     "content":"你改写后的问题"
+    "content":"你改写后的问题"
 }     
 ```         
-'''}
-        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + [temp_conversation]))
-        t1 = code_utils.extract_code(t[0].output)
-        new_query = m["content"]
-        if t1:
-            try:
-                new_query = json.loads(t1[0][1])["content"]
-            except Exception:
-                pass                  
-        
-        if new_query != m["content"]:
-            self.llm.emb(None,LLMRequest(instruction=new_query))
-            m["content"] = new_query
-            print(f'context query rewrite:{m["content"]}\n\n',flush=True)
+    '''}
+            t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + [temp_conversation]))
+            t1 = code_utils.extract_code(t[0].output)
+            new_query = m["content"]
+            if t1:
+                try:
+                    new_query = json.loads(t1[0][1])["content"]
+                except Exception:
+                    pass                  
+            
+            if new_query != m["content"]:
+                temp1 = self.llm.emb(None,LLMRequest(instruction=new_query))
+                temp2 = self.llm.emb(None,LLMRequest(instruction=m["content"]))
+                sim = np.dot(temp1[0].output,temp2[1].output)
+                if sim > 0.8:
+                    m["content"] = new_query
+                    print(f'context query rewrite:{m["content"]}\n\n',flush=True)
+                else:
+                    print(f'''context query rewrite fail. 
+the similarity is too low {sim}
+query:  {m["content"]}
+new_query: {new_query}
+\n\n''',flush=True)
 
         time_msg = ""
             
