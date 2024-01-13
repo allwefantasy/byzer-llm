@@ -267,11 +267,7 @@ new_query: {new_query}
             # if time_msg:
             #     m["content"] = f'''补充信息：{time_msg} \n原始问题：{old_content} ''' 
             time_msg = ""                         
-            now = datetime.now().strftime("%Y-%m-%d")
-            m = {
-                "content":'''去年11月份哈弗品牌的国内零售总数是多少？''',
-                "role":"user"
-            }
+            now = datetime.now().strftime("%Y-%m-%d")            
             class TimeRange(pydantic.BaseModel):
                 '''
                 时间区间
