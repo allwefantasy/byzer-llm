@@ -276,15 +276,19 @@ A4
         if t[0].values:     
             v = t[0].values[0]
             if isinstance(v,str):
+                print("invoke reply_with_clarify",flush=True)
                 return True,{"content":v,"metadata":{"TERMINATE":True}}
             
             if isinstance(v,list):
+                print("invoke reply_with_key_messages",flush=True)
                 v = " ".join(v)          
             key_msg = v
             print(f'compute the key info:{m["content"]}\n\n',flush=True)
         
         if key_msg:
             m["content"] = f'''补充信息：{key_msg} \n原始问题：{old_content} '''
+            print(f'final query:{m["content"]}\n\n',flush=True)
+
         
         # check if the user's question is ambiguous or not, if it is, try to ask the user to clarify the question.                        
         # def reply_with_clarify(content:Annotated[str,"这个是你反问用户的内容"]):
