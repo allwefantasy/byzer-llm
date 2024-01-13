@@ -892,15 +892,13 @@ class ByzerLLM:
         
         r = LLMClassResponse(response=response,value=None,metadata={"reason":""})
 
-        is_json = False
-        try:
-            json.loads(response.output)
-            is_json = True
-        except Exception as inst:
-            pass
+        is_python_code = False
+        if code_utils.infer_lang(response.output) == "python"
+            is_python_code = True
         
         code = response.output
-        if not is_json:
+        
+        if not is_python_code:
             codes = code_utils.extract_code(response.output)
             
             if len(codes) == 0:

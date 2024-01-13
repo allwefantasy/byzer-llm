@@ -425,7 +425,7 @@ def caculate_current_time():
 2. 回复的内容只有一个代码块，且代码块的语言为 Python
 3. 不要演示如何调用你生成的函数的代码
 '''
-    return msg  
+    return msg   
 
 
 
