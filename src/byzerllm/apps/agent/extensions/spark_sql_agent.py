@@ -233,7 +233,7 @@ class SparkSQLAgent(ConversableAgent):
             # send the sql code to the sql reviewer to review            
             self.send({
                     "content":f'''
-```python
+```sql
 {code_utils.get_target_codes(codes,["sql"])[0]}
 ```
 '''},self.sql_reviewer_agent)
