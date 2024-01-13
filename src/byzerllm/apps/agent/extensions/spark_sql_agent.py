@@ -316,12 +316,7 @@ class SparkSQLAgent(ConversableAgent):
                                 conversations=[last_conversation],
                                 tools=[run_code,ignore],
                                 execute_tool=True)
-        # find the first success result
-        t = None
-        for i in range(len(ts)):
-            if ts[i].values:
-                t = ts[i]
-                break
+        t = parallel_utils.get_single_result(ts)
 
         # t = self.llm.chat_oai(conversations=[last_conversation],
         #                   tools=[run_code,ignore],
@@ -332,15 +327,16 @@ class SparkSQLAgent(ConversableAgent):
                 target_message["content"] = messages[-2]["content"]                
             else:                
                 t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(messages+[{
-                    "content":'''请根据上面的描述修正你的代码。''',
+                    "content":'''请修正你的代码。''',
                     "role":"user"
                 }]))
                 sql_codes = code_utils.get_target_codes(code_utils.extract_code(t[0].output),["sql"])
                 if sql_codes:
                     target_message["content"] = sql_codes[0]
                     target_message["metadata"]["TERMINATE"] = False
-                    message_utils.inc_error_count(target_message) 
-        
+                    message_utils.inc_error_count(target_message)
+        else:        
+            print(f"Fail to recognize the reveiw result: {last_conversation}",flush=True)
         ## make sure the last message is the reviewed sql code    
         return True, target_message   
 
