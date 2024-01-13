@@ -467,6 +467,9 @@ class ByzerLLM:
     def setup_template(self,model:str,template:Union[Template,str])->'ByzerLLM':
         if template == "auto":
             meta = self.get_meta(model=model)
+            if "QWenLMHeadModel" in meta.get("architectures",[]):
+                self.setup_template(model,Templates.qwen())
+
             if not meta.get("support_chat_template",False):
                 raise Exception(f"The model({model}) is not support auto(apply chat template) for now.")
             

@@ -497,17 +497,37 @@ def response_class_format(prompt:str,cls:Union[pydantic.BaseModel,str])->str:
     else:
         _cls = cls.schema_json(ensure_ascii=False)    
         
-    
-    msg = f'''当你回答用户问题的时候，你需要使用符合 OpenAPI 3.1 规范的 Json 格式进行回复，
+    example='''
+{"title": "Item", "description": "时间抽取的返回结果", "type": "object", "properties": {"time": {"title": "Time", "description": "时间信息,比如内容里会提到天， 月份，年等相关词汇", "type": "string"}, "other": {"title": "Other", "description": "除了时间以外的其他部分", "type": "string"}}, "required": ["time", "other"]}
+'''
+    example_output = '''{
+  "time": "最近三个月",
+  "other": "奔驰的销量趋势如何"
+}'''
+    msg = f'''当你回答用户问题的时候，你需要使用 Json 格式进行回复。
+
+示例：
+
+当你被要求按如下格式输出时,它符合 OpenAPI 3.1 规范：
+
+```json
+{example}
+```
+你的输出应该是这样的：
+
+```json
+{example_output}
+```
+
+现在用户的问题是：{prompt}
+
 下面Json文本描述了你需要返回的格式,它符合 OpenAPI 3.1 规范:
 
 ```json
 {_cls}
 ```
 
-现在用户的问题是：{prompt}
-
-请根据自己生成的内容并且 Json 格式并发回复我。
+请根据自己生成的内容并以 Json 格式回复我。
 ''' 
     return msg 
 
@@ -519,15 +539,34 @@ def response_class_format_after_chat(cls:Union[pydantic.BaseModel,str])->str:
         _cls = cls
     else:
         _cls = cls.schema_json(ensure_ascii=False)
-        
-    msg = f'''当你回答用户问题的时候，你需要使用符合 OpenAPI 3.1 规范的 Json 格式进行回复，
+    example='''
+{"title": "Item", "description": "时间抽取的返回结果", "type": "object", "properties": {"time": {"title": "Time", "description": "时间信息,比如内容里会提到天， 月份，年等相关词汇", "type": "string"}, "other": {"title": "Other", "description": "除了时间以外的其他部分", "type": "string"}}, "required": ["time", "other"]}
+'''
+    example_output = '''{
+  "time": "最近三个月",
+  "other": "奔驰的销量趋势如何"
+}'''    
+    msg = f'''你需要以 Json 格式重新组织内容回复我。
+
+示例：
+
+当你被要求按如下格式输出时,它符合 OpenAPI 3.1 规范：
+
+```json
+{example}
+```
+你的输出应该是这样的：
+
+```json
+{example_output}
+```
+把你刚才回答我的内容重新做组织，以 Json 格式回复我
+
 下面Json文本描述了你需要返回的格式,它符合 OpenAPI 3.1 规范:
 
 ```json
 {_cls}
 ```
-
-请根据自己生成的内容并且 Json 格式并发回复我。
 ''' 
     return msg 
 
