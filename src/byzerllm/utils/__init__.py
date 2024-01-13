@@ -368,9 +368,7 @@ def function_impl_format(prompt:str,func:Optional[Union[Callable,str]],
 {tool_choice_ser}
 ```
 
-你需要使用符合 OpenAPI 3.1 规范的 Json 格式进行回复.
-
-下面Json文本描述了你需要返回的格式,它符合 OpenAPI 3.1 规范:
+函数的返回值格式需要满足如下约束：
 
 ```json
 {_cls}

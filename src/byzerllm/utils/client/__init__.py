@@ -851,14 +851,17 @@ class ByzerLLM:
                 r.metadata["reason"] = "No json block found"
                 return r 
             
-            lang,code = codes[0]
+            lang,code = codes[-1]
 
             if lang != "json":
                 r.metadata["reason"] = "No json block found"
                 return r
         
         try:
-            ms = FunctionCallList.parse_obj(json.loads(code))
+            temp = json.loads(code)
+            if isinstance(temp,list):
+                temp = temp[-1]
+            ms = FunctionCallList.parse_obj(temp)
         except Exception as inst:
             r.metadata["reason"] = str(inst)
             return r
@@ -901,7 +904,7 @@ class ByzerLLM:
                 r.metadata["reason"] = "No Python block found"
                 return r 
             
-            lang,code = codes[0]
+            lang,code = codes[-1]
 
             if lang != "python":
                 r.metadata["reason"] = "No Python block found"
@@ -944,7 +947,7 @@ class ByzerLLM:
                 r.metadata["reason"] = "No json block found"
                 return r 
             
-            lang,code = codes[0]
+            lang,code = codes[-1]
 
             if lang != "json":
                 r.metadata["reason"] = "No json block found"
