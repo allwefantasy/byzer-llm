@@ -51,8 +51,8 @@ class QueryCondition:
         action = Action.CONTINUE
         try:
             info = json.loads(code_utils.extract_code(t[0].output)[-1][1])
-            for m in info:
-                for k,v in m.items():
+            for item in info:
+                for k,v in item.items():
                     key_msg += f''' {k}={v}'''
         except Exception:
             print(f"QueryCondition error: {t[0].output}",flush=True)
