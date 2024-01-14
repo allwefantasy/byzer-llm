@@ -1,4 +1,4 @@
-from typing import List,Dict,Annotated
+from typing import List,Dict,Annotated,Any
 from byzerllm.utils.client import ByzerLLM,message_utils,code_utils,LLMRequest
 from byzerllm.utils.retrieval import ByzerRetrieval
 import json
@@ -13,8 +13,8 @@ class QueryContext:
     or aggregate fields.
     '''
     def __init__(self,llm:ByzerLLM, retrieval:ByzerRetrieval,
-                 sys_message:List[Dict,str],
-                 messages:List[Dict,str],**kwargs):
+                 sys_message:List[Dict[str,Any]],
+                 messages:List[Dict[str,Any]],**kwargs):
         self.messages = messages
         self._system_message = sys_message
         self.llm = llm
