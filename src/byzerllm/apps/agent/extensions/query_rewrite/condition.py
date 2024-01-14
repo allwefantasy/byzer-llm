@@ -68,7 +68,7 @@ class QueryCondition:
                 m["content"] = f'''补充信息：{time_msg} {key_msg} \n原始问题：{old_content} '''
                 print(f'final query:{m["content"]}\n\n',flush=True)                                    
 
-        return QueryRewriteResult(messsage = m,action = action,extra_info={"key_msg":key_msg})        
+        return QueryRewriteResult(message = m,action = action,extra_info={"key_msg":key_msg})        
              
 
 
