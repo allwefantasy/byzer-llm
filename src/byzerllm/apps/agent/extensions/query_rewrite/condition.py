@@ -22,7 +22,8 @@ class QueryCondition:
 
     def apply(self)->QueryRewriteResult:        
         m = copy.deepcopy(self.messages[-1])
-        time_msg = self.params.get("time_msg","")        
+        time_msg = self.params.get("time_msg","")  
+        key_msg = ""      
         ## extract key messages is the user want to generate sql code
         def reply_with_clarify(content:Annotated[str,"不理解问题，反问用户的内容"]): 
             '''
@@ -39,13 +40,13 @@ class QueryCondition:
         
             
         temp_conversation = [{"role":"user","content":f'''
-        首先根据我的问题，关联前面的对话，针对当前的问题以列表形式罗列我问题中的关键信息,诸如过滤条件，指标，分组条件。不需要生成SQL。
-        注意:
-        * 不要考虑时间
-        * 如果补充信息和原始问题有冲突，以原始信息为准
-        * 务必要参考对话中我们提及的表结构信息，示例数据，枚举值等，以便对表进行正确的过滤，分组，排序等操作。
-        * 过滤条件中的字段的值如果有不符合枚举值的，可以自动修正为枚举值里的值，如果无法修正，则不要添加该过滤条件。
-        * 生成的SQL中的字段务必要出现在前面对话中提及的表结构信息中的schema里。 
+首先根据我的问题，关联前面的对话，针对当前的问题以列表形式罗列我问题中的关键信息,诸如过滤条件，指标，分组条件。不需要生成SQL。
+注意:
+* 不要考虑时间
+* 如果补充信息和原始问题有冲突，以原始信息为准
+* 务必要参考对话中我们提及的表结构信息，示例数据，枚举值等，以便对表进行正确的过滤，分组，排序等操作。
+* 过滤条件中的字段的值如果有不符合枚举值的，可以自动修正为枚举值里的值，如果无法修正，则不要添加该过滤条件。
+* 生成的SQL中的字段务必要出现在前面对话中提及的表结构信息中的schema里。 
         '''}] 
 
          
