@@ -308,8 +308,8 @@ A4
             "content":"请判断根据这段话应该调用哪个函数。",
         }    
 
-        ts= parallel_utils.chat_oai(self.llm,3,
-                                conversations=[last_conversation,temp_conversation],
+        ts= parallel_utils.chat_oai(self.llm,1,
+                                conversations=message_utils.padding_messages_merge([last_conversation,temp_conversation]),
                                 tools=[run_code,ignore],
                                 execute_tool=True)
         t = None
