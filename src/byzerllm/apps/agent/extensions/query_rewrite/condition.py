@@ -18,7 +18,7 @@ class QueryCondition:
         self._system_message = sys_message
         self.llm = llm
         self.retrieval = retrieval
-        self.params = kwargs
+        self.params = kwargs        
 
     def apply(self)->QueryRewriteResult:        
         m = copy.deepcopy(self.messages[-1])
@@ -36,9 +36,9 @@ class QueryCondition:
             '''      
             return content 
 
-
+        
             
-        last_conversation = [{"role":"user","content":f'''
+        temp_conversation = [{"role":"user","content":f'''
         首先根据我的问题，关联前面的对话，针对当前的问题以列表形式罗列我问题中的关键信息,诸如过滤条件，指标，分组条件。不需要生成SQL。
         注意:
         * 不要考虑时间
@@ -48,8 +48,11 @@ class QueryCondition:
         * 生成的SQL中的字段务必要出现在前面对话中提及的表结构信息中的schema里。 
         '''}] 
 
-        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message  + self.messages + last_conversation),
-                                tools=[reply_with_clarify,reply_with_key_messages],
+         
+
+        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message  + self.messages + self.params.get("temp_conversation",temp_conversation)),
+                                tools=[self.params.get("reply_with_clarify",reply_with_clarify) ,
+                                       self.params.get("reply_with_key_messages",reply_with_key_messages) ],
                                 execute_tool=True)
         action = Action.CONTINUE
         if t[0].values:             

@@ -23,7 +23,7 @@ class QueryContext:
 
     def apply(self):        
         m = copy.deepcopy(self.messages[-1])
-        temp_conversation = {"role":"user","content":'''
+        temp_conversation = [{"role":"user","content":'''
 首先，你要先回顾我们前面几条聊天内容，针对我现在的问题，进行一个扩充改写。
      
 注意：
@@ -39,8 +39,8 @@ class QueryContext:
      "content":"你改写后的问题"
 }     
 ```             
-'''}
-        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + self.messages + [temp_conversation]))
+'''}]
+        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + self.messages + self.params.get("temp_conversation",temp_conversation)))
         t1 = code_utils.extract_code(t[0].output)
         new_query = m["content"]
         if t1:
