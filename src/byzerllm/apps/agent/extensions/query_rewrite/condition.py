@@ -54,6 +54,7 @@ class QueryCondition:
             for k,v in info.items():
                 key_msg += f''' {k}={v}'''
         except Exception:
+            print(f"QueryCondition error: {t[0].output}",flush=True)
             pass
 
         old_content = m["content"]

@@ -305,7 +305,7 @@ A4
         last_conversation = messages[-1] 
         temp_conversation = {
             "role":"user",
-            "content":"请判断根据这段话应该调用哪个函数。",
+            "content":"注意，你只需要判断调用哪个函数，并不需要解决问题。",
         }    
 
         ts= parallel_utils.chat_oai(self.llm,1,
