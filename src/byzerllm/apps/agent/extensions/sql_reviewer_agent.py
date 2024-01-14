@@ -103,11 +103,14 @@ class SQLReviewerAgent(ConversableAgent):
 ]
 ```
 '''}])
-        fields = json.loads(code_utils.extract_code(v[0].output)[-1][1])
-        for field in fields:
-            if "`" not in field:
-                new_message = {"content":f'''代码存在问题，字段或者别名: {field} 没有被反引号括起来,请修改''',"metadata":{}}
-                return True, message_utils.copy_error_count(message,new_message)
+        try:
+            fields = json.loads(code_utils.extract_code(t[0].output)[-1][1])
+            for field in fields:
+                if "`" not in field:
+                    new_message = {"content":f'''代码存在问题，字段或者别名: {field} 没有被反引号括起来,请修改''',"metadata":{}}
+                    return True, message_utils.copy_error_count(message,new_message)
+        except Exception:
+            pass
         
         new_message = {"content":f'''代码没有问题，可以正常允许。''',"metadata":{}}                        
                      
