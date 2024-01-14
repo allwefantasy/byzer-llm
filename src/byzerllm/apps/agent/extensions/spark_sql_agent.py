@@ -327,7 +327,7 @@ A4
                 target_message["content"] = messages[-2]["content"]                
             else:   
                 print(f"Fail to pass the review: {last_conversation}. Try to regenerate the sql",flush=True)             
-                t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(messages+[{
+                t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages+[{
                     "content":'''请修正你的代码。''',
                     "role":"user"
                 }]))
