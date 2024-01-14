@@ -63,7 +63,7 @@ query:  {m["content"]}
 new_query: {new_query}
 \n\n''',flush=True)
 
-        return QueryRewriteResult(m,Action.CONTINUE,extra_info={"new_query":new_query})       
+        return QueryRewriteResult(messsage = m,action = Action.CONTINUE,extra_info={"new_query":new_query})       
              
 
 

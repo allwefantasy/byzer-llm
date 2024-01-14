@@ -8,5 +8,5 @@ class Action(Enum):
 
 class QueryRewriteResult(pydantic.BaseModel):
     message: Dict[str, Any]    
-    action:Action
+    action: Action
     extra_info: Dict[str, Any]    

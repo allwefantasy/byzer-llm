@@ -60,7 +60,7 @@ class QueryTime:
                 time_msg = f'''时间区间是：{time_range.start} 至 {time_range.end}'''  
                 print(f'compute the time range:{time_msg} {m["content"]}\n\n',flush=True)                                    
 
-        return QueryRewriteResult(m,Action.CONTINUE,extra_info={"time_msg":time_msg})        
+        return QueryRewriteResult(message = m,action=Action.CONTINUE,extra_info={"time_msg":time_msg})        
              
 
 
