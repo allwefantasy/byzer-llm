@@ -95,7 +95,7 @@ class SQLReviewerAgent(ConversableAgent):
 
 {message["content"]}
 
-请找出所有的字段或者别名，不要带函数的，并将他们按照出现顺序，以json数组格式输出：
+请找出所有的字段或者别名，不要带函数的，保留反引号，并将他们按照出现顺序，以json数组格式输出：
 
 ```json
 [
