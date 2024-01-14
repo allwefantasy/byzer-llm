@@ -302,19 +302,27 @@ A4
             return 1    
         
 
-        last_conversation = messages[-1]     
+        last_conversation = messages[-1] 
+        temp_conversation = {
+            "role":"user",
+            "content":"请判断根据这段话应该调用哪个函数。",
+        }    
 
         ts= parallel_utils.chat_oai(self.llm,3,
-                                conversations=[last_conversation],
+                                conversations=[last_conversation,temp_conversation],
                                 tools=[run_code,ignore],
                                 execute_tool=True)
-        t = parallel_utils.get_single_result(ts)
+        t = None
+        for temp in  ts:
+            if temp[0].values:
+                t = temp
+                break
 
         # t = self.llm.chat_oai(conversations=[last_conversation],
         #                   tools=[run_code,ignore],
         #                   execute_tool=True)  
         
-        if t[0].values:               
+        if t and t[0].values:               
             if t[0].values[0] == 0:
                 target_message["content"] = messages[-2]["content"]                
             else:                
