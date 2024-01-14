@@ -14,7 +14,7 @@ from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetriev
 import pydantic
 from datetime import datetime
 from byzerllm.apps.agent.extensions.query_rewrite.context import QueryContext
-from byzerllm.apps.agent.extensions.query_rewrite.structure import QueryStructure
+from byzerllm.apps.agent.extensions.query_rewrite.condition import QueryCondition
 from byzerllm.apps.agent.extensions.query_rewrite.time import QueryTime
 from byzerllm.apps.agent.extensions.query_rewrite import Action
 try:
@@ -185,7 +185,7 @@ A4
             time_msg = r.extra_info["time_msg"]
             
             # structure query rewrite            
-            rewriter = QueryStructure(self.llm,self.retrieval,self._system_message,messages,
+            rewriter = QueryCondition(self.llm,self.retrieval,self._system_message,messages,
                                       time_msg=time_msg)
             r = rewriter.apply()
 

@@ -4,7 +4,7 @@ from byzerllm.utils.retrieval import ByzerRetrieval
 import copy
 from . import QueryRewriteResult,Action
 
-class QueryStruct:
+class QueryCondition:
     '''
     this tool is used to extract the key messages from the user's question which
     is used to generate the sql code conditions e.g. filter conditions, group by conditions, order by conditions
