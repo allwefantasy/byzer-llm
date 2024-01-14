@@ -46,7 +46,8 @@ class QueryCondition:
 
          
 
-        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message  + self.messages + self.params.get("temp_conversation",temp_conversation)))
+        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(
+            self._system_message  + self.messages + self.params.get("temp_conversation",temp_conversation)))
         action = Action.CONTINUE
         try:
             info = json.loads(code_utils.extract_code(t[0].output)[-1][1])

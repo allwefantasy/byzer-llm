@@ -189,9 +189,9 @@ A4
                                       time_msg=time_msg)
             r = rewriter.apply()
 
-            # we may need more information from the user
-            if r.action == Action.STOP:
-                return True, r.message
+            # # we may need more information from the user
+            # if r.action == Action.STOP:
+            #     return True, r.message
             
             key_msg = r.extra_info["key_msg"] 
             m["content"] = f'''补充信息：{time_msg} {key_msg} \n原始问题：{m["content"]} '''                       
@@ -259,7 +259,12 @@ A4
         last_conversation = [{"role":"user","content":'''请根据上面的错误，修正你的代码。'''}]   
         t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + last_conversation))
         _,new_code = code_utils.extract_code(t[0].output)[0]
-        new_message = {"content":new_code,"metadata":{}}
+        new_message = {"content":f'''
+```sql
+{new_code}
+```
+'''}    
+        message_utils.copy_error_count(message,new_message)
         return True, message_utils.inc_error_count(new_message)
 
         
