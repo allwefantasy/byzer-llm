@@ -325,11 +325,13 @@ A4
         if t and t[0].values:               
             if t[0].values[0] == 0:
                 target_message["content"] = messages[-2]["content"]                
-            else:                
+            else:   
+                print(f"Fail to pass the review: {last_conversation}. Try to regenerate the sql",flush=True)             
                 t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(messages+[{
                     "content":'''请修正你的代码。''',
                     "role":"user"
                 }]))
+                print(f"Try to regenerate the sql: {t[0].output}",flush=True)
                 sql_codes = code_utils.get_target_codes(code_utils.extract_code(t[0].output),["sql"])
                 if sql_codes:
                     target_message["content"] = sql_codes[0]
