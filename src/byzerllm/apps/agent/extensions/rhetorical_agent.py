@@ -129,8 +129,11 @@ class RhetoricalAgent(ConversableAgent):
     ) -> Tuple[bool, Union[str, Dict, None,ChatResponse]]:          
 
         if messages is None:
-            messages = self._messages[get_agent_name(sender)]  
-                
+            messages = self._messages[get_agent_name(sender)] 
+
+        if self.retrieval is None:
+            return True, None 
+        
         ## get the last 100 conversation
         docs = self.retrieval.filter(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"user_memory",
