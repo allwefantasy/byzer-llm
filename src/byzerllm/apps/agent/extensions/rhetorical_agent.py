@@ -139,7 +139,7 @@ class RhetoricalAgent(ConversableAgent):
                                         keyword=None,fields=[],
                                         vector=[],vectorField=None,
                                         limit=100)])
-        docs = docs.reverse()
+        docs.reverse()
         conversations = [{"content":doc["raw_conent"],"role":doc["role"]} for doc in docs]
                          
         last_conversation = [{"role":"user","content":'''开始'''}]
