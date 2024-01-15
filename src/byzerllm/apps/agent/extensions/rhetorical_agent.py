@@ -6,6 +6,7 @@ from ..agent import Agent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 from .. import get_agent_name,run_agent_func,ChatResponse
 from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient
+from byzerllm.utils.retrieval import SearchQuery
 import json
    
 class RhetoricalAgent(ConversableAgent): 
@@ -130,20 +131,21 @@ class RhetoricalAgent(ConversableAgent):
         if messages is None:
             messages = self._messages[get_agent_name(sender)]  
                 
-        
-#         old_conversations = self.simple_retrieval_client.search_content(q=m["content"],owner=self.owner,url="rhetorical",limit=3)
-#         if len(old_conversations) != 0:
-#             c = json.dumps(old_conversations,ensure_ascii=False)
-#             self.update_system_message(f'''{self.system_message}\n\n下面是我们以前一些名词定义:
-# ```json
-# {c}                                       
-# ```  
-# 你在回答我的问题的时候，可以参考这些内容。''')
+        ## get the last 100 conversation
+        docs = self.retrieval.filter(self.retrieval_cluster,
+                            [SearchQuery(self.retrieval_db,"user_memory",
+                                         filters={"and":[{"field":"owner","value":self.owner},{"field":"chat_name","value":self.chat_name}]},
+                                         sorts =[{"created_time":"desc"}],
+                                        keyword=None,fields=[],
+                                        vector=[],vectorField=None,
+                                        limit=100)])
+        docs = docs.reverse()
+        conversations = [{"content":doc["raw_conent"],"role":doc["role"]} for doc in docs]
                          
         last_conversation = [{"role":"user","content":'''开始'''}]
         
         # always choose the last six messages to generate the reply
-        c_messages = messages[-7:-1]                
+        c_messages = conversations[-7:-1]                
         _,v2 = self.generate_llm_reply(raw_message,message_utils.padding_messages_merge(self._system_message + c_messages + last_conversation),sender)
         print(f"rhetorical: {v2}",flush=True)
 

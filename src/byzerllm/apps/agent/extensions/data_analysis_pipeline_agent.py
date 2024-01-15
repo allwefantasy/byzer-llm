@@ -247,7 +247,7 @@ you should reply exactly `UPDATE CONTEXT`.
         
         ori_message = messages[-1]
                          
-        # self.send(message=ori_message,recipient=self.rhetoorical_agent)
+        self.send(message=ori_message,recipient=self.rhetoorical_agent)
 
         specified_agent = ori_message.get("metadata",{}).get("agent",None)  
 

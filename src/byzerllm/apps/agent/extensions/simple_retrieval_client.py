@@ -229,8 +229,9 @@ field(created_time,long,sort)
     def search_memory(self,chat_name:str, owner:str, q:str,limit:int=4,return_json:bool=True):
         docs = self.retrieval.search(self.retrieval_cluster,
                         [SearchQuery(self.retrieval_db,"user_memory",
-                                     filters={"and":[self._owner_filter(owner=owner)]},
-                                    keyword=chat_name,fields=["chat_name"],
+                                    filters={"and":[self._owner_filter(owner=owner),{"field":"chat_name","value":chat_name}]},
+                                    sorts =[{"created_time":"desc"}],
+                                    keyword=self.search_tokenize(q),fields=["content"],
                                     vector=self.emb(q),vectorField="content_vector",
                                     limit=1000)])
         docs = [doc for doc in docs if doc["role"] == "user" and doc["chat_name"] == chat_name]

@@ -169,12 +169,13 @@ A4
             old_memory = self.simple_retrieval_client.search_content(q=m["content"],owner=self.owner,url="rhetorical",limit=3)
             if len(old_memory) != 0:
                 c = json.dumps(old_memory,ensure_ascii=False)
-                self.update_system_message(f'''{self._system_message[0]["content"]}\n下面是我们以前对话的内容总结:
-    ```json
-    {c}                                       
-    ```  
-    你在回答我的问题的时候，可以参考这些内容。''') 
+                self.update_system_message(f'''{self.system_message}\n
 
+下面是用户的一些行为偏好，在回答问题的时候，可以参考：
+```json
+{c}                                       
+```  
+''') 
 
         # query rewrite                        
         if len(re.sub(r'\s+', '', m["content"])) < 60:
