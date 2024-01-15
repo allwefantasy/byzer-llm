@@ -95,7 +95,7 @@ class SQLReviewerAgent(ConversableAgent):
 
 {message["content"]}
 
-请找出所有的字段或者别名，不要带函数的，保留反引号，并将他们按照出现顺序，以json数组格式输出：
+请找出所有的字段以及别名，去掉函数，保留反引号，并将他们按照出现顺序，以json数组格式输出：
 
 ```json
 [
@@ -106,8 +106,10 @@ class SQLReviewerAgent(ConversableAgent):
         try:
             fields = json.loads(code_utils.extract_code(t[0].output)[-1][1])
             for field in fields:
-                if "`" not in field:
-                    new_message = {"content":f'''代码存在问题，字段或者别名: {field} 没有被反引号括起来,请修改''',"metadata":{}}
+                for field in fields:            
+                    if "`" not in field:
+                        if f"`{field}`" not in message["content"]:
+                            new_message = {"content":f'''代码存在问题，字段或者别名: {field} 没有被反引号括起来,请修改''',"metadata":{}}            
                     return True, message_utils.copy_error_count(message,new_message)
         except Exception:
             pass

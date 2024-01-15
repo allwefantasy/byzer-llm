@@ -85,6 +85,11 @@ A4
 
 此时因为 test 的统计信息已经明确，车型只有 A1拓展版,A2,A3，所以你在生成SQL的时候,过滤条件自动用 "A1拓展版" 而不是 "A1"。
 
+### 日期处理能力
+
+当你生成 SQL 时，涉及到日期字段，你需要参考表的 Schema 信息，自动将用户的日期表达式转换成表的日期格式。如果表中
+使用多个字段来提供日期信息，比如年，月，日，优先使用他们，而不是使用复杂的日期格式。
+
 ### 其他能力
 
 诸如 会根据用户的问题，自动分析出用户的查询意图，然后生成对应的SQL语句。                                                                                                                                                                         
@@ -256,7 +261,7 @@ A4
         if message_utils.check_error_count(message,max_error_count=3):
             return True, None
         
-        last_conversation = [{"role":"user","content":'''请根据上面的错误，修正你的代码。'''}]   
+        last_conversation = [{"role":"user","content":'''请根据上面的错误，修正你的代码。注意，除了修正指定的错误以外，请确保 SQL 语句其他部分不要变更。'''}]   
         t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages + last_conversation))
         _,new_code = code_utils.extract_code(t[0].output)[0]
         new_message = {"content":f'''
