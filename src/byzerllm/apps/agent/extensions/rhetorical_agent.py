@@ -10,18 +10,11 @@ import json
    
 class RhetoricalAgent(ConversableAgent): 
     
-    DEFAULT_SYSTEM_MESSAGE = '''你是一个非常善于反思和总结的AI助手。
-尝试从之前的对话中，找到下面三种内容。
+    DEFAULT_SYSTEM_MESSAGE = '''你的主要工作是从我们的对话中找到新的名词定义
 
-1. 用户指定你需要记住的一些内容。
-2. 用户额外补充的一些信息。
-3. 用户和你说明的一些名词定义。
+你首先需要了解 "名词定义"的含义：
 
-这些信息是为了方便以后回答我的问题的时候，可以参考这些信息，避免我重复和你确认这些信息。
-
-下面是一些例子，方便你理解。
-
-假设我们有如下的对话：
+所谓名词定义是在我们的对话中，有一些名词，是在交互过程中确定的，比如：
 
 ```
 用户： 上分的销售额是多少？
@@ -29,28 +22,51 @@ class RhetoricalAgent(ConversableAgent):
 用户： 是上海分行的销售额。
 ```
 
-你的总结：
+在这个对话中，我们可以确定，用户说的“上分”，就是指“上海分行”。于是，根据前面分析，你得到一个新的名词定义：
 
+```json
+[
+  "上分是指上海分行"
+]
 ```
-上分是指上海分行
-```
 
-下次当我再谈到上分的时候，你看到上面的总结后，可以直接明确我指就是上海分行。
-
-再比如，假设我们有如下的对话：
+再比如：
 
 ```
 用户： 奔驰上个月的销量
-助手： 销量是指销售额还是销售量？
-用户： 销售额
+助手： 销量是指销售额还是销售数量？
+用户： 以后我说销量的时候都是指的销售额
 ```
 
-你的总结：
+在这个对话中，我们可以确定，用户以后说销售，实际上就是指销售额。于是，根据前面分析，你得到一个新的名词定义：
 
+```json
+[
+ "销量是指销售额"
+]
 ```
-询问 奔驰上个月的销量时，销量是指销售额。
-如果在之前总结里，已经有提到的，就无需再次总结。
+
+每次当用户说“开始”，你就可以按如下步骤进行检查：
+
+1. 找到用户最近的一个的问题
+2. 顺着这个问题，依次回顾自己的回答和用户的回复
+3. 从这个过程中，参考前面的例子，找到你认为新的名词定义
+
+请按这个步骤一步一步进行检查，并且输出每一步检查的结果。
+
+最后，对你的结果重新以 Json 格式进行输出，格式如下：
+
+```json
+[
+  "这里替换成你新发现的名词定义"
+]
 ```
+
+注意：
+
+1. 当用户提供表信息或者示例数据的时候，不要对这些内容做任何分析。
+2. 输出的json 需要使用 ```sql`` 进行包裹。
+3. json 中的内容只需要包含名词定义部分，不要有其他内容。
 '''
     
     def __init__(
@@ -116,21 +132,20 @@ class RhetoricalAgent(ConversableAgent):
 
         m = messages[-1]        
         
-        old_conversations = self.simple_retrieval_client.search_content(q=m["content"],owner=self.owner,url="rhetorical",limit=3)
-        if len(old_conversations) != 0:
-            c = json.dumps(old_conversations,ensure_ascii=False)
-            self.update_system_message(f'''{self.DEFAULT_SYSTEM_MESSAGE}\n下面是我们以前对话的内容总结:
-```json
-{c}                                       
-```  
-你在回答我的问题的时候，可以参考这些内容。''')
+#         old_conversations = self.simple_retrieval_client.search_content(q=m["content"],owner=self.owner,url="rhetorical",limit=3)
+#         if len(old_conversations) != 0:
+#             c = json.dumps(old_conversations,ensure_ascii=False)
+#             self.update_system_message(f'''{self.system_message}\n\n下面是我们以前一些名词定义:
+# ```json
+# {c}                                       
+# ```  
+# 你在回答我的问题的时候，可以参考这些内容。''')
                          
-        last_conversation = [{"role":"user","content":'''现在，开始回顾我们前面的对话，并且找到我指定你需要记住的一些内容，
-或者我额外补充的一些信息，或者我和你说明的一些名词定义。'''}]
+        last_conversation = [{"role":"user","content":'''开始'''}]
 
         c_messages = messages[-7:-1]
         # always choose the last six messages to generate the reply        
-        _,v2 = self.generate_llm_reply(raw_message,message_utils.padding_messages_merge(self._system_message + c_messages[-7:-1] + last_conversation),sender)
+        _,v2 = self.generate_llm_reply(raw_message,message_utils.padding_messages_merge(self._system_message + c_messages + last_conversation),sender)
         print(f"rhetorical: {v2}",flush=True)
         self.simple_retrieval_client.save_text_content(owner=self.owner,title="",content=v2,url="rhetorical",auto_chunking=False)
         return True, None 
