@@ -110,7 +110,7 @@ class SQLReviewerAgent(ConversableAgent):
                     if "`" not in field:
                         if f"`{field}`" not in message["content"]:
                             new_message = {"content":f'''代码存在问题，字段或者别名: {field} 没有被反引号括起来,请修改''',"metadata":{}}            
-                    return True, message_utils.copy_error_count(message,new_message)
+                            return True, message_utils.copy_error_count(message,new_message)
         except Exception:
             pass
         
