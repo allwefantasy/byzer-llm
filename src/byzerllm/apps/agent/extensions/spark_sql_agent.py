@@ -96,7 +96,7 @@ A4
 
 特别需要注意的是：
 1. 你生成的代码要用 SQL 代码块包裹，```sql\n你的代码```, 注意一定要Block需要用sql标注而非vbnet。
-3. 生成的 Spark SQL 语句中，所有字段或者别名务必需要用 `` 括起来。
+3. 生成的 Spark SQL 语句中，所有字段或者别名务必需要用反引号 `` 括起来，尤其是 as 关键字后面的别名。
 4. 任何情况下都不要拆分成多段代码输出，请一次性生成完整的代码片段，确保代码的完整性。
 '''
     def __init__(
@@ -336,7 +336,7 @@ A4
             else:   
                 print(f"Fail to pass the review: {last_conversation}. Try to regenerate the sql",flush=True)             
                 t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages+[{
-                    "content":'''请修正你的代码。注意，除了修正指定的错误以外，请确保 SQL 语句其他部分不要变更。''',
+                    "content":'''请修正你的代码。注意，除了修正指定的错误以外，请确保 SQL 语句其他部分不要变更,代码需要用 ```sql```包裹起来。''',
                     "role":"user"
                 }]))
                 print(f"Try to regenerate the sql: {t[0].output}",flush=True)
