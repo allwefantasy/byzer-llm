@@ -574,8 +574,7 @@ def response_class_format(prompt:str,cls:Union[pydantic.BaseModel,str])->str:
 
 请根据自己生成的内容并以 Json 格式回复我。
 ''' 
-    return msg 
-
+    return msg
 
 def response_class_format_after_chat(cls:Union[pydantic.BaseModel,str])->str:
  

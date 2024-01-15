@@ -89,6 +89,11 @@ class DataAnalysis:
             return Agents.create_remote_agent(UserProxyAgent,f"user_{self.name}",self.llm,self.retrieval,
                                 human_input_mode="NEVER",
                                 max_consecutive_auto_reply=0,chat_wrapper=self.chat_wrapper)
+
+    def send_from_agent_to_agent(self,from_agent_name:str,to_agent_name:str,message:Dict[str,Any]):
+        if self.data_analysis_pipeline is None:
+            return None
+        return ray.get(self.data_analysis_pipeline.send_from_agent_to_agent.remote(from_agent_name,to_agent_name,message))  
         
     def analyze(self,content:str,metadata:Dict[str,Any]={}):        
         ray.get(self.data_analysis_pipeline.update_max_consecutive_auto_reply.remote(1))

@@ -176,7 +176,13 @@ you should reply exactly `UPDATE CONTEXT`.
         return list(self.agents.keys())  
 
     def get_agent_system_message(self,agent_name:str):
-        return self.agents[agent_name].system_message      
+        return self.agents[agent_name].system_message  
+
+    def send_from_agent_to_agent(self,source_agent:str, target_agent:str, message:Dict):
+        '''
+        for debug only        
+        '''
+        self.agents[source_agent].send(message=message,recipient=target_agent)    
 
     def preview_file(self):
         self.preview_file_agent._prepare_chat(self.python_interpreter, True)        
