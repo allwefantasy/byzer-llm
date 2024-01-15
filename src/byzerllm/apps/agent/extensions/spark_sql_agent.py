@@ -238,7 +238,7 @@ A4
             print(f"execute_result: {execute_result}",flush=True)
             
             if message_utils.is_success(execute_result):
-                return True,{"content":execute_result["content"],"metadata":{"TERMINATE":True}}
+                return True,{"content":execute_result["content"],"metadata":{"TERMINATE":True,"rewrite_query":m["content"],"sql":conversation}}
             else:
                 return True,{"content":f'Fail to execute the analysis. {execute_result["content"]}',"metadata":{"TERMINATE":True}}
 
