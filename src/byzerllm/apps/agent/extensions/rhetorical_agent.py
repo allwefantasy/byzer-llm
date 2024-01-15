@@ -1,6 +1,6 @@
 from ..conversable_agent import ConversableAgent
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
-from ....utils.client import ByzerLLM,message_utils
+from ....utils.client import ByzerLLM,message_utils,code_utils
 from byzerllm.utils.retrieval import ByzerRetrieval
 from ..agent import Agent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
@@ -129,8 +129,7 @@ class RhetoricalAgent(ConversableAgent):
 
         if messages is None:
             messages = self._messages[get_agent_name(sender)]  
-
-        m = messages[-1]        
+                
         
 #         old_conversations = self.simple_retrieval_client.search_content(q=m["content"],owner=self.owner,url="rhetorical",limit=3)
 #         if len(old_conversations) != 0:
@@ -142,12 +141,18 @@ class RhetoricalAgent(ConversableAgent):
 # 你在回答我的问题的时候，可以参考这些内容。''')
                          
         last_conversation = [{"role":"user","content":'''开始'''}]
-
-        c_messages = messages[-7:-1]
-        # always choose the last six messages to generate the reply        
+        
+        # always choose the last six messages to generate the reply
+        c_messages = messages[-7:-1]                
         _,v2 = self.generate_llm_reply(raw_message,message_utils.padding_messages_merge(self._system_message + c_messages + last_conversation),sender)
         print(f"rhetorical: {v2}",flush=True)
-        self.simple_retrieval_client.save_text_content(owner=self.owner,title="",content=v2,url="rhetorical",auto_chunking=False)
+
+        try:            
+            v = json.loads(code_utils.extract_code(v2)[-1][1])
+            for temp in v:
+                self.simple_retrieval_client.save_text_content(owner=self.owner,title="",content=temp,url="rhetorical",auto_chunking=False)
+        except Exception:
+            print(f"rhetorical error: {v2}",flush=True)                
         return True, None 
                 
         
