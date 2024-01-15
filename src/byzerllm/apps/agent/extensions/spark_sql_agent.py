@@ -226,6 +226,9 @@ A4
             # get the sql reviewed.             
             conversation = message_utils.un_termindate_message(self.chat_messages[get_agent_name(self.sql_reviewer_agent)][-1])            
             
+            if conversation["content"] == "FAIL TO GENERATE SQL CODE":
+                return True, {"content":f'Fail to generate sql code.',"metadata":{"TERMINATE":True}}
+            
             # send the sql code to the byzer engine to execute
             print(f"send the sql code to the byzer engine to execute {conversation}",flush=True)
             self.send(message=conversation,recipient=self.byzer_engine_agent)  
