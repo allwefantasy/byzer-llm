@@ -328,7 +328,7 @@ A4
             else:   
                 print(f"Fail to pass the review: {last_conversation}. Try to regenerate the sql",flush=True)             
                 t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages+[{
-                    "content":'''请修正你的代码。注意，除了指定的错误以外，保持 SQL 语句其他部分不要变更。''',
+                    "content":'''请修正你的代码。注意，除了修正指定的错误以外，请确保 SQL 语句其他部分不要变更。''',
                     "role":"user"
                 }]))
                 print(f"Try to regenerate the sql: {t[0].output}",flush=True)
