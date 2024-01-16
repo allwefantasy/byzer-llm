@@ -83,7 +83,7 @@ execute the code to preview the file. If the code is correct, the file will be l
             if message_utils.check_error_count(message,3):
                 return True, {
                     "content":f'''Fail to load the file: {raw_message.variables.get("file_path","")}. reason: {raw_message.output}''' + "\nTERMINATE",
-                    "metadata":{"TERMINATE":True}
+                    "metadata":{"TERMINATE":True,"code":1}
                 }
             # the code may be wrong, so generate a new code according to the conversation so far 
             extra_messages = []            
@@ -97,7 +97,7 @@ execute the code to preview the file. If the code is correct, the file will be l
             _,code = self.generate_llm_reply(raw_message,messages + extra_messages,sender)
             m = self.create_temp_message(code)
             message_utils.copy_error_count(message,m)
-            
+
             return True, message_utils.inc_error_count(m)
         
         
@@ -126,12 +126,14 @@ execute the code to preview the file. If the code is correct, the file will be l
         self.send(message=self.create_temp_message(code,new_message),recipient=self.code_agent)
 
         # get the code agent's reply
-        code_agent_messages = self._messages[get_agent_name(self.code_agent)]
+        last_message = self._messages[get_agent_name(self.code_agent)][-1]
+        if last_message["metadata"].get("code",0) != 0:
+            return True, {"content":f'''Fail to load the file: {file_path}. reason: {response.variables.get("file_preview","")}''',"metadata":{"TERMINATE":True,"code":1}}
         
-        response:ChatResponse = code_agent_messages[-1]["metadata"]["raw_message"] # self.generate_llm_reply(None,,sender)
+        response:ChatResponse = ["metadata"]["raw_message"]
 
         if "loaded_successfully" not in response.variables or response.variables["loaded_successfully"] is False:
-            return True, f'''Fail to load the file: {file_path}. reason: {response.variables.get("file_preview","")}''' + "\nTERMINATE"
+            return True, {"content":f'''Fail to load the file: {file_path}. reason: {response.variables.get("file_preview","")}''',"metadata":{"TERMINATE":True,"code":1}}
         
         file_preview = response.variables["file_preview"].to_csv(index=False)    
         
