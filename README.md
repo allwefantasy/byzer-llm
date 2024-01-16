@@ -206,6 +206,40 @@ t[0].output
  ...]
 ```
 
+The Byzer-LLM also support SaaS embedding model. The following code will deploy a Baichuanembedding model and then use the model to infer the input text.
+
+```python
+import os
+os.environ["RAY_DEDUP_LOGS"] = "0" 
+
+import ray
+from byzerllm.utils.retrieval import ByzerRetrieval
+from byzerllm.utils.client import ByzerLLM,LLMRequest,LLMResponse,LLMHistoryItem,InferBackend
+from byzerllm.utils.client import Templates
+
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)  
+
+llm = ByzerLLM(verbose=True)
+
+llm.setup_num_workers(1).setup_gpus_per_worker(0)
+
+chat_name = "baichuan_emb"
+if llm.is_model_exist(chat_name):
+    llm.undeploy(udf_name=chat_name)
+
+llm.deploy(model_path="",
+           pretrained_model_type="saas/baichuan",
+           udf_name=chat_name,
+           infer_params={
+            "saas.api_key":"",            
+            "saas.model":"Baichuan-Text-Embedding"
+           })
+llm.setup_default_emb_model_name(chat_name)
+
+v = llm.emb(None,LLMRequest(instruction="你好"))
+print(v.output)
+```
+
 ## Quatization
 
 If the backend is `InferBackend.transformers`, here is the baichuan2 example:
