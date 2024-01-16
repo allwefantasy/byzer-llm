@@ -130,7 +130,7 @@ execute the code to preview the file. If the code is correct, the file will be l
         if last_message["metadata"].get("code",0) != 0:
             return True, {"content":f'''Fail to load the file: {file_path}. reason: {response.variables.get("file_preview","")}''',"metadata":{"TERMINATE":True,"code":1}}
         
-        response:ChatResponse = ["metadata"]["raw_message"]
+        response:ChatResponse = ["metadata"]["execute_result"]
 
         if "loaded_successfully" not in response.variables or response.variables["loaded_successfully"] is False:
             return True, {"content":f'''Fail to load the file: {file_path}. reason: {response.variables.get("file_preview","")}''',"metadata":{"TERMINATE":True,"code":1}}
