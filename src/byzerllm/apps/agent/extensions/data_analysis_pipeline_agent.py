@@ -28,8 +28,6 @@ You have following agents to use:
 
 1. visualization_agent, 这个 Agent 可以帮助你对数据进行可视化。
 2. assistant_agent, 这个 Agent 可以帮你生成代码对数据进行分析，统计。
-3. common_agent, 这个Agent 只会根据对话来帮助用户分析数据。他不会生成任何代码去分析数据。
-4. spark_sql_agent, 这个Agent 可以根据用户对话帮助用户作分析，它主要生成 Spark SQL 代码对数据进行分析。
 
 
 Please check the user's question and decide which agent you need to use. And then reply the agent name only.

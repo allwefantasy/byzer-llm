@@ -71,7 +71,7 @@ execute the code to preview the file. If the code is correct, the file will be l
         
         ## no code block found so the code agent return None
         if raw_message is None or isinstance(raw_message,str):
-            return False, None
+            return True, None
                 
         raw_message: ChatResponse = raw_message
 
@@ -79,6 +79,7 @@ execute the code to preview the file. If the code is correct, the file will be l
             # stop the conversation if the code agent gives the success message
             return True, None
         else:
+            print(raw_message,flush=True)
             if raw_message.error_count > 3:
                 return True, {
                     "content":f'''Fail to load the file: {raw_message.variables.get("file_path","")}. reason: {raw_message.output}''' + "\nTERMINATE",
@@ -95,7 +96,7 @@ execute the code to preview the file. If the code is correct, the file will be l
 
             _,code = self.generate_llm_reply(raw_message,messages + extra_messages,sender)
             m = self.create_temp_message(code)
-            
+
             m["metadata"]["error_count"] = raw_message.error_count                        
             return True, message_utils.inc_error_count(m)
         
@@ -121,8 +122,7 @@ execute the code to preview the file. If the code is correct, the file will be l
         
         # only the first time we should keep the message sent to the code agent which have file_path, file_ref
         # in message metadata, when the sandbox is created, then we will reuse the sandbox, no need to contain
-        # the file_path, file_ref in the message metadata.
-        self._prepare_chat(self.code_agent, True)   
+        # the file_path, file_ref in the message metadata.         
         self.send(message=self.create_temp_message(code,new_message),recipient=self.code_agent)
 
         # get the code agent's reply
