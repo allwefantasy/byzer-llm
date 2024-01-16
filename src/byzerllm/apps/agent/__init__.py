@@ -22,8 +22,7 @@ class ChatResponse:
       output: str      
       code: str
       prompt: str
-      variables: Dict[str,Any]=dataclasses.field(default_factory=dict)
-      error_count:int=0
+      variables: Dict[str,Any]=dataclasses.field(default_factory=dict)      
 
 def get_agent_name(agent: Union[Agent,ClientActorHandle,str]) -> str:
     if isinstance(agent,Agent):

@@ -183,19 +183,16 @@ you should reply exactly `UPDATE CONTEXT`.
         self.agents[source_agent].send(message=message,recipient=target_agent)    
 
     def preview_file(self):
-        self.preview_file_agent._prepare_chat(self.python_interpreter, True)        
-        self.max_consecutive_auto_reply = 0          
-        self.initiate_chat(
-        self.preview_file_agent,
-        message={
+        print(f"send the preview file message to preview_file_agent:{self.file_path}",flush=True)
+        self.send(message={
             "content":f"We have a file, the file path is: {self.file_path} , please preview this file",
             "role":"user",
             "metadata":{
                 "file_path":self.file_path,
                 "file_ref":self.file_ref
             }
-        })      
-        # sync the conversation of preview_file_agent to other agents
+        },recipient=self.preview_file_agent)
+        
         print("sync the conversation of preview_file_agent to other agents",flush=True)
         for agent in self.agents.values():            
             for message in self._messages["privew_file_agent"]:                 

@@ -165,18 +165,23 @@ class PythonSandboxAgent(ConversableAgent):
             code_execution_config["last_n_messages"] = last_n_messages
             exitcode2str = "execution succeeded" if exitcode == 0 else "execution failed"
             
-            return True, ChatResponse(status=exitcode,
+            return True, {
+                "content":"",
+                 "metadata":{
+                     "execute_result":ChatResponse(status=exitcode,
                                       output=f"exitcode: {exitcode} ({exitcode2str})\nCode output: {output}",
                                       code=code_str,
                                       prompt=message,
-                                      variables=response,
-                                      error_count=message_utils.get_error_count(message)
-                                      )
+                                      variables=response,                                      
+                                      ),
+                      "error_count": message_utils.get_error_count(message),
+                 }
+            }
 
         print("No code block found in the last {} messages.".format(last_n_messages),flush=True)
         code_execution_config["last_n_messages"] = last_n_messages
 
-        return False, None            
+        return True, None            
 
     def check_sandbox_timeout(self,timeout:int=60*60): 
         remove_names = []

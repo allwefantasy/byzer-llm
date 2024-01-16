@@ -69,18 +69,18 @@ execute the code to preview the file. If the code is correct, the file will be l
         if get_agent_name(sender) != get_agent_name(self.code_agent):
             return False, None
         
-        ## no code block found so the code agent return None
-        if raw_message is None or isinstance(raw_message,str):
-            return True, None
-                
-        raw_message: ChatResponse = raw_message
+        if messages is None:
+            messages = self._messages[get_agent_name(sender)]
+
+        message = messages[-1]
+        raw_message = messages[-1]["metadata"]["execute_result"]
 
         if raw_message.status == 0 and "loaded_successfully" in raw_message.variables and raw_message.variables["loaded_successfully"]:                                 
             # stop the conversation if the code agent gives the success message
             return True, None
         else:
             print(raw_message,flush=True)
-            if raw_message.error_count > 3:
+            if message_utils.check_error_count(message,3):
                 return True, {
                     "content":f'''Fail to load the file: {raw_message.variables.get("file_path","")}. reason: {raw_message.output}''' + "\nTERMINATE",
                     "metadata":{"TERMINATE":True}
@@ -96,8 +96,8 @@ execute the code to preview the file. If the code is correct, the file will be l
 
             _,code = self.generate_llm_reply(raw_message,messages + extra_messages,sender)
             m = self.create_temp_message(code)
-
-            m["metadata"]["error_count"] = raw_message.error_count                        
+            message_utils.copy_error_count(message,m)
+            
             return True, message_utils.inc_error_count(m)
         
         
