@@ -31,14 +31,14 @@ BaiChuanErrorCodes = {
 class CustomSaasAPI:
     def __init__(self, infer_params: Dict[str, str]) -> None:
         self.api_key = infer_params["saas.api_key"]        
-        self.model = infer_params.get("saas.model", "Baichuan2-Turbo")
+        self.model = infer_params.get("saas.model", "Baichuan2-Turbo")        
 
         self.meta = [{
             "model_deploy_type": "saas",
             "backend":"saas"
         }] 
 
-        if "Embedding" not in  self.self.model:
+        if "embedding" not in  self.model.lower():
             self.api_url = infer_params.get("saas.baichuan_api_url", "https://api.baichuan-ai.com/v1/chat/completions")
             self.model = infer_params.get("saas.model", "Baichuan2-Turbo")
             self.meta["embedding_mode"] = False 
