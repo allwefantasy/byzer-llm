@@ -38,7 +38,7 @@ class CustomSaasAPI:
             "backend":"saas"
         }] 
 
-        if self.self.model == "Baichuan2-Turbo":
+        if "Embedding" not in  self.self.model:
             self.api_url = infer_params.get("saas.baichuan_api_url", "https://api.baichuan-ai.com/v1/chat/completions")
             self.model = infer_params.get("saas.model", "Baichuan2-Turbo")
             self.meta["embedding_mode"] = False 
