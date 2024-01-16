@@ -88,7 +88,7 @@ The unique features of Byzer-LLM are:
 ## Make sure you python version is 3.10.11
 pip install -r requirements.txt
 ## This is optional
-pip install -U vllm
+pip install vllm==0.2.6
 pip install -U byzerllm
 ray start --head
 ```
