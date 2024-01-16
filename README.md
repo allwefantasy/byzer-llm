@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2024/01] Release Byzer-LLM 0.1.34
+- [2024/01] Release Byzer-LLM 0.1.35
 - [2023/12] Release Byzer-LLM 0.1.30
 
 ---
@@ -59,6 +59,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.35： Add Baichuan Saas embedding model
 - 0.1.34： Enhance the Byzer-Agent API and fix some bugs in Byzer-LLM
 - 0.1.33： Fix Response Class bugs/ Add function implementation
 - 0.1.32： StableDiffusion optimization
