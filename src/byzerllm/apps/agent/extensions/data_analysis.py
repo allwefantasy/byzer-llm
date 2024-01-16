@@ -33,7 +33,7 @@ class DataAnalysis:
         self.suffix = generate_str_md5(f"{self.chat_name}_{self.owner}")
         self.name = f"data_analysis_pp_{self.suffix}"   
         self.manager = self.get_pipeline_manager()  
-        self.file_path = file_path
+        
         self.use_shared_disk = use_shared_disk
         self.llm = llm
         self.retrieval = retrieval
@@ -46,9 +46,8 @@ class DataAnalysis:
                                                         retrieval_cluster=self.retrieval_cluster,
                                                         retrieval_db=self.retrieval_db,
                                                         )     
-        
-        self.file_ref = None
-        self.file_path = None
+        self.file_path = file_path
+        self.file_ref = None                
 
         if not ray.get(self.manager.check_pipeline_exists.remote(self.name)):
             if self.file_path and not self.use_shared_disk:
