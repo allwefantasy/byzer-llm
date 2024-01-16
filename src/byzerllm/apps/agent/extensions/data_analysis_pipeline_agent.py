@@ -194,7 +194,7 @@ you should reply exactly `UPDATE CONTEXT`.
         },recipient=self.preview_file_agent)
         
         print("sync the conversation of preview_file_agent to other agents",flush=True)
-        for agent in self.agents.values():            
+        for agent in [self.visualization_agent,self.assistant_agent,self.python_interpreter]:            
             for message in self._messages["privew_file_agent"]:                 
                 self.send(message=message,recipient=agent,request_reply=False)
 
