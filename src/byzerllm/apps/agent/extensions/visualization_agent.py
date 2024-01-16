@@ -148,7 +148,7 @@ Please try to generate python code to analyze the file and answer the following 
         if last_message["metadata"].get("code",0) != 0:
             return True, {"content":f'''FAIL TO GNERATE CODE''',"metadata":{"TERMINATE":True,"code":1}}
         # give the result to the user             
-        response:ChatResponse = last_message["metadata"]["raw_message"]
+        response:ChatResponse = last_message["metadata"]["execute_result"]
         base64_image = response.variables["image_base64"]
 
         return True, {"content":base64_image,"metadata":{"TERMINATE":True}}
