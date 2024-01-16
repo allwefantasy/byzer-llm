@@ -38,6 +38,11 @@ def copy_error_count(message:Dict[str,Any],new_message:Dict[str,Any]):
     new_message["metadata"]["error_count"] = message["metadata"].get("error_count",0)
     return new_message
 
+def get_error_count(message:Dict[str,Any]):
+    if "metadata" not in message:
+        message["metadata"] = {}   
+    return message["metadata"].get("error_count",0)
+
 def inc_error_count(message:Dict[str,Any]):
     if "metadata" not in message:
         message["metadata"] = {}

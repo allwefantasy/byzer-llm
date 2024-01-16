@@ -11,8 +11,8 @@ import io
 import traceback
 import json
 import os
-from ....utils.retrieval import ByzerRetrieval
-from ....utils.client import ByzerLLM,code_utils
+from byzerllm.utils.retrieval import ByzerRetrieval
+from byzerllm.utils.client import ByzerLLM,code_utils,message_utils
 
 
 
@@ -164,12 +164,14 @@ class PythonSandboxAgent(ConversableAgent):
             exitcode, output,response = ray.get(sandbox.exec_capture_output.remote(code_str,target_names))
             code_execution_config["last_n_messages"] = last_n_messages
             exitcode2str = "execution succeeded" if exitcode == 0 else "execution failed"
-
+            
             return True, ChatResponse(status=exitcode,
                                       output=f"exitcode: {exitcode} ({exitcode2str})\nCode output: {output}",
                                       code=code_str,
                                       prompt=message,
-                                      variables=response)
+                                      variables=response,
+                                      error_count=message_utils.get_error_count(message)
+                                      )
 
         print("No code block found in the last {} messages.".format(last_n_messages),flush=True)
         code_execution_config["last_n_messages"] = last_n_messages
