@@ -7,6 +7,10 @@ class ByzerLLMGenerator:
         self.model = model        
         self.embedding = None
         self.tokenizer = None
+
+        if hasattr(model,"embed_query"):
+            self.embedding = model            
+
         if tokenizer:
             self.tokenizer = tokenizer
             from sentence_transformers import SentenceTransformer
