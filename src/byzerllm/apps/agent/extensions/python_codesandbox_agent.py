@@ -166,7 +166,7 @@ class PythonSandboxAgent(ConversableAgent):
             exitcode2str = "execution succeeded" if exitcode == 0 else "execution failed"
             
             return True, {
-                "content":"",
+                "content":f"exitcode: {exitcode} ({exitcode2str})\nCode output: {output}",
                  "metadata":{
                      "execute_result":ChatResponse(status=exitcode,
                                       output=f"exitcode: {exitcode} ({exitcode2str})\nCode output: {output}",
