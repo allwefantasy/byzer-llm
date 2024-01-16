@@ -85,10 +85,35 @@ The unique features of Byzer-LLM are:
 ## Installation
 
 ```bash
+## Make sure you python version is 3.10.11
 pip install -r requirements.txt
+## This is optional
 pip install -U vllm
 pip install -U byzerllm
 ray start --head
+```
+
+If your cuda version is 11.8, please check the following link to install vLLM:
+
+https://docs.vllm.ai/en/latest/getting_started/installation.html
+
+The key steps are:
+
+```shell
+As of now, vLLM’s binaries are compiled on CUDA 12.1 by default. However, you can install vLLM with CUDA 11.8 by running:
+
+# Install vLLM with CUDA 11.8.
+export VLLM_VERSION=0.2.4
+export PYTHON_VERSION=39
+pip install https://github.com/vllm-project/vllm/releases/download/v${VLLM_VERSION}/vllm-${VLLM_VERSION}+cu118-cp${PYTHON_VERSION}-cp${PYTHON_VERSION}-manylinux1_x86_64.whl
+
+# Re-install PyTorch with CUDA 11.8.
+pip uninstall torch -y
+pip install torch --upgrade --index-url https://download.pytorch.org/whl/cu118
+
+# Re-install xFormers with CUDA 11.8.
+pip uninstall xformers -y
+pip install --upgrade xformers --index-url https://download.pytorch.org/whl/cu118
 ```
 
 ---
