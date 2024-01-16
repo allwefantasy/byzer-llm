@@ -206,7 +206,7 @@ t[0].output
  ...]
 ```
 
-The Byzer-LLM also support SaaS embedding model. The following code will deploy a Baichuanembedding model and then use the model to infer the input text.
+The Byzer-LLM also support SaaS embedding model. The following code will deploy a Baichuan embedding model and then use the model to infer the input text.
 
 ```python
 import os
