@@ -45,9 +45,7 @@ class CustomSaasAPI:
         else:
             self.api_url = infer_params.get("saas.baichuan_api_url", "http://api.baichuan-ai.com/v1/embeddings")
             self.model = infer_params.get("saas.model", "Baichuan-Text-Embedding")
-            self.meta["embedding_mode"] = True 
-
-           
+            self.meta["embedding_mode"] = True            
         
 
      # saas/proprietary
@@ -71,7 +69,7 @@ class CustomSaasAPI:
         start_time = time.monotonic()
         res_data = self.request_with_retry(data)   
         time_cost = time.monotonic() - start_time
-        return res_data["data"][0["embedding"]]
+        return res_data["data"][0]["embedding"]
     
     
     def stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
