@@ -41,7 +41,11 @@ Please try to generate python code to analyze the file and answer the following 
 
 {question}
 
-    """
+注意：
+1. 不要提供类似 if __name__ == '__main__' 的判断。
+2. 代码需要通过 exec 函数执行，所以不要使用 return 语句。
+3. 不要使用 input 这种需要用户输入的函数。
+"""
 
     def __init__(
         self,
