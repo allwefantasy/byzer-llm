@@ -356,6 +356,8 @@ class ByzerLLM:
         self.mapping_response_class_format_func = {}
         self.mapping_response_class_format_after_chat_func = {}
 
+        self.mapping_base_system_message = {}
+
         self.mapping_impl_func_format_func = {}
 
         self.meta_cache = {}
@@ -420,7 +422,11 @@ class ByzerLLM:
 
     def setup_response_class_format_after_chat_func(self,model:str,func)->'ByzerLLM':
         self.mapping_response_class_format_after_chat_func[model] = func
-        return self    
+        return self  
+
+    def setup_base_system_messages(self,model:str,base_system_message:str)->'ByzerLLM':
+        self.mapping_base_system_message[model] = base_system_message
+        return self  
     
     def setup_infer_backend(self,backend:str)->'ByzerLLM':
         self.sys_conf["infer_backend"] = backend
@@ -1032,7 +1038,7 @@ class ByzerLLM:
 
         # generate response class 
         elif response_class and not response_after_chat:
-            f = self.mapping_response_class_format_func.get(model,response_class_format) if not enable_default_sys_message else sys_response_class_format
+            f = self.mapping_response_class_format_func.get(model,response_class_format) if not enable_default_sys_message else self.mapping_base_system_message.get(model,base_ability_format) 
             last_message["content"] = f(last_message["content"],cls = response_class)
                            
         
