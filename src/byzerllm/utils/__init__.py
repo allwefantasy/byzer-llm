@@ -817,6 +817,7 @@ JSON Schema：
     
     return msg
 
+
 def sys_response_class_format(prompt:str,cls:Union[pydantic.BaseModel,str])->str:
     
     _cls = ""
@@ -826,7 +827,7 @@ def sys_response_class_format(prompt:str,cls:Union[pydantic.BaseModel,str])->str
         _cls = cls.schema_json(ensure_ascii=False)
 
     msg = f'''
-回顾 RESPONSE_WITH_CLASS 能力。
+请使用 RESPONSE_WITH_CLASS 相关的能力，解决用户的问题。
 
 输入：
 
@@ -841,6 +842,83 @@ JSON Schema：
 输出：
 '''
     return msg
+
+def sys_function_calling_format(prompt:str,tools:List[Union[Callable,str]],tool_choice:Optional[Union[Callable,str]])->str:
+    tool_serializes = []
+    for v in tools:
+        tool_serializes.append(serialize_function_to_json(v))
+
+    force_prompt = ""
+    if tool_choice is not None:
+        tool_choice_ser = serialize_function_to_json(tool_choice)
+        force_prompt = f''''
+你必须使用如下的工具来解决用户的问题：        
+```json
+{tool_choice_ser}
+```
+'''  
+   
+    if tool_choice is None and len(tools) == 0:
+        return prompt                   
+
+    tools_str = "\n".join(tool_serializes)
+        
+    msg = f'''
+请使用 FUNCTION_CALLING 相关的能力，解决用户的问题。
+
+你有如下的函数可以使用：
+
+```json
+{tools_str}
+```
+{force_prompt}
+
+输入：
+
+{prompt}
+
+JSON Schema：
+
+```json
+{FUNCTION_CALLING_SCHEMA}
+```
+
+输出:
+''' 
+    return msg 
+
+def sys_function_impl_format(prompt:str,func:Optional[Union[Callable,str]],
+                             cls:Union[pydantic.BaseModel,str])->str:
+    
+    tool_choice_ser = serialize_function_to_json(func)    
+    _cls = ""
+    if isinstance(cls, str):
+        _cls = cls
+    else:
+        _cls = cls.schema_json(ensure_ascii=False)
+
+    
+    msg = f''''请使用 FUNCTION_IMPL 相关的能力，解决用户的问题。
+
+根据用户给定的函数列表，分析用户的问题，然后选择一个或者多个合适的函数返回给用户。
+
+用户问题： {prompt}
+
+输入：
+
+```json
+{tool_choice_ser}
+```
+
+JSON Schema：
+
+```json
+{_cls}
+```
+
+输出:
+'''
+    return msg  
 
   
 
