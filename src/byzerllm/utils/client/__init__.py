@@ -1016,7 +1016,7 @@ class ByzerLLM:
                  func_params:Optional[Dict[str,Any]]=None,
                  response_class:Optional[Union[pydantic.BaseModel,str]] = None, 
                  response_after_chat:Optional[Union[pydantic.BaseModel,str]] = False,
-                 enable_default_sys_message:bool=False,
+                 enable_default_sys_message:bool=False,                 
                  model:Optional[str] = None,
                  role_mapping=None,llm_config:Dict[str,Any]={}
                  )->Union[List[LLMResponse],List[LLMFunctionCallResponse],List[LLMClassResponse]]:        
