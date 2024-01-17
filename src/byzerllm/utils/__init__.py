@@ -614,6 +614,196 @@ def response_class_format_after_chat(cls:Union[pydantic.BaseModel,str])->str:
 ''' 
     return msg 
 
+
+def base_ability_format(prompt:Optional[str]=None)->str:
+    RESPONSE_WITH_CLASS_example='''
+{"title": "Item", "description": "时间抽取的返回结果", "type": "object", "properties": {"time": {"title": "Time", "description": "时间信息,比如内容里会提到天， 月份，年等相关词汇", "type": "string"}, "other": {"title": "Other", "description": "除了时间以外的其他部分", "type": "string"}}, "required": ["time", "other"]}
+'''
+    RESPONSE_WITH_CLASS_example_output = '''{
+  "time": "最近三个月",
+  "other": "奔驰的销量趋势如何"
+}'''
+
+    FUNCTION_CALLING_example = '''
+{
+  "name": "compute_date_range",
+  "description": "\n    计算日期范围\n    ",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "count": {
+        "type": "int",
+        "description": "时间跨度，数值类型,如果用户说的是几天，几月啥的，比较模糊，务必使用默认值",
+        "default": 3
+      },
+      "unit": {
+        "enum": [
+          "day",
+          "week",
+          "month",
+          "year"
+        ],
+        "type": "str",
+        "description": "",
+        "default": "day"
+      }
+    }
+  }
+}
+'''
+    FUNCTION_CALLING_example_output = '''
+{
+  "id": "unique_id_1",
+  "type": "function",
+  "tool_calls": [
+    {
+      "function": {
+        "name": "compute_date_range",
+        "arguments": {
+          "count": 3,
+          "unit": "day"
+        }
+      }
+    }
+  ]
+}
+'''
+
+    FUNCTION_IMPL_example = '''{
+  "name": "caculate_current_time",
+  "description": "\n    计算当前时间\n    ",
+  "parameters": {
+    "type": "object",
+    "properties": {}
+  }
+}'''    
+    FUNCTION_IMPL_example_output_schema='''
+{"title": "CurrentTime", "description": "当前时间    ", "type": "object", "properties": {"time": {"title": "Time", "description": "开始时间.时间格式为 yyyy-MM-dd", "type": "string"}}, "required": ["time"]}
+'''
+    FUNCTION_IMPL_example_output = '''
+from datetime import datetime
+
+def caculate_current_time():
+    # 获取当前日期和时间
+    now = datetime.now()
+    
+    # 将日期和时间格式化为"yyyy-MM-dd"的形式
+    time_str = now.strftime("%Y-%m-%d")
+    
+    return {"time": time_str}
+'''
+    msg = f'''下面是你具备的基础能力，当你回答用户问题的时候，随时回顾这些能力。
+
+===================RESPONSE_WITH_CLASS===================
+
+JSON 格式是一种轻量级的数据交换格式，JSON Schema 是一种用来描述 JSON 数据结构的语言，它是基于 JSON 的一个描述 JSON 数据结构的元数据，可以用来描述 JSON 数据的结构和内容，以及定义 JSON 数据的合法值范围。
+OpenAPI Specification (OAS) 使用 JSON Schema 来描述 Json 数据的结构和内容，你需要遵循 OpenAPI 3.1.0 版本的规范。
+
+下面是一个根据用户的问题，并且结合 JSON Schema 生成对应的 JSON 数据的例子：
+
+输入：
+
+最近三个月奔驰的销量趋势如何？
+
+JSON Schema：
+
+```json
+{RESPONSE_WITH_CLASS_example}
+```
+
+输出：
+
+```json
+{RESPONSE_WITH_CLASS_example_output}
+```
+
+当用户提到 RESPONSE_WITH_CLASS 时，请回顾该能力。
+
+===================FUNCTION_CALLING===================
+
+用户会提供一个函数列表给你,你需要根据用户的问题，选择一个或者多个函数返回给用户。如果你无法使用上述函数解决用户的问题，请如实告诉我你没有办法回答。
+下面假设你已经选择了一个函数作为输入，并且结合 JSON Schema 生成对应的 JSON 数据的例子：
+
+输入：
+
+```json
+{FUNCTION_CALLING_example}
+```
+
+JSON Schema：
+
+```json
+{FUNCTION_CALLING_SCHEMA}
+```
+
+输出：
+
+```json
+{FUNCTION_CALLING_example_output}
+```
+
+当用户提到 FUNCTION_CALLING 时，请回顾该能力。
+
+===================FUNCTION_IMPL===================
+
+你非常擅长 Python 语言。根据用户提供的一些信息以及问题，对用户提供的没有实现空函数函数进行实现。
+下面假设用户提供了一个需要实现的函数的签名，
+
+输入：
+
+```json
+{FUNCTION_IMPL_example}
+```
+
+JSON Schema：
+
+```json
+{FUNCTION_IMPL_example_output_schema}
+```
+
+输出：
+
+```python
+{FUNCTION_IMPL_example_output}
+```
+
+注意：
+1. 任何情况下都不要拆分成多段代码输出，请一次性生成完整的代码片段，确保代码的完整性
+2. 回复的内容只有一个代码块，且代码块的语言为 Python
+3. 不要演示如何调用你生成的函数的代码
+
+当用户提到 FUNCTION_IMPL 时，请回顾该能力。
+
+===================OTHERS===================
+'''
+    
+    return msg
+
+def sys_response_class_format(prompt:str,cls:Union[pydantic.BaseModel,str])->str:
+    
+    _cls = ""
+    if isinstance(cls, str):
+        _cls = cls
+    else:
+        _cls = cls.schema_json(ensure_ascii=False)
+
+    msg = f'''
+回顾 RESPONSE_WITH_CLASS 能力，根据用户的问题，结合 JSON Schema 生成对应的 JSON 数据。
+
+输入：
+
+{prompt}
+
+JSON Schema：
+
+```json
+{_cls}
+```
+
+输出：
+'''
+    return msg
+
   
 
 

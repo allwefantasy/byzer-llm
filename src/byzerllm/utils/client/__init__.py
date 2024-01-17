@@ -9,6 +9,8 @@ from byzerllm.utils import (function_calling_format,
                             response_class_format_after_chat,
                             FunctionCallList,
                             function_impl_format,
+                            base_ability_format,
+                            sys_response_class_format,
                             exec_capture_output
                             )
 from langchain.prompts import PromptTemplate
@@ -979,8 +981,10 @@ class ByzerLLM:
                  func_params:Optional[Dict[str,Any]]=None,
                  response_class:Optional[Union[pydantic.BaseModel,str]] = None, 
                  response_after_chat:Optional[Union[pydantic.BaseModel,str]] = False,
+                 enable_default_sys_message:bool=False,
                  model:Optional[str] = None,
-                 role_mapping=None,llm_config:Dict[str,Any]={})->Union[List[LLMResponse],List[LLMFunctionCallResponse],List[LLMClassResponse]]:        
+                 role_mapping=None,llm_config:Dict[str,Any]={}
+                 )->Union[List[LLMResponse],List[LLMFunctionCallResponse],List[LLMClassResponse]]:        
         
         if not self.default_model_name and not model:
             raise Exception("Use llm.setup_default_model_name to setup default model name or setup the model parameter")
@@ -996,6 +1000,18 @@ class ByzerLLM:
         
         if impl_func and not response_class:
             raise Exception("impl_func is enabled,response_class should be set.")
+        
+
+        if enable_default_sys_message:
+            first_message = conversations[0]
+            if first_message["role"] == "user":
+                conversations.insert(0,{
+                    "role":"system",
+                    "content": base_ability_format()
+                })
+            if first_message["role"] == "system":
+                first_message["content"] = f'''{base_ability_format()}
+{first_message["content"]}'''
                 
         meta = self.get_meta(model=model)        
         is_saas_model =  meta.get("model_deploy_type",None) == "saas"
