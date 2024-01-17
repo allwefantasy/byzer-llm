@@ -357,6 +357,7 @@ class ByzerLLM:
         self.mapping_response_class_format_after_chat_func = {}
 
         self.mapping_base_system_message = {}
+        self.mapping_sys_response_class_format_func = {}
 
         self.mapping_impl_func_format_func = {}
 
@@ -426,7 +427,13 @@ class ByzerLLM:
 
     def setup_base_system_messages(self,model:str,base_system_message:str)->'ByzerLLM':
         self.mapping_base_system_message[model] = base_system_message
-        return self  
+        return self 
+
+    def setup_sys_response_class_format_func(self,model:str,func)->'ByzerLLM':
+        self.mapping_sys_response_class_format_func[model] = func
+        return self     
+    
+    
     
     def setup_infer_backend(self,backend:str)->'ByzerLLM':
         self.sys_conf["infer_backend"] = backend
@@ -1013,10 +1020,10 @@ class ByzerLLM:
             if first_message["role"] == "user":
                 conversations.insert(0,{
                     "role":"system",
-                    "content": base_ability_format()
+                    "content": self.mapping_base_system_message.get(model,base_ability_format())
                 })
             if first_message["role"] == "system":
-                first_message["content"] = f'''{base_ability_format()}
+                first_message["content"] = f'''{self.mapping_base_system_message.get(model,base_ability_format())}
 {first_message["content"]}'''
                 
         meta = self.get_meta(model=model)        
@@ -1038,7 +1045,7 @@ class ByzerLLM:
 
         # generate response class 
         elif response_class and not response_after_chat:
-            f = self.mapping_response_class_format_func.get(model,response_class_format) if not enable_default_sys_message else self.mapping_base_system_message.get(model,base_ability_format) 
+            f = self.mapping_response_class_format_func.get(model,response_class_format) if not enable_default_sys_message else self.mapping_sys_response_class_format_func.get(model,sys_response_class_format) 
             last_message["content"] = f(last_message["content"],cls = response_class)
                            
         
