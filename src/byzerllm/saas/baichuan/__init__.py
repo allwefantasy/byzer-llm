@@ -72,7 +72,7 @@ class CustomSaasAPI:
         return res_data["data"][0]["embedding"]
     
     
-    def stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
+    async def async_stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
                     max_length: int = 4096,
                     top_p: float = 0.9,
                     temperature: float = 0.1, **kwargs):

@@ -18,7 +18,7 @@ except ImportError:
 
 # Regular expression for finding a code block
 DEFAULT_MODEL="chat"
-CODE_BLOCK_PATTERN = r"```(\w*)\n(.*?)\n```"
+CODE_BLOCK_PATTERN = r"```[ \t]*(\w+)?[ \t]*\r?\n(.*?)\r?\n[ \t]*```"
 WORKING_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "extensions")
 UNKNOWN = "unknown"
 TIMEOUT_MSG = "Timeout"
@@ -40,18 +40,45 @@ def get_value_from_llm_str(v:str,k:str, default_value)->Union[str,int,float,bool
                 pass 
     return value
 
-def content_str(content: Union[str, List]) -> str:
-    if type(content) is str:
+def content_str(content: Union[str, List, None]) -> str:
+    """Converts `content` into a string format.
+
+    This function processes content that may be a string, a list of mixed text and image URLs, or None,
+    and converts it into a string. Text is directly appended to the result string, while image URLs are
+    represented by a placeholder image token. If the content is None, an empty string is returned.
+
+    Args:
+        - content (Union[str, List, None]): The content to be processed. Can be a string, a list of dictionaries
+                                      representing text and image URLs, or None.
+
+    Returns:
+        str: A string representation of the input content. Image URLs are replaced with an image token.
+
+    Note:
+    - The function expects each dictionary in the list to have a "type" key that is either "text" or "image_url".
+      For "text" type, the "text" key's value is appended to the result. For "image_url", an image token is appended.
+    - This function is useful for handling content that may include both text and image references, especially
+      in contexts where images need to be represented as placeholders.
+    """
+    if content is None:
+        return ""
+    if isinstance(content, str):
         return content
+    if not isinstance(content, list):
+        raise TypeError(f"content must be None, str, or list, but got {type(content)}")
+
     rst = ""
     for item in content:
+        if not isinstance(item, dict):
+            raise TypeError("Wrong content format: every element should be dict if the content is a list.")
+        assert "type" in item, "Wrong content format. Missing 'type' key in content's dict."
         if item["type"] == "text":
             rst += item["text"]
-        else:
-            assert isinstance(item, dict) and item["type"] == "image_url", "Wrong content format."
+        elif item["type"] == "image_url":
             rst += "<image>"
+        else:
+            raise ValueError(f"Wrong content format: unknown type {item['type']} within the content")
     return rst
-
 
 def infer_lang(code):
     """infer the language for the code.
@@ -125,10 +152,8 @@ def extract_code(
         return match if match else [(UNKNOWN, text)]
 
     # Extract both multi-line and single-line code block, separated by the | operator
-    # `{3}(\w+)?\s*([\s\S]*?)`{3}: Matches multi-line code blocks.
-    #    The (\w+)? matches the language, where the ? indicates it is optional.
     # `([^`]+)`: Matches inline code.
-    code_pattern = re.compile(r"`{3}(\w+)?\s*([\s\S]*?)`{3}|`([^`]+)`")
+    code_pattern = re.compile(CODE_BLOCK_PATTERN + r"|`([^`]+)`")
     code_blocks = code_pattern.findall(text)
 
     # Extract the individual code blocks and languages from the matched groups
