@@ -10,7 +10,7 @@ class CustomSaasAPI:
     def __init__(self, infer_params: Dict[str, str]) -> None:
         self.api_key = infer_params["saas.api_key"]
         # chatglm_lite, chatglm_std, chatglm_pro
-        self.model = infer_params.get("saas.model", "chatglm_lite")        
+        self.model = infer_params.get("saas.model", "glm-4")        
         self.client = ZhipuAI(api_key=self.api_key)         
 
     # saas/proprietary
