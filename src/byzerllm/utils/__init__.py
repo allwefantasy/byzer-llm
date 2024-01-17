@@ -587,9 +587,12 @@ def response_class_format_after_chat(cls:Union[pydantic.BaseModel,str])->str:
 {"title": "Item", "description": "时间抽取的返回结果", "type": "object", "properties": {"time": {"title": "Time", "description": "时间信息,比如内容里会提到天， 月份，年等相关词汇", "type": "string"}, "other": {"title": "Other", "description": "除了时间以外的其他部分", "type": "string"}}, "required": ["time", "other"]}
 '''
     example_output = '''{
-  "time": "最近三个月",
-  "other": "奔驰的销量趋势如何"
-}'''    
+  "car": {
+    "name": "奔驰"
+  },
+  "metric": {
+    "name": "销量趋势"
+  }'''    
     msg = f'''你需要以 Json 格式重新组织内容回复我。
 
 示例：
@@ -616,12 +619,71 @@ def response_class_format_after_chat(cls:Union[pydantic.BaseModel,str])->str:
 
 
 def base_ability_format(prompt:Optional[str]=None)->str:
-    RESPONSE_WITH_CLASS_example='''
-{"title": "Item", "description": "时间抽取的返回结果", "type": "object", "properties": {"time": {"title": "Time", "description": "时间信息,比如内容里会提到天， 月份，年等相关词汇", "type": "string"}, "other": {"title": "Other", "description": "除了时间以外的其他部分", "type": "string"}}, "required": ["time", "other"]}
-'''
+    RESPONSE_WITH_CLASS_example='''{
+    "title": "Info",
+    "type": "object",
+    "properties": {
+        "car": {
+            "title": "Car",
+            "description": "车的信息",
+            "allOf": [
+                {
+                    "$ref": "#/definitions/Car"
+                }
+            ]
+        },
+        "metric": {
+            "title": "Metric",
+            "description": "计算的指标信息",
+            "allOf": [
+                {
+                    "$ref": "#/definitions/Metric"
+                }
+            ]
+        }
+    },
+    "required": [
+        "car",
+        "metric"
+    ],
+    "definitions": {
+        "Car": {
+            "title": "Car",
+            "type": "object",
+            "properties": {
+                "name": {
+                    "title": "Name",
+                    "description": "品牌名称",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name"
+            ]
+        },
+        "Metric": {
+            "title": "Metric",
+            "type": "object",
+            "properties": {
+                "name": {
+                    "title": "Name",
+                    "description": "指标名称",
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name"
+            ]
+        }
+    }
+}'''
     RESPONSE_WITH_CLASS_example_output = '''{
-  "time": "最近三个月",
-  "other": "奔驰的销量趋势如何"
+  "car": {
+    "name": "奔驰"
+  },
+  "metric": {
+    "name": "销量趋势"
+  }
 }'''
 
     FUNCTION_CALLING_example = '''

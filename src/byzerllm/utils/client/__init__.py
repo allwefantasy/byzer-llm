@@ -484,6 +484,11 @@ class ByzerLLM:
     def setup_template(self,model:str,template:Union[Template,str])->'ByzerLLM':
         if template == "auto":
             meta = self.get_meta(model=model)
+            
+            is_saas_model =  meta.get("model_deploy_type",None) == "saas"
+            if is_saas_model:
+                return self
+
             if "QWenLMHeadModel" in meta.get("architectures",[]):
                 self.setup_template(model,Templates.qwen())
                 return self
