@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2024/01] Release Byzer-LLM 0.1.36
+- [2024/01] Release Byzer-LLM 0.1.37
 - [2023/12] Release Byzer-LLM 0.1.30
 
 ---
@@ -59,6 +59,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.37： Fix data analysis agent bugs which caused by the upgrade of Byzer-Agent
 - 0.1.36： Fix data analysis agent bugs which caused by the upgrade of Byzer-Agent
 - 0.1.35： Add Baichuan Saas embedding model
 - 0.1.34： Enhance the Byzer-Agent API and fix some bugs in Byzer-LLM

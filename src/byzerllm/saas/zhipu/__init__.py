@@ -14,7 +14,18 @@ class CustomSaasAPI:
         self.api_key = infer_params["saas.api_key"]
         # chatglm_lite, chatglm_std, chatglm_pro
         self.model = infer_params.get("saas.model", "glm-4")        
-        self.client = ZhipuAI(api_key=self.api_key)  
+        self.client = ZhipuAI(api_key=self.api_key) 
+
+        self.meta = {
+            "model_deploy_type": "saas",
+            "backend":"saas",
+            "support_stream": True
+        }
+
+        if "embedding" not in  self.model.lower():            
+            self.meta["embedding_mode"] = False 
+        else:            
+            self.meta["embedding_mode"] = True       
         try:
             ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
         except ValueError:            
@@ -22,11 +33,16 @@ class CustomSaasAPI:
 
     # saas/proprietary
     def get_meta(self):
-        return [{
-            "model_deploy_type": "saas",
-            "backend":"saas",
-            "support_stream": True
-        }]    
+        return [self.meta] 
+
+    def embed_query(self, ins: str, **kwargs):                     
+        start_time = time.monotonic()
+        response = self.client.embeddings.create(
+                model=self.model,
+                input=ins,
+            )
+        time_cost = time.monotonic() - start_time
+        return response.data[0].embedding
 
     async def async_stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
                     max_length: int = 4096,
