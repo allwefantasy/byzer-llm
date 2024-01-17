@@ -20,7 +20,7 @@ class CustomSaasAPI:
             "backend":"saas"
         }]    
 
-    def stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
+    async def stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
                     max_length: int = 4096,
                     top_p: float = 0.7,
                     temperature: float = 0.9, **kwargs):
@@ -42,13 +42,14 @@ class CustomSaasAPI:
                             messages=messages,**other_params)
       
         time_cost = time.monotonic() - start_time
-        generated_text = res_data["choices"][0]["message"]["content"] 
+        generated_text = res_data.choices[0].message.content
+        print(res_data)
 
-        generated_tokens_count = res_data["usage"]["completion_tokens"]   
+        generated_tokens_count = res_data.usage.completion_tokens
 
         return [(generated_text,{"metadata":{
-                        "request_id":res_data["id"],
-                        "input_tokens_count":res_data["usage"]["prompt_tokens"],
+                        "request_id":res_data.id,
+                        "input_tokens_count":res_data.usage.prompt_tokens,
                         "generated_tokens_count":generated_tokens_count,
                         "time_cost":time_cost,
                         "first_token_time":0,
