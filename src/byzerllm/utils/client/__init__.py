@@ -1027,15 +1027,14 @@ class ByzerLLM:
 
         # implement function and the function should return a response class
         elif impl_func and response_class:
-            f = self.mapping_impl_func_format_func.get(model,function_impl_format)
+            f = self.mapping_impl_func_format_func.get(model,function_impl_format) 
             last_message["content"] = f(last_message["content"],impl_func,cls = response_class) 
 
         # generate response class 
         elif response_class and not response_after_chat:
-            f = self.mapping_response_class_format_func.get(model,response_class_format)
+            f = self.mapping_response_class_format_func.get(model,response_class_format) if enable_default_sys_message else sys_response_class_format
             last_message["content"] = f(last_message["content"],cls = response_class)
-        
-                   
+                           
         
         if is_saas_model or is_message_format:
             final_ins = last_message["content"]
