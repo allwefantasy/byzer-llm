@@ -619,64 +619,22 @@ def response_class_format_after_chat(cls:Union[pydantic.BaseModel,str])->str:
 
 
 def base_ability_format(prompt:Optional[str]=None)->str:
-    RESPONSE_WITH_CLASS_example='''{
-    "title": "Info",
-    "type": "object",
-    "properties": {
-        "car": {
-            "title": "Car",
-            "description": "车的信息",
-            "allOf": [
-                {
-                    "$ref": "#/definitions/Car"
-                }
-            ]
-        },
-        "metric": {
-            "title": "Metric",
-            "description": "计算的指标信息",
-            "allOf": [
-                {
-                    "$ref": "#/definitions/Metric"
-                }
-            ]
-        }
-    },
-    "required": [
-        "car",
-        "metric"
-    ],
-    "definitions": {
-        "Car": {
-            "title": "Car",
-            "type": "object",
-            "properties": {
-                "name": {
-                    "title": "Name",
-                    "description": "品牌名称",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "name"
-            ]
-        },
-        "Metric": {
-            "title": "Metric",
-            "type": "object",
-            "properties": {
-                "name": {
-                    "title": "Name",
-                    "description": "指标名称",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "name"
-            ]
-        }
-    }
+    RESPONSE_WITH_CLASS_example_0='''{"title": "Item", "description": "时间抽取的返回结果", "type": "object", "properties": {"time": {"title": "Time", "description": "时间信息,比如内容里会提到天， 月份，年等相关词汇", "type": "string"}, "other": {"title": "Other", "description": "除了时间以外的其他部分", "type": "string"}}, "required": ["time", "other"]}'''
+    RESPONSE_WITH_CLASS_example_output_0 = '''{
+    "time": "最近三个月",
+    "other": "奔驰的销量趋势如何"
+    }'''
+
+    RESPONSE_WITH_CLASS_example='''{"title": "Info", "type": "object", "properties": {"car": {"title": "Car", "description": "车的信息", "allOf": [{"$ref": "#/definitions/Car"}]}, "metric": {"title": "Metric", "description": "计算的指标信息", "allOf": [{"$ref": "#/definitions/Metric"}]}}, "required": ["car", "metric"], "definitions": {"Car": {"title": "Car", "type": "object", "properties": {"name": {"title": "Name", "description": "品牌名称", "type": "string"}}, "required": ["name"]}, "Metric": {"title": "Metric", "type": "object", "properties": {"name": {"title": "Name", "description": "指标名称", "type": "string"}}, "required": ["name"]}}}'''
+    RESPONSE_WITH_CLASS_example_output = '''{
+  "car": {
+    "name": "奔驰"
+  },
+  "metric": {
+    "name": "销量趋势"
+  }
 }'''
+    RESPONSE_WITH_CLASS_example='''{"title": "Info", "type": "object", "properties": {"car": {"title": "Car", "description": "车的信息", "allOf": [{"$ref": "#/definitions/Car"}]}, "metric": {"title": "Metric", "description": "计算的指标信息", "allOf": [{"$ref": "#/definitions/Metric"}]}}, "required": ["car", "metric"], "definitions": {"Car": {"title": "Car", "type": "object", "properties": {"name": {"title": "Name", "description": "品牌名称", "type": "string"}}, "required": ["name"]}, "Metric": {"title": "Metric", "type": "object", "properties": {"name": {"title": "Name", "description": "指标名称", "type": "string"}}, "required": ["name"]}}}'''
     RESPONSE_WITH_CLASS_example_output = '''{
   "car": {
     "name": "奔驰"
@@ -756,12 +714,30 @@ def caculate_current_time():
 '''
     msg = f'''下面是你具备的基础能力，当你回答用户问题的时候，随时回顾这些能力。
 
-===================RESPONSE_WITH_CLASS===================
-
-JSON 格式是一种轻量级的数据交换格式，JSON Schema 是一种用来描述 JSON 数据结构的语言，它是基于 JSON 的一个描述 JSON 数据结构的元数据，可以用来描述 JSON 数据的结构和内容，以及定义 JSON 数据的合法值范围。
+JSON 格式是一种轻量级的数据交换格式，JSON Schema 是基于 JSON 的一个描述 JSON 数据结构的元数据，可以用来描述 JSON 数据的结构和内容，以及定义 JSON 数据的合法值范围。
 OpenAPI Specification (OAS) 使用 JSON Schema 来描述 Json 数据的结构和内容，你需要遵循 OpenAPI 3.1.0 版本的规范。
 
+===================RESPONSE_WITH_CLASS===================
+
 下面是一个根据用户的问题，并且结合 JSON Schema 生成对应的 JSON 数据的例子：
+
+输入：
+
+最近三个月奔驰的销量趋势如何？
+
+JSON Schema：
+
+```json
+{RESPONSE_WITH_CLASS_example_0}
+```
+
+输出：
+
+```json
+{RESPONSE_WITH_CLASS_example_output_0}
+```
+
+下面生成的 Json 数据有有嵌套结构的例子：
 
 输入：
 
@@ -850,7 +826,7 @@ def sys_response_class_format(prompt:str,cls:Union[pydantic.BaseModel,str])->str
         _cls = cls.schema_json(ensure_ascii=False)
 
     msg = f'''
-回顾 RESPONSE_WITH_CLASS 能力，根据用户的问题，结合 JSON Schema 生成对应的 JSON 数据。
+回顾 RESPONSE_WITH_CLASS 能力。
 
 输入：
 
