@@ -59,7 +59,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
-- 0.1.37： Fix data analysis agent bugs which caused by the upgrade of Byzer-Agent
+- 0.1.37： Upgrade saas/zhipu model, you can choose glm-4 / embedding-2 for LLM or embedding purpose
 - 0.1.36： Fix data analysis agent bugs which caused by the upgrade of Byzer-Agent
 - 0.1.35： Add Baichuan Saas embedding model
 - 0.1.34： Enhance the Byzer-Agent API and fix some bugs in Byzer-LLM
