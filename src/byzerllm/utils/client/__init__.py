@@ -11,6 +11,8 @@ from byzerllm.utils import (function_calling_format,
                             function_impl_format,
                             base_ability_format,
                             sys_response_class_format,
+                            sys_function_calling_format,
+                            sys_function_impl_format,
                             exec_capture_output
                             )
 from langchain.prompts import PromptTemplate
@@ -355,11 +357,15 @@ class ByzerLLM:
         self.mapping_function_calling_format_func = {}
         self.mapping_response_class_format_func = {}
         self.mapping_response_class_format_after_chat_func = {}
+        self.mapping_impl_func_format_func = {}
 
         self.mapping_base_system_message = {}
         self.mapping_sys_response_class_format_func = {}
+        self.mapping_sys_function_calling_format_func = {}
+        self.mapping_sys_response_class_format_after_chat_func = {}
+        self.mapping_sys_impl_func_format_func = {}
 
-        self.mapping_impl_func_format_func = {}
+        
 
         self.meta_cache = {}
 
@@ -431,8 +437,19 @@ class ByzerLLM:
 
     def setup_sys_response_class_format_func(self,model:str,func)->'ByzerLLM':
         self.mapping_sys_response_class_format_func[model] = func
-        return self     
-    
+        return self  
+
+    def setup_sys_function_calling_format_func(self,model:str,func)->'ByzerLLM':
+        self.mapping_sys_function_calling_format_func[model] = func
+        return self
+
+    def setup_sys_response_class_format_after_chat_func(self,model:str,func)->'ByzerLLM':
+        self.mapping_sys_response_class_format_after_chat_func[model] = func
+        return self
+
+    def setup_sys_impl_func_format_func(self,model:str,func)->'ByzerLLM':
+        self.mapping_sys_impl_func_format_func[model] = func
+        return self   
     
     
     def setup_infer_backend(self,backend:str)->'ByzerLLM':
@@ -1040,12 +1057,12 @@ class ByzerLLM:
         
         # function calling
         if tools or tool_choice:
-            f = self.mapping_function_calling_format_func.get(model,function_calling_format)
+            f = self.mapping_function_calling_format_func.get(model,function_calling_format) if not enable_default_sys_message else self.mapping_sys_function_calling_format_func.get(model,sys_function_calling_format)
             last_message["content"] = f(last_message["content"],tools,tool_choice)
 
         # implement function and the function should return a response class
         elif impl_func and response_class:
-            f = self.mapping_impl_func_format_func.get(model,function_impl_format) 
+            f = self.mapping_impl_func_format_func.get(model,function_impl_format) if not enable_default_sys_message else self.mapping_sys_impl_func_format_func.get(model,sys_function_impl_format)    
             last_message["content"] = f(last_message["content"],impl_func,cls = response_class) 
 
         # generate response class 
