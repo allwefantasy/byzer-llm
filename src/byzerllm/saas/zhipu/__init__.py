@@ -3,7 +3,10 @@ from zhipuai import ZhipuAI
 import time
 import traceback
 from typing import List, Tuple, Dict,Any
-from retrying import retry
+import ray
+from byzerllm.utils import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
+import threading
+import asyncio
 
 
 class CustomSaasAPI:
@@ -11,13 +14,18 @@ class CustomSaasAPI:
         self.api_key = infer_params["saas.api_key"]
         # chatglm_lite, chatglm_std, chatglm_pro
         self.model = infer_params.get("saas.model", "glm-4")        
-        self.client = ZhipuAI(api_key=self.api_key)         
+        self.client = ZhipuAI(api_key=self.api_key)  
+        try:
+            ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+        except ValueError:            
+            ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()            
 
     # saas/proprietary
     def get_meta(self):
         return [{
             "model_deploy_type": "saas",
-            "backend":"saas"
+            "backend":"saas",
+            "support_stream": True
         }]    
 
     async def async_stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
@@ -26,13 +34,17 @@ class CustomSaasAPI:
                     temperature: float = 0.9, **kwargs):
         
         messages = his + [{"role": "user", "content": ins}]
+        
+        stream = kwargs.get("stream",False)    
 
         other_params = {}
+        
+        if "stream" in kwargs:        
+            other_params["stream"] = kwargs["stream"]
 
         for k, v in kwargs.items():
             if k in ["max_tokens", "stop"]:
                 other_params[k] = v
-                
         
         start_time = time.monotonic()
         res_data = self.client.chat.completions.create(
@@ -40,11 +52,43 @@ class CustomSaasAPI:
                             temperature = temperature,
                             top_p = top_p,
                             messages=messages,**other_params)
+        
+        if stream:            
+            server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+            request_id = [None]
+
+            def writer(): 
+                r = ""
+                for response in res_data:                                        
+                    v = response.choices[0].delta.content
+                    r += v
+                    request_id[0] = f"zhipu_{response.id}"
+                    ray.get(server.add_item.remote(request_id[0], 
+                                                    StreamOutputs(outputs=[SingleOutput(text=r,metadata=SingleOutputMeta(
+                                                        input_tokens_count= -1,
+                                                        generated_tokens_count= -1,
+                                                    ))])
+                                                    ))
+                ray.get(server.mark_done.remote(request_id[0]))
+
+            threading.Thread(target=writer,daemon=True).start()            
+                               
+            time_count= 10*100
+            while request_id[0] is None and time_count > 0:
+                time.sleep(0.01)
+                time_count -= 1
+            
+            if request_id[0] is None:
+                raise Exception("Failed to get request id")
+            
+            def write_running():
+                return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
+                        
+            await asyncio.to_thread(write_running)
+            return [("",{"metadata":{"request_id":request_id[0],"stream_server":"BLOCK_VLLM_STREAM_SERVER"}})] 
       
         time_cost = time.monotonic() - start_time
-        generated_text = res_data.choices[0].message.content
-        print(res_data)
-
+        generated_text = res_data.choices[0].message.content        
         generated_tokens_count = res_data.usage.completion_tokens
 
         return [(generated_text,{"metadata":{
