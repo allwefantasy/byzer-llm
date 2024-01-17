@@ -1032,7 +1032,7 @@ class ByzerLLM:
 
         # generate response class 
         elif response_class and not response_after_chat:
-            f = self.mapping_response_class_format_func.get(model,response_class_format) if enable_default_sys_message else sys_response_class_format
+            f = self.mapping_response_class_format_func.get(model,response_class_format) if not enable_default_sys_message else sys_response_class_format
             last_message["content"] = f(last_message["content"],cls = response_class)
                            
         
