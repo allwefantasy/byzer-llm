@@ -25,16 +25,15 @@ class QueryContext:
     def apply(self):        
         m = copy.deepcopy(self.messages[-1])
         temp_conversation = [{"role":"user","content":'''
-首先，你要先回顾我们前面几条聊天内容，针对我现在的问题，进行一个扩充改写。
+首先，根据我们前面几条聊天内容，针对我现在的问题，进行一个信息扩充。如果我的问题信息已经比较充足，
+则输出原有问题即可。
      
 注意：
 1. 不要询问用户问题          
-2. 不要生成SQL，
+2. 不要生成SQL
 3. 不要额外添加上下文中不存在的信息
 4. 不要关注时间,不要改写时间
-5. 如果无需改写，输出原有问题  
-6. 尽量保证信息完整                        
-7. 写出你的改写后的问题
+6. 尽量保证信息完整 
 '''}]
         class SingleLine(pydantic.BaseModel):
             content:str=pydantic.Field(...,description="改写后的query")
@@ -47,7 +46,8 @@ class QueryContext:
         new_query = m["content"]           
         if t[0].value:
             new_query = t[0].value.content   
-            m["content"] = new_query             
+            m["content"] = new_query   
+            print(f'context query rewrite: {m["content"]} -> {new_query}\n\n',flush=True)          
     #         if new_query != m["content"]:
     #             temp1 = self.llm.emb(None,LLMRequest(instruction=new_query))
     #             temp2 = self.llm.emb(None,LLMRequest(instruction=m["content"]))
