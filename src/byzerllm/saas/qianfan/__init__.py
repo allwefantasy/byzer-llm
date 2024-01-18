@@ -1,31 +1,38 @@
 import traceback
 from typing import List, Dict
-
+import os
+import time
 import qianfan
+from byzerllm.utils import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
+import threading
+import asyncio
+import ray
 
 
 class CustomSaasAPI:
-    def __init__(self, infer_params: Dict[str, str]) -> None:
+    def __init__(self, infer_params: Dict[str, str]) -> None:        
         self.api_key: str = infer_params["saas.api_key"]
         self.secret_key: str = infer_params["saas.secret_key"]
-        self.model: str = infer_params.get("saas.model", "ERNIE-Bot-turbo")
-        self.endpoint: str = infer_params.get("saas.endpoint", None)
-        self.request_timeout: float = infer_params.get("saas.request_timeout", 60)
-        self.retry_count: int = infer_params.get("saas.retry_count", 5)
-        self.backoff_factor: float = infer_params.get("saas.backoff_factor", 4)
-        self.penalty_score: float = infer_params.get("penalty_score", 1.0)
-
+        os.environ["QIANFAN_ACCESS_KEY"] = self.api_key
+        os.environ["QIANFAN_SECRET_KEY"] = self.secret_key
         qianfan.AK(self.api_key)
         qianfan.SK(self.secret_key)
+        self.model: str = infer_params.get("saas.model", "ERNIE-Bot-turbo")   
+        self.client = qianfan.ChatCompletion()   
+        try:
+            ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+        except ValueError:            
+            ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote() 
 
      # saas/proprietary
     def get_meta(self):
         return [{
             "model_deploy_type": "saas",
-            "backend":"saas"
+            "backend":"saas",
+            "support_stream": True
         }]    
 
-    def stream_chat(
+    async def async_stream_chat(
             self,
             tokenizer,
             ins: str,
@@ -35,7 +42,22 @@ class CustomSaasAPI:
             temperature: float = 0.9,
             **kwargs
     ):
-        timeout_s = kwargs.get("timeout_s", self.request_timeout)
+
+        other_params = {}
+        
+        if "request_timeout" in kwargs:
+            other_params["request_timeout"] = int(kwargs["request_timeout"])
+        
+        if "retry_count" in kwargs:
+            other_params["retry_count"] = int(kwargs["retry_count"])
+        
+        if "backoff_factor" in kwargs:
+            other_params["backoff_factor"] = float(kwargs["backoff_factor"])  
+
+        if "penalty_score" in kwargs:
+            other_params["penalty_score"] = float(kwargs["penalty_score"])  
+
+        stream = kwargs.get("stream",False)                                  
 
         messages = qianfan.Messages()
         for item in his:
@@ -50,24 +72,62 @@ class CustomSaasAPI:
 
         if ins:
             messages.append(ins, qianfan.Role.User)
+        
+        start_time = time.monotonic()
+        
+        res_data = self.client.do(
+            model=self.model,            
+            messages=messages,
+            top_p=top_p,
+            temperature=temperature,
+            stream=stream,
+            **other_params
+        )
+        
+        if stream:
+            server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+            request_id = [None]
 
-        content = None
-        try:
-            client = qianfan.ChatCompletion()
-            resp = client.do(
-                model=self.model,
-                endpoint=self.endpoint,
-                retry_count=int(self.retry_count),
-                request_timeout=float(timeout_s),
-                backoff_factor=float(self.backoff_factor),
-                penalty_score=float(self.penalty_score),
-                messages=messages,
-                top_p=top_p,
-                temperature=temperature,
-            )
-            content = resp.body['result']
-            print(f"【Qianfan({self.model}) --> Byzer】: {resp.body}")
-        except Exception as e:
-            traceback.print_exc()
-            content = f"request qianfan api failed: {e}" if content is None or content == "" else content
-        return [(content, "")]
+            def writer(): 
+                for response in res_data:                                        
+                    if res_data["code"] == 200:
+                        v = response["result"]
+                        request_id[0] = f'qianfan_{response["id"]}'
+                        ray.get(server.add_item.remote(request_id[0], 
+                                                       StreamOutputs(outputs=[SingleOutput(text=v,metadata=SingleOutputMeta(
+                                                           input_tokens_count=response["usage"]["prompt_tokens"],
+                                                           generated_tokens_count=response["usage"]["completion_tokens"],
+                                                       ))])
+                                                       ))                                            
+                ray.get(server.mark_done.remote(request_id[0]))
+
+            threading.Thread(target=writer,daemon=True).start()            
+                               
+            time_count= 10*100
+            while request_id[0] is None and time_count > 0:
+                time.sleep(0.01)
+                time_count -= 1
+            
+            if request_id[0] is None:
+                raise Exception("Failed to get request id")
+            
+            def write_running():
+                return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
+                        
+            await asyncio.to_thread(write_running)
+            return [("",{"metadata":{"request_id":request_id[0],"stream_server":"BLOCK_VLLM_STREAM_SERVER"}})] 
+
+        time_cost = time.monotonic() - start_time
+
+        generated_text = res_data["result"]
+        generated_tokens_count = res_data["usage"]["completion_tokens"]
+        input_tokens_count = res_data["usage"]["prompt_tokens"]
+
+        return [(generated_text,{"metadata":{
+                "request_id":res_data["id"],
+                "input_tokens_count":input_tokens_count,
+                "generated_tokens_count":generated_tokens_count,
+                "time_cost":time_cost,
+                "first_token_time":0,
+                "speed":float(generated_tokens_count)/time_cost,        
+            }})] 
