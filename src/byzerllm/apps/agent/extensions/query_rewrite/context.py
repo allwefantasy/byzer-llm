@@ -4,6 +4,7 @@ from byzerllm.utils.retrieval import ByzerRetrieval
 import json
 import numpy as np
 import copy
+import pydantic
 from . import QueryRewriteResult,Action
 
 class QueryContext:
@@ -33,36 +34,33 @@ class QueryContext:
 4. 不要关注时间,不要改写时间
 5. 如果无需改写，输出原有问题  
 6. 尽量保证信息完整                        
-7. 写出你的改写后的问题,用 json 代码块包,格式如下：
-
-```json
-{
-     "content":"你改写后的问题"
-}     
-```             
+7. 写出你的改写后的问题
 '''}]
-        t = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + self.messages + self.params.get("temp_conversation",temp_conversation)))
-        t1 = code_utils.extract_code(t[0].output)
-        new_query = m["content"]
-        if t1:
-            try:
-                new_query = json.loads(t1[0][1])["content"]
-            except Exception:
-                pass                  
-        
-        if new_query != m["content"]:
-            temp1 = self.llm.emb(None,LLMRequest(instruction=new_query))
-            temp2 = self.llm.emb(None,LLMRequest(instruction=m["content"]))
-            sim = np.dot(temp1[0].output,temp2[0].output)
-            if sim > 0.8:
-                print(f'context query rewrite: {m["content"]} -> {new_query}\n\n',flush=True)
-                m["content"] = new_query                    
-            else:
-                print(f'''context query rewrite fail. 
-the similarity is too low {sim}
-query:  {m["content"]}
-new_query: {new_query}
-\n\n''',flush=True)
+        class SingleLine(pydantic.BaseModel):
+            content:str=pydantic.Field(...,description="改写后的query")
+
+        t = self.llm.chat_oai(
+            conversations=message_utils.padding_messages_merge(self._system_message + self.messages + self.params.get("temp_conversation",temp_conversation)),
+            response_class=SingleLine,
+            enable_default_sys_message=True
+            ) 
+        new_query = m["content"]           
+        if t[0].value:
+            new_query = t[0].value.content   
+            m["content"] = new_query             
+    #         if new_query != m["content"]:
+    #             temp1 = self.llm.emb(None,LLMRequest(instruction=new_query))
+    #             temp2 = self.llm.emb(None,LLMRequest(instruction=m["content"]))
+    #             sim = np.dot(temp1[0].output,temp2[0].output)
+    #             if sim > 0.8:
+    #                 print(f'context query rewrite: {m["content"]} -> {new_query}\n\n',flush=True)
+    #                 m["content"] = new_query                    
+    #             else:
+    #                 print(f'''context query rewrite fail. 
+    # the similarity is too low {sim}
+    # query:  {m["content"]}
+    # new_query: {new_query}
+    # \n\n''',flush=True)
 
         return QueryRewriteResult(message = m,action = Action.CONTINUE,extra_info={"new_query":new_query})       
              
