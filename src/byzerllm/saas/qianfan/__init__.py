@@ -90,7 +90,7 @@ class CustomSaasAPI:
 
             def writer(): 
                 for response in res_data:                                        
-                    if res_data["code"] == 200:
+                    if response["code"] == 200:
                         v = response["result"]
                         request_id[0] = f'qianfan_{response["id"]}'
                         ray.get(server.add_item.remote(request_id[0], 
