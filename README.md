@@ -87,10 +87,15 @@ The unique features of Byzer-LLM are:
 
 ## Installation
 
+Recommend Env:
+
+1. Conda:  python==3.10.11  
+2. OS:     ubuntu 22.04
+
 ```bash
 ## Make sure you python version is 3.10.11
 pip install -r requirements.txt
-## This is optional
+## Skip this step if you have no Nvidia GPU
 pip install vllm==0.2.6
 pip install -U byzerllm
 ray start --head
