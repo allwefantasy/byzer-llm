@@ -1014,7 +1014,8 @@ print(t)
 
 Since the different SaaS models have different parameters, here we provide some templates for the SaaS models to help you deploy the SaaS models.
 
-Here is quick example with Python:
+
+### baichuan/百川
 
 ```python
 
@@ -1035,8 +1036,7 @@ llm.deploy(model_path="",
            pretrained_model_type="saas/baichuan",
            udf_name=chat_name,
            infer_params={
-            "saas.api_key":"xxxxxxx",            
-            "saas.baichuan_api_url":"https://api.baichuan-ai.com/v1/chat/completions",
+            "saas.api_key":"xxxxxxx",                        
             "saas.model":"Baichuan2-Turbo"
            })
 
@@ -1045,21 +1045,20 @@ llm.chat_oai(model=chat_name,conversations=[{
     "content":"你好",
 }])           
 ```
+There are some enum values for the `saas.model`:
 
-Since we use SaaS model, There is no need to specify the gpus, so we set `setup_gpus_per_worker` to 0. However, the SaaS model has its own max concurrency limit, the `setup_num_workers` only control the max concurrency accepted by the Byzer-LLM.
+1. Baichuan2-Turbo
+2. Baichuan-Text-Embedding
 
-
-For now, only QianWen Saas support stream chat, here is the example:
+### qianwen/通义千问
 
 ```python
 from byzerllm.utils.client import ByzerLLM
-llm = ByzerLLM(verbose=True)
+llm = ByzerLLM()
 
 llm.setup_num_workers(1).setup_gpus_per_worker(0)
 
 chat_name = "qianwen_chat"
-if llm.is_model_exist(chat_name):
-    llm.undeploy(udf_name=chat_name)
 
 llm.deploy(model_path="",
            pretrained_model_type="saas/qianwen",
@@ -1079,30 +1078,10 @@ for t in v:
     print(t,flush=True)           
 ```
 
-To check if a model the support of stream chat, you can check [Model Meta](Model-Meta).
+There are some enum values for the `saas.model`:
 
-
-### qianfan
-
-
-```sql
-!byzerllm setup single;
-!byzerllm setup "num_gpus=0";
-!byzerllm setup "maxConcurrency=10";
-
-run command as LLM.`` where
-action="infer"
-and pretrainedModelType="saas/qianfan"
-and `saas.api_key`="xxxxxxxxxxxxxxxxxx"
-and `saas.secret_key`="xxxxxxxxxxxxxxxx"
-and `saas.model`="ERNIE-Bot-turbo"
-and `saas.retry_count`="3"
-and `saas.request_timeout`="120"
-and reconnect="false"
-and udfName="qianfan_saas"
-and modelTable="command";
-
-```
+1. qwen-turbo
+2. qwen-max
 
 ### azure openai
 
@@ -1144,23 +1123,34 @@ and udfName="openai_saas"
 and modelTable="command";
 ```
 
-### zhipu
+### zhipu/智谱
 
-```sql
+```python
+import ray
 
-!byzerllm setup single;
-!byzerllm setup "num_gpus=0";
-!byzerllm setup "maxConcurrency=10";
+from byzerllm.utils.client import ByzerLLM
 
-run command as LLM.`` where
-action="infer"
-and pretrainedModelType="saas/zhipu"
-and `saas.api_key`="xxxxxxxxxxxxxxxxxx"
-and `saas.secret_key`="xxxxxxxxxxxxxxxx"
-and `saas.model`="chatglm_lite"
-and udfName="zhipu_saas"
-and modelTable="command";
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)  
+
+llm = ByzerLLM()
+
+llm.setup_num_workers(1).setup_gpus_per_worker(0)
+
+chat_name = "zhipu_chat"
+
+llm.deploy(model_path="",
+           pretrained_model_type="saas/zhipu",
+           udf_name=chat_name,
+           infer_params={
+            "saas.api_key":"xxxx",            
+            "saas.model":"glm-4"
+           })
 ```
+
+There are some enum values for the `saas.model`:
+
+1. glm-4
+2. embedding-2
 
 ### minimax
 
@@ -1197,24 +1187,6 @@ and `saas.api_key`="xxxxxxxxxxxxxxxx"
 and `saas.api_secret`="xxxx"
 and `gpt_url`="ws://spark-api.xf-yun.com/v1.1/chat"
 and udfName="sparkdesk_saas"
-and modelTable="command";
-```
-
-### baichuan
-
-```sql
-!byzerllm setup single;
-!byzerllm setup "num_gpus=0";
-!byzerllm setup "maxConcurrency=10";
-
-run command as LLM.`` where
-action="infer"
-and pretrainedModelType="saas/baichuan"
-and `saas.api_key`="xxxxxxxxxxxxxxxxxx"
-and `saas.secret_key`="xxxxxxxxxxxxxxxx"
-and `saas.baichuan_api_url`="https://api.baichuan-ai.com/v1/chat"
-and `saas.model`="Baichuan2-53B"
-and udfName="baichuan_saas"
 and modelTable="command";
 ```
 
