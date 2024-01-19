@@ -162,8 +162,16 @@ This time the script will automatically install the following software:
 2. Conda
 3. Nvidia Driver 535
 4. Cuda 12.1.0
-5. all the python packages in requirements.txt
-6. Byzer-SQL/Byzer-Notebook
+5. Ray
+6. all the python packages in requirements.txt
+7. Byzer-SQL/Byzer-Notebook
+
+If you need to add more worker nodes to the Ray cluster, repeat the above steps on the worker nodes.
+Notice that the `ROLE` should be `worker` on the worker nodes.
+
+```shell
+ROLE=worker ./setup-machine.sh
+```
 
 ---
 
