@@ -303,7 +303,7 @@ TORCH_CUDA_ARCH_LIST_VALUE="8.0 8.6 9.0"
 if [[ "${VLLM_SUPPORT}" == "true" ]]; then
     echo "Setup VLLM support in Byzer-LLM"
     # pip install --no-deps "git+${GIT_VLLM}"
-    pip install vllm==0.2.1.post1
+    pip install vllm==0.2.6
 fi
 
 if [[ "${AVIARY_SUPPORT}" == "true" ]]; then
