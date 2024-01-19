@@ -49,6 +49,12 @@ The unique features of Byzer-LLM are:
 * [Chat Template](#Chat-Template)
 * [LLM Default Generation Parameters](#LLM-Default-Generation-Parameters)
 * [SaaS Models](#SaaS-Models)
+    * [qianwen/通义千问](#qianwen/通义千问)
+    * [baichuan/百川](#baichuan/百川)
+    * [azure openai](#azure-openai)
+    * [openai](#openai)
+    * [zhipu/智谱](#zhipu/智谱)     
+    
 * [Multi Modal](#Multi-Modal)
 * [StableDiffusion](#StableDiffusion)
 * [SQL Support](#SQL-Support)
