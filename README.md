@@ -35,6 +35,7 @@ The unique features of Byzer-LLM are:
 * [Versions](#Versions)
 * [Installation](#Installation)
 * [Quick Start](#Quick-Start)
+* [How to connect Models from outside of Ray Cluster](#how-to-connect-models-from-outside-of-ray-cluster)
 * [Embedding Model](#Embedding-Model)
 * [Quatization](#Quatization)
 * [Supported Models](#Supported-Models)
@@ -144,7 +145,17 @@ llm.deploy(model_path="/home/byzerllm/models/openbuddy-llama2-13b64k-v15",
            pretrained_model_type="custom/llama2",
            udf_name="llama2_chat",infer_params={})
 
-llm.chat("llama2_chat",LLMRequest(instruction="hello world"))[0].output
+
+
+llm_client = ByzerLLM()
+llm_client.setup_template("llama2_chat","auto")
+
+v = llm.chat_oai(model="llama2_chat",conversations=[{
+    "role":"user",
+    "content":"hello",
+}])
+
+print(v[0].output)
 ```
 
 The above code will deploy a llama2 model and then use the model to infer the input text. If you use transformers as the inference backend, you should specify the `pretrained_model_type` manually since the transformers backend can not auto detect the model type.
@@ -172,12 +183,53 @@ llm.deploy(pretrained_model_type="saas/azure_openai",
             "saas.deployment_id"="xxxxxx"
            })
 
-llm.chat("azure_openai",LLMRequest(instruction="hello world"))[0].output
+
+llm_client = ByzerLLM()
+llm_client.setup_template("azure_openai","auto")
+
+v = llm.chat_oai(model="azure_openai",conversations=[{
+    "role":"user",
+    "content":"hello",
+}])
+
+print(v[0].output)
 ```
 
 Notice that the SaaS model does not need GPU, so we set the `setup_gpus_per_worker` to 0, and you can use `setup_num_workers`
 to control max concurrency,how ever, the SaaS model has its own max concurrency limit, the `setup_num_workers` only control the max
 concurrency accepted by the Byzer-LLM.
+
+## How to connect Models from outside of Ray Cluster
+
+The recommended way is start a empty Ray worker in your target machine:
+
+```shell
+ray start --address="xxxxx:6379"  --num-gpus=0 --num-cpus=0 
+```
+
+Then you can connect the Models from outside of the Ray cluster:
+
+```python
+import ray
+from byzerllm.utils.client import ByzerLLM,LLMRequest,InferBackend
+
+## connect the ray cluster by the empty worker we started before
+## this code should be run once in your prorgram
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)
+
+## new a ByzerLLM instance
+
+llm_client = ByzerLLM()
+llm_client.setup_template("llama2_chat","auto")
+
+v = llm.chat_oai(model="llama2_chat",conversations=[{
+    "role":"user",
+    "content":"hello",
+}])
+
+print(v[0].output)
+```
+
 
 ## Embedding Model
 
@@ -345,7 +397,11 @@ llm.deploy(
     infer_params={}
 )
 
-llm.chat("zephyr_chat",LLMRequest(instruction="hello world"))[0].output
+v = llm.chat_oai(model="zephyr_chat",conversations=[{
+    "role":"user",
+    "content":"hello",
+}])
+print(v[0].output)
 ```
 
 There are some tiny differences between the vLLM and the transformers backend. 
