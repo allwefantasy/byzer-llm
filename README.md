@@ -136,7 +136,7 @@ pip install --upgrade xformers --index-url https://download.pytorch.org/whl/cu11
 
 > Only tested on Ubuntu 20.04/22.04 CentOS 8.0
 
-If your machine is a raw machine, only have the OS, you can use the following script to install the Byzer-LLM:
+If your machine is a raw machine whithout GPU Driver and Cuda installed, you can use the following script to setup the machine:
 
 ```shell
 git clone https://gitee.com/allwefantasy/byzer-llm
