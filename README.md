@@ -132,6 +132,39 @@ pip uninstall xformers -y
 pip install --upgrade xformers --index-url https://download.pytorch.org/whl/cu118
 ```
 
+### Raw Machine 
+
+> Only tested on Ubuntu 20.04/22.04 CentOS 8.0
+
+If your machine is a raw machine, only have the OS, you can use the following script to install the Byzer-LLM:
+
+```shell
+git clone https://gitee.com/allwefantasy/byzer-llm
+cd byzer-llm/setup-machine
+```
+
+Then switch to the ROOT user, and run the following script:
+
+```shell
+ROLE=master ./setup-machine.sh
+```
+This step will create a user called `byzerllm`.
+
+Then switch to the `byzerllm` user, and run the following script:
+
+```shell
+ROLE=master ./setup-machine.sh
+```
+
+This time the script will automatically install the following software:
+
+1. 
+2. Conda
+3. Nvidia Driver 535
+4. Cuda 12.1.0
+5. all the python packages in requirements.txt
+6. Byzer-SQL/Byzer-Notebook
+
 ---
 
 ## Quick Start
