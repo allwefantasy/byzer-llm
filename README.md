@@ -201,7 +201,7 @@ concurrency accepted by the Byzer-LLM.
 
 ## How to connect Models from outside of Ray Cluster
 
-The recommended way is start a empty Ray worker in your target machine:
+The recommended way is to start a empty Ray worker in your target machine(e.g. Your web server machine):
 
 ```shell
 ray start --address="xxxxx:6379"  --num-gpus=0 --num-cpus=0 
