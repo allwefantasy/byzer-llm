@@ -98,7 +98,7 @@ Recommend Env:
 
 1. Conda:  python==3.10.11  
 2. OS:     ubuntu 22.04
-3. Cuda:   12.1.0 (Optinal)
+3. Cuda:   12.1.0 (Optional if you only use SaaS model)
 
 ```bash
 ## Make sure you python version is 3.10.11
