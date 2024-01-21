@@ -35,6 +35,7 @@ class CustomSaasAPI:
     def embed_query(self, ins: str, **kwargs): 
         # text-embedding-v1或者text-embedding-v2              
         resp = dashscope.TextEmbedding.call(
+        api_key=self.api_key,
         model=self.model,
         input=ins)
         if resp.status_code == HTTPStatus.OK:
