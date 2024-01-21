@@ -45,9 +45,9 @@ class QueryContext:
             ) 
         new_query = m["content"]           
         if t[0].value:
-            new_query = t[0].value.content   
-            m["content"] = new_query   
+            new_query = t[0].value.content               
             print(f'context query rewrite: {m["content"]} -> {new_query}\n\n',flush=True)          
+            m["content"] = new_query   
     #         if new_query != m["content"]:
     #             temp1 = self.llm.emb(None,LLMRequest(instruction=new_query))
     #             temp2 = self.llm.emb(None,LLMRequest(instruction=m["content"]))
