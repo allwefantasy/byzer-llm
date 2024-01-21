@@ -242,7 +242,7 @@ field(created_time,long,sort)
             return docs[0:limit]    
 
     def emb(self,s:str):        
-        return self.llm.emb(self.llm.default_emb_model_name,LLMRequest(instruction=s))[0].output 
+        return self.llm.emb(self.llm.default_emb_model_name,LLMRequest(instruction=s))[0].output[0:1024] 
 
 
     def split_text_into_chunks(self,s:str):
