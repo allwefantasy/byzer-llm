@@ -39,7 +39,7 @@ class CustomSaasAPI:
         model=self.model,
         input=ins)
         if resp.status_code == HTTPStatus.OK:
-            return resp.output.embedding[0]["embedding"]
+            return resp.output["embeddings"][0]["embedding"]
         else:
             raise Exception(resp.message)
 
