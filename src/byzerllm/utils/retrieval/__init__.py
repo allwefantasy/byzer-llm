@@ -23,6 +23,8 @@ class ClusterBuilder:
         self.jvm_settings = None
         self.resource_requirement_settings = None
 
+        self.custom_resources = {}
+
         self.br = br
 
     def set_name(self,name:str):
@@ -40,6 +42,11 @@ class ClusterBuilder:
     def set_node_memory(self,nodeMemory:str):
         self.nodeMemory = nodeMemory
         return self
+    
+    def set_custom_resource(self,k:str,v:float):
+        self.custom_resources[k] = v
+        return self
+
     
     def set_node_cpu(self,nodeCPU:int):
         self.nodeCPU = nodeCPU
@@ -86,6 +93,10 @@ class ClusterBuilder:
 
         if self.nodeCPU:
            resourceOptions.append(ResourceRequirement("CPU",self.nodeCPU))
+
+        if self.custom_resources:
+            for k,v in self.custom_resources.items():
+                resourceOptions.append(ResourceRequirement(k,v))   
 
         self.jvm_settings = JVMSettings(jvmOptions)
         self.resource_requirement_settings = ResourceRequirementSettings(resourceOptions)        
