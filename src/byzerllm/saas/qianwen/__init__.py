@@ -13,7 +13,15 @@ import asyncio
 class CustomSaasAPI:
     def __init__(self, infer_params: Dict[str, str]) -> None:
         self.api_key: str = infer_params["saas.api_key"]  
-        self.model = infer_params.get("saas.model", "qwen-turbo") 
+        self.model = infer_params.get("saas.model", "qwen-turbo")
+        self.meta = {
+            "model_deploy_type": "saas",
+            "backend":"saas",
+            "support_stream": True
+        } 
+        
+        self.meta["embedding_mode"] = "embedding"  in  self.model.lower()
+
         try:
             ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
         except ValueError:            
@@ -21,11 +29,18 @@ class CustomSaasAPI:
 
      # saas/proprietary
     def get_meta(self):
-        return [{
-            "model_deploy_type": "saas",
-            "backend":"saas",
-            "support_stream": True
-        }]  
+        return [] 
+
+    
+    def embed_query(self, ins: str, **kwargs): 
+        # text-embedding-v1或者text-embedding-v2              
+        resp = dashscope.TextEmbedding.call(
+        model=self.model,
+        input=ins)
+        if resp.status_code == HTTPStatus.OK:
+            return resp.output.embedding[0]["embedding"]
+        else:
+            raise Exception(resp.message)
 
 
     async def async_stream_chat(
