@@ -396,7 +396,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
 
     if quatization in ["4", "8", "true",True,4,8]:
         print(f"enable [{quatization}] quatization.", flush=True)
-        load_in_8bit = quatization == "8"
+        load_in_8bit = quatization == "8" or quatization == 8
         # default using int4
         quantization_config = BitsAndBytesConfig(
             load_in_4bit=True,
