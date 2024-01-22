@@ -31,10 +31,13 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
         config.max_length = max_length
         config.temperature = temperature
         config.top_p = top_p
+
+        if "max_new_tokens" in kwargs:
+            config.max_new_tokens = int(kwargs["max_new_tokens"])
         
         conversations = his + [{"content":ins,"role":"user"}]
         start_time = time.monotonic()
-        response = self.chat(tokenizer, conversations,generation_config=config)
+        response = self.chat(tokenizer, messages=conversations,generation_config=config)
         time_taken = time.monotonic() - start_time
 
         generated_tokens_count = tokenizer(response, return_token_type_ids=False,return_tensors="pt")["input_ids"].shape[1]
