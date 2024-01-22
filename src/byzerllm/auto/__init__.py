@@ -33,8 +33,22 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
         config.top_p = top_p
         
         conversations = his + [{"content":ins,"role":"user"}]
+        start_time = time.monotonic()
         response = self.chat(tokenizer, conversations,generation_config=config)
-        return [(response,"")]
+        time_taken = time.monotonic() - start_time
+
+        generated_tokens_count = tokenizer(response, return_token_type_ids=False,return_tensors="pt")["input_ids"].shape[1]
+        print(f"chat took {time_taken} s to complete. tokens/s:{float(generated_tokens_count)/time_taken}",flush=True)
+        
+        return [(response,{"metadata":{
+            "request_id":"",
+            "input_tokens_count": -1,
+            "generated_tokens_count":generated_tokens_count,
+            "time_cost":time_taken,
+            "first_token_time": -1.0,
+            "speed":float(generated_tokens_count)/time_taken*1000,
+            "prob": -1.0
+        }})] 
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
     timeout_s = float(kwargs.get("timeout_s",60*5)) 
@@ -80,7 +94,16 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
     new_tokens = response[0][tokens["input_ids"].shape[1]:]
     print(f"generate took {time_taken} s to complete. tokens/s:{len(new_tokens)/time_taken}",flush=True)
     answer = tokenizer.decode(new_tokens, skip_special_tokens=True)
-    return [(answer,"")]
+    
+    return [(answer,{"metadata":{
+            "request_id":"",
+            "input_tokens_count": tokens["input_ids"].shape[1],
+            "generated_tokens_count":len(new_tokens),
+            "time_cost":time_taken,
+            "first_token_time": -1.0,
+            "speed":float(generated_tokens_count)/time_taken*1000,
+            "prob": -1.0
+        }})] 
 
 async def async_get_meta(model):
      from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs     
