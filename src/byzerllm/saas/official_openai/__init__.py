@@ -1,11 +1,12 @@
 
 from typing import List, Tuple, Dict,Any
 import httpx
+from openai import OpenAI   
 
 class CustomSaasAPI:    
 
     def __init__(self, infer_params: Dict[str, str]) -> None:
-        from openai import OpenAI        
+             
         self.api_key = infer_params["saas.api_key"]        
         self.model = infer_params.get("saas.model","gpt-3.5-turbo-1106")
         
