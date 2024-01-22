@@ -1211,21 +1211,42 @@ and modelTable="command";
 
 ```sql
 
-!byzerllm setup single;
-!byzerllm setup "num_gpus=0";
-!byzerllm setup "maxConcurrency=10";
+import ray
 
-run command as LLM.`` where
-action="infer"
-and pretrainedModelType="saas/azure_openai"
-and `saas.api_type`="azure"
-and `saas.api_key`="xxx"
-and `saas.api_base`="xxx"
-and `saas.api_version`="xxxxx"
-and `saas.model`="xxxxx"
-and udfName="openai_saas"
-and modelTable="command";
+from byzerllm.utils.client import ByzerLLM
+
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)  
+
+llm = ByzerLLM()
+
+llm.setup_num_workers(1).setup_gpus_per_worker(0)
+
+chat_name = "openai_chat"
+
+llm.deploy(model_path="",
+           pretrained_model_type="saas/official_openai",
+           udf_name=chat_name,
+           infer_params={
+            "saas.api_key":"xxxx",            
+            "saas.model":"gpt-3.5-turbo-1106"
+           })
 ```
+
+If you need to use proxy, you can setup the proxy with the following code:
+
+```python
+llm.deploy(model_path="",
+           pretrained_model_type="saas/official_openai",
+           udf_name=chat_name,
+           infer_params={
+            "saas.api_key":"xxxx",            
+            "saas.model":"gpt-3.5-turbo-1106"
+            "saas.base_url": "http://my.test.server.example.com:8083",
+            "saas.proxies":"http://my.test.proxy.example.com"
+            "saas.local_address":"0.0.0.0"
+           })
+```
+
 
 ### zhipu/智谱
 
