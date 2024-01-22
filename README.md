@@ -347,6 +347,35 @@ v = llm.emb(None,LLMRequest(instruction="你好"))
 print(v.output)
 ```
 
+If you need to use embedding rerank model, you can refer to the following usage.
+```python
+import ray
+from byzerllm.utils.client import ByzerLLM,LLMRequest,InferBackend
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)
+llm = ByzerLLM()
+
+llm.setup_gpus_per_worker(0.4).setup_num_workers(2).setup_infer_backend(InferBackend.Transformers)
+llm.deploy(
+    model_path="/Users/wanghan/data/bge-reranker-base",
+    pretrained_model_type="custom/bge_rerank",
+    udf_name="emb_rerank",
+    infer_params={}
+)   
+llm.setup_default_emb_model_name("emb_rerank")
+```
+Then you can get a relevance score by inputting query and passage to the reranker
+```python
+sentence_pairs_01 = ['query', 'passage']
+t1 = llm.emb_rerank(sentence_pairs=sentence_pairs_01)
+print(t1[0].output)
+#output [['query', 'passage'], 0.4474925994873047]
+
+sentence_pairs_02 = [['what is panda?', 'hi'], ['what is panda?','The giant panda (Ailuropoda melanoleuca), sometimes called a panda bear or simply panda, is a bear species endemic to China.']]
+t2 = llm.emb_rerank(sentence_pairs=sentence_pairs_02)
+print(t2[0].output)
+#output [[['what is panda?', 'The giant panda (Ailuropoda melanoleuca), sometimes called a panda bear or simply panda, is a bear species endemic to China.'], 6.1821160316467285], [['what is panda?', 'hi'], -8.154398918151855]]
+```
+
 ## Quatization
 
 If the backend is `InferBackend.transformers`, here is the baichuan2 example:
