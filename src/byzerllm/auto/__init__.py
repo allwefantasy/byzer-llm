@@ -432,13 +432,23 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     model.generation_config = GenerationConfig.from_pretrained(pretrained_model_dir)
     
     if "use_cache" in infer_params:
-        model.generation_config.use_cache = infer_params["use_cache"] == "true"    
+        if isinstance(infer_params["use_cache"],bool):
+            model.generation_config.use_cache = infer_params["use_cache"]
+        else:
+            model.generation_config.use_cache = infer_params["use_cache"] == "true"    
     
     model.eval()  
     if quatization:
         model = torch.compile(model)
            
     has_chat = hasattr(model,"chat")
+    
+    if "message_format" in infer_params:
+        if isinstance(infer_params["message_format"],bool):
+            has_chat = infer_params["message_format"]
+        else:
+            has_chat = infer_params["message_format"] == "true"
+
     extra_meta = {}
     if has_chat:
         extra_meta["message_format"] = True
