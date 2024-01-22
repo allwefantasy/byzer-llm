@@ -844,7 +844,32 @@ class ByzerLLM:
         res = self._query(model,v) 
       
         return [LLMResponse(output=item["predict"],metadata=item.get("metadata",{}),input=item["input"]) for item in res]
-            
+
+    def emb_rerank(self, model: str = None, sentence_pairs: Union[List[Tuple[str, str]], Tuple[str, str]] = [],
+                   extract_params: Dict[str, Any] = {}) -> Union[Tuple[Tuple[str, str], float], List[Tuple[Tuple[str, str], float]]]:
+
+        if not model and not self.default_emb_model_name:
+            raise Exception("emb model name is required")
+
+        if not sentence_pairs or len(sentence_pairs) == 0:
+            raise Exception("emb rerank param sentence_pairs is required")
+
+        if not model:
+            model = self.default_emb_model_name
+
+        default_config = self.mapping_extra_generation_params.get(model, {})
+
+        v = [{
+            "instruction": sentence_pairs,
+            "embedding": True,
+            "embed_rerank": True,
+            **default_config,
+            **extract_params}]
+        res = self._query(model, v)
+
+        return [LLMResponse(output=item["predict"], metadata=item.get("metadata", {}), input=item["input"]) for item in
+                res]
+
     def _generate_ins(self,model:str,request:LLMRequest,role_mapping:Dict[str,str]):
          if not role_mapping["user_role"]:
              return request.instruction
