@@ -73,5 +73,5 @@ class CustomSaasAPI:
                             top_p=top_p                            
                         )
 
-        res = response.choices[0].text.strip()
+        res = response.choices[0].message.content
         return [(res, "")]
