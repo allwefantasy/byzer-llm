@@ -33,7 +33,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
         config.top_p = top_p
         
         conversations = his + [{"content":ins,"role":"user"}]
-        response = self.chat(tokenizer, conversations,genration_config=config)
+        response = self.chat(tokenizer, conversations,generation_config=config)
         return [(response,"")]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
