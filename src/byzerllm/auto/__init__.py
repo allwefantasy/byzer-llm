@@ -6,6 +6,7 @@ import ray
 import time
 from typing import Any,Any,Dict, List,Tuple,Generator,Optional,Union
 import types
+import copy
 
 from pyjava.api.mlsql import DataServer
 from byzerllm.utils.metrics import Metric
@@ -26,8 +27,13 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
         temperature:float=0.1,**kwargs):
  
     if self.get_meta()[0]["message_format"]:
+        config = copy.deepcopy(self.generation_config)
+        config.max_length = max_length
+        config.temperature = temperature
+        config.top_p = top_p
+        
         conversations = his + [{"content":ins,"role":"user"}]
-        response = self.chat(tokenizer, conversations)
+        response = self.chat(tokenizer, conversations,genration_config=config)
         return [(response,"")]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
@@ -398,6 +404,10 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         model = PeftModel.from_pretrained(model, adaptor_model_dir)
     
     model.generation_config = GenerationConfig.from_pretrained(pretrained_model_dir)
+    
+    if "use_cache" in infer_params:
+        model.generation_config.use_cache = infer_params["use_cache"] == "true"    
+    
     model.eval()  
     if quatization:
         model = torch.compile(model)
