@@ -29,7 +29,7 @@ class CustomSaasAPI:
 
      # saas/proprietary
     def get_meta(self):
-        return [] 
+        return [self.meta] 
 
     
     def embed_query(self, ins: str, **kwargs): 

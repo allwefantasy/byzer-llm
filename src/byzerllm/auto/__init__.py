@@ -1,4 +1,4 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig,StoppingCriteriaList
+from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig,StoppingCriteriaList,GenerationConfig
 import ray
 import torch
 import os
@@ -24,7 +24,12 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
         max_length:int=4090, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
-        
+ 
+    if self.get_meta()[0]["message_format"]:
+        conversations = his + [{"content":ins,"role":"user"}]
+        response = self.chat(tokenizer, conversations)
+        return [(response,"")]
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
     timeout_s = float(kwargs.get("timeout_s",60*5)) 
     skip_check_min_length = int(kwargs.get("stopping_sequences_skip_check_min_length",0))       
@@ -32,8 +37,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
     tokens = tokenizer(ins, return_token_type_ids=False,return_tensors="pt").to(device)
 
     stopping_criteria = None
-    
-    import math
+
 
     if "stopping_sequences" in kwargs:        
         stopping_sequences = [torch.tensor(word).to(device) for word in tokenize_stopping_sequences(tokenizer,kwargs["stopping_sequences"].split(","))]    
@@ -392,18 +396,25 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     if is_adaptor_model:
         from peft import PeftModel
         model = PeftModel.from_pretrained(model, adaptor_model_dir)
-
+    
+    model.generation_config = GenerationConfig.from_pretrained(pretrained_model_dir)
     model.eval()  
     if quatization:
-        model = torch.compile(model)   
+        model = torch.compile(model)
+           
+    has_chat = hasattr(model,"chat")
+    extra_meta = {}
+    if has_chat:
+        extra_meta["message_format"] = True
 
     def get_meta(self): 
-        config = self.config   
+        config = self.config           
         return [{
             "model_deploy_type": "proprietary",
             "backend":"transformers",
             "max_model_len":getattr(config, "model_max_length", -1),
-            "architectures":getattr(config, "architectures", [])
+            "architectures":getattr(config, "architectures", []),
+            **extra_meta
         }]    
 
     model.stream_chat = types.MethodType(stream_chat, model)
