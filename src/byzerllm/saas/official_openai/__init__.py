@@ -70,8 +70,7 @@ class CustomSaasAPI:
                             model=model,
                             max_tokens=max_length,
                             temperature=temperature,
-                            top_p=top_p,
-                            max_retries=max_retries
+                            top_p=top_p                            
                         )
 
         res = response.choices[0]["message"]["content"].replace(' .', '.').strip()
