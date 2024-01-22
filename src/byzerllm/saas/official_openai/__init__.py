@@ -1,22 +1,11 @@
-import openai
-from packaging import version
-
-required_version = version.parse("1.1.1")
-current_version = version.parse(openai.__version__)
-
-if current_version < required_version:
-    raise ValueError(f"Error: OpenAI version {openai.__version__}"
-                     " is less than the required version 1.1.1")
-else:
-    print(f"OpenAI version is {current_version}")
 
 from typing import List, Tuple, Dict,Any
-from openai import OpenAI
 import httpx
 
-class CustomSaasAPI:
+class CustomSaasAPI:    
+
     def __init__(self, infer_params: Dict[str, str]) -> None:
-        
+        from openai import OpenAI        
         self.api_key = infer_params["saas.api_key"]        
         self.model = infer_params.get("saas.model","gpt-3.5-turbo-1106")
         
