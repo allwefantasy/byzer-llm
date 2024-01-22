@@ -503,7 +503,13 @@ class ByzerLLM:
             meta = self.get_meta(model=model)
             
             is_saas_model =  meta.get("model_deploy_type",None) == "saas"
+            
             if is_saas_model:
+                return self
+            
+            is_message_format = meta.get("message_format",False)
+            
+            if is_message_format:                
                 return self
 
             if "QWenLMHeadModel" in meta.get("architectures",[]):
