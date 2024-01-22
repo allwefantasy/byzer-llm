@@ -1,5 +1,16 @@
-from typing import List, Tuple, Dict,Any
+import openai
+from packaging import version
 
+required_version = version.parse("1.1.1")
+current_version = version.parse(openai.__version__)
+
+if current_version < required_version:
+    raise ValueError(f"Error: OpenAI version {openai.__version__}"
+                     " is less than the required version 1.1.1")
+else:
+    print(f"OpenAI version is {current_version}")
+
+from typing import List, Tuple, Dict,Any
 from openai import OpenAI
 import httpx
 
