@@ -20,15 +20,16 @@ reponse_queue = queue.Queue()
 
 class SparkDeskAPIParams(object):
     # 初始化
-    def __init__(self, APPID, APIKey, APISecret, gpt_url):
+    def __init__(self, APPID, APIKey, APISecret, gpt_url, DOMAIN):
         self.APPID = APPID
         self.APIKey = APIKey
         self.APISecret = APISecret
         self.host = urlparse(gpt_url).netloc
         self.path = urlparse(gpt_url).path
-        self.gpt_url = gpt_url            
+        self.gpt_url = gpt_url
+        self.DOMAIN = DOMAIN
 
-    # 生成url
+        # 生成url
     def create_url(self):
         # 生成RFC1123格式的时间戳
         now = datetime.now()
@@ -60,28 +61,29 @@ class SparkDeskAPIParams(object):
         # 此处打印出建立连接时候的url,参考本demo的时候可取消上方打印的注释，比对相同参数时生成的url与自己代码生成的url是否一致
         return url
 
-class SparkDeskAPI:
+class CustomSaasAPI:
 
-    def __init__(self,appid, api_key, api_secret,params:Dict[str,str]={}) -> None:
-        appid = appid if appid else params.get("saas.appid","")
-        api_key = api_key if api_key else params.get("saas.api_key","")
-        api_secret = api_secret if api_secret else params.get("saas.api_secret","")
-        gpt_url = params.get("gpt_url","ws://spark-api.xf-yun.com/v1.1/chat")
-        self.config = SparkDeskAPIParams(appid, api_key, api_secret, gpt_url)
-    
+    def __init__(self, infer_params: Dict[str, str]) -> None:
+        self.appid: str = infer_params.get("saas.appid","")
+        self.api_key: str = infer_params.get("saas.api_key","")
+        self.api_secret: str = infer_params.get("saas.api_secret","")
+        self.gpt_url: str = infer_params.get("saas.gpt_url","")
+        self.domain: str = infer_params.get("saas.domain","")
+        self.config = SparkDeskAPIParams(self.appid, self.api_key, self.api_secret, self.gpt_url, self.domain)
+
     @staticmethod
     def on_error(ws, error):
         pass
 
 
     @staticmethod
-    def on_close(ws,a,b):        
+    def on_close(ws,a,b):
         pass
 
 
     @staticmethod
     def on_open(ws):
-        thread.start_new_thread(SparkDeskAPI.run, (ws,))
+        thread.start_new_thread(CustomSaasAPI.run, (ws,))
 
     @staticmethod
     def run(ws, *args):
@@ -93,7 +95,7 @@ class SparkDeskAPI:
             },
             "parameter": {
                 "chat": {
-                    "domain": "general",
+                    "domain": ws.domain,
                     "random_threshold": ws.temperature,
                     "max_tokens": ws.max_length,
                     "auditing": "default"
@@ -108,24 +110,24 @@ class SparkDeskAPI:
         data = json.dumps(data)
         ws.send(data)
 
-   
+
     @staticmethod
     def on_message(ws, message):
         data = json.loads(message)
         code = data['header']['code']
-        if code != 0:            
+        if code != 0:
             reponse_queue.put(f'请求错误: {code}, {data}')
             reponse_queue.put(None)
             ws.close()
         else:
             choices = data["payload"]["choices"]
             status = choices["status"]
-            content = choices["text"][0]["content"]            
+            content = choices["text"][0]["content"]
             reponse_queue.put(content)
             if status == 2:
                 reponse_queue.put(None)
                 ws.close()
-    
+
 
     # saas/proprietary
     def get_meta(self):
@@ -133,33 +135,34 @@ class SparkDeskAPI:
             "model_deploy_type": "saas",
             "backend":"saas"
         }]
-    
-    def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,Any]]=[],  
-        max_length:int=4096, 
-        top_p:float=0.7,
-        temperature:float=0.9):         
+
+    def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,Any]]=[],
+                    max_length:int=4096,
+                    top_p:float=0.7,
+                    temperature:float=0.9):
 
         q = his + [{"role": "user", "content": ins}]
         websocket.enableTrace(False)
         wsUrl = self.config.create_url()
-        ws = websocket.WebSocketApp(wsUrl, 
-                                    on_message=SparkDeskAPI.on_message, 
-                                    on_error=SparkDeskAPI.on_error, 
-                                    on_close=SparkDeskAPI.on_close, 
-                                    on_open=SparkDeskAPI.on_open)
+        ws = websocket.WebSocketApp(wsUrl,
+                                    on_message=CustomSaasAPI.on_message,
+                                    on_error=CustomSaasAPI.on_error,
+                                    on_close=CustomSaasAPI.on_close,
+                                    on_open=CustomSaasAPI.on_open)
         ws.appid = self.config.APPID
+        ws.domain = self.config.DOMAIN
         ws.question = q
         ws.max_length = max_length
         ws.top_p = top_p
-        ws.temperature = temperature        
+        ws.temperature = temperature
         ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
-        
+
         result = []
 
         t  = reponse_queue.get(timeout=30)
         while t is not None:
             result.append(t)
             t  = reponse_queue.get(timeout=30)
-           
+
 
         return [("".join(result),"")]
