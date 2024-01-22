@@ -392,9 +392,9 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
 
     tokenizer = AutoTokenizer.from_pretrained(pretrained_model_dir,trust_remote_code=True)    
 
-    quatization = infer_params.get("quatization", "false")
+    quatization = infer_params.get("backend.quantization",infer_params.get("quatization", "false"))
 
-    if quatization in ["4", "8", "true"]:
+    if quatization in ["4", "8", "true",True,4,8]:
         print(f"enable [{quatization}] quatization.", flush=True)
         load_in_8bit = quatization == "8"
         # default using int4
@@ -431,11 +431,12 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     
     model.generation_config = GenerationConfig.from_pretrained(pretrained_model_dir)
     
-    if "use_cache" in infer_params:
-        if isinstance(infer_params["use_cache"],bool):
-            model.generation_config.use_cache = infer_params["use_cache"]
+    if "use_cache" in infer_params or "backend.use_cache" in infer_params:
+        use_cache = infer_params.get("backend.use_cache",infer_params.get("use_cache", "false"))
+        if isinstance(use_cache,bool):
+            model.generation_config.use_cache = use_cache
         else:
-            model.generation_config.use_cache = infer_params["use_cache"] == "true"    
+            model.generation_config.use_cache = use_cache == "true"    
     
     model.eval()  
     if quatization:
@@ -443,11 +444,12 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
            
     has_chat = hasattr(model,"chat")
     
-    if "message_format" in infer_params:
-        if isinstance(infer_params["message_format"],bool):
-            has_chat = infer_params["message_format"]
+    if "message_format" in infer_params or "backend.message_format" in infer_params:
+        message_format = infer_params.get("backend.message_format",infer_params.get("message_format", "false"))
+        if isinstance(message_format,bool):
+            has_chat = message_format
         else:
-            has_chat = infer_params["message_format"] == "true"
+            has_chat = message_format == "true"
 
     extra_meta = {}
     if has_chat:
