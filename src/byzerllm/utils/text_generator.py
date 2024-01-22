@@ -8,7 +8,7 @@ class ByzerLLMGenerator:
         self.embedding = None
         self.tokenizer = None
 
-        if hasattr(model,"embed_query"):
+        if hasattr(model,"embed_query") or hasattr(model,"embed_rerank"):
             self.embedding = model            
 
         if tokenizer:
@@ -111,7 +111,10 @@ class ByzerLLMGenerator:
                         new_params[k[len("gen."):]] = v
                     if k.startswith("generation."):
                         new_params[k[len("generation."):]] = v 
-                
+
+                if query.get("embed_rerank", False):
+                    return self.embedding.embed_rerank(ins,extract_params=new_params)
+
                 if hasattr(self.embedding.model,"embed_query"):
                     return self.embedding.model.embed_query(ins,extract_params=new_params)
                 
