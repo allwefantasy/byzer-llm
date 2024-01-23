@@ -117,15 +117,13 @@ class CustomSaasAPI:
                 }
             }
         }
-        data = json.dumps(data)
-        print(data,flush=True)
+        data = json.dumps(data)        
         ws.send(data)
 
 
     @staticmethod
     def on_message(ws, message):
-        data = json.loads(message)
-        print(message,flush=True)
+        data = json.loads(message)        
         code = data['header']['code']
         if code != 0:
             reponse_queue.put(f'请求错误: {code}, {data}')
@@ -161,7 +159,7 @@ class CustomSaasAPI:
                     temperature:float=0.9):
 
         q = his + [{"role": "user", "content": ins}]
-        websocket.enableTrace(True)
+        websocket.enableTrace(self.debug)
         wsUrl = self.config.create_url()
         ws = websocket.WebSocketApp(wsUrl,
                                     on_message=CustomSaasAPI.on_message,
