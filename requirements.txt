@@ -27,7 +27,7 @@ dashscope
 tiktoken
 
 # dependencies only for sparkdesk
-websockets
+# websockets
 websocket-client
 
 # dependencies only for saas/chatglm
