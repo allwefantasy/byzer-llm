@@ -68,7 +68,7 @@ class CustomSaasAPI:
         required_params = [ "saas.appid", "saas.api_key", "saas.api_secret"]
         for param in required_params:
             if list(infer_params.keys()).count(param) < 1:
-                raise ValueError("%s The parameter is a required field, please configure it"% param)
+                raise ValueError("The parameter %s is a required field, please configure it"% param)
         for value in self.get_value(infer_params,required_params):
             if value is None or value == "":
                 raise ValueError("The mandatory model parameters cannot be empty.")
