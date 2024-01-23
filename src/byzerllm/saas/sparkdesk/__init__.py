@@ -79,6 +79,8 @@ class CustomSaasAPI:
         self.domain: str = infer_params.get("saas.domain","generalv3")
         self.config = SparkDeskAPIParams(self.appid, self.api_key, self.api_secret, self.gpt_url, self.domain)
 
+        self.debug = infer_params.get("debug",False)
+
     @staticmethod
     def on_error(ws, error):
         pass
@@ -122,6 +124,7 @@ class CustomSaasAPI:
     @staticmethod
     def on_message(ws, message):
         data = json.loads(message)
+        print(message,flush=True)
         code = data['header']['code']
         if code != 0:
             reponse_queue.put(f'请求错误: {code}, {data}')
@@ -174,10 +177,9 @@ class CustomSaasAPI:
 
         result = []
 
-        t  = reponse_queue.get(timeout=30)
+        t  = reponse_queue.get(timeout=60*5)
         while t is not None:
             result.append(t)
-            t  = reponse_queue.get(timeout=30)
-
-
+            t  = reponse_queue.get(timeout=60*5)       
+         
         return [("".join(result),"")]
