@@ -75,7 +75,7 @@ class CustomSaasAPI:
         self.appid: str = infer_params["saas.appid"]
         self.api_key: str = infer_params["saas.api_key"]
         self.api_secret: str = infer_params["saas.api_secret"]
-        self.gpt_url: str = infer_params.get("saas.gpt_url","wss://spark-api.xf-yun.com/v1.3/chat")
+        self.gpt_url: str = infer_params.get("saas.gpt_url","wss://spark-api.xf-yun.com/v3.1/chat")
         self.domain: str = infer_params.get("saas.domain","generalv3")
         self.config = SparkDeskAPIParams(self.appid, self.api_key, self.api_secret, self.gpt_url, self.domain)
         self.timeout = int(infer_params.get("saas.timeout",30))
