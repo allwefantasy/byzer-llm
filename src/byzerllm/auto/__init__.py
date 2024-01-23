@@ -30,8 +30,8 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
         config = copy.deepcopy(self.generation_config)
         config.max_length = max_length
         config.temperature = temperature
-        config.top_p = top_p
-
+        config.top_p = top_p        
+        
         if "max_new_tokens" in kwargs:
             config.max_new_tokens = int(kwargs["max_new_tokens"])
         
@@ -82,6 +82,15 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
 
     if "repetition_penalty" in kwargs:
         other_params["repetition_penalty"] = float(kwargs["repetition_penalty"])
+
+    if self.generation_config and self.generation_config.eos_token_id:
+        other_params["eos_token_id"] = self.generation_config.eos_token_id
+
+    if self.generation_config and self.generation_config.pad_token_id:
+        other_params["pad_token_id"] = self.generation_config.pad_token_id
+    
+    if self.generation_config and self.generation_config.bos_token_id:
+        other_params["bos_token_id"] = self.generation_config.bos_token_id
     
     start_time = time.monotonic()        
     response = self.generate(

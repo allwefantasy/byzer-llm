@@ -53,14 +53,14 @@ The unique features of Byzer-LLM are:
     * [baichuan/百川](#baichuan/百川)
     * [azure openai](#azure-openai)
     * [openai](#openai)
-    * [zhipu/智谱](#zhipu/智谱)     
-    
+    * [zhipu/智谱](#zhipu/智谱)         
 * [Multi Modal](#Multi-Modal)
 * [StableDiffusion](#StableDiffusion)
 * [SQL Support](#SQL-Support)
 * [Pretrain](#Pretrain)
 * [Finetune](#Finetune)
 * [Stream Chat](#Stream-Chat)
+* [Articles](#Articles)
 * [Contributing](#Contributing)
 
 ---
@@ -1562,6 +1562,16 @@ and checkpoint_dir="/home/byzerllm/models/sft/jobs/sft-william-20230912-21-50-10
 and savePath="/home/byzerllm/models/sft/jobs/sft-william-20230912-21-50-10-2529bf9f-493e-40a3-b20f-0369bd01d75d/finetune_model/merge";
 
 ```
+
+## Articles
+
+1. [一口气集成那些个大模型你也试试](https://www.51xpage.com/ai/yi-kou-qi-ji-cheng-na-xie-ge-da-mo-xing-ni-ye-shi-shi-unknown-unknown-man-man-xue-ai006/)
+2. [Byzer-LLM 快速体验智谱 GLM-4](https://mp.weixin.qq.com/s/Zhzn_C9-dKP4Nq49h8yUxw)
+3. [函数实现越通用越好？来看看 Byzer-LLM 的 Function Implementation 带来的编程思想大变化](https://mp.weixin.qq.com/s/_Sx0eC0WqC2M4K1JY9f49Q)
+4. [Byzer-LLM 之 QWen-VL-Chat/StableDiffusion多模态读图，生图](https://mp.weixin.qq.com/s/x4g66QvocE5dUlnL1yF9Dw)
+5. [基于Byzer-Agent 框架开发智能数据分析工具](https://mp.weixin.qq.com/s/BcoHUEXF24wTjArc7mwNaw)
+6. [Byzer-LLM 支持同时开源和SaaS版通义千问](https://mp.weixin.qq.com/s/VvzMUV654D7IO0He47nv3A)
+7. [给开源大模型带来Function Calling、 Respond With Class](https://mp.weixin.qq.com/s/GTVCYUhR_atYMX9ymp0eCg)
 
 
 
