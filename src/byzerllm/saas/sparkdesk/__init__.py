@@ -79,7 +79,7 @@ class CustomSaasAPI:
         self.domain: str = infer_params.get("saas.domain","generalv3")
         self.config = SparkDeskAPIParams(self.appid, self.api_key, self.api_secret, self.gpt_url, self.domain)
 
-        self.debug = infer_params.get("debug",False)
+        self.debug = infer_params.get("saas.debug",False)
 
     @staticmethod
     def on_error(ws, error):
