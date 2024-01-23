@@ -78,7 +78,7 @@ class CustomSaasAPI:
         self.gpt_url: str = infer_params.get("saas.gpt_url","wss://spark-api.xf-yun.com/v1.3/chat")
         self.domain: str = infer_params.get("saas.domain","generalv3")
         self.config = SparkDeskAPIParams(self.appid, self.api_key, self.api_secret, self.gpt_url, self.domain)
-
+        self.timeout = int(infer_params.get("saas.timeout",30))
         self.debug = infer_params.get("saas.debug",False)
 
     @staticmethod
@@ -176,9 +176,9 @@ class CustomSaasAPI:
 
         result = []
 
-        t  = reponse_queue.get(timeout=60*5)
+        t  = reponse_queue.get(timeout=self.timeout)
         while t is not None:
             result.append(t)
-            t  = reponse_queue.get(timeout=60*5)       
+            t  = reponse_queue.get(timeout=self.timeout)       
          
         return [("".join(result),"")]
