@@ -68,15 +68,15 @@ class CustomSaasAPI:
         required_params = [ "saas.appid", "saas.api_key", "saas.api_secret"]
         for param in required_params:
             if list(infer_params.keys()).count(param) < 1:
-                raise ValueError(param + " 参数为必填项，请配置")
+                raise ValueError("%s The parameter is a required field, please configure it"% param)
         for value in self.get_value(infer_params,required_params):
             if value is None or value == "":
-                raise ValueError("模型必填参数不能为空值")
+                raise ValueError("The mandatory model parameters cannot be empty.")
         self.appid: str = infer_params["saas.appid"]
         self.api_key: str = infer_params["saas.api_key"]
         self.api_secret: str = infer_params["saas.api_secret"]
-        self.gpt_url: str = infer_params.get("saas.gpt_url","wss://spark-api.xf-yun.com/v1.1/chat")
-        self.domain: str = infer_params.get("saas.domain","generalv1")
+        self.gpt_url: str = infer_params.get("saas.gpt_url","wss://spark-api.xf-yun.com/v1.3/chat")
+        self.domain: str = infer_params.get("saas.domain","generalv3")
         self.config = SparkDeskAPIParams(self.appid, self.api_key, self.api_secret, self.gpt_url, self.domain)
 
     @staticmethod
