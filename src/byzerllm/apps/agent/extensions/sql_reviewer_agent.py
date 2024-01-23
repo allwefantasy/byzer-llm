@@ -77,7 +77,12 @@ class SQLReviewerAgent(ConversableAgent):
 
         message = messages[-1]                
         v = self.llm.chat_oai(conversations=message_utils.padding_messages_merge(self._system_message + messages[-1:]))
-        print(f"review code {message}. review result {v[0].output}")
+        print(f'''
+review code:
+    {message}. 
+review result:
+    {v[0].output}
+''',flush=True)
         checks = json.loads(code_utils.extract_code(v[0].output)[-1][1])
 
         c = []
