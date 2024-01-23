@@ -1327,6 +1327,44 @@ and modelTable="command";
 ```
 
 ### sparkdesk
+```python
+import ray
+
+from byzerllm.utils.client import ByzerLLM
+
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)
+
+llm = ByzerLLM()
+
+llm.setup_num_workers(1).setup_gpus_per_worker(0)
+
+chat_name = "sparkdesk_saas"
+
+if llm.is_model_exist(chat_name):
+  llm.undeploy(udf_name=chat_name)
+
+llm.deploy(model_path="",
+           pretrained_model_type="saas/sparkdesk",
+           udf_name=chat_name,
+           infer_params={
+             "saas.appid":"xxxxxxx",
+             "saas.api_key":"xxxxxxx",
+             "saas.api_secret":"xxxxxxx",
+             "saas.gpt_url":"wss://spark-api.xf-yun.com/v3.1/chat",
+             "saas.domain":"generalv3"
+           })
+
+v = llm.chat_oai(model=chat_name,conversations=[{
+  "role":"user",
+  "content":"your prompt content",
+}])
+```
+sparkdesk V1.5 request URL，associated domain parameter is general：  
+`wss://spark-api.xf-yun.com/v1.1/chat`  
+sparkdesk V2 request URL，associated domain parameter is generalv2：  
+`wss://spark-api.xf-yun.com/v2.1/chat`  
+sparkdesk V3 request URL，associated domain parameter is generalv3 (Function Call feature is now supported.)：  
+`wss://spark-api.xf-yun.com/v3.1/chat`  
 
 ```sql
 !byzerllm setup single;
