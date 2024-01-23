@@ -118,6 +118,7 @@ class CustomSaasAPI:
             }
         }
         data = json.dumps(data)
+        print(data,flush=True)
         ws.send(data)
 
 
@@ -160,7 +161,7 @@ class CustomSaasAPI:
                     temperature:float=0.9):
 
         q = his + [{"role": "user", "content": ins}]
-        websocket.enableTrace(False)
+        websocket.enableTrace(True)
         wsUrl = self.config.create_url()
         ws = websocket.WebSocketApp(wsUrl,
                                     on_message=CustomSaasAPI.on_message,
