@@ -58,7 +58,7 @@ class DataAnalysis:
                 try:
                     ray.get_actor(self.message_store)
                 except:
-                    self.message_store = ray.remote(MemoryStore).options(num_cpus=0.1).remote()
+                    ray.remote(MemoryStore).options(num_cpus=0.1,name=self.message_store, lifetime="detached").remote()
 
 
         if not ray.get(self.manager.check_pipeline_exists.remote(self.name)):
