@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2024/01] Release Byzer-LLM 0.1.37
+- [2024/01] Release Byzer-LLM 0.1.38
 - [2023/12] Release Byzer-LLM 0.1.30
 
 ---
@@ -36,24 +36,30 @@ The unique features of Byzer-LLM are:
 * [Installation](#Installation)
 * [Quick Start](#Quick-Start)
 * [How to connect Models from outside of Ray Cluster](#how-to-connect-models-from-outside-of-ray-cluster)
-* [Embedding Model](#Embedding-Model)
+* Embedding/Rerank
+    * [Embedding Model](#Embedding-Model)
+    * [Embedding Rerank Model](#Embedding-Rerank-Model)
 * [Quatization](#Quatization)
 * [Supported Models](#Supported-Models)
-* [vLLM Support](#vLLM-Support)
-* [DeepSpeed Support](#DeepSpeed-Support)
-* [Function Calling](#Function-Calling)
-* [Respond with pydantic class](#Respond-with-pydantic-class)
-* [Function Implementation](#Function-Implementation)
-* [LLM-Friendly Function/DataClass](#LLM-Friendly-Function/DataClass)
-* [Model Meta](#Model-Meta)
-* [Chat Template](#Chat-Template)
-* [LLM Default Generation Parameters](#LLM-Default-Generation-Parameters)
+* Serving
+    * [vLLM Support](#vLLM-Support)
+    * [DeepSpeed Support](#DeepSpeed-Support)
+* LLM && Python    
+    * [Function Calling](#Function-Calling)
+    * [Respond with pydantic class](#Respond-with-pydantic-class)
+    * [Function Implementation](#Function-Implementation)
+    * [LLM-Friendly Function/DataClass](#LLM-Friendly-Function/DataClass)
+* Model Configurations    
+    * [Model Meta](#Model-Meta)
+    * [Chat Template](#Chat-Template)
+    * [LLM Default Generation Parameters](#LLM-Default-Generation-Parameters)
 * [SaaS Models](#SaaS-Models)
     * [qianwen/通义千问](#qianwen/通义千问)
     * [baichuan/百川](#baichuan/百川)
     * [azure openai](#azure-openai)
     * [openai](#openai)
-    * [zhipu/智谱](#zhipu/智谱)         
+    * [zhipu/智谱](#zhipu/智谱)
+    * [sparkdesk/星火](#sparkdesk/星火)         
 * [Multi Modal](#Multi-Modal)
 * [StableDiffusion](#StableDiffusion)
 * [SQL Support](#SQL-Support)
@@ -66,6 +72,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.38： Upgrade saas/sparkdask model / add embedding rerank model / agent message store support
 - 0.1.37： Upgrade saas/zhipu model, you can choose glm-4 / embedding-2 for LLM or embedding purpose
 - 0.1.36： Fix data analysis agent bugs which caused by the upgrade of Byzer-Agent
 - 0.1.35： Add Baichuan Saas embedding model
@@ -346,6 +353,8 @@ llm.setup_default_emb_model_name(chat_name)
 v = llm.emb(None,LLMRequest(instruction="你好"))
 print(v.output)
 ```
+
+## Embedding Rerank Model
 
 If you need to use embedding rerank model, you can refer to the following usage.
 ```python
@@ -1326,7 +1335,7 @@ and modelTable="command";
 
 ```
 
-### sparkdesk
+### sparkdesk/星火
 ```python
 import ray
 
