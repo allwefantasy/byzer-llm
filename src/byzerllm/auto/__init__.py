@@ -139,6 +139,16 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
     from vllm import  SamplingParams
     from vllm.utils import random_uuid
 
+    if "abort" in kwargs and "request_id" in kwargs:
+        abort = kwargs["abort"]
+        if isinstance(abort,str):
+            abort = abort == "true"
+        request_id = kwargs["request_id"]
+        if abort:
+           await model.abort(request_id)
+        return [("",{"metadata":{"request_id":request_id,}})]
+     
+     
     stream = kwargs.get("stream",False)
     request_id = random_uuid()
     

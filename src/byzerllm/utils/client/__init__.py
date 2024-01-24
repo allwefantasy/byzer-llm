@@ -1038,7 +1038,9 @@ class ByzerLLM:
         r.value=ms
 
         return r
-        
+
+    def abort(self,request_id:str):
+        self.chat_oai(conversations=[],llm_config={"gen.request_id":request_id,"gen.abort":True})    
 
     def chat_oai(self,
                  conversations,
