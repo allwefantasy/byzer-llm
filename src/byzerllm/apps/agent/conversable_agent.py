@@ -2,6 +2,7 @@ import asyncio
 from collections import defaultdict
 import copy
 import json
+import time
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 import ray
@@ -11,6 +12,8 @@ from .agent import Agent
 from ...utils.retrieval import ByzerRetrieval
 from ...utils.client import ByzerLLM,default_chat_wrapper,LLMResponse
 from . import get_agent_name,run_agent_func, ChatResponse
+from .store import MessageStore,Message as ChatStoreMessage
+from .store.stores import Stores
 
 try:
     from termcolor import colored
@@ -39,6 +42,8 @@ class ConversableAgent(Agent):
         default_auto_reply: Optional[Union[str, Dict, None]] = "",
         chat_wrapper:Optional[Callable[[ByzerLLM,Optional[List[Dict]],Dict],List[LLMResponse]]] = None,
         description:str = "ConversableAgent",
+        message_store: Optional[Union[str,ClientActorHandle,MessageStore]] = None,
+        group_name: Optional[str] = None,
         
     ):
         super().__init__(name)
@@ -46,6 +51,13 @@ class ConversableAgent(Agent):
         self.llm = llm
         self.retrieval = retrieval   
         self.chat_wrapper = chat_wrapper
+     
+        self.message_store = None
+        
+        if message_store is not None:
+            self.message_store = Stores(message_store)
+
+        self.group_name = group_name    
 
         self._messages = defaultdict(list)
         self._system_message = [{"content": system_message, "role": "system"}]
@@ -362,7 +374,16 @@ class ConversableAgent(Agent):
                     "Received message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
                 )
             
-            if not silent:                
+            if not silent:  
+                if self.message_store is not None:
+                    self.message_store.put(ChatStoreMessage(
+                        id=self.group_name if self.group_name is not None else "default",
+                        m=message,
+                        sender=get_agent_name(sender),
+                        receiver=self.get_name(),
+                        timestamp=time.monotonic()
+                    ))
+                                  
                 print(colored(get_agent_name(sender), "yellow"), "(to", f"{self.name}):\n", flush=True)
                 print(colored(f"{message['content']}", "green"), flush=True)
                 print("\n", "-" * 80, flush=True, sep="")

@@ -13,6 +13,7 @@ from byzerllm.apps.agent import Agent,Agents,get_agent_name,run_agent_func,ChatR
 from byzerllm.apps.agent.user_proxy_agent import UserProxyAgent
 from byzerllm.apps.agent.extensions.data_analysis_pipeline_agent import DataAnalysisPipeline,DataAnalysisPipelineManager
 from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient
+from byzerllm.apps.agent.store.memory_store import  MessageStore,MemoryStore
 
 
 class DataAnalysis:
@@ -25,14 +26,17 @@ class DataAnalysis:
                  chat_wrapper = default_chat_wrapper ,
                  skip_preview_file:bool=False,
                  retrieval_cluster:str="data_analysis",
-                 retrieval_db:str="data_analysis",              
+                 retrieval_db:str="data_analysis",
+                 message_store:Optional[Optional[Union[str,ClientActorHandle,MessageStore]]]=None,              
                  ):
         self.chat_name = chat_name
         self.owner = owner
         self.chat_wrapper = chat_wrapper
         self.suffix = generate_str_md5(f"{self.chat_name}_{self.owner}")
         self.name = f"data_analysis_pp_{self.suffix}"   
-        self.manager = self.get_pipeline_manager()  
+        self.manager = self.get_pipeline_manager() 
+
+        self.message_store = message_store 
         
         self.use_shared_disk = use_shared_disk
         self.llm = llm
@@ -47,7 +51,15 @@ class DataAnalysis:
                                                         retrieval_db=self.retrieval_db,
                                                         )     
         self.file_path = file_path
-        self.file_ref = None                
+        self.file_ref = None   
+
+        if self.message_store:
+            if isinstance(self.message_store,str):
+                try:
+                    ray.get_actor(self.message_store)
+                except:
+                    self.message_store = ray.remote(MemoryStore).options(num_cpus=0.1).remote()
+
 
         if not ray.get(self.manager.check_pipeline_exists.remote(self.name)):
             if self.file_path and not self.use_shared_disk:
@@ -68,7 +80,8 @@ class DataAnalysis:
                 file_ref=self.file_ref,
                 chat_name = self.chat_name,
                 owner = self.owner,
-                chat_wrapper = self.chat_wrapper
+                chat_wrapper = self.chat_wrapper,
+                message_store = self.message_store,
                 )) 
 
             # trigger file preview manually

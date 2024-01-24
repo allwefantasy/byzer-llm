@@ -18,6 +18,7 @@ from byzerllm.apps.agent.extensions.spark_sql_agent import SparkSQLAgent
 from byzerllm.apps.agent.extensions.rhetorical_agent import RhetoricalAgent
 from byzerllm.apps.agent.extensions.sql_reviewer_agent import SQLReviewerAgent
 from byzerllm.apps.agent.extensions.byzer_engine_agent import ByzerEngineAgent
+from byzerllm.apps.agent.store import MessageStore
 
 class DataAnalysisPipeline(ConversableAgent):  
     DEFAULT_SYSTEM_MESSAGE = '''You are a helpful data analysis assistant.
@@ -52,6 +53,7 @@ you should reply exactly `UPDATE CONTEXT`.
         max_consecutive_auto_reply: Optional[int] = None,
         human_input_mode: Optional[str] = "NEVER",
         code_execution_config: Optional[Union[Dict, bool]] = False,
+        message_store:Optional[Optional[Union[str,ClientActorHandle,MessageStore]]]=None,
         **kwargs,
     ):
         super().__init__(
@@ -61,7 +63,8 @@ you should reply exactly `UPDATE CONTEXT`.
             is_termination_msg,
             max_consecutive_auto_reply,
             human_input_mode,
-            code_execution_config=code_execution_config,            
+            code_execution_config=code_execution_config,   
+            message_store=message_store,         
             **kwargs,
         )
         self.chat_name = chat_name
@@ -69,6 +72,7 @@ you should reply exactly `UPDATE CONTEXT`.
         self.file_path = file_path
         self.file_ref = file_ref        
         self._reply_func_list = []
+        
         # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
         self.register_reply([Agent, ClientActorHandle,str], DataAnalysisPipeline.run_pipeline) 
         self.register_reply([Agent, ClientActorHandle,str], DataAnalysisPipeline.reply_agent) 
@@ -78,6 +82,9 @@ you should reply exactly `UPDATE CONTEXT`.
         params = {}
         if "chat_wrapper" in kwargs:
             params["chat_wrapper"] = kwargs["chat_wrapper"]
+
+        if message_store:
+            params["message_store"] = message_store    
 
         max_consecutive_auto_reply = 100000;            
 
@@ -307,8 +314,10 @@ class DataAnalysisPipelineManager:
                                 chat_name:str,
                                 owner:str,
                                 chat_wrapper:Optional[Callable[[ByzerLLM,Optional[List[Dict]],Dict],List[LLMResponse]]] = None,
+                                message_store:Optional[Optional[Union[str,ClientActorHandle,MessageStore]]]=None,
                                 num_gpus:int=0,num_cpus:int=0):
         self.lasted_updated[name] = time.time()
+        
         self.check_pipeline_timeout()
         if name in self.pipelines:            
             return self.pipelines[name]
@@ -325,7 +334,8 @@ class DataAnalysisPipelineManager:
                 file_ref=file_ref,
                 chat_wrapper=chat_wrapper,
                 chat_name=chat_name,
-                owner=owner                
+                owner=owner ,
+                message_store= message_store
                 )
         self.pipelines[name] = pipeline
         return pipeline
