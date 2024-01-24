@@ -5,7 +5,9 @@ class MemoryStore(MessageStore):
         self.messages = {}
 
     def put(self, message: Message):
-        self.messages.get(message.id,[]).append(message)
+        if message.id not in self.messages:
+            self.messages[message.id] = []
+        self.messages[message.id].append(message)
         return self
     
     def get(self, id: str):

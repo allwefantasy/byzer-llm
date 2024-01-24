@@ -15,13 +15,13 @@ class Stores:
             self.store = store
 
     def put(self, message):
-        if isinstance(self.store,MessageStore):
+        if issubclass(self.store,MessageStore):
             return self.store.put(message)
         else:
             return self.store.put.remote(message)
 
     def get(self, id):
-        if isinstance(self.store,MessageStore):
+        if issubclass(self.store,MessageStore):
             return self.store.get(id)
         else:
             return ray.get(self.store.get.remote(id))

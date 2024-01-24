@@ -84,7 +84,8 @@ you should reply exactly `UPDATE CONTEXT`.
             params["chat_wrapper"] = kwargs["chat_wrapper"]
 
         if message_store:
-            params["message_store"] = message_store    
+            params["message_store"] = message_store 
+            params["group_name"] = self.name   
 
         max_consecutive_auto_reply = 100000;            
 
