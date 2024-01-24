@@ -150,7 +150,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
      
      
     stream = kwargs.get("stream",False)
-    request_id = random_uuid()
+    request_id = kwargs["request_id"] if "request_id" in kwargs else random_uuid()        
     
     # in future, we should add the cancel logic here
     # first_request = False
