@@ -1049,7 +1049,12 @@ class ByzerLLM:
         if meta.get("backend",None) != "ray/vllm":
             raise Exception("abort only support ray/vllm backend")
         
-        self.chat_oai(conversations=[],llm_config={"gen.request_id":request_id,"gen.abort":True})    
+        self.chat_oai(conversations=[
+            {
+                "role":"user",
+                "content":f"{request_id}"
+            }
+        ],llm_config={"gen.request_id":request_id,"gen.abort":True})    
 
     def chat_oai(self,
                  conversations,
