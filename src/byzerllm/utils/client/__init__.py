@@ -1039,7 +1039,16 @@ class ByzerLLM:
 
         return r
 
-    def abort(self,request_id:str):
+    def abort(self,request_id:str,model:Optional[str]=None):
+        if not model and not self.default_model_name:
+            raise Exception("model name is required")
+        if not model:
+            model = self.default_model_name
+        
+        meta = self.get_meta(model=model)
+        if meta.get("backend",None) != "ray/vllm":
+            raise Exception("abort only support ray/vllm backend")
+        
         self.chat_oai(conversations=[],llm_config={"gen.request_id":request_id,"gen.abort":True})    
 
     def chat_oai(self,
