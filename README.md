@@ -42,8 +42,10 @@ The unique features of Byzer-LLM are:
 * [Quatization](#Quatization)
 * [Supported Models](#Supported-Models)
 * Serving
-    * [vLLM Support](#vLLM-Support)
-    * [DeepSpeed Support](#DeepSpeed-Support)
+    * Backend
+        * [vLLM Support](#vLLM-Support)
+        * [DeepSpeed Support](#DeepSpeed-Support)
+    * [Byzer-LLM OpenAI-Compatible RESTful API server](#ByzerLLm-OpenAI-Compatible-RESTful-API-server)
 * LLM && Python    
     * [Function Calling](#Function-Calling)
     * [Respond with pydantic class](#Respond-with-pydantic-class)
@@ -541,6 +543,52 @@ llm.chat("llama_chat",LLMRequest(instruction="hello world"))[0].output
 
 The code above is totally the same as the code for vLLM, except that the `InferBackend` is `InferBackend.DeepSpeed`.
 
+## Byzer-LLM OpenAI-Compatible RESTful API server
+
+You can use the following code to start a ByzerLLm OpenAI-Compatible RESTful API server:
+
+```shell
+ray start --address="xxxxx:6379"  --num-gpus=0 --num-cpus=0 
+python -m byzerllm.utils.client.entrypoints.openai.api_server
+```
+
+By default, the server will listen on port 8000, you can use the following code to test the API:
+
+```python
+from openai import OpenAI
+client = OpenAI(
+    base_url="http://127.0.0.1:8000/v1",
+    api_key="xxxx"
+)
+
+chat_completion = client.chat.completions.create(    
+    model="wenxin_chat",
+    messages=[{"role": "user", "content": "写一个排序算法"}],
+    stream=False
+)
+
+print(chat_completion.choices[0].message.content)
+```
+
+Stream chat:
+
+```python
+
+from openai import OpenAI
+client = OpenAI(
+    base_url="http://127.0.0.1:8000/v1",
+    api_key="simple"
+)
+
+chat_completion = client.chat.completions.create(    
+    model="wenxin_chat",
+    messages=[{"role": "user", "content": "写一个排序算法"}],
+    stream=True
+)
+
+for chunk in chat_completion:    
+    print(chunk.choices[0].delta.content or "", end="")
+```
 
 ## Function Calling
 
@@ -735,6 +783,107 @@ llm.setup_response_class_format_func("chat",custom_response_class_format)
 The Byzer-llm also support function implementation. You can define a empty function, and combine the doc in the function/the user's quesion to guide the LLM to implement the function. 
 
 Here is a simple example:
+
+```python
+from byzerllm.utils.client import code_utils,message_utils
+from typing import List,Union,Optional
+import pydantic
+
+class Time(pydantic.BaseModel):
+    time: str = pydantic.Field(...,description="时间，时间格式为 yyyy-MM-dd")
+
+
+@llm.impl()
+def calculate_current_time()->Time:
+    '''
+    计算当前时间
+    '''
+    pass 
+
+
+calculate_current_time()
+#output: Time(time='2024-01-28')
+```
+
+Or you can define a function with parameters:
+
+```python
+from byzerllm.utils.client import code_utils,message_utils
+from typing import List,Union,Optional,Annotated
+import pydantic
+from datetime import datetime
+
+class Time(pydantic.BaseModel):
+    time: str = pydantic.Field(...,description="时间，时间格式为 yyyy-MM-dd")
+
+
+@llm.impl()
+def add_one_day(current_day:Annotated[datetime,"当前日期，类型是datatime.datetime"])->Time:
+    '''
+    给传入的日期加一天，得到明天的时间
+    '''
+    pass 
+
+
+add_one_day(datetime.now())
+# output:Time(time='2024-01-29')
+```
+
+With instruction:
+
+```python
+from byzerllm.utils.client import code_utils,message_utils
+from typing import List,Union,Optional
+import pydantic
+
+class TimeRange(pydantic.BaseModel):
+    '''
+    时间区间
+    格式需要如下： yyyy-MM-dd
+    '''  
+    
+    start: str = pydantic.Field(...,description="开始时间.时间格式为 yyyy-MM-dd")
+    end: str = pydantic.Field(...,description="截止时间.时间格式为 yyyy-MM-dd")
+
+@llm.impl(instruction="去年三月到七月")
+def calculate_time_range()->TimeRange:
+    '''
+    计算时间区间，时间格式为 yyyy-MM-dd. 
+    '''
+    pass 
+
+calculate_time_range()
+# output: TimeRange(start='2023-03-01', end='2023-07-31')
+```
+
+If you want to replace instruction with the user's question, you can use the following code:
+
+```python
+from byzerllm.utils.client import code_utils,message_utils
+from typing import List,Union,Optional
+import pydantic
+
+class TimeRange(pydantic.BaseModel):
+    '''
+    时间区间
+    格式需要如下： yyyy-MM-dd
+    '''  
+    
+    start: str = pydantic.Field(...,description="开始时间.时间格式为 yyyy-MM-dd")
+    end: str = pydantic.Field(...,description="截止时间.时间格式为 yyyy-MM-dd")
+
+def calculate_time_range()->TimeRange:
+    '''
+    计算时间区间，时间格式为 yyyy-MM-dd. 
+    '''
+    pass 
+
+
+llm.impl(instruction="去年三月到七月")(calculate_time_range)()
+```
+
+You can also use the basic chat_oai function to implement the function:
+
 
 ```python
 class TimeRange(pydantic.BaseModel):

@@ -44,7 +44,6 @@ TIMEOUT_KEEP_ALIVE = 5  # seconds
 logger = logging.getLogger(__name__)
 
 ray.init(address = "auto", namespace="default",ignore_reinit_error=True)
-llm = ByzerLLM()
 
 app = fastapi.FastAPI()
 response_role = "assistant"
@@ -115,8 +114,8 @@ async def health() -> Response:
 async def show_available_models():
     """Show available models. Right now we only have one model."""
     model_cards = [
-        ModelCard(id=served_model,
-                  root=served_model,
+        ModelCard(id="",
+                  root="",
                   permission=[ModelPermission()])
     ]
     return ModelList(data=model_cards)
@@ -141,6 +140,14 @@ async def create_chat_completion(request: ChatCompletionRequest,
                                      "logit_bias is not currently supported")       
 
     model_name = request.model
+    
+    llm = ByzerLLM()
+    llm.setup_template(model=model_name,template="auto")
+    llm.setup_extra_generation_params(model_name,extra_generation_params={
+      "temperature":request.temperature or 0.01,
+      "top_p":request.top_p or 0.99
+    })
+
     request_id = f"cmpl-{random_uuid()}"
     created_time = int(time.monotonic())
     chunk_object_type = "chat.completion.chunk"            
