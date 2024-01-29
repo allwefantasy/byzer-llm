@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2024/01] Release Byzer-LLM 0.1.38
+- [2024/01] Release Byzer-LLM 0.1.39
 - [2023/12] Release Byzer-LLM 0.1.30
 
 ---
@@ -74,6 +74,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.39： Enhance Function Impl / Upgrade SaaS SDK / Add OpenAI-Compatible API Server
 - 0.1.38： Upgrade saas/sparkdask model / add embedding rerank model / agent message store support
 - 0.1.37： Upgrade saas/zhipu model, you can choose glm-4 / embedding-2 for LLM or embedding purpose
 - 0.1.36： Fix data analysis agent bugs which caused by the upgrade of Byzer-Agent
