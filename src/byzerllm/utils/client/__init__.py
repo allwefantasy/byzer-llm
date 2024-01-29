@@ -368,7 +368,7 @@ class ByzerLLM:
         self.mapping_sys_impl_func_format_func = {}
 
         
-
+        self.func_impl_cache = {}
         self.meta_cache = {}
 
         self.byzer_engine_url = None
@@ -1256,15 +1256,21 @@ class ByzerLLM:
             pre_generated_text=generated_text
             yield (clean_func(generated_text),text_outputs[0].metadata)     
     
-    def impl(self,instruction:Optional[str]=None,model:Optional[str]=None): 
+    def impl(self,instruction:Optional[str]=None,model:Optional[str]=None,skip_cache:bool=False): 
         if model is None:
             model = self.default_model_name
         if instruction is None:
-            instruction = ""
+            instruction = ""            
 
         def _impl(func):               
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
+
+                key = f"{model}_{instruction}_{func.__module__}.{func.__name__}"
+
+                if not skip_cache and key in self.func_impl_cache:
+                    return self.func_impl_cache[key](*args, **kwargs)
+                
                 signature = inspect.signature(func)
                 arguments = signature.bind(*args, **kwargs)
                 arguments.apply_defaults()
@@ -1276,11 +1282,21 @@ class ByzerLLM:
                     response_class = signature.return_annotation
                 else:
                     raise Exception("impl function should return a pydantic model")
+                
                 t = self.chat_oai(model=model,conversations=[{
                     "role":"user",
                     "content":instruction
-                }], impl_func=func,response_class=response_class, execute_impl_func=True, impl_func_params=input_dict)
-                return t[0].value
+                }], impl_func=func,
+                    response_class=response_class, 
+                    execute_impl_func=True, 
+                    impl_func_params=input_dict)
+                
+                r:LLMClassResponse = t[0]
+
+                if not skip_cache and key not in self.func_impl_cache:
+                    self.func_impl_cache[key] = r.metadata["func"]
+                
+                return r.value
 
             return wrapper      
         return _impl  
