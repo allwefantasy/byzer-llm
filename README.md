@@ -48,7 +48,7 @@ The unique features of Byzer-LLM are:
     * [Function Calling](#Function-Calling)
     * [Respond with pydantic class](#Respond-with-pydantic-class)
     * [Function Implementation](#Function-Implementation)
-    * [LLM-Friendly Function/DataClass](#LLM-Friendly-Function/DataClass)
+    * [LLM-Friendly Function/DataClass](#llm-friendly-functiondataclass)
 * Model Configurations    
     * [Model Meta](#Model-Meta)
     * [Chat Template](#Chat-Template)

@@ -168,7 +168,7 @@ def generate_str_md5(s: str) -> str:
 class SingleOutputMeta:
     def __init__(self, input_tokens_count:int=0, generated_tokens_count:int=0):        
         self.input_tokens_count = input_tokens_count
-        self.generated_tokens_count = generated_tokens_count
+        self.generated_tokens_count = generated_tokens_count    
 
 class SingleOutput:
     def __init__(self, text:str,metadata:SingleOutputMeta=SingleOutputMeta()):

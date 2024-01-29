@@ -22,6 +22,8 @@ import importlib
 import logging
 import time
 import asyncio
+import functools
+import inspect
 import pydantic
 import copy
 
@@ -995,6 +997,8 @@ class ByzerLLM:
             if impl_func_params is None:
                 impl_func_params = {}
             res_json = variables[func_name](**impl_func_params)
+            r.metadata["raw_func"] = code
+            r.metadata["func"]  = variables[func_name]            
             if isinstance(res_json,str):
                 res_json = json.loads(res_json)
             r.value=response_class.parse_obj(res_json)
@@ -1252,7 +1256,36 @@ class ByzerLLM:
             pre_generated_text=generated_text
             yield (clean_func(generated_text),text_outputs[0].metadata)     
     
+    def impl(self,instruction:Optional[str]=None,model:Optional[str]=None): 
+        if model is None:
+            model = self.default_model_name
+        if instruction is None:
+            instruction = ""
 
+        def _impl(func):               
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                signature = inspect.signature(func)
+                arguments = signature.bind(*args, **kwargs)
+                arguments.apply_defaults()
+                input_dict = {}
+                for param in signature.parameters:
+                    input_dict.update({ param: arguments.arguments[param] })
+                
+                if issubclass(signature.return_annotation,pydantic.BaseModel):
+                    response_class = signature.return_annotation
+                else:
+                    raise Exception("impl function should return a pydantic model")
+                t = self.chat_oai(model=model,conversations=[{
+                    "role":"user",
+                    "content":instruction
+                }], impl_func=func,response_class=response_class, execute_impl_func=True, impl_func_params=input_dict)
+                return t[0].value
+
+            return wrapper      
+        return _impl  
+
+    
     def raw_chat(self,model,request:Union[LLMRequest,str],extract_params:Dict[str,Any]={})->List[LLMResponse]:
         if isinstance(request,str): 
             request = LLMRequest(instruction=request)
@@ -1407,3 +1440,5 @@ class ByzerLLM:
 
 def default_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
     return llm.chat_oai(conversations=conversations,llm_config=llm_config)
+
+
