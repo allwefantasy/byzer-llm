@@ -805,6 +805,24 @@ calculate_current_time()
 #output: Time(time='2024-01-28')
 ```
 
+By default, the function implementation will be cached, 
+
+```python
+start = time.monotonic()
+calculate_current_time()
+print(f"first time cost: {time.monotonic()-start}")
+
+start = time.monotonic()
+calculate_current_time()
+print(f"second time cost: {time.monotonic()-start}")
+
+# output:
+# first time cost: 6.067266260739416
+# second time cost: 4.347506910562515e-05
+```
+
+you can use `llm.clear_impl_cache()` to clear the cache.
+
 Or you can define a function with parameters:
 
 ```python
@@ -880,6 +898,17 @@ def calculate_time_range()->TimeRange:
 
 
 llm.impl(instruction="去年三月到七月")(calculate_time_range)()
+```
+
+You can use `verbose=True` to get more information about the function implementation:
+
+```python
+@llm.impl()
+def add_one_day(current_day:Annotated[datetime,"当前日期，类型是datatime.datetime"])->Time:
+    '''
+    给传入的日期加一天，得到明天的时间
+    '''
+    pass 
 ```
 
 You can also use the basic chat_oai function to implement the function:

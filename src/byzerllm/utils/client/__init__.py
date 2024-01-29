@@ -1254,21 +1254,63 @@ class ByzerLLM:
             if pre_generated_text is not None and generated_text == pre_generated_text:
                 continue
             pre_generated_text=generated_text
-            yield (clean_func(generated_text),text_outputs[0].metadata)     
+            yield (clean_func(generated_text),text_outputs[0].metadata)   
+
+    def clear_impl_cache(self,model:Optional[str]=None,
+                         full_func_name:Optional[str]=None,
+                         instruction:Optional[str]=None):
+        if model is None and full_func_name is None and instruction is None:
+            self.func_impl_cache = {}          
+        
+        if model is not None and full_func_name is not None and instruction is None:
+            raise Exception("instruction is required")
+        
+
+        if model is not None:
+            instruction = "" if not instruction else instruction
+            full_func_name = "" if not full_func_name else full_func_name
+
+            key = f"{model}_{instruction}_{full_func_name}"
+            for k in list(self.func_impl_cache.keys()):
+                if k.startswith(key):
+                    del self.func_impl_cache[k]
+            return self        
+        
+        if full_func_name is not None:            
+            instruction = "" if not instruction else instruction
+            model = "" if not model else model
+            key = f"{model}_{instruction}_{full_func_name}"
+            for k in list(self.func_impl_cache.keys()):                
+                if k.endswith(key):
+                    del self.func_impl_cache[k]
+            return self        
+
+
+        
+        
     
-    def impl(self,instruction:Optional[str]=None,model:Optional[str]=None,skip_cache:bool=False): 
+    def impl(self,
+             instruction:Optional[str]=None,
+             model:Optional[str]=None,
+             verbose:Optional[bool]=None,
+             skip_cache:bool=False): 
         if model is None:
             model = self.default_model_name
         if instruction is None:
-            instruction = ""            
+            instruction = ""  
+        
+        if verbose is None:
+            verbose = self.verbose            
 
         def _impl(func):               
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
-
+                                                
                 key = f"{model}_{instruction}_{func.__module__}.{func.__name__}"
-
+                
                 if not skip_cache and key in self.func_impl_cache:
+                    if verbose:
+                        print(f''' {key} in cache, skip impl function''')
                     return self.func_impl_cache[key](*args, **kwargs)
                 
                 signature = inspect.signature(func)
@@ -1283,6 +1325,8 @@ class ByzerLLM:
                 else:
                     raise Exception("impl function should return a pydantic model")
                 
+                start_time = time.monotonic()
+
                 t = self.chat_oai(model=model,conversations=[{
                     "role":"user",
                     "content":instruction
@@ -1291,7 +1335,15 @@ class ByzerLLM:
                     execute_impl_func=True, 
                     impl_func_params=input_dict)
                 
-                r:LLMClassResponse = t[0]
+                r:LLMClassResponse = t[0]                
+                
+                if verbose:
+                    print(f'''Generate code for {key}: 
+```python
+{r.metadata["raw_func"]}
+``` 
+cost {time.monotonic() - start_time} seconds                     
+''',flush=True)
 
                 if not skip_cache and key not in self.func_impl_cache:
                     self.func_impl_cache[key] = r.metadata["func"]
