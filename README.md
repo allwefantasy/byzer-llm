@@ -821,9 +821,9 @@ print(f"second time cost: {time.monotonic()-start}")
 # second time cost: 4.347506910562515e-05
 ```
 
-you can use `llm.clear_impl_cache()` to clear the cache.
+you can use `llm.clear_impl_cache()` to clear the cache. 
 
-Or you can define a function with parameters:
+Here is the example for function implementation with parameters:
 
 ```python
 from byzerllm.utils.client import code_utils,message_utils
