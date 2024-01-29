@@ -45,7 +45,7 @@ The unique features of Byzer-LLM are:
     * Backend
         * [vLLM Support](#vLLM-Support)
         * [DeepSpeed Support](#DeepSpeed-Support)
-    * [Byzer-LLM OpenAI-Compatible RESTful API server](#ByzerLLm-OpenAI-Compatible-RESTful-API-server)
+    * [Byzer-LLM OpenAI-Compatible RESTful API server](#byzer-llm-openai-compatible-restful-api-server)
 * LLM && Python    
     * [Function Calling](#Function-Calling)
     * [Respond with pydantic class](#Respond-with-pydantic-class)
