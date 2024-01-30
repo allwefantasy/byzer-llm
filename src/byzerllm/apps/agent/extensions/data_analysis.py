@@ -14,6 +14,12 @@ from byzerllm.apps.agent.user_proxy_agent import UserProxyAgent
 from byzerllm.apps.agent.extensions.data_analysis_pipeline_agent import DataAnalysisPipeline,DataAnalysisPipelineManager
 from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient
 from byzerllm.apps.agent.store.memory_store import  MessageStore,MemoryStore
+from byzerllm.apps.agent.store.stores import Stores
+try:
+    from termcolor import colored
+except ImportError:
+    def colored(x, *args, **kwargs):
+        return x
 
 
 class DataAnalysis:
@@ -101,6 +107,15 @@ class DataAnalysis:
             return Agents.create_remote_agent(UserProxyAgent,f"user_{self.name}",self.llm,self.retrieval,
                                 human_input_mode="NEVER",
                                 max_consecutive_auto_reply=0,chat_wrapper=self.chat_wrapper)
+        
+    def get_messages(self):
+        v = [] 
+        store = Stores("MESSAGE_STORE")
+        for item in store.get(self.name):
+            v.append(colored(item.sender, "yellow"), "(to", f"{item.receiver}):\n", flush=True)
+            v.append(colored(f"{item.m['content']}", "green"), flush=True)
+            v.append("\n", "-" * 80, flush=True, sep="")
+        return "\n".join(v)    
 
     def send_from_agent_to_agent(self,from_agent_name:str,to_agent_name:str,message:Dict[str,Any]):
         if self.data_analysis_pipeline is None:
