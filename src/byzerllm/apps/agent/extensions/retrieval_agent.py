@@ -71,6 +71,8 @@ Context is: {input_context}
         name: str,
         llm: ByzerLLM,        
         retrieval: ByzerRetrieval,        
+        chat_name:str,
+        owner:str,
         code_agent: Union[Agent, ClientActorHandle,str],
         byzer_engine_url: str="http://127.0.0.1:9003/model/predict",        
         retrieval_cluster:str="data_analysis",
@@ -94,8 +96,8 @@ Context is: {input_context}
             code_execution_config=code_execution_config,            
             **kwargs,
         )
-        self.chat_name = name
-        self.owner = name
+        self.chat_name = chat_name
+        self.owner = owner
         self.code_agent = code_agent
 
         self.byzer_engine_url = byzer_engine_url

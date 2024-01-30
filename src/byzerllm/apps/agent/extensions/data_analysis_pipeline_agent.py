@@ -18,6 +18,7 @@ from byzerllm.apps.agent.extensions.spark_sql_agent import SparkSQLAgent
 from byzerllm.apps.agent.extensions.rhetorical_agent import RhetoricalAgent
 from byzerllm.apps.agent.extensions.sql_reviewer_agent import SQLReviewerAgent
 from byzerllm.apps.agent.extensions.byzer_engine_agent import ByzerEngineAgent
+from byzerllm.apps.agent.extensions.retrieval_agent import RetrievalAgent
 from byzerllm.apps.agent.store import MessageStore
 
 class DataAnalysisPipeline(ConversableAgent):  
@@ -138,7 +139,12 @@ you should reply exactly `UPDATE CONTEXT`.
         self.rhetoorical_agent = Agents.create_local_agent(RhetoricalAgent,"rhetoorical_agent",llm,retrieval,
                                                             chat_name=self.chat_name,
                                                             owner=self.owner,
-                                                            max_consecutive_auto_reply=max_consecutive_auto_reply,**params)                
+                                                            max_consecutive_auto_reply=max_consecutive_auto_reply,**params)  
+        self.retrieval_agent = Agents.create_local_agent(RetrievalAgent,"retrieval_agent",llm,retrieval,                                   
+                                                        chat_name=self.chat_name,
+                                                        owner=self.owner,                                                         
+                                                        code_agent = None
+                                                        )               
         
         self.agents = {
             "assistant_agent":self.assistant_agent,
@@ -151,6 +157,7 @@ you should reply exactly `UPDATE CONTEXT`.
             "rhetoorical_agent":self.rhetoorical_agent,            
             "spark_sql_agent":self.spark_sql_agent,
             "byzer_engine_agent":self.byzer_engine_agent,
+            "retrieval_agent":self.retrieval_agent
         } 
         self.reply_from_agent = {}       
 
