@@ -9,7 +9,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 </h3>
 
 <p align="center">
-| <a href="./README.md"><b>English</b></a> | <a href="./README-CN.md"><b>Chinese</b></a> |
+| <a href="./README.md"><b>English</b></a> | <a href="./README-CN.md"><b>中文</b></a> |
 
 </p>
 

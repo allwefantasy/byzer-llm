@@ -5,7 +5,7 @@
 </h3>
 
 <p align="center">
-| <a href="#"><b>Documentation</b></a> | <a href="#"><b>Blog</b></a> | | <a href="#"><b>Discord</b></a> |
+| <a href="./README.md"><b>English</b></a> | <a href="./README-CN.md"><b>中文</b></a> |
 </p>
 
 ---
