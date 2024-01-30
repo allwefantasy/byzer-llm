@@ -9,7 +9,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 </h3>
 
 <p align="center">
-| <a href="#"><b>Documentation</b></a> | <a href="#"><b>Blog</b></a> | | <a href="#"><b>Discord</b></a> |
+| <a href="./README.md"><b>English</b></a> | <a href="./README-CN.md"><b>Chinese</b></a> |
 
 </p>
 
@@ -21,6 +21,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 - [2023/12] Release Byzer-LLM 0.1.30
 
 ---
+
 
 Byzer-LLM is Ray based , a full lifecycle solution for LLM that includes pretrain, fintune, deployment and serving.
 
