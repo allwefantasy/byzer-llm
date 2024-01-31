@@ -143,7 +143,7 @@ you should reply exactly `UPDATE CONTEXT`.
         self.retrieval_agent = Agents.create_local_agent(RetrievalAgent,"retrieval_agent",llm,retrieval,                                   
                                                         chat_name=self.chat_name,
                                                         owner=self.owner,                                                         
-                                                        code_agent = None
+                                                        code_agent = None,**params
                                                         )               
         
         self.agents = {
