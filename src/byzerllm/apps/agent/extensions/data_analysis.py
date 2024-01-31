@@ -13,7 +13,7 @@ from byzerllm.apps.agent import Agent,Agents,get_agent_name,run_agent_func,ChatR
 from byzerllm.apps.agent.user_proxy_agent import UserProxyAgent
 from byzerllm.apps.agent.extensions.data_analysis_pipeline_agent import DataAnalysisPipeline,DataAnalysisPipelineManager
 from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient
-from byzerllm.apps.agent.store.memory_store import  MessageStore,MemoryStore
+from byzerllm.apps.agent.store.memory_store import  MessageStore,MemoryStore,Message as ChatStoreMessage
 from byzerllm.apps.agent.store.stores import Stores
 try:
     from termcolor import colored
@@ -111,10 +111,10 @@ class DataAnalysis:
     def get_messages(self):
         v = [] 
         store = Stores("MESSAGE_STORE")
-        for item in store.get(self.name):
-            v.append(colored(item.sender, "yellow"), "(to", f"{item.receiver}):\n", flush=True)
-            v.append(colored(f"{item.m['content']}", "green"), flush=True)
-            v.append("\n", "-" * 80, flush=True, sep="")
+        for item in store.get(self.name):            
+            v.append(item.sender + " (to " + f"{item.receiver}):\n")
+            v.append(f"{item.m['content']}")
+            v.append("\n" + "-" * 80)
         return "\n".join(v)    
 
     def send_from_agent_to_agent(self,from_agent_name:str,to_agent_name:str,message:Dict[str,Any]):
@@ -122,7 +122,11 @@ class DataAnalysis:
             return None
         return ray.get(self.data_analysis_pipeline.send_from_agent_to_agent.remote(from_agent_name,to_agent_name,message))  
         
-    def analyze(self,content:str,metadata:Dict[str,Any]={}):        
+    def analyze(self,content:str,metadata:Dict[str,Any]={}): 
+        if self.message_store is not None:
+            store = Stores("MESSAGE_STORE")
+            store.clear(self.name)
+
         ray.get(self.data_analysis_pipeline.update_max_consecutive_auto_reply.remote(1))
         ray.get(           
            self.client.initiate_chat.remote(
@@ -137,10 +141,29 @@ class DataAnalysis:
            ) 
         ) 
         output = self.output()   
-        if self.retrieval:
-            self.simple_retrieval_client.save_conversation(owner=self.owner,chat_name=self.chat_name,role="user",content=content)
-            self.simple_retrieval_client.save_conversation(owner=self.owner,chat_name=self.chat_name,role="assistant",content=output["content"])
-        return output
+        
+        # if self.message_store is not None:
+        #     self.message_store.put(ChatStoreMessage(self.name,None,None,None,-1))
+        
+        metadata = output.get("metadata",{})
+        if "stream" in metadata and metadata["stream"]:
+            agent = metadata["agent"]
+            stream_id = metadata["stream_id"]
+            result = []
+            for item in self.data_analysis_pipeline.get_agent_stream_messages.remote(agent,stream_id):
+                t = ray.get(item)
+                result.append(t)
+                yield t
+            
+            # if self.retrieval:
+            #     self.simple_retrieval_client.save_conversation(owner=self.owner,chat_name=self.chat_name,role="user",content=content)
+            #     self.simple_retrieval_client.save_conversation(owner=self.owner,chat_name=self.chat_name,role="assistant",content="\n".join(result)) 
+      
+        else:    
+            if self.retrieval:
+                self.simple_retrieval_client.save_conversation(owner=self.owner,chat_name=self.chat_name,role="user",content=content)
+                self.simple_retrieval_client.save_conversation(owner=self.owner,chat_name=self.chat_name,role="assistant",content=output["content"])
+            return output
 
     def get_chat_messages(self):
         return ray.get(self.data_analysis_pipeline.get_chat_messages.remote())   
@@ -151,7 +174,12 @@ class DataAnalysis:
         except Exception:
             pass
         
-        try:
+        try:            
+            ray.kill(ray.get_actor(f"{self.name}"))
+        except Exception:
+            pass
+
+        try:            
             ray.get(self.manager.remove_pipeline.remote(self.name))  
         except Exception:
             pass

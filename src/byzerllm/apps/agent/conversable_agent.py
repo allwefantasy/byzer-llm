@@ -4,8 +4,9 @@ import copy
 import json
 import time
 import logging
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,Generator
 import ray
+import concurrent
 from ray.util.client.common import ClientActorHandle, ClientObjectRef
 from byzerllm.utils.client import message_utils
 from .agent import Agent
@@ -81,7 +82,28 @@ class ConversableAgent(Agent):
         self._agent_description = description
         
         self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
-        self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply)             
+        self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply) 
+
+        self.stream_replies = {} 
+
+    def put_stream_reply(self,id:str,reply:Generator): 
+        self.stream_replies[id] = reply
+
+    def _stream_get_message_from_self(self,id:str):
+        for item in self.stream_replies.get(id,[]):
+            yield item      
+
+    def stream_get_message(self,agent:Union[ClientActorHandle,Agent,str],id:str):
+        '''
+        get stream reply from agent
+        '''
+        if isinstance(agent,Agent):
+            return agent._stream_get_message_from_self(id)
+        elif isinstance(agent,str):
+            t = ray.get_actor(agent) 
+            return t._stream_get_message_from_self.remote(id)
+        else:
+            return agent._stream_get_message_from_self.remote(id)
     
     def get_name(self) -> str:
         return self._name    
@@ -347,20 +369,34 @@ class ConversableAgent(Agent):
         recipient: Union[ClientActorHandle,Agent,str], #"Agent"
         request_reply: Optional[bool] = None,
         silent: Optional[bool] = False,
+        async_send: Optional[bool] = False,
     ) -> bool:
         valid = self._append_message(message, "assistant", recipient)
         if valid:
             if isinstance(recipient, Agent):
-                return recipient.receive(message, self, request_reply, silent)
+                if async_send:
+                    with concurrent.ThreadPoolExecutor() as executor:
+                        executor.submit(recipient.receive, message, self, request_reply, silent)                    
+                else:
+                    recipient.receive(message, self, request_reply, silent)
             elif isinstance(recipient, str):                
-                t = ray.get_actor(recipient)                
-                return ray.get(t.receive.remote(message, self.get_name(), request_reply, silent))
+                t = ray.get_actor(recipient) 
+                if async_send:
+                    t.receive.remote(message, self.get_name(), request_reply, silent)   
+                else:            
+                    ray.get(t.receive.remote(message, self.get_name(), request_reply, silent))
             else:
-                return ray.get(recipient.receive.remote(message, self.get_name(), request_reply, silent))    
+                if async_send:
+                    recipient.receive.remote(message, self.get_name(), request_reply, silent)
+                else:
+                    ray.get(recipient.receive.remote(message, self.get_name(), request_reply, silent))    
+
+            return True        
         else:
             raise ValueError(
                 "Message can't be converted into a valid ChatCompletion message. Either content or function_call must be provided."
             ) 
+        
     
     def _process_received_message(self, message, sender, silent):
             raw_message = message

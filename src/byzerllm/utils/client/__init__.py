@@ -1189,8 +1189,7 @@ class ByzerLLM:
 
             return final_result
         
-        return responses
-
+        return responses    
         
     def stream_chat_oai(self,conversations, model:Optional[str]=None, role_mapping=None,llm_config:Dict[str,Any]={}): 
         

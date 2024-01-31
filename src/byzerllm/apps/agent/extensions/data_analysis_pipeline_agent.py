@@ -220,6 +220,10 @@ you should reply exactly `UPDATE CONTEXT`.
             return True, None
         else:
             return True,llm_reply.strip()
+
+    def get_agent_stream_messages(self,agent_name:str,id:str):
+        for message in self.agents[agent_name]._stream_get_message_from_self(id):
+            yield message
         
     def reply_reheorical_agent(
         self,
@@ -256,8 +260,9 @@ you should reply exactly `UPDATE CONTEXT`.
             messages = self._messages[get_agent_name(sender)]
         
         ori_message = messages[-1]
+
                                          
-        self.send(message=ori_message,recipient=self.rhetoorical_agent)
+        # self.send(message=ori_message,recipient=self.rhetoorical_agent)
 
         specified_agent = ori_message.get("metadata",{}).get("agent",None)  
 
@@ -277,7 +282,7 @@ you should reply exactly `UPDATE CONTEXT`.
             self.send(message=ori_message,recipient=agent)                                                
             agent_reply = self._messages[get_agent_name(agent)][-1]
             if isinstance(agent_reply,dict):
-                agent_reply = agent_reply["content"]
+                return True,agent_reply
             return True, {"content":agent_reply}
         
         return self.generate_llm_reply(raw_message,messages,sender)
@@ -294,8 +299,14 @@ class DataAnalysisPipelineManager:
             if time.time() - self.lasted_updated[name] > timeout:
                 remove_names.append(name)
         for name in remove_names:
-            del self.pipelines[name]
-            del self.lasted_updated[name]        
+            try:
+                del self.pipelines[name]                
+            except:
+                pass
+            try:
+                del self.lasted_updated[name]
+            except:
+                pass                    
 
     def check_pipeline_exists(self,name:str)->bool:
         self.check_pipeline_timeout() 
@@ -311,8 +322,14 @@ class DataAnalysisPipelineManager:
 
     def remove_pipeline(self,name:str):
         if name in self.pipelines:
-            del self.pipelines[name]
-            del self.lasted_updated[name]    
+            try:
+                del self.pipelines[name]                
+            except:
+                pass
+            try:
+                del self.lasted_updated[name]
+            except:
+                pass    
 
     def get_or_create_pipeline( self,
                                 name:str,

@@ -25,3 +25,9 @@ class Stores:
             return self.store.get(id)
         else:
             return ray.get(self.store.get.remote(id))
+        
+    def clear(self,id):
+        if isinstance(self.store,MessageStore):
+            return self.store.clear(id)
+        else:
+            return ray.get(self.store.clear.remote(id))     

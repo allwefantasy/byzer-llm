@@ -145,20 +145,9 @@ Context is: {input_context}
             content = ray.get(file_ref)
             self.simple_retrieval_client.save_text_content(owner=self.owner,title="",content=content,url=file_path) 
         
-        contents = self.simple_retrieval_client.search_content_chunks(owner=self.owner,q=new_message["content"],limit=100,return_json=False)
-        # split the contents into n groups
-        groups = []
-        
-        if not contents:
-            return True,"FAIL TO ANSWER TERMINATE"
-        
-        for i in range(0,len(contents),self.chunk_size_in_context):
-            groups.append(contents[i:i + self.chunk_size_in_context])
+        contents = self.simple_retrieval_client.search_content_chunks(owner=self.owner,q=new_message["content"],limit=4,return_json=False)         
 
-    
-        current_doc = 0        
-
-        input_context = json.dumps([{"content":x["raw_chunk"]} for x in groups[current_doc]],ensure_ascii=False,indent=4)
+        input_context = json.dumps([{"content":x["raw_chunk"]} for x in contents],ensure_ascii=False,indent=4)
 
         prompt = PromptTemplate.from_template('''User's question is: {input_question}
 
@@ -169,36 +158,15 @@ Context is:
 ```
 ''').format(input_question=new_message["content"],input_context=input_context)
         
-        new_message = {"content":prompt,"role":"user"}                    
-        final,v = self.generate_llm_reply(None,[new_message],sender)
-                
-        update_context_case = "UPDATE CONTEXT" in v[-20:].upper() or "UPDATE CONTEXT" in v[:20].upper()
-        while update_context_case:            
-            current_doc += 1
-            if current_doc >= self.update_context_retry or current_doc >= len(contents):
-                break
-
-            if not groups[current_doc] :
-                break
-            
-            input_context = json.dumps([{"content":x["raw_chunk"]} for x in groups[current_doc]],ensure_ascii=False,indent=4)
-
-            prompt = PromptTemplate.from_template('''User's question is: {input_question}
-
-Context is: 
-
-```json                                                                                            
-{input_context}
-```
-''').format(input_question=new_message["content"],input_context=input_context)
-            new_message = {"content":prompt,"role":"user"}
-            final,v = self.generate_llm_reply(None,[new_message],sender)
-            update_context_case = "UPDATE CONTEXT" in v[-20:].upper() or "UPDATE CONTEXT" in v[:20].upper()                
-
-        if update_context_case:
-            return True,{"content":"FAIL TO ANSWER","metadata":{"TERMINATE":True}}
-        else:
-            return True, {"content":v,"metadata":{"TERMINATE":True}}
+        new_message = {"content":prompt,"role":"user"}
+        id = str(uuid.uuid4())        
+        v = self.llm.stream_chat_oai(conversations=self._system_message + [new_message])
+        self.put_stream_reply(id,v)
+        return True, {
+            "content":id,
+            "metadata":{"agent":self.name,"TERMINATE":True,"stream":True,"stream_id":id}
+        }
+        
                 
         
                     

@@ -20,3 +20,7 @@ class MessageStore(ABC):
     @abstractmethod
     def get(self, id: str):
         pass
+
+    @abstractmethod
+    def clear(self, id: str):
+        pass

@@ -10,7 +10,9 @@ class MemoryStore(MessageStore):
             self.messages[message.id] = []
         v = self.messages[message.id]
         v.append(message)
-       
+        if message.m is None:
+            return self
+    
         # clean up old messages
         target = -1 
         for idx,item in enumerate(v):
@@ -33,5 +35,14 @@ class MemoryStore(MessageStore):
         return self
     
     def get(self, id: str):
-        return self.messages.get(id,[])        
+        v = self.messages.get(id,[])
+        if len(v)>0 and v[-1].m is None:
+            del self.messages[id]
+            return v
+        return v
+    
+    def clear(self, id: str):
+        if id in self.messages:
+            del self.messages[id]
+        
     

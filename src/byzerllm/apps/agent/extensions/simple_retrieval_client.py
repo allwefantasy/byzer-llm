@@ -137,7 +137,7 @@ field(created_time,long,sort)
             "url":url,
             "auth_tag":self.search_tokenize(auth_tag),
             "title_vector":self.emb(title),
-            "content_vector":self.emb(content[0:10000]),
+            "content_vector":self.emb(content[0:2048]),
             "created_time":int(time.time()*1000),
             }]
         self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content",text_content)
