@@ -821,8 +821,11 @@ class ByzerLLM:
         t = [LLMResponse(output=item["predict"],metadata=item.get("metadata",{}),input=item["input"]) for item in res]  
         return t[0].output      
 
-        
-    def emb(self, model, request:LLMRequest ,extract_params:Dict[str,Any]={})->List[List[float]]:
+    def emb_query(self,v:str,model:str=None):
+        return self.emb(model=model,request=LLMRequest(instruction=v))
+
+
+    def emb(self, model, request:LLMRequest ,extract_params:Dict[str,Any]={}):
         
         if not model and not self.default_emb_model_name:
             raise Exception("model name is required")
@@ -1284,9 +1287,54 @@ class ByzerLLM:
                     del self.func_impl_cache[k]
             return self        
 
+    
+    def response(self,instruction:Optional[str]=None,
+                      model:Optional[str]=None,
+                      verbose:Optional[bool]=None):  
+        if model is None:
+            model = self.default_model_name
+        if instruction is None:
+            instruction = ""  
+        
+        if verbose is None:
+            verbose = self.verbose            
 
-        
-        
+        def _impl(func):               
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):                                                                               
+                signature = inspect.signature(func)
+                arguments = signature.bind(*args, **kwargs)
+                arguments.apply_defaults()
+                input_dict = {}
+                for param in signature.parameters:
+                    input_dict.update({ param: arguments.arguments[param] })
+                
+                if len(input_dict.keys()) != 1:
+                    raise Exception("response function should have only one parameter which type should be string")
+
+                if issubclass(signature.return_annotation,pydantic.BaseModel):
+                    response_class = signature.return_annotation
+                else:
+                    raise Exception("impl function should return a pydantic model")
+                
+                start_time = time.monotonic()
+
+                t = self.chat_oai(model=model,conversations=[{
+                    "role":"user",
+                    "content":list(input_dict.values())[0]
+                }], 
+                    response_class=response_class,                     
+                    impl_func_params=input_dict)
+                
+                r:LLMClassResponse = t[0]                
+                
+                if verbose:
+                    print(f'''cost {time.monotonic() - start_time} seconds''',flush=True)                
+                
+                return r.value
+
+            return wrapper      
+        return _impl            
     
     def impl(self,
              instruction:Optional[str]=None,
