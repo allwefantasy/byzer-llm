@@ -145,7 +145,14 @@ Context is: {input_context}
             content = ray.get(file_ref)
             self.simple_retrieval_client.save_text_content(owner=self.owner,title="",content=content,url=file_path) 
         
-        contents = self.simple_retrieval_client.search_content_chunks(owner=self.owner,q=new_message["content"],limit=4,return_json=False)         
+        top_k = 4
+        if "top_k" in new_message["metadata"]:
+            top_k = new_message["metadata"]["top_k"]    
+        
+        contents = self.simple_retrieval_client.search_content_chunks(owner=self.owner,q=new_message["content"],limit=top_k,return_json=False)
+        for item in contents:
+            temp = self.simple_retrieval_client.get_doc(item["doc_id"],owner=self.owner)
+            item["doc_url"] = temp["url"]                        
 
         input_context = json.dumps([{"content":x["raw_chunk"]} for x in contents],ensure_ascii=False,indent=4)
 
@@ -164,7 +171,7 @@ Context is:
         self.put_stream_reply(id,v)
         return True, {
             "content":id,
-            "metadata":{"agent":self.name,"TERMINATE":True,"stream":True,"stream_id":id}
+            "metadata":{"agent":self.name,"TERMINATE":True,"stream":True,"stream_id":id,"contexts":contents}
         }
         
                 

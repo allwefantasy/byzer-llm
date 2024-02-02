@@ -150,14 +150,16 @@ class DataAnalysis:
             agent = metadata["agent"]
             stream_id = metadata["stream_id"]
             result = []
+            yield metadata["contexts"]
             for item in self.data_analysis_pipeline.get_agent_stream_messages.remote(agent,stream_id):
                 t = ray.get(item)
-                result.append(t)
+                result.append(t[0])
                 yield t
             
-            # if self.retrieval:
-            #     self.simple_retrieval_client.save_conversation(owner=self.owner,chat_name=self.chat_name,role="user",content=content)
-            #     self.simple_retrieval_client.save_conversation(owner=self.owner,chat_name=self.chat_name,role="assistant",content="\n".join(result)) 
+            if self.retrieval:
+                self.simple_retrieval_client.save_conversation(owner=self.owner,chat_name=self.chat_name,role="user",content=content)
+                r = "".join(result)
+                self.simple_retrieval_client.save_conversation(owner=self.owner,chat_name=self.chat_name,role="assistant",content=r) 
       
         else:    
             if self.retrieval:
