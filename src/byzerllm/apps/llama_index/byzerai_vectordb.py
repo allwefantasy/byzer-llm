@@ -9,6 +9,14 @@ from llama_index.vector_stores.types import (
     VectorStoreQuery,    
     VectorStoreQueryResult,
 )
+from llama_index.schema import (
+    BaseNode,
+    ImageNode,
+    IndexNode,
+    NodeRelationship,
+    RelatedNodeInfo,
+    TextNode,
+)
 from llama_index.vector_stores.utils import node_to_metadata_dict
 from byzerllm.utils.client import ByzerLLM
 from byzerllm.utils.retrieval import ByzerRetrieval
@@ -42,7 +50,29 @@ def _build_metadata_filter_fn(
 
     return filter_fn
 
-class ByzerAIVectorStore(VectorStore):           
+def metadata_dict_to_node(metadata: dict, text: Optional[str] = None) -> BaseNode:
+    """Common logic for loading Node data from metadata dict."""
+    node_json = metadata.get("_node_content", None)
+    node_type = metadata.get("_node_type", None)
+    if node_json is None:
+        raise ValueError("Node content not found in metadata dict.")
+
+    node: BaseNode
+    if node_type == IndexNode.class_name():
+        node = IndexNode.parse_raw(node_json)
+    elif node_type == ImageNode.class_name():
+        node = ImageNode.parse_raw(node_json)
+    else:
+        node = TextNode.parse_raw(node_json)
+
+    if text is not None:
+        node.set_content(text)
+
+    return node
+
+class ByzerAIVectorStore(VectorStore):    
+    
+    stores_text: bool = True       
 
     def __init__(
         self,
@@ -62,7 +92,10 @@ class ByzerAIVectorStore(VectorStore):
     def get(self, text_id: str) -> List[float]:
         """Get embedding."""
         v = self._retrieval.get_chunk_by_id(text_id)
-        return v["chunk_vector"] 
+        if len(v) == 0:
+            return []
+                
+        return v[0]["chunk_vector"] 
 
     def add(
         self,
@@ -84,8 +117,10 @@ class ByzerAIVectorStore(VectorStore):
                 "chunk_content": node.get_content(),
                 "owner":""                
             }
-            v.append(m)
-        self._retrieval.save_chunks(v)    
+            v.append(m)          
+        self._retrieval.save_chunks(v) 
+        self._retrieval.commit_chunk()
+        
         return [node.node_id for node in nodes]
 
     def delete(self, ref_doc_id: str, **delete_kwargs: Any) -> None:
@@ -96,7 +131,8 @@ class ByzerAIVectorStore(VectorStore):
 
         """        
         chunks = self._retrieval.get_chunks_by_docid(ref_doc_id)        
-        self._retrieval.delete_by_ids([chunk["_id"] for chunk in chunks])    
+        self._retrieval.delete_by_ids([chunk["_id"] for chunk in chunks])
+        self._retrieval.commit_chunk()    
         
 
     def query(
@@ -108,12 +144,13 @@ class ByzerAIVectorStore(VectorStore):
              
         
         query_embedding = cast(List[float], query.query_embedding)
-        chunks = self._retrieval.search_content_chunks(owner="",
+        chunks = self._retrieval.search_content_chunks(owner="default",
                                               query_str=query.query_str,
                                               query_embedding=query_embedding,
-                                              doc_ids=[],
-                                              limit=4,
+                                              doc_ids=query.node_ids,
+                                              limit=100,
                                               return_json=False)
+        
         chunks_map = {}
         for chunk in chunks:
             chunk["metadata"] = json.loads(chunk["metadata"])
@@ -122,26 +159,34 @@ class ByzerAIVectorStore(VectorStore):
         query_filter_fn = _build_metadata_filter_fn(
             lambda node_id: chunks_map[node_id], query.filters
         )
-
-        if query.node_ids is not None:
-            available_ids = set(query.node_ids)
-
-            def node_filter_fn(node_id: str) -> bool:
-                return node_id in available_ids
-
-        else:
-
-            def node_filter_fn(node_id: str) -> bool:
-                return True
-
+        
         top_similarities = []
         top_ids = []
-
+        
+        counter = query.similarity_top_k
+        nodes = []
         for chunk in chunks:
-            if query_filter_fn(chunk["_id"]) and node_filter_fn(chunk["_id"]):
-                top_similarities.append(chunk["score"])
+            if query_filter_fn(chunk["_id"]):                
+                if counter <= 0:
+                    break
+                top_similarities.append(chunk["_score"])
                 top_ids.append(chunk["_id"])
+                try:
+                    node = metadata_dict_to_node({"_node_content": json.loads(chunk["metadata"])})
+                    node.text = chunk["chunk"]
+                except Exception:
+                    # TODO: Legacy support for old metadata format
+                    node = TextNode(
+                        text=chunk["raw_chunk"],
+                        id_=chunk["_id"],
+                        embedding=None,
+                        relationships={
+                            NodeRelationship.SOURCE: RelatedNodeInfo(node_id=chunk["doc_id"])
+                        },
+                    )                
+                nodes.append(node)
+                counter -= 1
 
-        return VectorStoreQueryResult(similarities=top_similarities, ids=top_ids)
+        return VectorStoreQueryResult(nodes = nodes ,similarities=top_similarities, ids=top_ids)
 
 

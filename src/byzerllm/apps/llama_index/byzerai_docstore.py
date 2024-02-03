@@ -28,5 +28,4 @@ class ByzerAIDocumentStore(KVDocumentStore):
         self._llm = llm
         self._retrieval = SimpleRetrieval(llm=llm, retrieval=retrieval)         
         kv_store = ByzerAIKVStore(llm=llm, retrieval=retrieval)
-        super().__init__(kv_store, namespace=namespace, batch_size=batch_size)  
-        self._collection = f"{self._namespace}/doc"
+        super().__init__(kv_store, namespace=namespace, batch_size=batch_size)          

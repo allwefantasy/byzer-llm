@@ -261,7 +261,8 @@ class ByzerRetrieval:
             raise Exception("Please launch gateway first")
                 
         v = ray.get(self.retrieval_gateway.shutdownCluster.remote(cluster_name))
-        del self.clusters[cluster_name]        
+        if cluster_name in self.clusters:
+            del self.clusters[cluster_name]        
         return v
             
 
@@ -327,6 +328,10 @@ class ByzerRetrieval:
         cluster = self.cluster(cluster_name)
         if isinstance(search_query,SearchQuery):
             search_query = [search_query]
+
+        if not search_query:
+            raise Exception("search_query is empty")
+            
         v = cluster.search.remote(f"[{','.join([x.json() for x in search_query])}]")
         return json.loads(ray.get(v))  
     

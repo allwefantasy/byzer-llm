@@ -103,7 +103,7 @@ field(created_time,long,sort)
         for item in data:
             doc_id = item["doc_id"]
             collection = item["collection"]
-            _id = f'{collection}/{doc_id}',
+            _id = f"{collection}/{doc_id}"
             result.append({"_id":_id,
             "doc_id":doc_id,               
             "json_data":item["json_data"], 
@@ -111,7 +111,7 @@ field(created_time,long,sort)
             "content":self.search_tokenize(item["content"]),
             "owner":owner,          
             "created_time":int(time.time()*1000),
-            })
+            })        
                     
         self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content",result)            
 
@@ -134,22 +134,24 @@ field(created_time,long,sort)
     
         if query_str is not None:
             keyword = self.search_tokenize(query_str)
-            fields = ["content"]
+            fields = ["chunk"]
 
         if query_embedding is not None:
             vector = query_embedding
-            vectorField = "content_vector"    
+            vectorField = "chunk_vector"    
         
         
-        if doc_ids is not None:
+        if doc_ids:
             filters = {"or":[{"field":"doc_id","value":x} for x in doc_ids]}
         
-        docs = self.retrieval.search(self.retrieval_cluster,
-                        [SearchQuery(self.retrieval_db,"text_content_chunk",
+        query = SearchQuery(self.retrieval_db,"text_content_chunk",
                                     filters=filters,
                                     keyword=keyword,fields=fields,
                                     vector=vector,vectorField=vectorField,
-                                    limit=limit)])
+                                    limit=limit)
+        
+        docs = self.retrieval.search(self.retrieval_cluster,
+                        [query])
     
         if return_json:
             context = json.dumps([{"content":x["raw_chunk"]} for x in docs],ensure_ascii=False,indent=4)    
@@ -192,7 +194,7 @@ field(created_time,long,sort)
 
     def get_chunk_by_id(self,chunk_id:str):
         filters = {"and":[{"field":"_id","value":chunk_id}]}        
-        docs = self.retrieval.search(self.retrieval_cluster,
+        docs = self.retrieval.filter(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content_chunk",
                                          filters=filters,
                                         keyword=None,fields=[],
@@ -228,14 +230,14 @@ field(created_time,long,sort)
                 "owner":owner or "default",
                 "chunk":self.search_tokenize(chunk_content),
                 "raw_chunk":chunk_content,
-                "chunk_vector":chunk_embedding,                
+                "chunk_vector":chunk_embedding[0:1024],                
                 "metadata":json.dumps(metadata,ensure_ascii=False),
                 "created_time":int(time.time()*1000),
-                })        
+                })                   
             
         self.retrieval.build_from_dicts(self.retrieval_cluster,
                                         self.retrieval_db,
-                                        "text_content_chunk",text_content_chunks)    
+                                        "text_content_chunk",text_content_chunks)           
 
             
         
@@ -256,7 +258,10 @@ field(created_time,long,sort)
         self.retrieval.delete_by_ids(self.retrieval_cluster,self.retrieval_db,"text_content",[ids])
 
     def commit_doc(self):
-        self.retrieval.commit(self.retrieval_cluster,self.retrieval_db)    
+        self.retrieval.commit(self.retrieval_cluster,self.retrieval_db,"text_content")    
+
+    def commit_chunk(self):
+        self.retrieval.commit(self.retrieval_cluster,self.retrieval_db,"text_content_chunk")    
                     
         
     def search_memory(self,chat_name:str, owner:str, q:str,limit:int=4,return_json:bool=True):

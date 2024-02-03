@@ -32,13 +32,14 @@ class ByzerAIKVStore(BaseKVStore):
             val (dict): value
             collection (str): collection name
 
-        """
+        """        
         self._retrieval.save_doc(data=[{            
             "doc_id":key,
             "json_data":json.dumps(val,ensure_ascii=False),
             "collection":collection,
-            "content":val["data"].get("text",""),
+            "content":"",
         }],owner=None)
+        self._retrieval.commit_doc()
 
     async def aput(
         self, key: str, val: dict, collection: str = DEFAULT_COLLECTION
@@ -84,6 +85,8 @@ class ByzerAIKVStore(BaseKVStore):
 
         if cur_batch > 0:
             self._retrieval.save_doc(data=v,owner=None)
+
+        self._retrieval.commit_doc()    
             
 
     def get(self, key: str, collection: str = DEFAULT_COLLECTION) -> Optional[dict]:
