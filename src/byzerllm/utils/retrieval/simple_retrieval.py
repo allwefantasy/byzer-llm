@@ -22,8 +22,8 @@ import jieba
 
 class SimpleRetrieval:
     def __init__(self,llm:ByzerLLM, retrieval: ByzerRetrieval,
-                 retrieval_cluster:str,
-                 retrieval_db:str,
+                 retrieval_cluster:str="byzerai_store",
+                 retrieval_db:str="byzerai_store",
                  max_output_length=10000):
         self.retrieval_cluster = retrieval_cluster
         self.retrieval_db = retrieval_db
@@ -41,14 +41,11 @@ emb model does not exist. Try to use `llm.setup_default_emb_model_name` to set t
                 database=self.retrieval_db,
                 table="text_content",schema='''st(
 field(_id,string),
+field(doc_id,string),
 field(owner,string),
-field(title,string,analyze),
 field(content,string,analyze),
-field(url,string),
-field(raw_content,string),
-field(auth_tag,string,analyze),
-field(title_vector,array(float)),
-field(content_vector,array(float)),
+field(json_data,string),
+field(collection,string),
 field(created_time,long,sort)
 )''',
                 location=f"/tmp/{self.retrieval_cluster}",num_shards=1 
@@ -87,39 +84,7 @@ field(created_time,long,sort)
                         location=f"/tmp/{self.retrieval_cluster}",num_shards=1
                 ))  
 
-    def save_conversation(self,owner:str,chat_name:str,role:str,content:str):
-        if not self.retrieval:
-            raise Exception("retrieval is not setup")                                
-
-        if chat_name is None:
-            chat_name = content[0:10]   
-
-        if len(content) > self.max_output_length:
-            raise Exception(f"The response content length {len(content)} is larger than max_output_length {self.max_output_length}")
-
-        data = [{"_id":str(uuid.uuid4()),
-                "chat_name":chat_name,
-                "role":role,
-                "owner":owner,
-                "content":self.search_tokenize(content),
-                "raw_content":content,
-                "auth_tag":"",
-                "created_time":int(time.time()*1000),
-                "chat_name_vector":self.emb(chat_name),
-                "content_vector":self.emb(content)}]    
-
-        self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"user_memory",data)
-
-    def get_conversations(self,owner:str, chat_name:str,limit=1000)->List[Dict[str,Any]]:
-        docs = self.retrieval.filter(self.retrieval_cluster,
-                        [SearchQuery(self.retrieval_db,"user_memory",
-                                     filters={"and":[self._owner_filter(owner),{"field":"chat_name","value":chat_name}]},
-                                     sorts=[{"created_time":"desc"}],
-                                    keyword=None,fields=["chat_name"],
-                                    vector=[],vectorField=None,
-                                    limit=limit)])
-        sorted_docs = sorted(docs[0:limit],key=lambda x:x["created_time"],reverse=False)
-        return sorted_docs
+    
     
     def get_conversations_as_history(self,owner:str,chat_name:str,limit=1000)->List[LLMHistoryItem]:
         chat_history = self.get_conversations(owner,chat_name,limit=limit)        
@@ -127,38 +92,28 @@ field(created_time,long,sort)
         return chat_history    
 
 
-    def save_text_content(self,owner:str,title:str,content:str,url:str,auth_tag:str="",auto_chunking:bool=True):
+    def save_doc(self,data:List[Dict[str,Any]],owner:Optional[str]=None,):
 
         if not self.retrieval:
             raise Exception("retrieval is not setup")
-
-                        
-        text_content = [{"_id":generate_str_md5(content),
-            "title":self.search_tokenize(title),
-            "content":self.search_tokenize(content[0:10000]),
-            "owner":owner,
-            "raw_content":content[0:10000],
-            "url":url,
-            "auth_tag":self.search_tokenize(auth_tag),
-            "title_vector":self.emb(title),
-            "content_vector":self.emb(content[0:2048]),
+  
+        owner = owner or "default"
+    
+        result = []
+        for item in data:
+            doc_id = item["doc_id"]
+            collection = item["collection"]
+            _id = f'{collection}/{doc_id}',
+            result.append({"_id":_id,
+            "doc_id":doc_id,               
+            "json_data":item["json_data"], 
+            "collection":collection,            
+            "content":self.search_tokenize(item["content"]),
+            "owner":owner,          
             "created_time":int(time.time()*1000),
-            }]
-        self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content",text_content)
-        
-        if auto_chunking:            
-            content_chunks= self.split_text_into_chunks(content)
-                        
-            text_content_chunks = [{"_id":f'''{text_content[0]["_id"]}_{i}''',
-                "doc_id":text_content[0]["_id"],
-                "owner":owner,
-                "chunk":self.search_tokenize(item),
-                "raw_chunk":item,
-                "chunk_vector":self.emb(item),                
-                "created_time":int(time.time()*1000),
-                } for i,item in enumerate(content_chunks)]
-            
-            self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content_chunk",text_content_chunks)    
+            })
+                    
+        self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"text_content",result)            
 
     
     def _owner_filter(self,owner:str):
@@ -169,14 +124,13 @@ field(created_time,long,sort)
                               query_str:Optional[str]=None,
                               query_embedding:Optional[List[float]]=None,  
                               doc_ids:Optional[List[str]]=None,                            
-                              limit:int=4,
-        
+                              limit:int=4,        
                               return_json:bool=True):   
         keyword = None
         fields = []
         vector = []
         vectorField = None
-        filers = {}
+        filters = {}
     
         if query_str is not None:
             keyword = self.search_tokenize(query_str)
@@ -237,16 +191,17 @@ field(created_time,long,sort)
             return docs 
 
     def get_chunk_by_id(self,chunk_id:str):
+        filters = {"and":[{"field":"_id","value":chunk_id}]}        
         docs = self.retrieval.search(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content_chunk",
-                                         filters={"and":[{"field":"_id","value":chunk_id}]},
+                                         filters=filters,
                                         keyword=None,fields=[],
                                         vector=[],vectorField=None,
                                         limit=1)])
         return docs
     
     def get_chunks_by_docid(self,doc_id:str):
-        docs = self.retrieval.search(self.retrieval_cluster,
+        docs = self.retrieval.filter(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content_chunk",
                                          filters={"and":[{"field":"doc_id","value":doc_id}]},
                                         keyword=None,fields=[],
@@ -256,7 +211,7 @@ field(created_time,long,sort)
     
     def delete_chunk_by_ids(self,chunk_ids:List[str]):        
         self.retrieval.delete_by_ids(self.retrieval_cluster,self.retrieval_db,"text_content_chunk",chunk_ids)
-        self.retrieval.commit(self.retrieval_cluster,self.retrieval_db)
+        self.retrieval.commit(self.retrieval_cluster,self.retrieval_db)    
     
     def save_chunks(self,chunks:List[Dict[str,Any]]):
         text_content_chunks = []
@@ -284,24 +239,25 @@ field(created_time,long,sort)
 
             
         
-    def get_doc(self,doc_id:str,owner:str):
-        docs = self.retrieval.search(self.retrieval_cluster,
+    def get_doc(self,doc_id:str,collection:str):
+        filters = {"and":[{"field":"_id","value":f'{collection}/{doc_id}'}]}        
+        docs = self.retrieval.filter(self.retrieval_cluster,
                             [SearchQuery(self.retrieval_db,"text_content",
-                                         filters={"and":[self._owner_filter(owner)]},
-                                        keyword=doc_id,fields=["_id"],
+                                         filters=filters,
+                                        keyword=None,fields=[],
                                         vector=[],vectorField=None,
                                         limit=1)])
         return docs[0] if docs else None
     
-    def get_doc_by_url(self,url:str,owner:str):
-        docs = self.retrieval.search(self.retrieval_cluster,
-                            [SearchQuery(self.retrieval_db,"text_content",
-                                         filters={"and":[self._owner_filter(owner)]},
-                                        keyword=url,fields=["url"],
-                                        vector=[],vectorField=None,
-                                        limit=1)])
-        return docs[0] if docs else None
-                
+    def delete_doc(self,doc_ids:List[str],collection:str):
+        ids = []
+        for doc_id in doc_ids:
+            ids.append(f'{collection}/{doc_id}')
+        self.retrieval.delete_by_ids(self.retrieval_cluster,self.retrieval_db,"text_content",[ids])
+
+    def commit_doc(self):
+        self.retrieval.commit(self.retrieval_cluster,self.retrieval_db)    
+                    
         
     def search_memory(self,chat_name:str, owner:str, q:str,limit:int=4,return_json:bool=True):
         docs = self.retrieval.search(self.retrieval_cluster,
@@ -337,6 +293,40 @@ field(created_time,long,sort)
         # return self.llm.apply_sql_func("select mkString(' ',parse(value)) as value",[
         # {"value":s}],url=self.byzer_engine_url)["value"]
         return " ".join(seg_list) 
+    
+    def save_conversation(self,owner:str,chat_name:str,role:str,content:str):
+        if not self.retrieval:
+            raise Exception("retrieval is not setup")                                
+
+        if chat_name is None:
+            chat_name = content[0:10]   
+
+        if len(content) > self.max_output_length:
+            raise Exception(f"The response content length {len(content)} is larger than max_output_length {self.max_output_length}")
+
+        data = [{"_id":str(uuid.uuid4()),
+                "chat_name":chat_name,
+                "role":role,
+                "owner":owner,
+                "content":self.search_tokenize(content),
+                "raw_content":content,
+                "auth_tag":"",
+                "created_time":int(time.time()*1000),
+                "chat_name_vector":self.emb(chat_name),
+                "content_vector":self.emb(content)}]    
+
+        self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"user_memory",data)
+
+    def get_conversations(self,owner:str, chat_name:str,limit=1000)->List[Dict[str,Any]]:
+        docs = self.retrieval.filter(self.retrieval_cluster,
+                        [SearchQuery(self.retrieval_db,"user_memory",
+                                     filters={"and":[self._owner_filter(owner),{"field":"chat_name","value":chat_name}]},
+                                     sorts=[{"created_time":"desc"}],
+                                    keyword=None,fields=["chat_name"],
+                                    vector=[],vectorField=None,
+                                    limit=limit)])
+        sorted_docs = sorted(docs[0:limit],key=lambda x:x["created_time"],reverse=False)
+        return sorted_docs
     
                
     

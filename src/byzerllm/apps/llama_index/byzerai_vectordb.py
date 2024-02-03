@@ -3,7 +3,6 @@ import logging
 from typing import Any, Callable, Dict, List, Mapping, Optional, cast
 
 from llama_index.schema import BaseNode
-from llama_index.utils import concat_dirs
 from llama_index.vector_stores.types import (    
     MetadataFilters,
     VectorStore,
@@ -48,38 +47,11 @@ class ByzerAIVectorStore(VectorStore):
     def __init__(
         self,
         llm:ByzerLLM,
-        retrieval:ByzerRetrieval,
-        retrieval_cluster: str = "default",
-        retrieval_db="default",                                            
+        retrieval:ByzerRetrieval,                                                   
         **kwargs: Any,
     ) -> None:        
         self._llm = llm
-        self._retrieval = SimpleRetrieval(llm=llm, retrieval=retrieval, 
-                                            retrieval_cluster=retrieval_cluster,
-                                            retrieval_db=retrieval_db,                                            
-                                          **kwargs)
-        
-
-    @classmethod
-    def from_persist_dir(
-        cls,
-        llm:ByzerLLM,
-        retrieval:ByzerRetrieval,
-        retrieval_cluster: str,
-        retrieval_db: str,
-    ) -> "ByzerAIVectorStore":
-        """Load from persist dir."""
-        return cls(llm,retrieval,retrieval_cluster,retrieval_db)
-
-    @classmethod
-    def from_namespaced_persist_dir(
-        cls,
-        llm:ByzerLLM,
-        retrieval:ByzerRetrieval,
-        retrieval_cluster: str,
-        retrieval_db: str,
-    ) -> Dict[str, VectorStore]:
-        return cls(llm,retrieval,retrieval_cluster,retrieval_db)
+        self._retrieval = SimpleRetrieval(llm=llm, retrieval=retrieval,**kwargs)        
         
 
     @property
