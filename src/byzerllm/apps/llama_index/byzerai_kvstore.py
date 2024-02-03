@@ -37,7 +37,7 @@ class ByzerAIKVStore(BaseKVStore):
             "doc_id":key,
             "json_data":json.dumps(val,ensure_ascii=False),
             "collection":collection,
-            "content":val.get("text",""),
+            "content":val["data"].get("text",""),
         }],owner=None)
 
     async def aput(
