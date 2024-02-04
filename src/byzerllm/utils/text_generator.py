@@ -193,7 +193,7 @@ async def simple_predict_func(model,v):
     return {"value":[json.dumps(results,ensure_ascii=False)]}
 
 
-def chatglm_predict_func(model,v):
+async def chatglm_predict_func(model,v):
     (trainer,tokenizer) = model
     llm = ByzerLLMGenerator(trainer,tokenizer,use_feature_extraction=True)
     data = [json.loads(item) for item in v]
