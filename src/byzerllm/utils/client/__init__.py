@@ -382,6 +382,7 @@ class ByzerLLM:
 
         self.default_model_name = None
         self.default_emb_model_name = None
+        self.default_rerank_model_name = None
         self.default_role_mapping = {
                     "user_role":"User:",
                     "assistant_role": "Assistant:",
@@ -409,7 +410,11 @@ class ByzerLLM:
 
     def setup_default_emb_model_name(self,model_name:str)->'ByzerLLM':
         self.default_emb_model_name = model_name
-        return self    
+        return self  
+
+    def setup_default_re_rank_model_name(self,model_name:str)->'ByzerLLM':
+        self.default_rerank_model_name = model_name
+        return self  
 
     def setup(self,name:str, value:Any)->'ByzerLLM':
         self.sys_conf[name]=value
@@ -863,14 +868,14 @@ class ByzerLLM:
     def emb_rerank(self, model: str = None, sentence_pairs: Union[List[Tuple[str, str]], Tuple[str, str]] = [],
                    extract_params: Dict[str, Any] = {}) -> Union[Tuple[Tuple[str, str], float], List[Tuple[Tuple[str, str], float]]]:
 
-        if not model and not self.default_emb_model_name:
-            raise Exception("emb model name is required")
+        if not model and not self.default_rerank_model_name:
+            raise Exception("rerank model name is required")
 
         if not sentence_pairs or len(sentence_pairs) == 0:
-            raise Exception("emb rerank param sentence_pairs is required")
+            raise Exception("rerank rerank param sentence_pairs is required")
 
         if not model:
-            model = self.default_emb_model_name
+            model = self.default_rerank_model_name
 
         default_config = self.mapping_extra_generation_params.get(model, {})
 
