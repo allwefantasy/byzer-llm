@@ -9,7 +9,7 @@ from llama_index.storage.kvstore.types import (
 
 from byzerllm.utils.client import ByzerLLM
 from byzerllm.utils.retrieval import ByzerRetrieval
-from byzerllm.utils.retrieval.simple_retrieval import SimpleRetrieval
+from byzerllm.apps.llama_index.simple_retrieval import SimpleRetrieval
 from byzerllm.utils.langutil import asyncfy_with_semaphore
 
 class ByzerAIKVStore(BaseKVStore):

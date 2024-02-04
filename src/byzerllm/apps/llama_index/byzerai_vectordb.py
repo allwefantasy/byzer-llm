@@ -20,7 +20,7 @@ from llama_index.schema import (
 from llama_index.vector_stores.utils import node_to_metadata_dict
 from byzerllm.utils.client import ByzerLLM
 from byzerllm.utils.retrieval import ByzerRetrieval
-from byzerllm.utils.retrieval.simple_retrieval import SimpleRetrieval
+from byzerllm.apps.llama_index.simple_retrieval import SimpleRetrieval
 
 logger = logging.getLogger(__name__)
 
