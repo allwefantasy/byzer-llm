@@ -25,7 +25,7 @@ class ByzerAIEmbedding(BaseEmbedding):
 
     def _get_query_embedding(self, query: str) -> List[float]:
         """Get query embedding."""
-        return self._llm.emb_query(query)[0].output
+        return self._llm.emb_query(query)[0].output[0:1024]
 
     async def _aget_query_embedding(self, query: str) -> List[float]:
         return asyncfy_with_semaphore(self._get_query_embedding, query)

@@ -22,9 +22,11 @@ import jieba
 
 class SimpleRetrieval:
     def __init__(self,llm:ByzerLLM, retrieval: ByzerRetrieval,
+                 chunk_collection: Optional[str] = "default",
                  retrieval_cluster:str="byzerai_store",
                  retrieval_db:str="byzerai_store",
                  max_output_length=10000):
+        self.chunk_collection = chunk_collection
         self.retrieval_cluster = retrieval_cluster
         self.retrieval_db = retrieval_db
         self.max_output_length = max_output_length
@@ -61,36 +63,12 @@ field(chunk,string,analyze),
 field(raw_chunk,string,no_index),
 field(chunk_vector,array(float)),
 field(metadata,string,no_index),
+field(chunk_collection,string),
 field(created_time,long,sort)
 )''',
                 location=f"/tmp/{self.retrieval_cluster}",num_shards=1                
            )) 
-           if not self.retrieval.check_table_exists(self.retrieval_cluster,self.retrieval_db,"user_memory"):
-                self.retrieval.create_table(self.retrieval_cluster,tableSettings=TableSettings(
-                        database=self.retrieval_db,
-                        table="user_memory",schema='''st(
-        field(_id,string),
-        field(chat_name,string),
-        field(role,string),
-        field(owner,string),
-        field(content,string,analyze),
-        field(raw_content,string,no_index),
-        field(auth_tag,string,analyze),
-        field(created_time,long,sort),
-        field(chat_name_vector,array(float)),
-        field(content_vector,array(float))
-        )
-        ''',
-                        location=f"/tmp/{self.retrieval_cluster}",num_shards=1
-                ))  
-
-    
-    
-    def get_conversations_as_history(self,owner:str,chat_name:str,limit=1000)->List[LLMHistoryItem]:
-        chat_history = self.get_conversations(owner,chat_name,limit=limit)        
-        chat_history = [LLMHistoryItem(item["role"],item["raw_content"]) for item in chat_history]
-        return chat_history    
-
+            
 
     def save_doc(self,data:List[Dict[str,Any]],owner:Optional[str]=None,):
 
@@ -130,7 +108,7 @@ field(created_time,long,sort)
         fields = []
         vector = []
         vectorField = None
-        filters = {}
+        filters = {"and":[{"field":"chunk_collection","value":self.chunk_collection}]}
     
         if query_str is not None:
             keyword = self.search_tokenize(query_str)
@@ -142,7 +120,7 @@ field(created_time,long,sort)
         
         
         if doc_ids:
-            filters = {"or":[{"field":"doc_id","value":x} for x in doc_ids]}
+            filters["and"].append({"or":[{"field":"doc_id","value":x} for x in doc_ids]})
         
         query = SearchQuery(self.retrieval_db,"text_content_chunk",
                                     filters=filters,
@@ -224,13 +202,15 @@ field(created_time,long,sort)
             chunk_content = chunk["chunk_content"]
             chunk_embedding = chunk["chunk_embedding"]
             metadata = chunk.get("metadata",{})
+            _id = f"{self.chunk_collection}/{chunk_id}"
             
-            text_content_chunks.append({"_id":chunk_id,
+            text_content_chunks.append({"_id":_id,
                 "doc_id":ref_doc_id or "",
                 "owner":owner or "default",
                 "chunk":self.search_tokenize(chunk_content),
                 "raw_chunk":chunk_content,
-                "chunk_vector":chunk_embedding[0:1024],                
+                "chunk_vector":chunk_embedding,  
+                "chunk_collection":self.chunk_collection,              
                 "metadata":json.dumps(metadata,ensure_ascii=False),
                 "created_time":int(time.time()*1000),
                 })                   
@@ -262,25 +242,10 @@ field(created_time,long,sort)
 
     def commit_chunk(self):
         self.retrieval.commit(self.retrieval_cluster,self.retrieval_db,"text_content_chunk")    
-                    
-        
-    def search_memory(self,chat_name:str, owner:str, q:str,limit:int=4,return_json:bool=True):
-        docs = self.retrieval.search(self.retrieval_cluster,
-                        [SearchQuery(self.retrieval_db,"user_memory",
-                                    filters={"and":[self._owner_filter(owner=owner),{"field":"chat_name","value":chat_name}]},
-                                    sorts =[{"created_time":"desc"}],
-                                    keyword=self.search_tokenize(q),fields=["content"],
-                                    vector=self.emb(q),vectorField="content_vector",
-                                    limit=1000)])
-        docs = [doc for doc in docs if doc["role"] == "user" and doc["chat_name"] == chat_name]
-        if return_json:
-            context = json.dumps([{"content":x["raw_chunk"]} for x in docs[0:limit]],ensure_ascii=False,indent=4)    
-            return context 
-        else:
-            return docs[0:limit]    
+                                  
 
     def emb(self,s:str):        
-        return self.llm.emb(self.llm.default_emb_model_name,LLMRequest(instruction=s))[0].output[0:1024] 
+        return self.llm.emb(self.llm.default_emb_model_name,LLMRequest(instruction=s))[0].output
 
 
     def split_text_into_chunks(self,s:str):
@@ -298,40 +263,7 @@ field(created_time,long,sort)
         # return self.llm.apply_sql_func("select mkString(' ',parse(value)) as value",[
         # {"value":s}],url=self.byzer_engine_url)["value"]
         return " ".join(seg_list) 
-    
-    def save_conversation(self,owner:str,chat_name:str,role:str,content:str):
-        if not self.retrieval:
-            raise Exception("retrieval is not setup")                                
-
-        if chat_name is None:
-            chat_name = content[0:10]   
-
-        if len(content) > self.max_output_length:
-            raise Exception(f"The response content length {len(content)} is larger than max_output_length {self.max_output_length}")
-
-        data = [{"_id":str(uuid.uuid4()),
-                "chat_name":chat_name,
-                "role":role,
-                "owner":owner,
-                "content":self.search_tokenize(content),
-                "raw_content":content,
-                "auth_tag":"",
-                "created_time":int(time.time()*1000),
-                "chat_name_vector":self.emb(chat_name),
-                "content_vector":self.emb(content)}]    
-
-        self.retrieval.build_from_dicts(self.retrieval_cluster,self.retrieval_db,"user_memory",data)
-
-    def get_conversations(self,owner:str, chat_name:str,limit=1000)->List[Dict[str,Any]]:
-        docs = self.retrieval.filter(self.retrieval_cluster,
-                        [SearchQuery(self.retrieval_db,"user_memory",
-                                     filters={"and":[self._owner_filter(owner),{"field":"chat_name","value":chat_name}]},
-                                     sorts=[{"created_time":"desc"}],
-                                    keyword=None,fields=["chat_name"],
-                                    vector=[],vectorField=None,
-                                    limit=limit)])
-        sorted_docs = sorted(docs[0:limit],key=lambda x:x["created_time"],reverse=False)
-        return sorted_docs
+        
     
                
     

@@ -77,11 +77,12 @@ class ByzerAIVectorStore(VectorStore):
     def __init__(
         self,
         llm:ByzerLLM,
-        retrieval:ByzerRetrieval,                                                   
+        retrieval:ByzerRetrieval,
+        chunk_collection: Optional[str] = "default",                                                   
         **kwargs: Any,
     ) -> None:        
         self._llm = llm
-        self._retrieval = SimpleRetrieval(llm=llm, retrieval=retrieval,**kwargs)        
+        self._retrieval = SimpleRetrieval(llm=llm, retrieval=retrieval,chunk_collection=chunk_collection,**kwargs)        
         
 
     @property
@@ -146,7 +147,7 @@ class ByzerAIVectorStore(VectorStore):
         query_embedding = cast(List[float], query.query_embedding)
         chunks = self._retrieval.search_content_chunks(owner="default",
                                               query_str=query.query_str,
-                                              query_embedding=query_embedding,
+                                              query_embedding=query_embedding,                                              
                                               doc_ids=query.node_ids,
                                               limit=100,
                                               return_json=False)
@@ -172,7 +173,7 @@ class ByzerAIVectorStore(VectorStore):
                 top_similarities.append(chunk["_score"])
                 top_ids.append(chunk["_id"])
                 try:
-                    node = metadata_dict_to_node({"_node_content": json.loads(chunk["metadata"])})
+                    node = metadata_dict_to_node({"_node_content": chunk["metadata"]})
                     node.text = chunk["chunk"]
                 except Exception:
                     # TODO: Legacy support for old metadata format
@@ -180,6 +181,7 @@ class ByzerAIVectorStore(VectorStore):
                         text=chunk["raw_chunk"],
                         id_=chunk["_id"],
                         embedding=None,
+                        metadata=chunk["metadata"],                        
                         relationships={
                             NodeRelationship.SOURCE: RelatedNodeInfo(node_id=chunk["doc_id"])
                         },

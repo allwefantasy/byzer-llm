@@ -18,7 +18,7 @@ class ByzerAIKVStore(BaseKVStore):
     def __init__(
         self,
         llm:ByzerLLM,
-        retrieval:ByzerRetrieval,        
+        retrieval:ByzerRetrieval,                
         **kwargs: Any,
     ) -> None:
         self._llm = llm
