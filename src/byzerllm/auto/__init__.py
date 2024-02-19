@@ -391,6 +391,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
             disable_log_stats=disable_log_stats,            
             ** ohter_params
         )
+        print(ohter_params)
         llm = AsyncLLMEngine.from_engine_args(engine_args)                               
         llm.async_stream_chat = types.MethodType(async_vllm_chat, llm) 
         llm.async_get_meta = types.MethodType(async_get_meta,llm)

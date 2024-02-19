@@ -232,7 +232,9 @@ if [[ $DRIVER_INSTALLED == false ]];then
         sudo dnf config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo
         # here we install cuda also, but it will not be used since will use the cuda installed by conda
         # sudo dnf install -y cuda 
-        sudo dnf install -y nvidia-driver
+        # sudo dnf remove "cuda*" "*cublas*" "*cufft*" "*cufile*" "*curand*" "*cusolver*" "*cusparse*" "*gds-tools*" "*npp*" "*nvjpeg*" "nsight*" "*nvvm*"
+        # sudo dnf module remove --all nvidia-driver
+        # sudo dnf module reset nvidia-driver        
         sudo dnf module install -y nvidia-driver
     fi
 fi
