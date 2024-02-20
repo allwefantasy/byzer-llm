@@ -331,62 +331,31 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
             ray.get_actor("VLLM_STREAM_SERVER")
         except ValueError:            
             ray.remote(VLLMStreamServer).options(name="VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()
-                
-        dtype: str = infer_params.get("backend.dtype","auto")
-        seed: int = int(infer_params.get("backend.seed",0))
-        worker_use_ray: bool = infer_params.get("backend.worker_use_ray","false") == "false"
-        pipeline_parallel_size: int = int(infer_params.get("backend.pipeline_parallel_size",1))
-        tensor_parallel_size: int = num_gpus
-        block_size: int = int(infer_params.get("backend.block_size",16))
-        swap_space: int = int(infer_params.get("backend.swap_space",4))  # GiB
-        gpu_memory_utilization: float = float(infer_params.get("backend.gpu_memory_utilization",0.90))        
+                        
+        worker_use_ray: bool = infer_params.get("backend.worker_use_ray","false") == "false"        
+        tensor_parallel_size: int = num_gpus        
+        gpu_memory_utilization: float = float(infer_params.get("backend.gpu_memory_utilization",0.90))                
+        disable_log_stats: bool = infer_params.get("backend.disable_log_stats","false") == "true"        
         
-        disable_log_stats: bool = infer_params.get("backend.disable_log_stats","false") == "true"
-        quantization = infer_params.get("backend.quantization",None)
-        
-
         ohter_params = {}
         
         for k,v in infer_params.items():
-            if k.startswith("backend.") and k not in ["backend.dtype",
-                                                      "backend.seed",
-                                                      "backend.worker_use_ray",
-                                                      "backend.pipeline_parallel_size",
-                                                      "backend.tensor_parallel_size",
-                                                      "backend.block_size",
-                                                      "backend.swap_space",
+            if k.startswith("backend.") and k not in ["backend.worker_use_ray",                                                                                                                                                                  
                                                       "backend.gpu_memory_utilization",
                                                       "backend.disable_log_stats",
                                                       "backend.quantization"]:
                 ohter_params[k[len("backend."):]] = v
-
-        if quantization is not None:
-            ohter_params["quantization"] = quantization
-
-        if "backend.max_num_batched_tokens" in infer_params:
-            ohter_params["max_num_batched_tokens"] = int(infer_params["backend.max_num_batched_tokens"])
-
-        if "backend.max_model_len" in infer_params:
-            ohter_params["max_model_len"] = int(infer_params["backend.max_model_len"])
-
-        if "backend.max_num_seqs" in infer_params:
-            ohter_params["max_num_seqs"] = int(infer_params["backend.max_num_seqs"])        
-        
+                       
 
         from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs     
         engine_args = AsyncEngineArgs(
             engine_use_ray=False,            
             model=model_dir,             
-            worker_use_ray=worker_use_ray,                                        
-            dtype=dtype,
-            seed=seed,
-            pipeline_parallel_size=pipeline_parallel_size,
-            tensor_parallel_size=tensor_parallel_size,
-            block_size=block_size,
-            swap_space=swap_space,
+            worker_use_ray=worker_use_ray,                                                                
+            tensor_parallel_size=tensor_parallel_size,            
             gpu_memory_utilization=gpu_memory_utilization,            
             disable_log_stats=disable_log_stats,            
-            ** ohter_params
+            **ohter_params
         )        
         llm = AsyncLLMEngine.from_engine_args(engine_args)                               
         llm.async_stream_chat = types.MethodType(async_vllm_chat, llm) 
