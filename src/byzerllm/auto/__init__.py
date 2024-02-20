@@ -375,11 +375,8 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
 
         from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs     
         engine_args = AsyncEngineArgs(
-            engine_use_ray=False,
-            disable_log_requests=False,
-            model=model_dir,
-            tokenizer=None,tokenizer_mode="auto",
-            trust_remote_code=True,    
+            engine_use_ray=False,            
+            model=model_dir,             
             worker_use_ray=worker_use_ray,                                        
             dtype=dtype,
             seed=seed,
@@ -390,8 +387,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
             gpu_memory_utilization=gpu_memory_utilization,            
             disable_log_stats=disable_log_stats,            
             ** ohter_params
-        )
-        print(ohter_params)
+        )        
         llm = AsyncLLMEngine.from_engine_args(engine_args)                               
         llm.async_stream_chat = types.MethodType(async_vllm_chat, llm) 
         llm.async_get_meta = types.MethodType(async_get_meta,llm)

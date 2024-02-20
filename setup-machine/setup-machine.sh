@@ -234,7 +234,8 @@ if [[ $DRIVER_INSTALLED == false ]];then
         # sudo dnf install -y cuda 
         # sudo dnf remove "cuda*" "*cublas*" "*cufft*" "*cufile*" "*curand*" "*cusolver*" "*cusparse*" "*gds-tools*" "*npp*" "*nvjpeg*" "nsight*" "*nvvm*"
         # sudo dnf module remove --all nvidia-driver
-        # sudo dnf module reset nvidia-driver        
+        # sudo dnf module reset nvidia-driver     
+        # https://www.nvidia.com/content/DriverDownloads/confirmation.php?url=/XFree86/Linux-x86_64/535.154.05/NVIDIA-Linux-x86_64-535.154.05.run&lang=us&type=geforcem   
         sudo dnf module install -y nvidia-driver
     fi
 fi
