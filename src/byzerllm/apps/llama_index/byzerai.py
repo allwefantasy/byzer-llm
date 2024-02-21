@@ -78,7 +78,7 @@ class ByzerAI(CustomLLM):
                 text:str = response[0]
                 metadata:Dict[str,Any] = response[1]
                 completion_response = CompletionResponse(text=text, delta=text[len(v):], raw=None)
-                v = response.output
+                v = text
                 yield completion_response
         return stream_completion_response_to_chat_response(gen())
 
@@ -102,6 +102,6 @@ class ByzerAI(CustomLLM):
                 text:str = response[0]
                 metadata:Dict[str,Any] = response[1]
                 completion_response = CompletionResponse(text=text, delta=text[len(v):], raw=None)
-                v = response.output
+                v = text
                 yield completion_response
         return gen()        

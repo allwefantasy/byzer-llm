@@ -144,8 +144,8 @@ class DataAnalysis:
         
         # if self.message_store is not None:
         #     self.message_store.put(ChatStoreMessage(self.name,None,None,None,-1))
+        metadata = output["metadata"]        
         
-        metadata = output.get("metadata",{})
         if "stream" in metadata and metadata["stream"]:
             agent = metadata["agent"]
             stream_id = metadata["stream_id"]

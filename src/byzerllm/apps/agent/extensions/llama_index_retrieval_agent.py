@@ -1,5 +1,5 @@
 from ..conversable_agent import ConversableAgent
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, Generator
 from ....utils.client import ByzerLLM
 from byzerllm.utils.retrieval import ByzerRetrieval
 from ..agent import Agent
@@ -21,7 +21,10 @@ except ImportError:
         return x
 
 import jieba     
+import pydantic
 
+class AgentData(pydantic.BaseModel):        
+    namespace:str = pydantic.Field(...,description="用户提及的命名空间名字,如果没有显示提及，默认为 default")        
 
 
 class LlamaIndexRetrievalAgent(ConversableAgent): 
@@ -62,11 +65,8 @@ class LlamaIndexRetrievalAgent(ConversableAgent):
         # self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
         self.register_reply([Agent, ClientActorHandle,str], LlamaIndexRetrievalAgent.generate_retrieval_based_reply) 
         self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply) 
-        self.service_context = get_service_context(llm)
-        self.storage_context = get_storage_context(llm,retrieval)        
-              
-        
-                        
+        self.llm = llm
+        self.retrieval = retrieval                                                         
 
     def generate_retrieval_based_reply(
         self,
@@ -80,14 +80,35 @@ class LlamaIndexRetrievalAgent(ConversableAgent):
             messages = self._messages[get_agent_name(sender)]
                 
         new_message = messages[-1]
-        index = VectorStoreIndex.from_vector_store(vector_store = self.storage_context.vector_store,service_context=self.service_context)
-        query_engine = index.as_query_engine()
-        response = query_engine.query(new_message["content"])
+        content = new_message["content"]
         
+        @self.llm.response()
+        def extract_data(s:str)->AgentData:
+            pass
+
+        agent_data = extract_data(content)
+        if not agent_data.namespace:
+            agent_data.namespace = "default" 
+
+        print("agent_data",flush=True)    
+
+        service_context = get_service_context(self.llm)
+        storage_context = get_storage_context(self.llm,self.retrieval,chunk_collection=agent_data.namespace,namespace=agent_data.namespace)                
+
+        index = VectorStoreIndex.from_vector_store(vector_store = storage_context.vector_store,service_context=service_context)
+        query_engine = index.as_query_engine(streaming=True)        
+        id = str(uuid.uuid4())        
+        streaming_response = query_engine.query(new_message["content"])
+        
+        def gen():            
+            for response in streaming_response.response_gen:
+                yield (response,None)
+
+        self.put_stream_reply(id,gen())
         return True, {
-            "content":response.response,
-            "metadata":{"agent":self.name,"TERMINATE":True,"stream":False,"stream_id":id,"contexts":[]}
-        }
+            "content":id,
+            "metadata":{"agent":self.name,"TERMINATE":True,"stream":True,"stream_id":id,"contexts":[]}
+        }        
         
                 
         

@@ -237,6 +237,20 @@ field(created_time,long,sort)
             ids.append(f'{collection}/{doc_id}')
         self.retrieval.delete_by_ids(self.retrieval_cluster,self.retrieval_db,"text_content",[ids])
 
+    def truncate_table(self):
+        self.retrieval.truncate(self.retrieval_cluster,self.retrieval_db,"text_content")
+        self.retrieval.truncate(self.retrieval_cluster,self.retrieval_db,"text_content_chunk")
+        self.commit_doc()
+        self.commit_chunk()
+
+    def delete_from_doc_collection(self,collection:str):
+        self.retrieval.delete_by_filter(self.retrieval_cluster,self.retrieval_db,"text_content",
+                                        {"collection":collection})
+
+    def delete_from_chunk_collection(self,collection:str):
+        self.retrieval.delete_by_filter(self.retrieval_cluster,self.retrieval_db,"text_content_chunk",
+                                        {"chunk_collection":collection})    
+
     def commit_doc(self):
         self.retrieval.commit(self.retrieval_cluster,self.retrieval_db,"text_content")    
 

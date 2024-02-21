@@ -19,6 +19,8 @@ from byzerllm.apps.agent.extensions.rhetorical_agent import RhetoricalAgent
 from byzerllm.apps.agent.extensions.sql_reviewer_agent import SQLReviewerAgent
 from byzerllm.apps.agent.extensions.byzer_engine_agent import ByzerEngineAgent
 from byzerllm.apps.agent.extensions.retrieval_agent import RetrievalAgent
+from byzerllm.apps.agent.extensions.llama_index_retrieval_agent import LlamaIndexRetrievalAgent
+from byzerllm.apps.agent.extensions.load_data_agent import LoadDataAgent
 from byzerllm.apps.agent.store import MessageStore
 
 class DataAnalysisPipeline(ConversableAgent):  
@@ -146,6 +148,18 @@ you should reply exactly `UPDATE CONTEXT`.
                                                         code_agent = None,**params
                                                         )               
         
+        self.llama_index_query_agent = Agents.create_local_agent(LlamaIndexRetrievalAgent,"llama_index_query_agent",llm,retrieval,                                   
+                                                        chat_name=self.chat_name,
+                                                        owner=self.owner,                                                         
+                                                        **params
+                                                        ) 
+
+        self.load_data_agent = Agents.create_local_agent(LoadDataAgent,"load_data_agent",llm,retrieval,                                   
+                                                        chat_name=self.chat_name,
+                                                        owner=self.owner,                                                         
+                                                        **params
+                                                        )   
+        
         self.agents = {
             "assistant_agent":self.assistant_agent,
             "visualization_agent":self.visualization_agent,
@@ -156,7 +170,8 @@ you should reply exactly `UPDATE CONTEXT`.
             "byzer_engine_agent":self.byzer_engine_agent,            
             "rhetoorical_agent":self.rhetoorical_agent,            
             "spark_sql_agent":self.spark_sql_agent,
-            "byzer_engine_agent":self.byzer_engine_agent,
+            "llama_index_query_agent":self.llama_index_query_agent,
+            "load_data_agent":self.load_data_agent,
             "retrieval_agent":self.retrieval_agent
         } 
         self.reply_from_agent = {}       

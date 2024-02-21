@@ -342,6 +342,10 @@ class ByzerRetrieval:
         v = cluster.filter.remote(f"[{','.join([x.json() for x in search_query])}]")
         return json.loads(ray.get(v))
 
+    def delete_by_filter(self,cluster_name:str, database:str, table:str,filter:Dict[str,Any])-> bool:
+        cluster = self.cluster(cluster_name)
+        return ray.get(cluster.deleteByFilter.remote(database,table,json.dumps(filter,ensure_ascii=False)))    
+
 
     
     
