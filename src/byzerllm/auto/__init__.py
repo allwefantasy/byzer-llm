@@ -279,7 +279,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
             if k.startswith("backend.") and k not in ["backend.worker_use_ray",                                                                                                                                                                  
                                                       "backend.gpu_memory_utilization",
                                                       "backend.disable_log_stats",
-                                                      "backend.quantization"]:
+                                                      ]:
                 ohter_params[k[len("backend."):]] = v
                        
         
