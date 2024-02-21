@@ -19,8 +19,7 @@ from byzerllm.utils import (VLLMStreamServer,
                             StopSequencesCriteria)
 
 try:
-    from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs
-    from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs 
+    from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs    
     from vllm import  SamplingParams
     from vllm.utils import random_uuid    
 except ImportError:
