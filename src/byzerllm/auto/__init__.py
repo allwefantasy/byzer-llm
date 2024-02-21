@@ -2,20 +2,30 @@ from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig,
 import ray
 import torch
 import os
-import ray
 import time
-from typing import Any,Any,Dict, List,Tuple,Generator,Optional,Union
 import types
 import copy
-
+import asyncio
+from typing import Any,Any,Dict, List,Tuple,Generator,Optional,Union
 from pyjava.api.mlsql import DataServer
 from byzerllm.utils.metrics import Metric
-from .. import BlockRow
-from byzerllm.utils import VLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
-import asyncio
-from byzerllm.utils import compute_max_new_tokens,tokenize_stopping_sequences,StopSequencesCriteria
+from byzerllm import BlockRow
+from byzerllm.utils import (VLLMStreamServer,
+                            StreamOutputs,
+                            SingleOutput,
+                            SingleOutputMeta,
+                            compute_max_new_tokens,
+                            tokenize_stopping_sequences,
+                            StopSequencesCriteria)
 
-
+try:
+    from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs
+    from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs 
+    from vllm import  SamplingParams
+    from vllm.utils import random_uuid    
+except ImportError:
+    print("vllm is not installed, if you want to use vllm backend,please install it by `pip install vllm`",flush=True)
+    pass
 
 INFERENCE_NAME = "auto"
 INFER_TOKEN_METRICS = Metric()
@@ -117,8 +127,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
             "prob": -1.0
         }})] 
 
-async def async_get_meta(model):
-     from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs     
+async def async_get_meta(model):     
      model:AsyncLLMEngine = model     
      config = await model.get_model_config()
      tokenizer = model.engine.tokenizer
@@ -136,8 +145,6 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         max_length:int=4096, 
         top_p:float=0.95,
         temperature:float=0.1,**kwargs):
-    from vllm import  SamplingParams
-    from vllm.utils import random_uuid
 
     if "abort" in kwargs and "request_id" in kwargs:
         abort = kwargs["abort"]
@@ -150,31 +157,7 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
      
      
     stream = kwargs.get("stream",False)
-    request_id = kwargs["request_id"] if "request_id" in kwargs else random_uuid()        
-    
-    # in future, we should add the cancel logic here
-    # first_request = False
-
-    # if "request_id" in kwargs:
-    #     request_id = kwargs["request_id"]        
-    # else:
-    #     request_id = random_uuid()
-    #     first_request = True
-
-    # if stream and not first_request:
-    #     server = ray.get_actor("VLLM_STREAM_SERVER")
-    #     final_output = ray.get(server.get_item.remote(request_id))
-        
-    #     if isinstance(final_output,str):
-    #         return [("",{"metadata":{"request_id":request_id,"status":"running"}})]
-        
-    #     if final_output is None:
-    #         return [("",{"metadata":{"request_id":request_id,"status":"finish"}})]
-        
-    #     text_outputs = [output for output in final_output.outputs]
-    #     generated_text = text_outputs[0].text        
-    #     return [(generated_text,{"metadata":{"request_id":final_output.request_id}})]    
-    
+    request_id = kwargs["request_id"] if "request_id" in kwargs else random_uuid()                        
     n: int = 1
     best_of: Optional[int] =  kwargs["best_of"] if "best_of" in kwargs else None
     presence_penalty: float = float(kwargs.get("presence_penalty",0.0))
@@ -269,53 +252,6 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         "prob":prob
     }})]   
 
-def block_vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
-        max_length:int=4096, 
-        top_p:float=0.95,
-        temperature:float=0.1,**kwargs):
-    from vllm import  SamplingParams        
-    n: int = 1
-    best_of: Optional[int] =  kwargs["best_of"] if "best_of" in kwargs else None
-    presence_penalty: float = float(kwargs.get("presence_penalty",0.0))
-    frequency_penalty: float = float(kwargs.get("frequency_penalty",0.0))
-    top_k: int = int(kwargs.get("top_k",-1))
-    use_beam_search: bool = kwargs.get("use_beam_search","false") == "true"
-    stop: Union[None, str, List[str]] = kwargs["stop"] if "stop" in kwargs else None
-    ignore_eos: bool = kwargs.get("ignore_eos","false") == "true"
-    max_tokens: int = max_length
-    logprobs: Optional[int] = kwargs["logprobs"] if "logprobs" in kwargs else None
-
-    model = self
-    sampling_params = SamplingParams(temperature=temperature, 
-                                     n = n,
-                                     best_of=best_of,
-                                     presence_penalty=presence_penalty,
-                                     frequency_penalty=frequency_penalty,
-                                     top_k=top_k,
-                                     use_beam_search=use_beam_search,
-                                     stop = stop,
-                                     ignore_eos=ignore_eos,
-                                     logprobs=logprobs,
-                                     top_p=top_p, 
-                                     max_tokens=max_tokens)    
-    outputs = model.generate([ins], sampling_params)    
-
-    output = outputs[0].outputs[0]
-    generated_text = output.text
-        
-    input_tokens_count = len(outputs[0].prompt_token_ids)
-    generated_tokens_count = len(output.token_ids) 
-    print(f"total_tokens_count:{input_tokens_count + generated_tokens_count} request_id:{outputs[0].request_id} output_num:{len(outputs)}/{len(outputs[0].outputs)}  input_tokens_count:{input_tokens_count} generated_tokens_count:{generated_tokens_count}",flush=True)
-
-    return [(generated_text,"")]   
-
-
-def vllm_chat(self,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
-        max_length:int=4096, 
-        top_p:float=0.95,
-        temperature:float=0.1,**kwargs):
-    model = self        
-    return block_vllm_chat(model,model,tokenizer,ins,his,max_length,top_p,temperature,**kwargs)   
 
 def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}): 
     infer_mode = sys_conf.get("infer_backend","transformers")
@@ -346,8 +282,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
                                                       "backend.quantization"]:
                 ohter_params[k[len("backend."):]] = v
                        
-
-        from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs     
+        
         engine_args = AsyncEngineArgs(
             engine_use_ray=False,            
             model=model_dir,             
