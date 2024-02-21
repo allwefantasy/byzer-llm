@@ -90,7 +90,7 @@ class LlamaIndexRetrievalAgent(ConversableAgent):
         if not agent_data.namespace:
             agent_data.namespace = "default" 
 
-        print("agent_data",flush=True)    
+        print(f"{agent_data}",flush=True)    
 
         service_context = get_service_context(self.llm)
         storage_context = get_storage_context(self.llm,self.retrieval,chunk_collection=agent_data.namespace,namespace=agent_data.namespace)                
