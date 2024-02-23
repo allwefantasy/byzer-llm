@@ -105,10 +105,11 @@ class ByzerAIVectorStore(VectorStore):
     ) -> List[str]:
         """Add nodes to index."""
         v = []
+        count = 0
         for node in nodes:                        
             metadata = node_to_metadata_dict(
                 node, remove_text=True, flat_metadata=False
-            )
+            )                
             metadata.pop("_node_content", None)            
             m = {
                 "chunk_id": node.node_id,

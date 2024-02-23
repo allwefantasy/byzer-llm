@@ -64,7 +64,8 @@ field(owner,string),
 field(chunk,string,analyze),
 field(raw_chunk,string,no_index),
 field(chunk_vector,array(float)),
-field(metadata,string,no_index),
+field(metadata,string,analyze),
+field(json_data,string,no_index),
 field(chunk_collection,string),
 field(created_time,long,sort)
 )''',
@@ -145,7 +146,7 @@ field(created_time,long,sort)
     def search_content_by_filename(self,filename:str,collection:str): 
         filters = [{"field":"collection","value":collection}]
         docs = self.retrieval.search(self.retrieval_cluster,
-                        [SearchQuery(self.retrieval_db,"text_content",
+                        [SearchQuery(self.retrieval_db,"text_content_chunk",
                                     filters={"and":filters},
                                     keyword=self.search_tokenize(filename),fields=["metadata"],
                                     vector=[],vectorField=None,
@@ -226,7 +227,8 @@ field(created_time,long,sort)
                 "raw_chunk":chunk_content,
                 "chunk_vector":chunk_embedding,  
                 "chunk_collection":self.chunk_collection,              
-                "metadata":json.dumps(metadata,ensure_ascii=False),
+                "metadata":self.search_tokenize(json.dumps(metadata,ensure_ascii=False)),
+                "json_data":json.dumps(metadata,ensure_ascii=False),
                 "created_time":int(time.time()*1000),
                 })                   
             
@@ -259,8 +261,10 @@ field(created_time,long,sort)
         self.commit_chunk()
 
     def delete_from_doc_collection(self,collection:str):
-        self.retrieval.delete_by_filter(self.retrieval_cluster,self.retrieval_db,"text_content",
-                                        {"collection":collection})
+        for suffix in ["index","data","ref_doc_info","metadata"]:
+            self.retrieval.delete_by_filter(self.retrieval_cluster,self.retrieval_db,"text_content",
+                                            {"collection":f"{collection}/{suffix}"})
+        
 
     def delete_from_chunk_collection(self,collection:str):
         self.retrieval.delete_by_filter(self.retrieval_cluster,self.retrieval_db,"text_content_chunk",

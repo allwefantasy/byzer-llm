@@ -32,7 +32,7 @@ class ByzerAIKVStore(BaseKVStore):
             val (dict): value
             collection (str): collection name
 
-        """        
+        """             
         self._retrieval.save_doc(data=[{            
             "doc_id":key,
             "json_data":json.dumps(val,ensure_ascii=False),
@@ -68,7 +68,7 @@ class ByzerAIKVStore(BaseKVStore):
 
         """
         cur_batch = 0
-        v = []
+        v = []        
         for key, val in kv_pairs:
             v.append({            
             "doc_id":key,
