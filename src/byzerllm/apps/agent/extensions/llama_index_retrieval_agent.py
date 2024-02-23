@@ -24,7 +24,7 @@ import jieba
 import pydantic
 
 class AgentData(pydantic.BaseModel):        
-    namespace:str = pydantic.Field(...,description="用户提及的命名空间名字,如果没有显示提及，默认为 default")        
+    namespace:str = pydantic.Field(...,description="用户提及的命名空间名字,如果没有提及，则设置为 default")        
 
 
 class LlamaIndexRetrievalAgent(ConversableAgent): 
@@ -82,11 +82,12 @@ class LlamaIndexRetrievalAgent(ConversableAgent):
         new_message = messages[-1]
         content = new_message["content"]
         
-        @self.llm.response()
-        def extract_data(s:str)->AgentData:
-            pass
+        # @self.llm.response()
+        # def extract_data(s:str)->AgentData:
+        #     pass
 
-        agent_data = extract_data(content)
+        # agent_data = extract_data(content)
+        agent_data = AgentData(namespace="default")
         if not agent_data.namespace:
             agent_data.namespace = "default" 
 
@@ -98,11 +99,13 @@ class LlamaIndexRetrievalAgent(ConversableAgent):
         index = VectorStoreIndex.from_vector_store(vector_store = storage_context.vector_store,service_context=service_context)
         query_engine = index.as_query_engine(streaming=True)        
         id = str(uuid.uuid4())        
-        streaming_response = query_engine.query(new_message["content"])
+        streaming_response = query_engine.query(content)
         
-        def gen():            
+        def gen(): 
+            t = ""           
             for response in streaming_response.response_gen:
-                yield (response,None)
+                t += response
+                yield (t,None)
 
         self.put_stream_reply(id,gen())
         return True, {

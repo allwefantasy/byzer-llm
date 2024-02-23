@@ -15,7 +15,11 @@ from llama_index import SimpleDirectoryReader
 from llama_index.node_parser import SentenceSplitter
 from llama_index import SimpleDirectoryReader, VectorStoreIndex, ServiceContext
 from llama_index.node_parser import SentenceSplitter,SentenceWindowNodeParser
-from llama_index import Document
+from llama_index import (  
+    Document,  
+    get_response_synthesizer,
+)
+from llama_index.indices.document_summary import DocumentSummaryIndex
 import pydantic
 
 try:
@@ -117,13 +121,8 @@ class LoadDataAgent(ConversableAgent):
 
         documents = SimpleDirectoryReader(agent_data.path).load_data()
 
-        sp = SentenceSplitter(chunk_size=1024, chunk_overlap=0)
-        # node_parser = SentenceWindowNodeParser.from_defaults(
-        #     window_size=3,
-        #     window_metadata_key="window",
-        #     original_text_metadata_key="original_text",  
-        #     sentence_splitter=sp  
-        # )                
+        sp = SentenceSplitter(chunk_size=1024, chunk_overlap=0)        
+
         nodes = sp.get_nodes_from_documents(
             documents, show_progress=True
         )

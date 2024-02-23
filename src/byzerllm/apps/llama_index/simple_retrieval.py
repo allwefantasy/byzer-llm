@@ -46,6 +46,8 @@ field(_id,string),
 field(doc_id,string),
 field(owner,string),
 field(content,string,analyze),
+field(raw_content,string,no_index),
+field(metadata,string,analyze),
 field(json_data,string,no_index),
 field(collection,string),
 field(created_time,long,sort)
@@ -84,9 +86,11 @@ field(created_time,long,sort)
             _id = f"{collection}/{doc_id}"
             result.append({"_id":_id,
             "doc_id":doc_id,               
-            "json_data":item["json_data"], 
+            "json_data":item["json_data"],
+            "metadata":self.search_tokenize(item["json_data"]), 
             "collection":collection,            
             "content":self.search_tokenize(item["content"]),
+            "raw_content":item["content"],
             "owner":owner,          
             "created_time":int(time.time()*1000),
             })        
@@ -136,6 +140,17 @@ field(created_time,long,sort)
             return context 
         else:
             return docs
+        
+
+    def search_content_by_filename(self,filename:str,collection:str): 
+        filters = [{"field":"collection","value":collection}]
+        docs = self.retrieval.search(self.retrieval_cluster,
+                        [SearchQuery(self.retrieval_db,"text_content",
+                                    filters={"and":filters},
+                                    keyword=self.search_tokenize(filename),fields=["metadata"],
+                                    vector=[],vectorField=None,
+                                    limit=10000)])
+        return docs 
 
     def search_content(self,q:str,owner:str,url:str,auth_tag:str=None,limit:int=4,return_json:bool=True): 
         filters = [self._owner_filter(owner)]
