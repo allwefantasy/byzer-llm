@@ -26,6 +26,7 @@ import functools
 import inspect
 import pydantic
 import copy
+import traceback
 
 
 logger = logging.getLogger(__name__)
@@ -951,7 +952,7 @@ class ByzerLLM:
                 temp = temp[-1]
             ms = FunctionCallList.parse_obj(temp)
         except Exception as inst:
-            r.metadata["reason"] = str(inst)
+            r.metadata["reason"] = str(inst) + "\n" + traceback.format_exc()
             return r
                     
         _func_maps = dict([(t.__name__,t) for t in tools])
@@ -960,11 +961,13 @@ class ByzerLLM:
             func_params = {}
         
         try:
+            r.metadata["choosed_functions"] = []
             for m in ms.tool_calls:        
                 if m.function.name in _func_maps:
+                    r.metadata["choosed_functions"].append(m.function.name)
                     r.values.append(_func_maps[m.function.name](**m.function.arguments,**func_params))
         except Exception as inst:
-            r.metadata["reason"] = str(inst)            
+            r.metadata["reason"] = str(inst) + "\n" + traceback.format_exc()            
 
         return r
     
@@ -1011,7 +1014,7 @@ class ByzerLLM:
                 res_json = json.loads(res_json)
             r.value=response_class.parse_obj(res_json)
         except Exception as inst:
-            r.metadata["reason"] = str(inst)
+            r.metadata["reason"] = str(inst) + "\n" + traceback.format_exc()
             return r                                                       
 
         return r
@@ -1044,7 +1047,7 @@ class ByzerLLM:
         try:
             ms = response_class.parse_obj(json.loads(code))            
         except Exception as inst:
-            r.metadata["reason"] = str(inst)
+            r.metadata["reason"] = str(inst) + "\n" + traceback.format_exc()
             return r                                       
         
         r.value=ms
