@@ -155,7 +155,7 @@ class ByzerAIVectorStore(VectorStore):
         
         chunks_map = {}
         for chunk in chunks:
-            chunk["metadata"] = json.loads(chunk["metadata"])
+            chunk["metadata"] = json.loads(chunk["json_data"])
             chunks_map[chunk["_id"]] = chunk["metadata"]
             
         query_filter_fn = _build_metadata_filter_fn(

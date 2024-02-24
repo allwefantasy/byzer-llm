@@ -144,7 +144,7 @@ field(created_time,long,sort)
         
 
     def search_content_by_filename(self,filename:str,collection:str): 
-        filters = [{"field":"collection","value":collection}]
+        filters = [{"field":"chunk_collection","value":collection}]
         docs = self.retrieval.search(self.retrieval_cluster,
                         [SearchQuery(self.retrieval_db,"text_content_chunk",
                                     filters={"and":filters},
