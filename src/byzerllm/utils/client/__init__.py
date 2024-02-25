@@ -961,10 +961,10 @@ class ByzerLLM:
             func_params = {}
         
         try:
-            r.metadata["choosed_functions"] = []
+            r.metadata["selected_functions"] = []
             for m in ms.tool_calls:        
                 if m.function.name in _func_maps:
-                    r.metadata["choosed_functions"].append(m.function.name)
+                    r.metadata["selected_functions"].append(m.function.name)
                     r.values.append(_func_maps[m.function.name](**m.function.arguments,**func_params))
         except Exception as inst:
             r.metadata["reason"] = str(inst) + "\n" + traceback.format_exc()            
@@ -1362,24 +1362,25 @@ class ByzerLLM:
             def wrapper(*args, **kwargs):
                                                 
                 key = f"{model}_{instruction}_{func.__module__}.{func.__name__}"
-                
-                if not skip_cache and key in self.func_impl_cache:
-                    if verbose:
-                        print(f''' {key} in cache, skip impl function''')
-                    return self.func_impl_cache[key](*args, **kwargs)
-                
                 signature = inspect.signature(func)
                 arguments = signature.bind(*args, **kwargs)
                 arguments.apply_defaults()
-                input_dict = {}
-                for param in signature.parameters:
-                    input_dict.update({ param: arguments.arguments[param] })
                 
                 if issubclass(signature.return_annotation,pydantic.BaseModel):
                     response_class = signature.return_annotation
                 else:
                     raise Exception("impl function should return a pydantic model")
                 
+                if not skip_cache and key in self.func_impl_cache:
+                    if verbose:
+                        print(f''' {key} in cache, skip impl function''')
+                    return response_class.parse_obj(self.func_impl_cache[key](*args, **kwargs))
+                
+                
+                input_dict = {}
+                for param in signature.parameters:
+                    input_dict.update({ param: arguments.arguments[param] })
+                                                
                 start_time = time.monotonic()
 
                 t = self.chat_oai(model=model,conversations=[{
