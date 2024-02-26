@@ -29,6 +29,29 @@ except ImportError:
 INFERENCE_NAME = "auto"
 INFER_TOKEN_METRICS = Metric()
 
+def get_bool(params:Dict[str,str],key:str,default:bool=False)->bool:
+    if key in params:
+        if isinstance(params[key],bool):
+            return params[key]
+        else:            
+            return params[key] == "true" or params[key] == "True"
+    return default
+
+def get_int(params:Dict[str,str],key:str,default:int=0)->int:
+    if key in params:
+        return int(params[key])
+    return default
+
+def get_float(params:Dict[str,str],key:str,default:float=0.0)->float:
+    if key in params:
+        return float(params[key])
+    return default
+
+def get_str(params:Dict[str,str],key:str,default:str="")->str:
+    if key in params:
+        return params[key]
+    return default    
+
 
 def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],  
         max_length:int=4090, 
@@ -146,27 +169,25 @@ async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],
         temperature:float=0.1,**kwargs):
 
     if "abort" in kwargs and "request_id" in kwargs:
-        abort = kwargs["abort"]
-        if isinstance(abort,str):
-            abort = abort == "true"
+        abort = get_bool(kwargs,"abort",False)        
         request_id = kwargs["request_id"]
         if abort:
            await model.abort(request_id)
         return [("",{"metadata":{"request_id":request_id,}})]
      
      
-    stream = kwargs.get("stream",False)
+    stream = get_bool(kwargs,"stream",False)
     request_id = kwargs["request_id"] if "request_id" in kwargs else random_uuid()                        
     n: int = 1
-    best_of: Optional[int] =  kwargs["best_of"] if "best_of" in kwargs else None
+    best_of: Optional[int] = get_int(kwargs,"best_of",None)
     presence_penalty: float = float(kwargs.get("presence_penalty",0.0))
     frequency_penalty: float = float(kwargs.get("frequency_penalty",0.0))
     top_k: int = int(kwargs.get("top_k",-1))
-    use_beam_search: bool = kwargs.get("use_beam_search","false") == "true"
+    use_beam_search: bool = get_bool(kwargs,"use_beam_search",False)
     stop: Union[None, str, List[str]] = kwargs["stop"] if "stop" in kwargs else None
-    ignore_eos: bool = kwargs.get("ignore_eos","false") == "true"
+    ignore_eos: bool = get_bool(kwargs,"ignore_eos",False)
     max_tokens: int = max_length
-    logprobs: Optional[int] = kwargs["logprobs"] if "logprobs" in kwargs else None
+    logprobs: Optional[int] = get_int(kwargs,"logprobs",None)
     # repetition_penalty: float = float(kwargs.get("repetition_penalty",1.1))
 
     other_params = {}
@@ -267,10 +288,10 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         except ValueError:            
             ray.remote(VLLMStreamServer).options(name="VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()
                         
-        worker_use_ray: bool = infer_params.get("backend.worker_use_ray","false") == "false"        
+        worker_use_ray: bool = get_bool(infer_params,"backend.worker_use_ray",True)
         tensor_parallel_size: int = num_gpus        
         gpu_memory_utilization: float = float(infer_params.get("backend.gpu_memory_utilization",0.90))                
-        disable_log_stats: bool = infer_params.get("backend.disable_log_stats","false") == "true"        
+        disable_log_stats: bool = get_bool(infer_params,"backend.disable_log_stats",False)
         
         ohter_params = {}
         
