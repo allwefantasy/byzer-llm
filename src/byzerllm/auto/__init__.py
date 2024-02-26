@@ -289,6 +289,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
             ray.remote(VLLMStreamServer).options(name="VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()
                         
         worker_use_ray: bool = get_bool(infer_params,"backend.worker_use_ray",True)
+        engine_use_ray: bool = get_bool(infer_params,"backend.engine_use_ray",False)
         tensor_parallel_size: int = num_gpus        
         gpu_memory_utilization: float = float(infer_params.get("backend.gpu_memory_utilization",0.90))                
         disable_log_stats: bool = get_bool(infer_params,"backend.disable_log_stats",False)
@@ -296,7 +297,8 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         ohter_params = {}
         
         for k,v in infer_params.items():
-            if k.startswith("backend.") and k not in ["backend.worker_use_ray",                                                                                                                                                                  
+            if k.startswith("backend.") and k not in ["backend.worker_use_ray", 
+                                                      "backend.engine_use_ray",                                                                                                                                                                 
                                                       "backend.gpu_memory_utilization",
                                                       "backend.disable_log_stats",
                                                       ]:
@@ -304,7 +306,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
                        
         
         engine_args = AsyncEngineArgs(
-            engine_use_ray=False,            
+            engine_use_ray=engine_use_ray,            
             model=model_dir,             
             worker_use_ray=worker_use_ray,                                                                
             tensor_parallel_size=tensor_parallel_size,            
