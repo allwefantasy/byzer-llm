@@ -22,8 +22,7 @@ def chat(ray_context):
         
         for key in ["query","instruction","history","user_role","system_msg","assistant_role"]:
             value.pop(key,"")            
-        
-        
+                
         conversations = history + [{
             "role":"user",
             "content":v
