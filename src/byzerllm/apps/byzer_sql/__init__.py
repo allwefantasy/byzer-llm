@@ -20,9 +20,9 @@ def chat(ray_context):
         v = value.get("query",value.get("instruction",""))
         history = json.loads(value.get("history","[]"))
         
-        value.pop("query","")
-        value.pop("instruction","")
-        value.pop("history","")
+        for key in ["query","instruction","history","user_role","system_msg","assistant_role"]:
+            value.pop(key,"")            
+        
         
         conversations = history + [{
             "role":"user",
