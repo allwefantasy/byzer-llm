@@ -9,7 +9,7 @@ import asyncio
 from typing import Any,Any,Dict, List,Tuple,Generator,Optional,Union
 from pyjava.api.mlsql import DataServer
 from byzerllm.utils.metrics import Metric
-from byzerllm import BlockRow
+from byzerllm import BlockRow,get_real_tokenizer
 from byzerllm.utils import (VLLMStreamServer,
                             StreamOutputs,
                             SingleOutput,
@@ -17,6 +17,7 @@ from byzerllm.utils import (VLLMStreamServer,
                             compute_max_new_tokens,
                             tokenize_stopping_sequences,
                             StopSequencesCriteria)
+                            
 
 try:
     from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs    
@@ -153,15 +154,8 @@ async def async_get_meta(model):
      model:AsyncLLMEngine = model     
      config = await model.get_model_config()
      tokenizer = model.engine.tokenizer
-     # After vLLM > 0.2.7 , vLLM brings lora support, 
-     # Then the tokenizer of the model.engine is TokenizerGroup,
-     # you can get the original tokenizer by tokenizer.tokenizer
-     # or get lora_toeknizer by get_lora_tokenizer
-     is_tokenizer_group = hasattr(tokenizer,"get_lora_tokenizer")
-     if is_tokenizer_group:
-        final_tokenizer = tokenizer.tokenizer
-     else:
-        final_tokenizer = tokenizer
+          
+     final_tokenizer = get_real_tokenizer(tokenizer)
 
      support_chat_template = (hasattr(final_tokenizer,"apply_chat_template") 
                               and hasattr(final_tokenizer,"chat_template") 

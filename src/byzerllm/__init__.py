@@ -93,5 +93,17 @@ def log_to_file(msg:str,file_path:str):
         f.write(msg)
         f.write("\n")
 
+# After vLLM > 0.2.7 , vLLM brings lora support, 
+# Then the tokenizer of the model.engine is TokenizerGroup,
+# you can get the original tokenizer by tokenizer.tokenizer
+# or get lora_toeknizer by get_lora_tokenizer
+def get_real_tokenizer(tokenizer):
+    is_tokenizer_group = hasattr(tokenizer,"get_lora_tokenizer")
+    if is_tokenizer_group:
+        final_tokenizer = tokenizer.tokenizer
+    else:
+        final_tokenizer = tokenizer
+    return final_tokenizer    
+
        
     

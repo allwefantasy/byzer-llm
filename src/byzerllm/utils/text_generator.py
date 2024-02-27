@@ -1,5 +1,6 @@
 from typing import List,Tuple,Any,Dict
 import json
+from byzerllm import get_real_tokenizer
 from .emb import ByzerLLMEmbeddings,ByzerSentenceTransformerEmbeddings
 
 class ByzerLLMGenerator:
@@ -12,12 +13,12 @@ class ByzerLLMGenerator:
             self.embedding = model            
 
         if tokenizer:
-            self.tokenizer = tokenizer
+            self.tokenizer = get_real_tokenizer(tokenizer)
             from sentence_transformers import SentenceTransformer
             if isinstance(model, SentenceTransformer) or isinstance(self.tokenizer, SentenceTransformer):
-                self.embedding = ByzerSentenceTransformerEmbeddings(model,tokenizer)
+                self.embedding = ByzerSentenceTransformerEmbeddings(model,self.tokenizer)
             else:    
-                self.embedding = ByzerLLMEmbeddings(model,tokenizer,use_feature_extraction=use_feature_extraction)
+                self.embedding = ByzerLLMEmbeddings(model,self.tokenizer,use_feature_extraction=use_feature_extraction)
     
     def extract_history(self,input)-> List[Dict[str,str]]:
         history = input.get("history",[])
