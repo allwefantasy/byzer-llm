@@ -17,6 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
+- [2024/02] Release Byzer-LLM 0.1.40
 - [2024/01] Release Byzer-LLM 0.1.39
 - [2023/12] Release Byzer-LLM 0.1.30
 
@@ -45,6 +46,7 @@ The unique features of Byzer-LLM are:
 * Serving
     * Backend
         * [vLLM Support](#vLLM-Support)
+            * [vLLM troubleshooting](#vLLM-troubleshooting)
         * [DeepSpeed Support](#DeepSpeed-Support)
     * [Byzer-LLM OpenAI-Compatible RESTful API server](#byzer-llm-openai-compatible-restful-api-server)
 * LLM && Python    
@@ -70,11 +72,14 @@ The unique features of Byzer-LLM are:
 * [Finetune](#Finetune)
 * [Stream Chat](#Stream-Chat)
 * [Articles](#Articles)
+* [Third-party Libraries](#Third-party-Libraries)
+    * [Llama_index](#Llama_index)
 * [Contributing](#Contributing)
 
 ---
 
 ## Versions
+- 0.1.40： LlamaIndex support / vLLM 0.3.2 Support / Byzer-SQL new features / Qwen 1.5 support
 - 0.1.39： Enhance Function Impl / Upgrade SaaS SDK / Add OpenAI-Compatible API Server
 - 0.1.38： Upgrade saas/sparkdask model / add embedding rerank model / agent message store support
 - 0.1.37： Upgrade saas/zhipu model, you can choose glm-4 / embedding-2 for LLM or embedding purpose
@@ -497,6 +502,42 @@ There are some tiny differences between the vLLM and the transformers backend.
 
 1. The `pretrained_model_type` is fixed to `custom/auto` for vLLM, since the vLLM will auto detect the model type.
 2. Use `setup_infer_backend` to specify `InferBackend.VLLM` as the inference backend.
+
+### vLLM troubleshooting
+If you use the version of vLLM > 0.2.7 and meets the following error:
+
+```shell
+ Error Type: TASK_EXECUTION_EXCEPTION
+
+ self._call_impl(*args, **kwargs)
+  File "/home/byzerllm/miniconda3/envs/byzerllm-dev2/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1527, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/byzerllm/miniconda3/envs/byzerllm-dev2/lib/python3.10/site-packages/vllm/model_executor/layers/vocab_parallel_embedding.py", line 96, in forward
+    input_mask = ((input_ < self.vocab_start_index) |
+TypeError: '<' not supported between instances of 'TensorMetadata' and 'int'
+```
+
+You can open the Ray dashboard and find the RayVLLMWorker Actor, go into and check the tasks tab and click the error task to get the error message above.
+
+The solution is to modify the `$CONDA_ENV/site-packages/vllm/model_executor/parallel_utils/communication_op.py` in the vLLM pip package:
+
+Replace the following code:
+
+```python
+TensorMetadata = namedtuple("TensorMetadata", ["dtype", "size"])
+```
+
+to 
+
+```python
+class TensorMetadata:
+    def __init__(self, dtype, size):
+        self.dtype = dtype
+        self.size = size
+```
+
+
+
  
 
 ### Stream Chat
@@ -1789,6 +1830,46 @@ and checkpoint_dir="/home/byzerllm/models/sft/jobs/sft-william-20230912-21-50-10
 and savePath="/home/byzerllm/models/sft/jobs/sft-william-20230912-21-50-10-2529bf9f-493e-40a3-b20f-0369bd01d75d/finetune_model/merge";
 
 ```
+
+## Third-party Libraries
+
+### Llama_index
+
+Llama_index can use byzer-llm to access the LLM model, use Byzer-retrieval as the RAG storage.
+Try to use the following code to get service_context and storage_context.
+
+```python
+## init the ByzerLLM and ByzerRetrieval
+code_search_path=["/home/winubuntu/softwares/byzer-retrieval-lib/"]
+env_vars = {"JAVA_HOME": "/home/winubuntu/softwares/jdk-21",
+            "PATH":"/home/winubuntu/softwares/jdk-21/bin:/home/winubuntu/.cargo/bin:/usr/local/cuda/bin:/home/winubuntu/softwares/byzer-lang-all-in-one-linux-amd64-3.1.1-2.3.2/jdk8/bin:/home/winubuntu/miniconda3/envs/byzerllm-dev/bin:/home/winubuntu/miniconda3/condabin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"}
+import os
+import ray
+from byzerllm.apps.llama_index import get_service_context,get_storage_context
+from byzerllm.utils.retrieval import ByzerRetrieval
+from byzerllm.utils.client import ByzerLLM,Templates
+
+ray.init(address="auto",namespace="default",ignore_reinit_error=True,
+                 job_config=ray.job_config.JobConfig(code_search_path=code_search_path,
+                                                      runtime_env={"env_vars": env_vars})
+                 )  
+model_name = "qianwen_chat"
+llm = ByzerLLM()
+llm.setup_template(model=model_name,template="auto")
+llm.setup_default_emb_model_name("emb")
+llm.setup_default_model_name(model_name)
+llm.setup_extra_generation_params(model_name,extra_generation_params={
+    "temperature":0.01,
+    "top_p":0.99
+})
+retrieval = ByzerRetrieval()
+retrieval.launch_gateway() 
+
+## get the service_context and storage_context for Llama_index
+service_context = get_service_context(llm)
+storage_context = get_storage_context(llm,retrieval,chunk_collection="default",namespace="default")
+```
+
 
 ## Articles
 
