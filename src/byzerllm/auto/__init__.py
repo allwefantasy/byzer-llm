@@ -153,7 +153,19 @@ async def async_get_meta(model):
      model:AsyncLLMEngine = model     
      config = await model.get_model_config()
      tokenizer = model.engine.tokenizer
-     support_chat_template = hasattr(tokenizer,"apply_chat_template") and hasattr(tokenizer,"chat_template") and tokenizer.chat_template is not None
+     # After vLLM > 0.2.7 , vLLM brings lora support, 
+     # Then the tokenizer of the model.engine is TokenizerGroup,
+     # you can get the original tokenizer by tokenizer.tokenizer
+     # or get lora_toeknizer by get_lora_tokenizer
+     is_tokenizer_group = hasattr(tokenizer,"get_lora_tokenizer")
+     if is_tokenizer_group:
+        final_tokenizer = tokenizer.tokenizer
+     else:
+        final_tokenizer = tokenizer
+
+     support_chat_template = (hasattr(final_tokenizer,"apply_chat_template") 
+                              and hasattr(final_tokenizer,"chat_template") 
+                              and final_tokenizer.chat_template is not None)
          
      return [{"model_deploy_type":"proprietary",
               "backend":"ray/vllm",

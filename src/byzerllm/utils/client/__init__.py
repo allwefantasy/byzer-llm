@@ -523,7 +523,7 @@ class ByzerLLM:
             
             if is_message_format:                
                 return self
-
+                        
             if "QWenLMHeadModel" in meta.get("architectures",[]):
                 self.setup_template(model,Templates.qwen())
                 return self
