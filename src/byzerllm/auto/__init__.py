@@ -14,8 +14,7 @@ from byzerllm.utils import (VLLMStreamServer,
                             SingleOutputMeta,
                             compute_max_new_tokens,
                             tokenize_stopping_sequences,
-                            )  
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"                        
+                            )                         
 try:
     from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs    
     from vllm import  SamplingParams
