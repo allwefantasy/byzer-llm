@@ -1,4 +1,3 @@
-from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig,StoppingCriteriaList,GenerationConfig
 import ray
 import torch
 import os
@@ -27,6 +26,8 @@ try:
 except ImportError:
     print("vllm is not installed, if you want to use vllm backend,please install it by `pip install vllm`",flush=True)
     pass
+
+from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig,StoppingCriteriaList,GenerationConfig
 
 INFERENCE_NAME = "auto"
 INFER_TOKEN_METRICS = Metric()
