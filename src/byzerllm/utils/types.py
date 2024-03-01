@@ -1,6 +1,6 @@
 from transformers import StoppingCriteria
-
 class StopSequencesCriteria(StoppingCriteria):
+    import torch
     """
      skip_check_min_length is used to skip the the stop sequence check if the input_ids is short
      than the min_length. 
