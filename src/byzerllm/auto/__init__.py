@@ -16,7 +16,8 @@ from byzerllm.utils import (VLLMStreamServer,
                             SingleOutputMeta,
                             compute_max_new_tokens,
                             tokenize_stopping_sequences,
-                            StopSequencesCriteria)
+                            )
+from byzerllm.utils.types import StopSequencesCriteria
                             
 
 try:

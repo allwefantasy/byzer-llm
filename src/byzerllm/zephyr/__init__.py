@@ -3,7 +3,8 @@ import transformers
 import torch
 from typing import Dict,List,Tuple
 from byzerllm.utils import (generate_instruction_from_history,
-compute_max_new_tokens,tokenize_stopping_sequences,StopSequencesCriteria)
+compute_max_new_tokens,tokenize_stopping_sequences)
+from byzerllm.utils.types import StopSequencesCriteria
 
 from typing import Dict, Any,List,Generator
 from pyjava.storage import streaming_tar as STar

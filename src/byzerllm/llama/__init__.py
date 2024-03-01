@@ -5,7 +5,8 @@ from typing import Dict,List,Any,Generator
 from pyjava.api.mlsql import DataServer
 from byzerllm import BlockRow
 from byzerllm.utils import (generate_instruction_from_history,
-compute_max_new_tokens,tokenize_stopping_sequences,StopSequencesCriteria)
+compute_max_new_tokens,tokenize_stopping_sequences)
+from byzerllm.utils.types import StopSequencesCriteria
 import os
 import time
 
