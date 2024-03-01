@@ -1,5 +1,4 @@
 import ray
-import torch
 import os
 import time
 import types
@@ -26,7 +25,7 @@ try:
 except ImportError:
     print("vllm is not installed, if you want to use vllm backend,please install it by `pip install vllm`",flush=True)
     pass
-
+import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig,StoppingCriteriaList,GenerationConfig
 
 INFERENCE_NAME = "auto"
