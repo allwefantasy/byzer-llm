@@ -14,10 +14,7 @@ from byzerllm.utils import (VLLMStreamServer,
                             SingleOutputMeta,
                             compute_max_new_tokens,
                             tokenize_stopping_sequences,
-                            )
-from byzerllm.utils.types import StopSequencesCriteria
-                            
-
+                            )                            
 try:
     from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs    
     from vllm import  SamplingParams
@@ -27,6 +24,7 @@ except ImportError:
     pass
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig,StoppingCriteriaList,GenerationConfig
+from byzerllm.utils.types import StopSequencesCriteria
 
 INFERENCE_NAME = "auto"
 INFER_TOKEN_METRICS = Metric()
