@@ -743,7 +743,7 @@ class ByzerLLM:
                 return (infer,None)
             
             UDFBuilder.build(self.ray_context,init_model,simple_predict_func)
-            return 
+            return self.get_meta(model=udf_name) 
 
         
         if pretrained_model_type == "bark":
@@ -758,7 +758,7 @@ class ByzerLLM:
                 results=[{"predict":model.text_to_voice(item["instruction"]).tolist(),"labels":""} for item in data]
                 return {"value":[json.dumps(results,ensure_ascii=False,indent=4)]}
             UDFBuilder.build(self.ray_context,init_model,predict_func)
-            return                
+            return self.get_meta(model=udf_name)               
         
         # we put in this place so it only take effect for private model
         self.mapping_max_output_length[udf_name]=1024
@@ -779,6 +779,7 @@ class ByzerLLM:
             return model
         
         UDFBuilder.build(self.ray_context,init_model,getattr(predict_module,predict_func))
+        return self.get_meta(model=udf_name)
   
     def get_meta(self,model:str,llm_config:Dict[str,Any]={}):        
         if not model and not self.default_model_name:
