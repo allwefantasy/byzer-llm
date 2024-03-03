@@ -171,10 +171,13 @@ async def async_get_meta(model):
               }     
      
      if not isinstance(model.engine,_AsyncLLMEngine): 
-         state =  get_actor_info(model.engine)         
-         meta["engien_state"] = state.state
-         meta["engine_actor_id"] = state.actor_id         
-        #  meta["engine_placement_group_id"] = model.placement_group.id.hex()
+         try:
+            state =  get_actor_info(model.engine)         
+            meta["engien_state"] = state.state
+            meta["engine_actor_id"] = state.actor_id         
+            #  meta["engine_placement_group_id"] = model.placement_group.id.hex()
+         except Exception as e:
+            print(f"get engine state error:{e}",flush=True)
          
      return [meta]
 
