@@ -80,7 +80,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
-- 0.1.41： Fix vLLM bugs
+- 0.1.41： Fix vLLM bugs / vLLM 0.3.3 Support
 - 0.1.40： LlamaIndex support / vLLM 0.3.2 Support / Byzer-SQL new features / Qwen 1.5 support
 - 0.1.39： Enhance Function Impl / Upgrade SaaS SDK / Add OpenAI-Compatible API Server
 - 0.1.38： Upgrade saas/sparkdask model / add embedding rerank model / agent message store support
