@@ -3,16 +3,25 @@
 # you can get the original tokenizer by tokenizer.tokenizer
 # or get lora_toeknizer by get_lora_tokenizer
 
-def get_local_tokenizer(llm,engine_args):
-    from vllm.transformers_utils.tokenizer import TokenizerGroup
-    from vllm.engine.arg_utils import AsyncEngineArgs
-    engine_args: AsyncEngineArgs = engine_args
-    engine_configs = engine_args.create_engine_configs()    
-    model_config = engine_configs[0]
-    scheduler_config = engine_configs[3]
-    lora_config = engine_configs[5]
+def validate_args_engine_use_ray():
+    try:
+        from vllm.transformers_utils.tokenizer import TokenizerGroup
+        return True
+    except ImportError:
+        return False
 
-    if engine_args.engine_use_ray:        
+
+
+def get_local_tokenizer(llm,engine_args):    
+    from vllm.engine.arg_utils import AsyncEngineArgs
+    engine_args: AsyncEngineArgs = engine_args    
+
+    if engine_args.engine_use_ray:  
+        from vllm.transformers_utils.tokenizer import TokenizerGroup
+        engine_configs = engine_args.create_engine_configs()    
+        model_config = engine_configs[0]
+        scheduler_config = engine_configs[3]
+        lora_config = engine_configs[5]      
         init_kwargs = dict(
                 enable_lora=bool(lora_config),
                 max_num_seqs=scheduler_config.max_num_seqs,

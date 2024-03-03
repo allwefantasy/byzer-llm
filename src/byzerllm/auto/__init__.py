@@ -15,7 +15,7 @@ from byzerllm.utils import (VLLMStreamServer,
                             compute_max_new_tokens,
                             tokenize_stopping_sequences,
                             ) 
-from byzerllm.utils.tokenizer import get_real_tokenizer,get_local_tokenizer                        
+from byzerllm.utils.tokenizer import get_real_tokenizer,get_local_tokenizer,validate_args_engine_use_ray                        
 try:
     from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs    
     from vllm import  SamplingParams
@@ -295,7 +295,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
             ray.remote(VLLMStreamServer).options(name="VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()
                         
         worker_use_ray: bool = get_bool(infer_params,"backend.worker_use_ray",True)
-        engine_use_ray: bool = get_bool(infer_params,"backend.engine_use_ray",False)
+        engine_use_ray: bool = validate_args_engine_use_ray()        
         tensor_parallel_size: int = num_gpus        
         gpu_memory_utilization: float = float(infer_params.get("backend.gpu_memory_utilization",0.90))                
         disable_log_stats: bool = get_bool(infer_params,"backend.disable_log_stats",False)
