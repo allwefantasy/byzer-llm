@@ -295,7 +295,11 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
             ray.remote(VLLMStreamServer).options(name="VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()
                         
         worker_use_ray: bool = get_bool(infer_params,"backend.worker_use_ray",True)
-        engine_use_ray: bool = validate_args_engine_use_ray()        
+        
+        engine_use_ray: bool = validate_args_engine_use_ray()              
+        if "backend.engine_use_ray" in infer_params:
+            engine_use_ray = get_bool(infer_params,"backend.engine_use_ray",True)
+
         tensor_parallel_size: int = num_gpus        
         gpu_memory_utilization: float = float(infer_params.get("backend.gpu_memory_utilization",0.90))                
         disable_log_stats: bool = get_bool(infer_params,"backend.disable_log_stats",False)
