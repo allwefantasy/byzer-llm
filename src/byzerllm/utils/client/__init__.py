@@ -667,8 +667,8 @@ class ByzerLLM:
             model = ray.get_actor(udf_name)
             meta = self.get_meta(model=udf_name)
             if meta.get("backend","") == "ray/vllm":
-                if "placement_group" in meta:
-                    cancel_placement_group(meta["placement_group"])
+                if "engine_placement_group" in meta:
+                    cancel_placement_group(meta["engine_placement_group"])
             ray.kill(model)        
         except ValueError:
             pass

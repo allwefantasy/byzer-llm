@@ -172,9 +172,10 @@ async def async_get_meta(model):
      print(f"meta: {meta} type:{type(model.engine)}",flush=True)
      if not isinstance(model.engine,_AsyncLLMEngine): 
          state =  get_actor_info(model.engine)
-         meta["state"] = state.state
+         meta["engien_state"] = state.state
+         meta["engine_actor_id"] = state.actor_id
          if state.placement_group_id:
-            meta["placement_group_id"] = state.placement_group_id
+            meta["engine_placement_group_id"] = state.placement_group_id
          
      return [meta]
 
