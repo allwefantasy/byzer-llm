@@ -17,6 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
+- [2024/03] Release Byzer-LLM 0.1.41
 - [2024/02] Release Byzer-LLM 0.1.40
 - [2024/01] Release Byzer-LLM 0.1.39
 - [2023/12] Release Byzer-LLM 0.1.30
@@ -79,6 +80,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.41： Fix vLLM bugs
 - 0.1.40： LlamaIndex support / vLLM 0.3.2 Support / Byzer-SQL new features / Qwen 1.5 support
 - 0.1.39： Enhance Function Impl / Upgrade SaaS SDK / Add OpenAI-Compatible API Server
 - 0.1.38： Upgrade saas/sparkdask model / add embedding rerank model / agent message store support
