@@ -1,6 +1,6 @@
 from typing import List,Tuple,Any,Dict
 import json
-from byzerllm import get_real_tokenizer
+from byzerllm.utils.tokenizer import get_real_tokenizer
 from .emb import ByzerLLMEmbeddings,ByzerSentenceTransformerEmbeddings
 
 class ByzerLLMGenerator:

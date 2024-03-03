@@ -7,14 +7,15 @@ import asyncio
 from typing import Any,Any,Dict, List,Tuple,Generator,Optional,Union
 from pyjava.api.mlsql import DataServer
 from byzerllm.utils.metrics import Metric
-from byzerllm import BlockRow,get_real_tokenizer
+from byzerllm import BlockRow
 from byzerllm.utils import (VLLMStreamServer,
                             StreamOutputs,
                             SingleOutput,
                             SingleOutputMeta,
                             compute_max_new_tokens,
                             tokenize_stopping_sequences,
-                            )                         
+                            ) 
+from byzerllm.utils.tokenizer import get_real_tokenizer,get_local_tokenizer                        
 try:
     from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs    
     from vllm import  SamplingParams
@@ -322,7 +323,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         llm = AsyncLLMEngine.from_engine_args(engine_args)                               
         llm.async_stream_chat = types.MethodType(async_vllm_chat, llm) 
         llm.async_get_meta = types.MethodType(async_get_meta,llm)
-        return (llm,llm.engine.tokenizer)  
+        return (llm,get_local_tokenizer(llm,engine_args))  
 
     if  infer_mode == "ray/deepspeed":
         from .backend_ds import DeepSpeedInference,ParallelConfig        
