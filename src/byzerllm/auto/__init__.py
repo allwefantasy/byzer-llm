@@ -169,9 +169,10 @@ async def async_get_meta(model):
               "max_model_len":config.max_model_len,
               "architectures":getattr(config.hf_config, "architectures", [])
               }     
-     print(f"meta: {meta} type:{type(model.engine)}",flush=True)
+     
      if not isinstance(model.engine,_AsyncLLMEngine): 
          state =  get_actor_info(model.engine)
+         print(state,flush=True)
          meta["engien_state"] = state.state
          meta["engine_actor_id"] = state.actor_id
          if state.placement_group_id:
