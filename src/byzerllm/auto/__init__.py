@@ -19,7 +19,7 @@ from byzerllm.utils.tokenizer import get_real_tokenizer,get_local_tokenizer,vali
 from byzerllm.utils.ray_utils import get_actor_info
 
 try:
-    from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs    
+    from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs,_AsyncLLMEngine    
     from vllm import  SamplingParams
     from vllm.utils import random_uuid    
 except ImportError:
@@ -170,7 +170,7 @@ async def async_get_meta(model):
               "architectures":getattr(config.hf_config, "architectures", [])
               }     
 
-     if isinstance(model.engine,ClientActorHandle): 
+     if not isinstance(model.engine,_AsyncLLMEngine): 
          state =  get_actor_info(model.engine)
          meta["state"] = state.state
          meta["placement_group"] = state.placement_group_id

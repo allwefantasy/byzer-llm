@@ -15,6 +15,7 @@ from byzerllm.utils import (function_calling_format,
                             sys_function_impl_format,
                             exec_capture_output
                             )
+from byzerllm.utils.ray_utils import cancel_placement_group,get_actor_info
 from langchain.prompts import PromptTemplate
 import json
 import dataclasses
@@ -662,6 +663,10 @@ class ByzerLLM:
         convert(train_params,self.conf()) 
 
     def undeploy(self,udf_name:str):                  
+        meta = self.get_meta(model=udf_name)
+        if meta.get("backend","") == "ray/vllm":
+            if "placement_group" in meta:
+                cancel_placement_group(meta["placement_group"])
         try:
             model = ray.get_actor(udf_name)
             ray.kill(model)        
