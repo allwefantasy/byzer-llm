@@ -669,7 +669,8 @@ class ByzerLLM:
             if meta.get("backend","") == "ray/vllm":
                 if "engine_placement_group" in meta:
                     cancel_placement_group(meta["engine_placement_group"])
-            ray.kill(model)        
+            ray.kill(model)  
+            del self.meta_cache[udf_name]      
         except ValueError:
             pass
 
