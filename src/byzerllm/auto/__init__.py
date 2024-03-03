@@ -16,6 +16,7 @@ from byzerllm.utils import (VLLMStreamServer,
                             tokenize_stopping_sequences,
                             ) 
 from byzerllm.utils.tokenizer import get_real_tokenizer,get_local_tokenizer,validate_args_engine_use_ray                        
+from byzerllm.utils.ray_utils import get_actor_info
 
 try:
     from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs    
@@ -27,6 +28,7 @@ except ImportError:
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig,StoppingCriteriaList,GenerationConfig
 from byzerllm.utils.types import StopSequencesCriteria
+from ray.util.client.common import ClientActorHandle
 
 INFERENCE_NAME = "auto"
 INFER_TOKEN_METRICS = Metric()
@@ -154,10 +156,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
 async def async_get_meta(model):     
      model:AsyncLLMEngine = model     
      config = await model.get_model_config()
-     tokenizer = model.local_tokenizer
-     placement_group = None
-     if hasattr(model,"placement_group"):
-         placement_group = model.placement_group     
+     tokenizer = model.local_tokenizer       
      final_tokenizer = get_real_tokenizer(tokenizer)
 
      support_chat_template = (hasattr(final_tokenizer,"apply_chat_template") 
@@ -169,9 +168,12 @@ async def async_get_meta(model):
               "support_chat_template": support_chat_template,
               "max_model_len":config.max_model_len,
               "architectures":getattr(config.hf_config, "architectures", [])
-              }
-     if placement_group:
-         meta["placement_group"] = str(placement_group.id)
+              }     
+
+     if isinstance(model.engine,ClientActorHandle): 
+         state =  get_actor_info(model.engine)
+         meta["state"] = state.state
+         meta["placement_group"] = state.placement_group_id
          
      return [meta]
 
