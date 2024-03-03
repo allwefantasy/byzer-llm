@@ -16,6 +16,7 @@ from byzerllm.utils import (VLLMStreamServer,
                             tokenize_stopping_sequences,
                             ) 
 from byzerllm.utils.tokenizer import get_real_tokenizer,get_local_tokenizer,validate_args_engine_use_ray                        
+
 try:
     from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs    
     from vllm import  SamplingParams
@@ -154,20 +155,25 @@ async def async_get_meta(model):
      model:AsyncLLMEngine = model     
      config = await model.get_model_config()
      tokenizer = model.local_tokenizer
-          
+     placement_group = None
+     if hasattr(model,"placement_group"):
+         placement_group = model.placement_group     
      final_tokenizer = get_real_tokenizer(tokenizer)
 
      support_chat_template = (hasattr(final_tokenizer,"apply_chat_template") 
                               and hasattr(final_tokenizer,"chat_template") 
                               and final_tokenizer.chat_template is not None)
-         
-     return [{"model_deploy_type":"proprietary",
+     meta = {"model_deploy_type":"proprietary",
               "backend":"ray/vllm",
               "support_stream": True,
               "support_chat_template": support_chat_template,
               "max_model_len":config.max_model_len,
               "architectures":getattr(config.hf_config, "architectures", [])
-              }]
+              }
+     if placement_group:
+         meta["placement_group"] = str(placement_group.id)
+         
+     return [meta]
 
 async def async_vllm_chat(model,tokenizer,ins:str, his:List[Tuple[str,str]]=[],  
         max_length:int=4096, 

@@ -9,3 +9,4 @@ def cancel_placement_group(group_id:str):
     remove_placement_group(PlacementGroup(
                 PlacementGroupID(hex_to_binary(group_id))
             ))
+    
