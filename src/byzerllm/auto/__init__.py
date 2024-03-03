@@ -173,7 +173,8 @@ async def async_get_meta(model):
      if not isinstance(model.engine,_AsyncLLMEngine): 
          state =  get_actor_info(model.engine)
          meta["state"] = state.state
-         meta["placement_group"] = state.placement_group_id
+         if state.placement_group:
+            meta["placement_group"] = state.placement_group_id
          
      return [meta]
 
