@@ -674,7 +674,8 @@ class ByzerLLM:
             except Exception as inst:
                 pass
             ray.kill(model)  
-            del self.meta_cache[udf_name]                  
+            if udf_name in self.meta_cache:
+                del self.meta_cache[udf_name]                          
         except ValueError:
             pass
         time.sleep(3)
