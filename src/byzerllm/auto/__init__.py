@@ -153,7 +153,7 @@ def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,str]]=[],
 async def async_get_meta(model):     
      model:AsyncLLMEngine = model     
      config = await model.get_model_config()
-     tokenizer = model.engine.tokenizer
+     tokenizer = model.local_tokenizer
           
      final_tokenizer = get_real_tokenizer(tokenizer)
 
@@ -298,7 +298,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         
         engine_use_ray: bool = validate_args_engine_use_ray()              
         if "backend.engine_use_ray" in infer_params:
-            engine_use_ray = get_bool(infer_params,"backend.engine_use_ray",True)
+            engine_use_ray = get_bool(infer_params,"backend.engine_use_ray",False)
 
         tensor_parallel_size: int = num_gpus        
         gpu_memory_utilization: float = float(infer_params.get("backend.gpu_memory_utilization",0.90))                
@@ -324,10 +324,12 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
             disable_log_stats=disable_log_stats,            
             **ohter_params
         )        
-        llm = AsyncLLMEngine.from_engine_args(engine_args)                               
+        llm = AsyncLLMEngine.from_engine_args(engine_args) 
+        tokenizer = get_local_tokenizer(llm,engine_args)         
+        llm.local_tokenizer = tokenizer                     
         llm.async_stream_chat = types.MethodType(async_vllm_chat, llm) 
         llm.async_get_meta = types.MethodType(async_get_meta,llm)
-        return (llm,get_local_tokenizer(llm,engine_args))  
+        return (llm,tokenizer)  
 
     if  infer_mode == "ray/deepspeed":
         from .backend_ds import DeepSpeedInference,ParallelConfig        
