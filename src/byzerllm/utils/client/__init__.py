@@ -662,13 +662,13 @@ class ByzerLLM:
         from byzerllm.utils.fulltune.pretrain.convert_to_transformers import convert
         convert(train_params,self.conf()) 
 
-    def undeploy(self,udf_name:str):                  
-        meta = self.get_meta(model=udf_name)
-        if meta.get("backend","") == "ray/vllm":
-            if "placement_group" in meta:
-                cancel_placement_group(meta["placement_group"])
+    def undeploy(self,udf_name:str):                          
         try:
             model = ray.get_actor(udf_name)
+            meta = self.get_meta(model=udf_name)
+            if meta.get("backend","") == "ray/vllm":
+                if "placement_group" in meta:
+                    cancel_placement_group(meta["placement_group"])
             ray.kill(model)        
         except ValueError:
             pass
