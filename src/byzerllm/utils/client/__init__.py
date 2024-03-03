@@ -662,7 +662,8 @@ class ByzerLLM:
         from byzerllm.utils.fulltune.pretrain.convert_to_transformers import convert
         convert(train_params,self.conf()) 
 
-    def undeploy(self,udf_name:str):                          
+    def undeploy(self,udf_name:str):  
+        import time                        
         try:
             model = ray.get_actor(udf_name)
             try:
@@ -673,9 +674,10 @@ class ByzerLLM:
             except Exception as inst:
                 pass
             ray.kill(model)  
-            del self.meta_cache[udf_name]      
+            del self.meta_cache[udf_name]                  
         except ValueError:
             pass
+        time.sleep(3)
 
     def generate_instruction_from_history(self,model:str,conversations:List[Dict[str,str]],role_mapping:Dict[str,str]={        
         "user_role":"User:",        
