@@ -174,7 +174,7 @@ async def async_get_meta(model):
          state =  get_actor_info(model.engine)         
          meta["engien_state"] = state.state
          meta["engine_actor_id"] = state.actor_id         
-         meta["engine_placement_group_id"] = model.placement_group.id.hex()
+        #  meta["engine_placement_group_id"] = model.placement_group.id.hex()
          
      return [meta]
 
