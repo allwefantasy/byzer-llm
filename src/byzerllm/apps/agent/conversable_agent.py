@@ -81,10 +81,17 @@ class ConversableAgent(Agent):
         self.reply_at_receive = defaultdict(lambda: True)
         self._agent_description = description
         
-        self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)   
-        self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply) 
-
+        self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.generate_llm_reply)           
+        self.auto_register_reply()
+        self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply)         
+        
         self.stream_replies = {} 
+
+    def auto_register_reply(self):        
+        for attr_name in dir(self):
+            attr = getattr(self, attr_name)
+            if callable(attr) and hasattr(attr, '_is_reply'):
+                self.register_reply([Agent, ClientActorHandle,str], attr)       
 
     def put_stream_reply(self,id:str,reply:Generator): 
         self.stream_replies[id] = reply
