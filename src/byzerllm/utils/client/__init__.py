@@ -686,7 +686,7 @@ class ByzerLLM:
     }):                
         meta = self.get_meta(model=model)
         if self.mapping_auto_use_apply_chat_template.get(model,False) and meta.get("support_chat_template",False) :
-            return self.apply_chat_template(model,json.dumps(conversations,ensure_ascii=False))
+            return self.apply_chat_template(model,json.dumps(conversations,ensure_ascii=False),add_generation_prompt=True)
 
         new_his = []    
         for item in conversations:

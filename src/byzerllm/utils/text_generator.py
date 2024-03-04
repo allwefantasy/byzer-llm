@@ -101,7 +101,7 @@ class ByzerLLMGenerator:
                 if not self.tokenizer:
                     raise Exception("This model do not support tokenizer service")
                 messages = json.loads(ins)
-                return self.tokenizer.apply_chat_template(messages,tokenize=False, add_generation_prompt=False)
+                return self.tokenizer.apply_chat_template(messages,tokenize=False, add_generation_prompt=True)
 
             if query.get("embedding",False):
                 if not self.embedding:
