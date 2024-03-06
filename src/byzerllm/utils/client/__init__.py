@@ -410,7 +410,11 @@ class ByzerLLM:
 
     def setup_pin_model_worker_mapping(self,pin_model_worker_mapping:Dict[Any,int])->'ByzerLLM':
         self.pin_model_worker_mapping = pin_model_worker_mapping
-        return self    
+        return self   
+
+    def setup_load_balance_way(self,load_balance_way:str)->'ByzerLLM':
+        self.sys_conf["load_balance"] = load_balance_way
+        return self 
 
     def setup_default_model_name(self,model_name:str)->'ByzerLLM':
         self.default_model_name = model_name

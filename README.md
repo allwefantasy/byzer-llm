@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2024/03] Release Byzer-LLM 0.1.42
+- [2024/03] Release Byzer-LLM 0.1.43
 - [2024/02] Release Byzer-LLM 0.1.40
 - [2024/01] Release Byzer-LLM 0.1.39
 - [2023/12] Release Byzer-LLM 0.1.30
@@ -59,6 +59,8 @@ The unique features of Byzer-LLM are:
     * [Model Meta](#Model-Meta)
     * [Chat Template](#Chat-Template)
     * [LLM Default Generation Parameters](#LLM-Default-Generation-Parameters)
+    * [Pin Model Worker Mapping](#Pin-Model-Worker-Mapping)
+    * [Model Worker Load Balance](#Model-Worker-Load-Balance)
 * [SaaS Models](#SaaS-Models)
     * [qianwen/通义千问](#qianwen/通义千问)
     * [baichuan/百川](#baichuan/百川)
@@ -80,6 +82,8 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.43： add pin_model_worker_mapping to ByzerLLM which can some request to the same worker(if you have a model with multiple workers), add load_balance parameter to ByzerLLM which can control the load balance strategy when the model has multiple workers
+and this parameter takes effect only when you deploy model.
 - 0.1.42： when use  tokenizer apply_chat_template we should  add_generation_prompt=True
 - 0.1.41： Fix vLLM bugs / vLLM 0.3.3 Support
 - 0.1.40： LlamaIndex support / vLLM 0.3.2 Support / Byzer-SQL new features / Qwen 1.5 support
@@ -1162,6 +1166,95 @@ llm.setup_extra_generation_params("chat",{
 ```
 
 In this case, the `generation.stop_token_ids` will be set to `[7]` for the model instance `chat`. Every time you call the `chat` model, the `generation.stop_token_ids` will be set to `[7]` automatically.
+
+## Pin Model Worker Mapping
+
+Byzer-LLM have multi-type requests to the model instance.
+
+1. embedding
+2. tokenizer
+3. apply_chat_template
+4. meta
+5. complete/chat
+
+And in Byzer-LLM you can start one model instance which have multi workers,e.g.
+
+```python
+llm.setup_gpus_per_worker(2).setup_num_workers(4).setup_infer_backend(InferBackend.VLLM)
+llm.deploy(
+    model_path=model_location,
+    pretrained_model_type="custom/auto",
+    udf_name="chat",
+    infer_params={"backend.gpu_memory_utilization":0.8,
+                    "backend.enforce_eager":False,
+                    "backend.trust_remote_code":True,
+                    "backend.max_model_len":1024*4,
+                    "backend.quantization":"gptq",
+                    }
+)
+```
+
+Here you deploy one model instance with 4 workers, and each worker have 2 gpus, each worker is a vLLM instance.
+The ByzerLLM will auto route the request to the worker, and the worker is selected by the LRU algorithm.
+
+If you want to the request like embedding,tokenizer,apply_chat_template,meta to be processed by the same worker, you can use the following code:
+
+```python
+llm.setup_pin_model_worker_mapping({
+                "embedding":0,
+                "tokenizer":0,
+                "apply_chat_template":0,
+                "meta":0,
+            } 
+```
+
+this will make sure the request like embedding,tokenizer,apply_chat_template,meta to be processed by the worker 0.
+
+## Model Worker Load Balance
+
+In Byzer-LLM you can start one model instance which have multi workers,e.g.
+
+```python
+llm.setup_gpus_per_worker(2).setup_num_workers(4).setup_infer_backend(InferBackend.VLLM)
+llm.deploy(
+    model_path=model_location,
+    pretrained_model_type="custom/auto",
+    udf_name="chat",
+    infer_params={"backend.gpu_memory_utilization":0.8,
+                    "backend.enforce_eager":False,
+                    "backend.trust_remote_code":True,
+                    "backend.max_model_len":1024*4,
+                    "backend.quantization":"gptq",
+                    }
+)
+```
+
+Here you deploy one model instance with 4 workers, each worker have 2 gpus, and each worker is a vLLM instance.
+By default, the ByzerLLM will auto route the request to the worker, and the worker is selected by the LRU algorithm.
+You can change this behavior by using the following code:
+
+```python
+llm.setup_gpus_per_worker(8).setup_num_workers(1).setup_infer_backend(InferBackend.VLLM)
+llm.setup_worker_concurrency(999)
+llm.setup_load_balance_way("round_robin")
+llm.deploy(
+    model_path=model_location,
+    pretrained_model_type="custom/auto",
+    udf_name=chat_model_name,
+    infer_params={"backend.gpu_memory_utilization":0.8,
+                    "backend.enforce_eager":False,
+                    "backend.trust_remote_code":True,
+                    "backend.max_model_len":1024*4,
+                    "backend.quantization":"gptq",
+                    }
+)
+```
+
+Here you can use the `setup_worker_concurrency` to setup the worker concurrency, and use the `setup_load_balance_way` to setup the load balance way. For now, the Byzer-LLM support the following load balance way:
+
+1. round_robin
+2. lru
+
 
 ## Multi Modal 
 
