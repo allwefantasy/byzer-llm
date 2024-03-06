@@ -390,6 +390,8 @@ class ByzerLLM:
                     "assistant_role": "Assistant:",
                     "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly."
                     }
+        
+        self.pin_model_worker_mapping = None
 
         if url is not None and self.sql_model:            
             v = globals()
@@ -405,6 +407,10 @@ class ByzerLLM:
     def setup_reset(self):
         self.sys_conf = self.default_sys_conf.copy()
         self.context.conf = self.sys_conf
+
+    def setup_pin_model_worker_mapping(self,pin_model_worker_mapping:Dict[Any,int])->'ByzerLLM':
+        self.pin_model_worker_mapping = pin_model_worker_mapping
+        return self    
 
     def setup_default_model_name(self,model_name:str)->'ByzerLLM':
         self.default_model_name = model_name
@@ -1566,8 +1572,19 @@ cost {time.monotonic() - start_time} seconds
         if self.verbose:
             print(f"Send to model[{model}]:{new_input_value}")
       
-        try:            
-            [index, worker] = ray.get(udf_master.get.remote())                        
+        try:    
+            worker_id = -1  
+            if self.pin_model_worker_mapping:
+                if input_value[0].get("embedding",False):
+                    worker_id = self.pin_model_worker_mapping.get("embedding",-1)
+                elif input_value[0].get("tokenizer",False):
+                    worker_id = self.pin_model_worker_mapping.get("tokenizer",-1)
+                elif input_value[0].get("apply_chat_template",False):
+                    worker_id = self.pin_model_worker_mapping.get("apply_chat_template",-1)
+                elif input_value[0].get("meta",False):
+                    worker_id = self.pin_model_worker_mapping.get("meta",-1)    
+
+            [index, worker] = ray.get(udf_master.get.remote(worker_id))                        
             res = ray.get(worker.async_apply.remote(new_input_value))                                    
             return json.loads(res["value"][0])
         except Exception as inst:
