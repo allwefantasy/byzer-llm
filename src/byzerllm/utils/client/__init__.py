@@ -1582,7 +1582,7 @@ cost {time.monotonic() - start_time} seconds
                 elif input_value[0].get("apply_chat_template",False):
                     worker_id = self.pin_model_worker_mapping.get("apply_chat_template",-1)
                 elif input_value[0].get("meta",False):
-                    worker_id = self.pin_model_worker_mapping.get("meta",-1)    
+                    worker_id = self.pin_model_worker_mapping.get("meta",-1)                  
 
             [index, worker] = ray.get(udf_master.get.remote(worker_id))                        
             res = ray.get(worker.async_apply.remote(new_input_value))                                    
