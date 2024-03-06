@@ -10,8 +10,8 @@ def reply(agents=[]):
             is_lambda = inspect.isfunction(_agents) and agents.__name__ == '<lambda>'
             if is_lambda:
                 _agents = agents(self)
-            if len(_agents)==0 or get_agent_name(kwargs['sender']) in [get_agent_name(agent) for agent in _agents]:                
-                return func(self,*args, **kwargs)                
+            if len(_agents)==0 or get_agent_name(kwargs['sender']) in [get_agent_name(agent) for agent in _agents]:                                
+                return func(*args, **kwargs)                
             return False, None
         wrapper._is_reply = True
         return wrapper

@@ -162,12 +162,15 @@ async def async_get_meta(model):
      support_chat_template = (hasattr(final_tokenizer,"apply_chat_template") 
                               and hasattr(final_tokenizer,"chat_template") 
                               and final_tokenizer.chat_template is not None)
+     
      meta = {"model_deploy_type":"proprietary",
               "backend":"ray/vllm",
               "support_stream": True,
               "support_chat_template": support_chat_template,
               "max_model_len":config.max_model_len,
-              "architectures":getattr(config.hf_config, "architectures", [])
+              "architectures":getattr(config.hf_config, "architectures", []),
+              "processing_requests":len(model._request_tracker._request_streams.keys()),
+              "new_requests":model._request_tracker._new_requests.qsize(),
               }     
      
      if not isinstance(model.engine,_AsyncLLMEngine): 
@@ -338,7 +341,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         )        
         llm = AsyncLLMEngine.from_engine_args(engine_args) 
         tokenizer = get_local_tokenizer(llm,engine_args)         
-        llm.local_tokenizer = tokenizer                     
+        llm.local_tokenizer = tokenizer             
         llm.async_stream_chat = types.MethodType(async_vllm_chat, llm) 
         llm.async_get_meta = types.MethodType(async_get_meta,llm)
         return (llm,tokenizer)  
