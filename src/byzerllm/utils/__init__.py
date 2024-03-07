@@ -900,6 +900,13 @@ JSON Schema：
 '''
     return msg  
 
+def format_prompt(func,**kargs): 
+    from langchain import PromptTemplate
+    doc = func.__doc__       
+    prompt = "\n".join([line.strip() for line in doc.split('\n')])
+    tpl = PromptTemplate.from_template(prompt)
+    return tpl.format(**kargs)
+
   
 
 

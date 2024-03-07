@@ -1,16 +1,14 @@
-from datasets import load_dataset,Dataset
 from typing import Any,List,Dict
 from ray.util.client.common import ClientObjectRef
 from pyjava.api.mlsql import RayContext
 from pyjava.storage import streaming_tar
 import os
-
-import ray
 import inspect
+import functools
 
-from typing import Dict,Generator
+from typing import Dict,Generator,Optional
 from dataclasses import dataclass
-from .utils import print_flush
+from byzerllm.utils import (print_flush,format_prompt)
 from .store import transfer_from_ob
 
 @dataclass
@@ -93,7 +91,20 @@ def log_to_file(msg:str,file_path:str):
         f.write(msg)
         f.write("\n")
 
+def prompt():          
+    def _impl(func):               
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):                                                                               
+            signature = inspect.signature(func)
+            arguments = signature.bind(*args, **kwargs)
+            arguments.apply_defaults()
+            input_dict = {}
+            for param in signature.parameters:
+                input_dict.update({ param: arguments.arguments[param] })
+            return format_prompt(func,**input_dict)
 
+        return wrapper      
+    return _impl 
 
        
     

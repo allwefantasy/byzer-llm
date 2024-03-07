@@ -13,7 +13,8 @@ from byzerllm.utils import (function_calling_format,
                             sys_response_class_format,
                             sys_function_calling_format,
                             sys_function_impl_format,
-                            exec_capture_output
+                            exec_capture_output,
+                            format_prompt,
                             )
 from byzerllm.utils.ray_utils import cancel_placement_group,get_actor_info
 from langchain.prompts import PromptTemplate
@@ -1318,6 +1319,42 @@ class ByzerLLM:
                     del self.func_impl_cache[k]
             return self        
 
+    def prompt(self,model:Optional[str]=None):              
+            if model is None:
+                model = self.default_model_name            
+
+            def _impl(func):               
+                @functools.wraps(func)
+                def wrapper(*args, **kwargs):                                                                               
+                    signature = inspect.signature(func)
+                    arguments = signature.bind(*args, **kwargs)
+                    arguments.apply_defaults()
+                    input_dict = {}
+                    for param in signature.parameters:
+                        input_dict.update({ param: arguments.arguments[param] })
+                    
+                    prompt_str = format_prompt(func.__doc__,input_dict)                    
+                                        
+                    if issubclass(signature.return_annotation,pydantic.BaseModel):
+                        response_class = signature.return_annotation                    
+                        t = self.chat_oai(model=model,conversations=[{
+                            "role":"user",
+                            "content":list(input_dict.values())[0]
+                        }], 
+                            response_class=response_class,                     
+                            impl_func_params=input_dict)                    
+                        r:LLMClassResponse = t[0]                                                                                
+                        return r.value
+                    elif issubclass(signature.return_annotation,str):
+                        t = self.chat_oai(model=model,conversations=[{
+                            "role":"user",
+                            "content":prompt_str
+                        }])
+                        return t[0].output
+                    else:
+                        raise Exception("impl function should return a pydantic model or string")
+                return wrapper      
+            return _impl
     
     def response(self,instruction:Optional[str]=None,
                       model:Optional[str]=None,
