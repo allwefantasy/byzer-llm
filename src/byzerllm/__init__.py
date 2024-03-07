@@ -91,20 +91,25 @@ def log_to_file(msg:str,file_path:str):
         f.write(msg)
         f.write("\n")
 
-def prompt():          
-    def _impl(func):               
+def prompt(llm=None):    
+    def _impl(func):                       
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):                                                                               
+        def wrapper(*args, **kwargs):                      
             signature = inspect.signature(func)
             arguments = signature.bind(*args, **kwargs)
             arguments.apply_defaults()
             input_dict = {}
             for param in signature.parameters:
                 input_dict.update({ param: arguments.arguments[param] })
+            if "self" in input_dict:
+                instance = input_dict.pop("self") 
+                is_lambda = inspect.isfunction(llm) and llm.__name__ == '<lambda>'                
+                if is_lambda:                                        
+                    return llm(instance).prompt()(func)(instance,**input_dict)                
             return format_prompt(func,**input_dict)
 
         return wrapper      
-    return _impl 
+    return _impl
 
        
     

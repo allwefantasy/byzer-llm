@@ -1325,7 +1325,7 @@ class ByzerLLM:
 
             def _impl(func):               
                 @functools.wraps(func)
-                def wrapper(*args, **kwargs):                                                                               
+                def wrapper(*args, **kwargs):                                                                                                   
                     signature = inspect.signature(func)
                     arguments = signature.bind(*args, **kwargs)
                     arguments.apply_defaults()
@@ -1333,7 +1333,9 @@ class ByzerLLM:
                     for param in signature.parameters:
                         input_dict.update({ param: arguments.arguments[param] })
                     
-                    prompt_str = format_prompt(func.__doc__,input_dict)                    
+                    if "self" in input_dict:
+                        _ = input_dict.pop("self") 
+                    prompt_str = format_prompt(func,**input_dict)                    
                                         
                     if issubclass(signature.return_annotation,pydantic.BaseModel):
                         response_class = signature.return_annotation                    
