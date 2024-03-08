@@ -111,7 +111,7 @@ def prompt(llm=None,render:str="simple"):
                 instance = input_dict.pop("self") 
                 is_lambda = inspect.isfunction(llm) and llm.__name__ == '<lambda>'                
                 if is_lambda:                                        
-                    return llm(instance).prompt()(func)(instance,**input_dict)             
+                    return llm(instance).prompt(render=render)(func)(instance,**input_dict)             
             
             if render == "jinja2" or render == "jinja":                  
                 return format_prompt_jinja2(func,**input_dict)
