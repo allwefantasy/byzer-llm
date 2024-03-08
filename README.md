@@ -55,6 +55,7 @@ The unique features of Byzer-LLM are:
     * [Respond with pydantic class](#Respond-with-pydantic-class)
     * [Function Implementation](#Function-Implementation)
     * [LLM-Friendly Function/DataClass](#llm-friendly-functiondataclass)
+    * [Prompt Function && Prompt Class](#Prompt-Function--Prompt-Class)
 * Model Configurations    
     * [Model Meta](#Model-Meta)
     * [Chat Template](#Chat-Template)
@@ -1154,6 +1155,217 @@ The output:
 ```
 
 Notice that this feature will cause additional RPC call, so it will bring some performance penalty.
+
+## Prompt Function && Prompt Class
+
+Prompt Function is a function implemented by text instead of code. The Prompt function will auto bind the function parameters to the 
+function's doc string.
+
+Prompt Class is a class which contains the prompt function.
+
+Here is a simple example for prompt function:
+
+```python
+@llm.prompt()
+def generate_answer(context:str,question:str)->str:
+    '''
+    Answer the question based on only the following context:
+    {context}
+    Question: {question}
+    Answer:
+    '''
+    pass
+
+context='''
+Byzer产品栈从底层存储到大模型管理和serving再到应用开发框架：
+1. Byzer-Retrieval, 一个支持向量+搜索的混合检索数据库。
+2. Byzer-LLM, 可以衔接SaaS/开源模型，能部署，可以统一入口。
+3. Byzer-Agent ,一套分布式 Agent 框架，做为应用开发框架
+4. ByzerPerf, 一套性能吞吐评测框架
+5. ByzerEvaluation, 一套大模型效果评测框架 （未开源）
+6. Byzer-SQL， 一套全SQL方言，支持ETL，数据分析等工作，并且支持大模型的管理和调用（model as UDF）,方便数据预处理。
+'''
+print(generate_answer(context=context,question="Byzer SQL是什么？"))
+## output: Byzer SQL 是一个全SQL方言，支持ETL、数据分析等工作，并且支持大模型的管理和调用（model as UDF），方便数据预处理。
+```
+
+Now we try to convert the prompt function to prompt class:
+
+```python
+import ray
+from byzerllm.utils.client import ByzerLLM
+import byzerllm
+
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)  
+
+class RAG():
+    def __init__(self):        
+        self.llm = ByzerLLM()
+        self.llm.setup_template(model="sparkdesk_chat",template="auto")
+        self.llm.setup_default_model_name("sparkdesk_chat")        
+    
+    @byzerllm.prompt(lambda self: self.llm)
+    def generate_answer(self,context:str,question:str)->str:
+        '''
+        Answer the question based on only the following context:
+        {context}
+        Question: {question}
+        Answer:
+        '''
+        pass
+
+t = RAG()
+print(t.generate_answer(context=context,question="Byzer SQL是什么？"))    
+```
+
+If you only want to get the prompt which is bind the parameters instead of execute the prompt, you can use the following code:
+
+```python
+import ray
+from byzerllm.utils.client import ByzerLLM
+import byzerllm
+
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)  
+
+class RAG():
+    def __init__(self):        
+        self.llm = ByzerLLM()
+        self.llm.setup_template(model="sparkdesk_chat",template="auto")
+        self.llm.setup_default_model_name("sparkdesk_chat")        
+    
+    @byzerllm.prompt()
+    def generate_answer(self,context:str,question:str)->str:
+        '''
+        Answer the question based on only the following context:
+        {context}
+        Question: {question}
+        Answer:
+        '''
+        pass
+
+t = RAG()
+print(t.generate_answer(context=context,question="Byzer SQL是什么？"))
+```
+
+The difference between the two code is that the `byzerllm.prompt whether have delived the `llm` instance to the prompt function.
+Here is the output:
+
+```text
+
+Answer the question based on only the following context:
+
+Byzer产品栈从底层存储到大模型管理和serving再到应用开发框架：
+1. Byzer-Retrieval, 一个支持向量+搜索的混合检索数据库。
+2. Byzer-LLM, 可以衔接SaaS/开源模型，能部署，可以统一入口。
+3. Byzer-Agent ,一套分布式 Agent 框架，做为应用开发框架
+4. ByzerPerf, 一套性能吞吐评测框架
+5. ByzerEvaluation, 一套大模型效果评测框架 （未开源）
+6. Byzer-SQL， 一套全SQL方言，支持ETL，数据分析等工作，并且支持大模型的管理和调用（model as UDF）,方便数据预处理。
+
+Question: Byzer SQL是什么？
+Answer:
+```
+
+Prompt function support two kinds of return value:
+
+1. str
+2. pydanitc.BaseModel
+
+Here is the example for pydanitc.BaseModel:
+
+```python
+
+import ray
+import functools
+import inspect
+import byzerllm
+import pydantic
+
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)  
+
+class ByzerProductDesc(pydantic.BaseModel):
+    byzer_retrieval: str
+    byzer_llm: str
+    byzer_agent: str
+    byzer_perf: str
+    byzer_evaluation: str
+    byzer_sql: str
+
+class RAG():
+    def __init__(self):        
+        self.llm = ByzerLLM()
+        self.llm.setup_template(model="sparkdesk_chat",template="auto")
+        self.llm.setup_default_model_name("sparkdesk_chat")        
+    
+    @byzerllm.prompt(lambda self: self.llm)
+    def generate_answer(self,context:str,question:str)->ByzerProductDesc:
+        '''
+        Answer the question based on only the following context:
+        {context}
+        Question: {question}
+        Answer:
+        '''
+        pass
+
+t = RAG()
+
+byzer_product = t.generate_answer(context=context,question="Byzer 产品列表")
+print(byzer_product.byzer_sql)
+## output: 一套全SQL方言，支持ETL，数据分析等工作，并且支持大模型的
+```
+
+As we know, the prompt function is a function implemented by text instead of code, the lucky thing is that we can `program`
+in the text, we introduce the jinjia2 to support this feature. Here is the example:
+
+```python
+import ray
+import functools
+import inspect
+import byzerllm
+import pydantic
+from byzerllm.utils.client import ByzerLLM
+
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)  
+
+data = {
+    'name': 'Jane Doe',
+    'task_count': 3,
+    'tasks': [
+        {'name': 'Submit report', 'due_date': '2024-03-10'},
+        {'name': 'Finish project', 'due_date': '2024-03-15'},
+        {'name': 'Reply to emails', 'due_date': '2024-03-08'}
+    ]
+}
+
+
+class RAG():
+    def __init__(self):        
+        self.llm = ByzerLLM()
+        self.llm.setup_template(model="sparkdesk_chat",template="auto")
+        self.llm.setup_default_model_name("sparkdesk_chat")        
+    
+    @byzerllm.prompt(lambda self:self.llm,render="jinja2")
+    def generate_answer(self,name,task_count,tasks)->str:
+        '''
+        Hello {{ name }},
+
+        This is a reminder that you have {{ task_count }} pending tasks:
+        {% for task in tasks %}
+        - Task: {{ task.name }} | Due: {{ task.due_date }}
+        {% endfor %}
+
+        Best regards,
+        Your Reminder System
+        '''
+        pass
+
+t = RAG()
+
+response = t.generate_answer(**data)
+print(response)
+
+## output:Hello! Is there anything else I can assist you with?
+```
 
 ## LLM Default Generation Parameters
 
