@@ -903,14 +903,22 @@ JSON Schema：
 def format_prompt(func,**kargs): 
     from langchain import PromptTemplate
     doc = func.__doc__       
-    prompt = "\n".join([line.strip() for line in doc.split('\n')])
+    lines = doc.splitlines()
+    # get the first line to get the whitespace prefix
+    first_non_empty_line = next(line for line in lines if line.strip())
+    prefix_whitespace_length = len(first_non_empty_line) - len(first_non_empty_line.lstrip())    
+    prompt = "\n".join([line[prefix_whitespace_length:] for line in lines])
     tpl = PromptTemplate.from_template(prompt)
     return tpl.format(**kargs)
 
 def format_prompt_jinja2(func,**kargs):
     from jinja2 import Template
     doc = func.__doc__       
-    prompt = "\n".join([line.strip() for line in doc.split('\n')])
+    lines = doc.splitlines()
+    # get the first line to get the whitespace prefix
+    first_non_empty_line = next(line for line in lines if line.strip())
+    prefix_whitespace_length = len(first_non_empty_line) - len(first_non_empty_line.lstrip())    
+    prompt = "\n".join([line[prefix_whitespace_length:] for line in lines])
     tpl = Template(prompt)
     return tpl.render(kargs)
   
