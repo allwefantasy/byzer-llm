@@ -15,6 +15,7 @@ from byzerllm.utils import (function_calling_format,
                             sys_function_impl_format,
                             exec_capture_output,
                             format_prompt,
+                            format_prompt_jinja2
                             )
 from byzerllm.utils.ray_utils import cancel_placement_group,get_actor_info
 from langchain.prompts import PromptTemplate
@@ -1319,7 +1320,7 @@ class ByzerLLM:
                     del self.func_impl_cache[k]
             return self        
 
-    def prompt(self,model:Optional[str]=None):              
+    def prompt(self,model:Optional[str]=None,render:Optional[str]="simple"):              
             if model is None:
                 model = self.default_model_name            
 
@@ -1335,7 +1336,11 @@ class ByzerLLM:
                     
                     if "self" in input_dict:
                         _ = input_dict.pop("self") 
-                    prompt_str = format_prompt(func,**input_dict)                    
+                    
+                    if render == "jinja2" or render == "jinja":                  
+                        prompt_str = format_prompt_jinja2(func,**input_dict)
+                    else:
+                        prompt_str = format_prompt(func,**input_dict)
                                         
                     if issubclass(signature.return_annotation,pydantic.BaseModel):
                         response_class = signature.return_annotation                    

@@ -907,6 +907,12 @@ def format_prompt(func,**kargs):
     tpl = PromptTemplate.from_template(prompt)
     return tpl.format(**kargs)
 
+def format_prompt_jinja2(func,**kargs):
+    from jinja2 import Template
+    doc = func.__doc__       
+    prompt = "\n".join([line.strip() for line in doc.split('\n')])
+    tpl = Template(prompt)
+    return tpl.render(kargs)
   
 
 

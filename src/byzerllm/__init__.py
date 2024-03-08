@@ -8,7 +8,7 @@ import functools
 
 from typing import Dict,Generator,Optional
 from dataclasses import dataclass
-from byzerllm.utils import (print_flush,format_prompt)
+from byzerllm.utils import (print_flush,format_prompt,format_prompt_jinja2)
 from .store import transfer_from_ob
 
 @dataclass
@@ -91,7 +91,13 @@ def log_to_file(msg:str,file_path:str):
         f.write(msg)
         f.write("\n")
 
-def prompt(llm=None):    
+
+def prompt(llm=None,render:str="simple"):    
+    '''
+    decorator to add prompt function to a method
+    render: simple,jinja2
+    llm: lambda function to get the ByzerLLM instance from the method instance
+    '''
     def _impl(func):                       
         @functools.wraps(func)
         def wrapper(*args, **kwargs):                      
@@ -105,8 +111,12 @@ def prompt(llm=None):
                 instance = input_dict.pop("self") 
                 is_lambda = inspect.isfunction(llm) and llm.__name__ == '<lambda>'                
                 if is_lambda:                                        
-                    return llm(instance).prompt()(func)(instance,**input_dict)                
-            return format_prompt(func,**input_dict)
+                    return llm(instance).prompt()(func)(instance,**input_dict)             
+            
+            if render == "jinja2" or render == "jinja":                  
+                return format_prompt_jinja2(func,**input_dict)
+            
+            return format_prompt(func,**input_dict) 
 
         return wrapper      
     return _impl
