@@ -404,7 +404,7 @@ class ByzerLLM:
                 0,[],self.sys_conf
             ) 
             self.context.have_fetched = True
-            self.ray_context = self.context.rayContext         
+            self.ray_context = self.context.rayContext                     
         
     def setup_reset(self):
         self.sys_conf = self.default_sys_conf.copy()

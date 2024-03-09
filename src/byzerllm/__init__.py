@@ -121,5 +121,11 @@ def prompt(llm=None,render:str="simple"):
         return wrapper      
     return _impl
 
+
+from byzerllm.utils.client import ByzerLLM
+from byzerllm.utils.retrieval import ByzerRetrieval
+from byzerllm.utils.connect_ray import connect_cluster
+__all__ = ["ByzerLLM","ByzerRetrieval","connect_cluster","prompt"]
+
        
     
