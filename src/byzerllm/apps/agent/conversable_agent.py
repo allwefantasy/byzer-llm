@@ -70,7 +70,7 @@ class ConversableAgent(Agent):
         )
         self.human_input_mode = human_input_mode
         self._max_consecutive_auto_reply = (
-            max_consecutive_auto_reply if max_consecutive_auto_reply is not None else 10
+            max_consecutive_auto_reply if max_consecutive_auto_reply is not None else -1
         )
         self._code_execution_config = {} if code_execution_config is None else code_execution_config
         self._consecutive_auto_reply_counter = defaultdict(int)
@@ -86,6 +86,15 @@ class ConversableAgent(Agent):
         self.register_reply([Agent, ClientActorHandle,str], ConversableAgent.check_termination_and_human_reply)         
         
         self.stream_replies = {} 
+        self.error_count = {}
+        
+    def get_then_increment_error_count(self,agent:Union[ClientActorHandle,Agent,str]):
+        agent_name = get_agent_name(agent)
+        if agent_name not in self.error_count:
+            self.error_count[agent_name] = 0
+        v = self.error_count[agent_name]    
+        self.error_count[agent_name] += 1
+        return v    
 
     def auto_register_reply(self):        
         for attr_name in dir(self):
@@ -542,7 +551,7 @@ class ConversableAgent(Agent):
             # if the human input is empty, and the message is a termination message, then we will terminate the conversation
             reply = reply if reply or not self._is_termination_msg(message) else "exit"
         else:            
-            if self._consecutive_auto_reply_counter[get_agent_name(sender)] >= self._max_consecutive_auto_reply_dict[get_agent_name(sender)]:
+            if self._max_consecutive_auto_reply_dict[get_agent_name(sender)] != -1 and self._consecutive_auto_reply_counter[get_agent_name(sender)] >= self._max_consecutive_auto_reply_dict[get_agent_name(sender)]:
                 if self.human_input_mode == "NEVER":
                     reply = "exit"
                 else:

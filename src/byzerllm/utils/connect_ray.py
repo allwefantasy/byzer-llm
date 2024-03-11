@@ -22,7 +22,7 @@ def _check_java_version(java_home:str):
 
 
 
-def connect_cluster(addresss:str="auto",java_home:Optional[str]=None,
+def connect_cluster(address:str="auto",java_home:Optional[str]=None,
                 code_search_path:Optional[List[str]]=None):
     import ray
     java_home=java_home if java_home else os.environ.get("JAVA_HOME")
@@ -39,5 +39,5 @@ def connect_cluster(addresss:str="auto",java_home:Optional[str]=None,
         job_config = ray.job_config.JobConfig(code_search_path=code_search_path,
                                                         runtime_env={"env_vars": env_vars})
         
-    ray.init(address=addresss,namespace="default",ignore_reinit_error=True,
+    ray.init(address=address,namespace="default",ignore_reinit_error=True,
                     job_config=job_config) 

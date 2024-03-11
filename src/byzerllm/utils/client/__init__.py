@@ -1619,7 +1619,7 @@ cost {time.monotonic() - start_time} seconds
            
         if self.verbose:
             print(f"Send to model[{model}]:{new_input_value}")
-      
+        index = -1 
         try:    
             worker_id = -1  
             if self.pin_model_worker_mapping:
@@ -1638,7 +1638,8 @@ cost {time.monotonic() - start_time} seconds
         except Exception as inst:
             raise inst
         finally:
-            ray.get(udf_master.give_back.remote(index)) 
+            if index != -1:
+                ray.get(udf_master.give_back.remote(index)) 
 
 def default_chat_wrapper(llm:"ByzerLLM",conversations: Optional[List[Dict]] = None,llm_config={}):
     return llm.chat_oai(conversations=conversations,llm_config=llm_config)

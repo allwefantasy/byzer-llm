@@ -12,8 +12,8 @@ from byzerllm.apps.agent import Agents
 from byzerllm.apps.agent.extensions.preview_file_agent import PreviewFileAgent
 from byzerllm.apps.agent.extensions.python_codesandbox_agent import PythonSandboxAgent
 from byzerllm.apps.agent.extensions.visualization_agent import VisualizationAgent
-from byzerllm.apps.agent.assistant_agent import AssistantAgent
-from byzerllm.apps.agent.common_agent import CommonAgent
+from byzerllm.apps.agent.extensions.assistant_agent import AssistantAgent
+from byzerllm.apps.agent.extensions.common_agent import CommonAgent
 from byzerllm.apps.agent.extensions.spark_sql_agent import SparkSQLAgent
 from byzerllm.apps.agent.extensions.rhetorical_agent import RhetoricalAgent
 from byzerllm.apps.agent.extensions.sql_reviewer_agent import SQLReviewerAgent

@@ -95,7 +95,7 @@ def log_to_file(msg:str,file_path:str):
 def prompt(llm=None,render:str="simple"):    
     '''
     decorator to add prompt function to a method
-    render: simple,jinja2
+    render: simple,jinja/jinja2
     llm: lambda function to get the ByzerLLM instance from the method instance
     '''
     def _impl(func):                       
@@ -125,7 +125,8 @@ def prompt(llm=None,render:str="simple"):
 from byzerllm.utils.client import ByzerLLM
 from byzerllm.utils.retrieval import ByzerRetrieval
 from byzerllm.utils.connect_ray import connect_cluster
-__all__ = ["ByzerLLM","ByzerRetrieval","connect_cluster","prompt"]
+from byzerllm.apps.agent.registry import reply as agent_reply
+__all__ = ["ByzerLLM","ByzerRetrieval","connect_cluster","prompt","agent_reply"]
 
        
     

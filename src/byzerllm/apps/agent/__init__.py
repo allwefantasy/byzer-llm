@@ -22,7 +22,8 @@ class ChatResponse:
       output: str      
       code: str
       prompt: str
-      variables: Dict[str,Any]=dataclasses.field(default_factory=dict)      
+      variables: Dict[str,Any]=dataclasses.field(default_factory=dict)    
+      raw_output: str = ""  
 
 def get_agent_name(agent: Union[Agent,ClientActorHandle,str]) -> str:
     if isinstance(agent,Agent):
@@ -121,7 +122,7 @@ class Agents:
                                                        llm=llm,retrieval=retrieval,
                                                        groupchat=groupchat,*args, **kwargs)
         return group_chat_manager   
-    
+
 
 
         
