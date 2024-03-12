@@ -1,7 +1,7 @@
 import asyncio
 from collections import defaultdict
 import copy
-import json
+import inspect
 import time
 import logging
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,Generator
@@ -97,9 +97,8 @@ class ConversableAgent(Agent):
         return v    
 
     def auto_register_reply(self):        
-        for attr_name in dir(self):
-            attr = getattr(self, attr_name)
-            if callable(attr) and hasattr(attr, '_is_reply'):
+        for _, attr in inspect.getmembers(self, predicate=inspect.ismethod):            
+            if hasattr(attr, '_is_reply'):
                 self.register_reply([Agent, ClientActorHandle,str], attr)       
 
     def put_stream_reply(self,id:str,reply:Generator): 
