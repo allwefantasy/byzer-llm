@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2024/03] Release Byzer-LLM 0.1.44
+- [2024/03] Release Byzer-LLM 0.1.45
 - [2024/02] Release Byzer-LLM 0.1.40
 - [2024/01] Release Byzer-LLM 0.1.39
 - [2023/12] Release Byzer-LLM 0.1.30
@@ -83,6 +83,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.45:  Optimize Byzer-Agent, please check this [link](https://github.com/allwefantasy/byzer-agent)
 - 0.1.44:  Prompt Function/Prompt Class help you to manage and execute your prompts.
 - 0.1.43： add pin_model_worker_mapping to ByzerLLM which can some request to the same worker(if you have a model with multiple workers), add load_balance parameter to ByzerLLM which can control the load balance strategy when the model has multiple workers
 and this parameter takes effect only when you deploy model.
