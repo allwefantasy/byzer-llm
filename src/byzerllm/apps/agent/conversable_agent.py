@@ -4,6 +4,7 @@ import copy
 import inspect
 import time
 import logging
+import uuid
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,Generator
 import ray
 import concurrent
@@ -99,9 +100,23 @@ class ConversableAgent(Agent):
     def auto_register_reply(self):        
         for _, attr in inspect.getmembers(self, predicate=inspect.ismethod):            
             if hasattr(attr, '_is_reply'):
-                self.register_reply([Agent, ClientActorHandle,str], attr)       
+                self.register_reply([Agent, ClientActorHandle,str], attr) 
+                
+    def stream_reply(self,response_gen,**kwargs):                
+        id = str(uuid.uuid4())        
+        def gen(): 
+            t = ""           
+            for response in response_gen:
+                t += response
+                yield (t,None)
 
-    def put_stream_reply(self,id:str,reply:Generator): 
+        self._put_stream_reply(id,gen())
+        return True, {
+            "content":id,
+            "metadata":{"agent":self.name,"TERMINATE":True,"stream":True,"stream_id":id,**kwargs}
+        }                   
+
+    def _put_stream_reply(self,id:str,reply:Generator): 
         self.stream_replies[id] = reply
 
     def _stream_get_message_from_self(self,id:str):

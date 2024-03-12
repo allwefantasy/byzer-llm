@@ -168,11 +168,8 @@ Context is:
         new_message = {"content":prompt,"role":"user"}
         id = str(uuid.uuid4())        
         v = self.llm.stream_chat_oai(conversations=self._system_message + [new_message])
-        self.put_stream_reply(id,v)
-        return True, {
-            "content":id,
-            "metadata":{"agent":self.name,"TERMINATE":True,"stream":True,"stream_id":id,"contexts":contents}
-        }
+        
+        return self.stream_reply(v,contexts=contents)          
         
                 
         

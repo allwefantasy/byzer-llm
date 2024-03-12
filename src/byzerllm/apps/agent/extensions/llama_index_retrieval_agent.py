@@ -107,11 +107,8 @@ class LlamaIndexRetrievalAgent(ConversableAgent):
                 t += response
                 yield (t,None)
 
-        self.put_stream_reply(id,gen())
-        return True, {
-            "content":id,
-            "metadata":{"agent":self.name,"TERMINATE":True,"stream":True,"stream_id":id,"contexts":[]}
-        }        
+        return self.stream_reply(gen(),contexts=[])  
+        
         
                 
         

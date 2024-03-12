@@ -100,12 +100,8 @@ class LoadDataAgent(ConversableAgent):
 
         if not agent_data.path:
             def gen():            
-                yield ("Please provide a valid path.",None)                    
-            self.put_stream_reply(id,gen())
-            return True, {
-                "content":id,
-                "metadata":{"agent":self.name,"TERMINATE":True,"stream":True,"stream_id":id,"contexts":[]}
-            }         
+                yield ("Please provide a valid path.",None)                               
+            return self.stream_reply(gen(),contexts=[])           
 
         if not agent_data.namespace:
             agent_data.namespace = "default"     
