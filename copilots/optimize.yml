@@ -1,0 +1,5 @@
+source_dir: /home/winubuntu/projects/byzer-llm/src/byzerllm/saas
+target_file: /home/winubuntu/projects/byzer-llm/output.txt
+query: |
+  参考qianwen/__init__.py 的代码实现，对 official_openai/__init__.py 进行优化。注意 official_openai 里使用 OpenAI 的SDK，
+  需要保证你使用的准确性。

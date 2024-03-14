@@ -1320,7 +1320,7 @@ class ByzerLLM:
                     del self.func_impl_cache[k]
             return self        
 
-    def prompt(self,model:Optional[str]=None,render:Optional[str]="simple"):              
+    def prompt(self,model:Optional[str]=None,render:Optional[str]="simple",print_prompt:bool=False):              
             if model is None:
                 model = self.default_model_name            
 
@@ -1346,11 +1346,11 @@ class ByzerLLM:
                         response_class = signature.return_annotation                    
                         t = self.chat_oai(model=model,conversations=[{
                             "role":"user",
-                            "content":list(input_dict.values())[0]
+                            "content":prompt_str
                         }], 
                             response_class=response_class,                     
                             impl_func_params=input_dict)                    
-                        r:LLMClassResponse = t[0]                                                                                
+                        r:LLMClassResponse = t[0]                        
                         return r.value
                     elif issubclass(signature.return_annotation,str):
                         t = self.chat_oai(model=model,conversations=[{

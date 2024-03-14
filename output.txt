@@ -1,0 +1,1296 @@
+
+下面是一些文件路径以及每个文件对应的源码：
+
+##File: /home/winubuntu/projects/byzer-llm/src/byzerllm/saas/minimax/__init__.py
+import logging
+import requests
+import json
+import traceback
+from enum import Enum
+from dataclasses import dataclass
+
+from typing import Optional, List, Dict, Union, Any,str,Any
+
+import tenacity
+from tenacity import (
+    before_sleep_log,
+    wait_exponential,
+)
+
+logger = logging.getLogger(__name__)
+
+DEFAULT_BOT_SETTING = 'You are a helpful assistant. Think it over and answer the user question correctly.'
+
+
+class MiniMaxError(Exception):
+    def __init__(
+            self,
+            request_id=None,
+            status_msg=None,
+            status_code=None,
+            http_body=None,
+            http_status=None,
+            json_body=None,
+            headers=None,
+    ):
+        super(MiniMaxError, self).__init__(
+            f"api return error, code: {status_code}, msg: {status_msg}"
+        )
+
+        if http_body and hasattr(http_body, "decode"):
+            try:
+                http_body = http_body.decode("utf-8")
+            except BaseException:
+                http_body = (
+                    "<Could not decode body as utf-8. "
+                    "Please contact us through our help center at https://api.minimax.chat>"
+                )
+
+        self._status_msg = status_msg
+        self.http_body = http_body
+        self.http_status = http_status
+        self.json_body = json_body
+        self.headers = headers or {}
+        self.status_code = status_code
+        self.request_id = self.headers.get("request-id", request_id)
+
+     # saas/proprietary
+    def get_meta(self):
+        return [{
+            "model_deploy_type": "saas",
+            "backend":"saas"
+        }]    
+
+    def __str__(self):
+        msg = self._status_msg or "<empty message>"
+        if self.request_id is not None:
+            return "Request {0}: {1}".format(self.request_id, msg)
+        elif self.status_code is not None:
+            return "API return error, code: {0}, msg: {1}".format(self.status_code, msg)
+        else:
+            return msg
+
+    def __repr__(self):
+        return "%s(message=%r, http_status=%r, request_id=%r)" % (
+            self.__class__.__name__,
+            self._status_msg,
+            self.http_status,
+            self.request_id,
+        )
+
+
+def _minimax_api_retry_if_need(exception):
+    """
+        look for details: https://api.minimax.chat/document/guides/chat-pro?id=64b79fa3e74cddc5215939f4
+
+        1000: 未知错误
+        1001: 超时
+        1002: 触发RPM限流
+        1004: 鉴权失败
+        1008: 余额不足
+        1013: 服务内部错误
+        1027: 输出内容错误
+        1039: 触发TPM限流
+        2013: 输入格式信息不正常
+    """
+    if isinstance(exception, MiniMaxError):
+        status_code = exception.status_code
+        return (status_code == 1000
+                or status_code == 1001
+                or status_code == 1002
+                or status_code == 1013
+                or status_code == 1039)
+    return False
+
+
+class CustomSaasAPI:
+    def __init__(self, infer_params: Dict[str, str]) -> None:
+        self.api_key = infer_params["saas.api_key"]
+        self.group_id = infer_params["saas.group_id"]
+        self.model = infer_params.get("saas.model", "abab5.5-chat")
+        self.api_url = infer_params.get("saas.api_url", "https://api.minimax.chat/v1/text/chatcompletion_pro")
+
+    def stream_chat(
+            self,
+            tokenizer,
+            ins: str,
+            his: List[Dict[str,Any]],
+            max_length: int = 4096,
+            top_p: float = 0.7,
+            temperature: float = 0.9,
+            **kwargs
+    ):
+        glyph = kwargs.get('glyph', None)
+        bot_settings = MiniMaxBotSettings()
+        messages = MiniMaxMessages()
+
+        for item in his:
+            role, content = item['role'], item['content']
+            if role == "system":
+                bot_settings.append("Assistant", content)
+                continue
+            messages.append(content, role)
+
+        if ins:
+            messages.append(ins, MiniMaxMessageRole.USER)
+
+        if bot_settings.is_empty():
+            bot_settings.append("Assistant", DEFAULT_BOT_SETTING)
+
+        payload = {
+            "model": self.model,
+            "messages": messages.to_list(),
+            "tokens_to_generate": max_length,
+            "temperature": temperature,
+            "top_p": top_p,
+            "sample_messages": [],
+            "plugins": [],
+            "bot_setting": bot_settings.to_list(),
+            "reply_constraints": {
+                "sender_type": "BOT",
+                "sender_name": "Assistant"
+            }
+        }
+
+        if glyph:
+            payload['reply_constraints']['glyph'] = glyph
+
+        print(f"【Byzer --> MiniMax({self.model})】: {payload}")
+
+        content = None
+        try:
+            content = self.request_with_retry(payload)
+        except Exception as e:
+            traceback.print_exc()
+            if content == "" or content is None:
+                content = f"request minimax api failed: {e}"
+        return [(content, "")]
+
+    @tenacity.retry(
+        reraise=True,
+        retry=tenacity.retry_if_exception(_minimax_api_retry_if_need),
+        stop=tenacity.stop_after_attempt(10),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
+    )
+    def request_with_retry(self, payload):
+        """Use tenacity to retry the completion call."""
+
+        api_url = f"{self.api_url.removesuffix('/')}?GroupId={self.group_id}"
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(api_url, data=json.dumps(payload), headers=headers)
+        if response.status_code == 200:
+            res_data = json.loads(response.text)
+            print(f"【MiniMax({self.model}) --> Byzer】: {res_data}")
+            base_status_code = res_data['base_resp']['status_code']
+            if base_status_code != 0:
+                raise MiniMaxError(
+                    request_id=res_data.get('id'),
+                    status_code=base_status_code,
+                    status_msg=res_data['base_resp']['status_msg'],
+                    headers=headers,
+                    http_status=response.status_code
+                )
+            content = res_data["reply"].strip()
+            return content
+        else:
+            print(
+                f"request failed with status code `{response.status_code}`, "
+                f"headers: `{response.headers}`, "
+                f"body: `{response.content!r}`"
+            )
+            raise MiniMaxError(headers=headers, http_status=response.status_code, http_body=response.text)
+
+
+class MiniMaxMessageRole(str, Enum):
+    """MiniMax Message role."""
+    USER = "USER"
+    BOT = "BOT"
+    FUNCTION = "FUNCTION"
+
+
+class MiniMaxBotSettings:
+    """
+    MiniMax BotSetting list of Chat model.
+    Look for details: https://api.minimax.chat/document/guides/chat-pro
+    """
+
+    @dataclass
+    class Setting:
+        """
+        MiniMax bot setting.
+        """
+        bot_name: str = ""
+        content: str = ""
+
+        def to_dict(self) -> dict:
+            """
+            Convert generic bot setting to dict.
+            """
+            return {
+                "bot_name": self.bot_name,
+                "content": self.content
+            }
+
+    def __init__(self) -> None:
+        """
+        Init MiniMaxBotSettings
+        """
+        self._bot_settings: List[MiniMaxBotSettings.Setting] = []
+
+    def append(self, bot_name: str, content: Optional[str] = DEFAULT_BOT_SETTING) -> None:
+        """
+        append setting to settings_list
+        """
+        self._bot_settings.append(MiniMaxBotSettings.Setting(bot_name=bot_name, content=content))
+
+    def to_list(self) -> List[Dict[str, Any]]:
+        """
+        convert bot settings to list
+        """
+        return [bot.to_dict() for bot in self._bot_settings]
+
+    def is_empty(self) -> bool:
+        """
+        check settings is empty
+        """
+        return len(self._bot_settings) <= 0
+
+
+class MiniMaxMessages:
+    """
+    MiniMax Message list of Chat model.
+    Look for details: https://api.minimax.chat/document/guides/chat-pro
+    """
+
+    @dataclass
+    class Message:
+        """
+        MiniMax Chat message.
+        """
+        sender_type: Union[str, MiniMaxMessageRole] = MiniMaxMessageRole.USER
+        sender_name: str = ""
+        text: Optional[str] = ""
+
+        def to_dict(self) -> dict:
+            """
+            Convert generic message to MiniMax message dict.
+            """
+            sender_type = self.sender_type
+            if isinstance(sender_type, str):
+                sender_type = self._mapping_sender_type()
+            return {
+                "sender_type": sender_type.value,
+                "sender_name": self.sender_name,
+                "text": self.text
+            }
+
+        def _mapping_sender_type(self) -> MiniMaxMessageRole:
+            if self.sender_type == "system" or self.sender_type == "assistant":
+                return MiniMaxMessageRole.BOT
+            if self.sender_type == "function":
+                return MiniMaxMessageRole.FUNCTION
+            return MiniMaxMessageRole.USER
+
+    def __init__(self, bot_name_mapping: Optional[dict] = None) -> None:
+        """
+        Init MiniMaxMessages
+        """
+        self._msg_list: List[MiniMaxMessages.Message] = []
+        self._bot_name_mapping: dict = {
+            "USER": "User",
+            "user": "User",
+            "BOT": "Assistant",
+            "system": "Assistant",
+            "assistant": "Assistant"
+        } if bot_name_mapping is None else bot_name_mapping
+
+    def append(
+            self,
+            message: str,
+            sender_type: Optional[Union[str, MiniMaxMessageRole]] = None,
+            sender_name: Optional[str] = None,
+    ) -> None:
+        """
+        append message to message_list
+        """
+        sender_type = sender_type if sender_type is not None else MiniMaxMessageRole.USER
+        if sender_name is None:
+            sender_name = self._bot_name_mapping.get(sender_type) if sender_type in self._bot_name_mapping else "User"
+        msg = MiniMaxMessages.Message(
+            sender_type=sender_type,
+            sender_name=sender_name,
+            text=message
+        )
+        self._msg_list.append(msg)
+
+    def to_list(self) -> List[Dict[str, Any]]:
+        """
+        convert messages to list
+        """
+        return [msg.to_dict() for msg in self._msg_list]
+
+
+##File: /home/winubuntu/projects/byzer-llm/src/byzerllm/saas/baichuan/__init__.py
+import requests
+import json
+import time
+import hashlib
+import traceback
+from retrying import retry
+from typing import List, Tuple, Dict,Any
+
+BaiChuanErrorCodes = {
+    "0": "success",
+    "1": "system error",
+    "10000": "Invalid parameters, please check",
+    "10100": "Missing apikey",
+    "10101": "Invalid apikey",
+    "10102": "apikey has expired",
+    "10103": "Invalid Timestamp parameter in request header",
+    "10104": "Expire Timestamp parameter in request header",
+    "10105": "Invalid Signature parameter in request header",
+    "10106": "Invalid encryption algorithm in request header, not supported by server",
+    "10200": "Account not found",
+    "10201": "Account is locked, please contact the support staff",
+    "10202": "Account is temporarily locked, please try again later",
+    "10203": "Request too frequent, please try again later",
+    "10300": "Insufficient account balance, please recharge",
+    "10301": "Account is not verified, please complete the verification first",
+    "10400": "Topic violates security policy for prompts",
+    "10401": "Topic violates security policy for answer",
+    "10500": "Internal error",
+}
+
+class CustomSaasAPI:
+    def __init__(self, infer_params: Dict[str, str]) -> None:
+        self.api_key = infer_params["saas.api_key"]        
+        self.model = infer_params.get("saas.model", "Baichuan2-Turbo")        
+
+        self.meta = {
+            "model_deploy_type": "saas",
+            "backend":"saas"
+        }
+
+        if "embedding" not in  self.model.lower():
+            self.api_url = infer_params.get("saas.baichuan_api_url", "https://api.baichuan-ai.com/v1/chat/completions")
+            self.model = infer_params.get("saas.model", "Baichuan2-Turbo")
+            self.meta["embedding_mode"] = False 
+        else:
+            self.api_url = infer_params.get("saas.baichuan_api_url", "http://api.baichuan-ai.com/v1/embeddings")
+            self.model = infer_params.get("saas.model", "Baichuan-Text-Embedding")
+            self.meta["embedding_mode"] = True            
+        
+
+     # saas/proprietary
+    def get_meta(self):
+        return [self.meta]
+    
+    def embed_query(self, ins: str, **kwargs):
+        '''
+        curl http://api.baichuan-ai.com/v1/embeddings \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $BAICHUNA_API_KEY" \
+        -d '{
+            "model": "Baichuan-Text-Embedding",
+            "input": "百川大模型"
+        }'
+        '''        
+        data = {
+            "model": self.model,            
+            "input": ins
+        }      
+        start_time = time.monotonic()
+        res_data = self.request_with_retry(data)   
+        time_cost = time.monotonic() - start_time
+        return res_data["data"][0]["embedding"]
+    
+    
+    async def async_stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
+                    max_length: int = 4096,
+                    top_p: float = 0.9,
+                    temperature: float = 0.1, **kwargs):
+        
+        messages = his + [{"role": "user", "content": ins}]
+
+        other_params = {}
+        if "with_search_enhance" in kwargs:
+            other_params["with_search_enhance"] = kwargs["with_search_enhance"]
+        
+        if "top_k" in kwargs:
+            other_params["top_k"] = kwargs["top_k"]
+
+        data = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": temperature,
+            "top_p": top_p,
+            "stream": False,
+            **other_params
+        }        
+        
+        start_time = time.monotonic()
+        res_data = self.request_with_retry(data)   
+        time_cost = time.monotonic() - start_time
+        generated_text = res_data["choices"][0]["message"]["content"] 
+
+        generated_tokens_count = res_data["usage"]["completion_tokens"]   
+
+        return [(generated_text,{"metadata":{
+        "request_id":res_data["id"],
+        "input_tokens_count":res_data["usage"]["prompt_tokens"],
+        "generated_tokens_count":generated_tokens_count,
+        "time_cost":time_cost,
+        "first_token_time":0,
+        "speed":float(generated_tokens_count)/time_cost,        
+    }})]                 
+        
+    @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_attempt_number=3)
+    def request_with_retry(self, data):
+        json_data = json.dumps(data)        
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + self.api_key,            
+        }
+        response = requests.post(self.api_url, data=json_data, headers=headers)
+        if response.status_code == 200:
+            # id = response.headers.get("X-BC-Request-Id")            
+            res_data = json.loads(response.text)                                                   
+            return res_data
+
+
+        else:
+            print("request baichuan api failed, http response code:" + str(response.status_code))
+            print("response text:" + response.text)
+            raise Exception("request baichuan api failed")
+
+
+
+
+##File: /home/winubuntu/projects/byzer-llm/src/byzerllm/saas/chatglm/__init__.py
+from wudao.api_request import executeSSE, getToken, queryTaskResult
+from random import randint
+import time
+import uuid
+
+from typing import Union, List, Tuple, Optional, Dict,Any
+
+def randomTaskCode():
+    return "%019d" % randint(0, 10**19)
+
+class ChatGLMAPI:
+    def __init__(self,api_key:str, public_key:str,params:Dict[str,str]={}) -> None:
+        self.api_key = api_key if api_key else params.get("saas.api_key","")
+        self.public_key = public_key if public_key else params.get("saas.public_key","")
+        self.ability_type = "chatGLM"
+        self.engine_type = "chatGLM"
+        self.temp_token = None
+
+     # saas/proprietary
+    def get_meta(self):
+        return [{
+            "model_deploy_type": "saas",
+            "backend":"saas"
+        }]    
+
+    def get_token_or_refresh(self):
+        token_result = getToken(self.api_key, self.public_key)
+        if token_result and token_result["code"] == 200:
+            token = token_result["data"]
+            self.temp_token = token
+        else:
+            raise Exception("Fail to get token from ChatGLMAPI. Check api_key/public_key")    
+        return self.temp_token    
+    
+    def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,Any]]=[],  
+        max_length:int=4096, 
+        top_p:float=0.7,
+        temperature:float=0.9,**kwargs): 
+
+        q = []
+        for item in his:    
+            q.append(item["user"])
+            q.append(item["assistant"])
+
+        data = {
+                    "top_p": top_p,
+                    "temperature": temperature,                    
+                    "risk": 0.15,                    
+                    "requestTaskNo": randomTaskCode(),                                        
+                    "prompt": ins,
+                    "history": q                    
+                }          
+        token = self.temp_token if self.temp_token  else self.get_token_or_refresh()
+        resp = executeSSE(self.ability_type, self.engine_type, token, data)                
+
+        output_text = ""
+        for event in resp.events():
+            if event.data:
+                output_text = event.data
+            elif event.event == "error":
+                token = self.get_token_or_refresh()
+                break
+                
+        return [(output_text,"")]
+
+
+
+
+
+
+##File: /home/winubuntu/projects/byzer-llm/src/byzerllm/saas/official_openai/__init__.py
+
+from typing import List, Tuple, Dict,Any
+import httpx
+from openai import OpenAI   
+
+class CustomSaasAPI:    
+
+    def __init__(self, infer_params: Dict[str, str]) -> None:
+             
+        self.api_key = infer_params["saas.api_key"]        
+        self.model = infer_params.get("saas.model","gpt-3.5-turbo-1106")
+        
+        other_params = {}
+
+        if "saas.api_base" in infer_params:
+            other_params["api_base"] = infer_params["saas.api_base"]
+        
+        if "saas.api_version" in infer_params:
+            other_params["api_version"] = infer_params["saas.api_version"]
+        
+        if "saas.api_type" in infer_params:
+            other_params["api_type"] = infer_params["saas.api_type"]
+
+        if "saas.base_url" in infer_params:
+            other_params["base_url"] = infer_params["saas.base_url"]    
+
+        if "saas.timeout" in infer_params:
+            other_params["timeout"] = float(infer_params["saas.timeout"]    )
+        
+        self.max_retries = int(infer_params.get("saas.max_retries",10))
+                    
+
+        self.proxies = infer_params.get("saas.proxies", None)
+        self.local_address = infer_params.get("saas.local_address", "0.0.0.0")
+                
+        
+        if self.proxies is None or self.proxies == "":
+            self.client = OpenAI(**other_params,api_key=self.api_key)  
+        else:
+            self.client = OpenAI(**other_params,api_key=self.api_key,http_client=httpx.Client(
+                proxies=self.proxies,
+                transport=httpx.HTTPTransport(local_address=self.local_address)))                        
+    
+        
+
+    # saas/proprietary
+    def get_meta(self):
+        return [{
+            "model_deploy_type": "saas",
+            "backend":"saas"
+        }]
+
+    def stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
+                    max_length: int = 4096,
+                    top_p: float = 0.7,
+                    temperature: float = 0.9, **kwargs):
+
+        model = self.model
+        max_retries = self.max_retries
+
+        if "model" in kwargs:
+            model = kwargs["model"]
+        if "max_retries" in kwargs:
+            max_retries = kwargs["max_retries"]
+
+        messages = his + [{"role": "user", "content": ins}]
+
+        response = self.client.chat.completions.create(
+                            messages=messages,
+                            model=model,
+                            max_tokens=max_length,
+                            temperature=temperature,
+                            top_p=top_p                            
+                        )
+
+        res = response.choices[0].message.content
+        return [(res, "")]
+
+
+##File: /home/winubuntu/projects/byzer-llm/src/byzerllm/saas/azure_openai/__init__.py
+from typing import List, Tuple, Dict,Any
+
+import openai
+from byzerllm.utils.openai_utils import completion_with_retry
+
+
+class CustomSaasAPI:
+    def __init__(self, infer_params: Dict[str, str]) -> None:
+        self.api_type = infer_params["saas.api_type"]
+        self.api_key = infer_params["saas.api_key"]
+        self.api_base = infer_params["saas.api_base"]
+        self.api_version = infer_params["saas.api_version"]
+        self.deployment_id = infer_params["saas.deployment_id"]
+        openai.api_type = infer_params["saas.api_type"]
+        openai.api_key = infer_params["saas.api_key"]
+        openai.api_base = infer_params["saas.api_base"]
+        openai.api_version = infer_params["saas.api_version"]
+
+        self.max_retries = 10
+
+     # saas/proprietary
+    def get_meta(self):
+        return [{
+            "model_deploy_type": "saas",
+            "backend":"saas"
+        }]    
+
+    def stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
+                    max_length: int = 4096,
+                    top_p: float = 0.7,
+                    temperature: float = 0.9, **kwargs):
+
+        deployment_id = self.deployment_id
+        max_retries = self.max_retries
+
+        if "model" in kwargs:
+            deployment_id = kwargs["model"]
+        if "max_retries" in kwargs:
+            max_retries = kwargs["max_retries"]
+
+        messages = his + [{"role": "user", "content": ins}]
+
+        response = None
+
+        try:
+            chat_completion = completion_with_retry(
+                is_chat_model=True,
+                max_retries=max_retries,
+                messages=messages,
+                deployment_id=deployment_id,
+                temperature=temperature,
+                top_p=top_p,
+                max_tokens=max_length
+            )
+            response = chat_completion.choices[0]["message"]["content"].replace(' .', '.').strip()
+        except Exception as e:
+            print(f"request azure openai failed: {e}")
+            response = f"Exception occurred during the request, please try again: {e}" \
+                if response is None or response == "" else response
+
+        return [(response, "")]
+
+
+##File: /home/winubuntu/projects/byzer-llm/src/byzerllm/saas/sparkdesk/__init__.py
+import _thread as thread
+import base64
+import datetime
+import hashlib
+import hmac
+import json
+from urllib.parse import urlparse
+import ssl
+from datetime import datetime
+from time import mktime
+from urllib.parse import urlencode
+from wsgiref.handlers import format_date_time
+from typing import List, Tuple,Dict,Any
+import time
+import queue
+
+import websocket
+
+reponse_queue = queue.Queue()
+
+class SparkDeskAPIParams(object):
+    # 初始化
+    def __init__(self, APPID, APIKey, APISecret, gpt_url, DOMAIN):
+        self.APPID = APPID
+        self.APIKey = APIKey
+        self.APISecret = APISecret
+        self.host = urlparse(gpt_url).netloc
+        self.path = urlparse(gpt_url).path
+        self.gpt_url = gpt_url
+        self.DOMAIN = DOMAIN
+
+        # 生成url
+    def create_url(self):
+        # 生成RFC1123格式的时间戳
+        now = datetime.now()
+        date = format_date_time(mktime(now.timetuple()))
+
+        # 拼接字符串
+        signature_origin = "host: " + self.host + "\n"
+        signature_origin += "date: " + date + "\n"
+        signature_origin += "GET " + self.path + " HTTP/1.1"
+
+        # 进行hmac-sha256进行加密
+        signature_sha = hmac.new(self.APISecret.encode('utf-8'), signature_origin.encode('utf-8'),
+                                 digestmod=hashlib.sha256).digest()
+
+        signature_sha_base64 = base64.b64encode(signature_sha).decode(encoding='utf-8')
+
+        authorization_origin = f'api_key="{self.APIKey}", algorithm="hmac-sha256", headers="host date request-line", signature="{signature_sha_base64}"'
+
+        authorization = base64.b64encode(authorization_origin.encode('utf-8')).decode(encoding='utf-8')
+
+        # 将请求的鉴权参数组合为字典
+        v = {
+            "authorization": authorization,
+            "date": date,
+            "host": self.host
+        }
+        # 拼接鉴权参数，生成url
+        url = self.gpt_url + '?' + urlencode(v)
+        # 此处打印出建立连接时候的url,参考本demo的时候可取消上方打印的注释，比对相同参数时生成的url与自己代码生成的url是否一致
+        return url
+
+
+class CustomSaasAPI:
+
+    def __init__(self, infer_params: Dict[str, str]) -> None:
+        required_params = [ "saas.appid", "saas.api_key", "saas.api_secret"]
+        for param in required_params:
+            if list(infer_params.keys()).count(param) < 1:
+                raise ValueError("The parameter %s is a required field, please configure it"% param)
+        for value in self.get_value(infer_params,required_params):
+            if value is None or value == "":
+                raise ValueError("The mandatory model parameters cannot be empty.")
+        self.appid: str = infer_params["saas.appid"]
+        self.api_key: str = infer_params["saas.api_key"]
+        self.api_secret: str = infer_params["saas.api_secret"]
+        self.gpt_url: str = infer_params.get("saas.gpt_url","wss://spark-api.xf-yun.com/v3.1/chat")
+        self.domain: str = infer_params.get("saas.domain","generalv3")
+        self.config = SparkDeskAPIParams(self.appid, self.api_key, self.api_secret, self.gpt_url, self.domain)
+        self.timeout = int(infer_params.get("saas.timeout",30))
+        self.debug = infer_params.get("saas.debug",False)
+
+    @staticmethod
+    def on_error(ws, error):
+        pass
+
+
+    @staticmethod
+    def on_close(ws,a,b):
+        pass
+
+
+    @staticmethod
+    def on_open(ws):
+        thread.start_new_thread(CustomSaasAPI.run, (ws,))
+
+    @staticmethod
+    def run(ws, *args):
+        # 8192
+        data = {
+            "header": {
+                "app_id": ws.appid,
+                "uid": "1234"
+            },
+            "parameter": {
+                "chat": {
+                    "domain": ws.domain,
+                    "random_threshold": ws.temperature,
+                    "max_tokens": ws.max_length,
+                    "auditing": "default"
+                }
+            },
+            "payload": {
+                "message": {
+                    "text": ws.question
+                }
+            }
+        }
+        data = json.dumps(data)        
+        ws.send(data)
+
+
+    @staticmethod
+    def on_message(ws, message):
+        data = json.loads(message)        
+        code = data['header']['code']
+        if code != 0:
+            reponse_queue.put(f'请求错误: {code}, {data}')
+            reponse_queue.put(None)
+            ws.close()
+        else:
+            choices = data["payload"]["choices"]
+            status = choices["status"]
+            content = choices["text"][0]["content"]
+            reponse_queue.put(content)
+            if status == 2:
+                reponse_queue.put(None)
+                ws.close()
+
+
+    # saas/proprietary
+    def get_meta(self):
+        return [{
+            "model_deploy_type": "saas",
+            "backend":"saas"
+        }]
+
+    def get_value(self,infer_params: Dict[str, str],keys_to_get):
+        values = []
+        for key in keys_to_get:
+            if key in infer_params.keys():
+                values.append(infer_params[key])
+        return values
+
+    def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,Any]]=[],
+                    max_length:int=4096,
+                    top_p:float=0.7,
+                    temperature:float=0.9):
+
+        q = his + [{"role": "user", "content": ins}]
+        websocket.enableTrace(self.debug)
+        wsUrl = self.config.create_url()
+        ws = websocket.WebSocketApp(wsUrl,
+                                    on_message=CustomSaasAPI.on_message,
+                                    on_error=CustomSaasAPI.on_error,
+                                    on_close=CustomSaasAPI.on_close,
+                                    on_open=CustomSaasAPI.on_open)
+        ws.appid = self.config.APPID
+        ws.domain = self.config.DOMAIN
+        ws.question = q
+        ws.max_length = max_length
+        ws.top_p = top_p
+        ws.temperature = temperature
+        ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+
+        result = []
+
+        t  = reponse_queue.get(timeout=self.timeout)
+        while t is not None:
+            result.append(t)
+            t  = reponse_queue.get(timeout=self.timeout)       
+         
+        return [("".join(result),"")]
+
+##File: /home/winubuntu/projects/byzer-llm/src/byzerllm/saas/zhipu/__init__.py
+import json
+from zhipuai import ZhipuAI
+import time
+import traceback
+from typing import List, Tuple, Dict,Any
+import ray
+from byzerllm.utils import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
+import threading
+import asyncio
+
+
+class CustomSaasAPI:
+    def __init__(self, infer_params: Dict[str, str]) -> None:
+        self.api_key = infer_params["saas.api_key"]
+        # chatglm_lite, chatglm_std, chatglm_pro
+        self.model = infer_params.get("saas.model", "glm-4")        
+        self.client = ZhipuAI(api_key=self.api_key) 
+
+        self.meta = {
+            "model_deploy_type": "saas",
+            "backend":"saas",
+            "support_stream": True
+        }
+
+        if "embedding" not in  self.model.lower():            
+            self.meta["embedding_mode"] = False 
+        else:            
+            self.meta["embedding_mode"] = True       
+        try:
+            ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+        except ValueError:            
+            ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()            
+
+    # saas/proprietary
+    def get_meta(self):
+        return [self.meta] 
+
+    def embed_query(self, ins: str, **kwargs):                     
+        start_time = time.monotonic()
+        response = self.client.embeddings.create(
+                model=self.model,
+                input=ins,
+            )
+        time_cost = time.monotonic() - start_time
+        return response.data[0].embedding
+
+    async def async_stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
+                    max_length: int = 4096,
+                    top_p: float = 0.7,
+                    temperature: float = 0.9, **kwargs):
+        
+        messages = his + [{"role": "user", "content": ins}]
+        
+        stream = kwargs.get("stream",False)    
+
+        other_params = {}
+        
+        if "stream" in kwargs:        
+            other_params["stream"] = kwargs["stream"]
+
+        for k, v in kwargs.items():
+            if k in ["max_tokens", "stop"]:
+                other_params[k] = v
+        
+        start_time = time.monotonic()
+        res_data = self.client.chat.completions.create(
+                            model=self.model,
+                            temperature = temperature,
+                            top_p = top_p,
+                            messages=messages,**other_params)
+        
+        if stream:            
+            server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+            request_id = [None]
+
+            def writer(): 
+                r = ""
+                for response in res_data:                                        
+                    v = response.choices[0].delta.content
+                    r += v
+                    request_id[0] = f"zhipu_{response.id}"
+                    ray.get(server.add_item.remote(request_id[0], 
+                                                    StreamOutputs(outputs=[SingleOutput(text=r,metadata=SingleOutputMeta(
+                                                        input_tokens_count= -1,
+                                                        generated_tokens_count= -1,
+                                                    ))])
+                                                    ))
+                ray.get(server.mark_done.remote(request_id[0]))
+
+            threading.Thread(target=writer,daemon=True).start()            
+                               
+            time_count= 10*100
+            while request_id[0] is None and time_count > 0:
+                time.sleep(0.01)
+                time_count -= 1
+            
+            if request_id[0] is None:
+                raise Exception("Failed to get request id")
+            
+            def write_running():
+                return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
+                        
+            await asyncio.to_thread(write_running)
+            return [("",{"metadata":{"request_id":request_id[0],"stream_server":"BLOCK_VLLM_STREAM_SERVER"}})] 
+      
+        time_cost = time.monotonic() - start_time
+        generated_text = res_data.choices[0].message.content        
+        generated_tokens_count = res_data.usage.completion_tokens
+
+        return [(generated_text,{"metadata":{
+                        "request_id":res_data.id,
+                        "input_tokens_count":res_data.usage.prompt_tokens,
+                        "generated_tokens_count":generated_tokens_count,
+                        "time_cost":time_cost,
+                        "first_token_time":0,
+                        "speed":float(generated_tokens_count)/time_cost,        
+                    }})]
+
+
+
+
+##File: /home/winubuntu/projects/byzer-llm/src/byzerllm/saas/qianwen/__init__.py
+from http import HTTPStatus
+from typing import List, Dict
+import dashscope
+from dashscope.api_entities.dashscope_response import Message
+import time
+import ray
+from byzerllm.utils import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
+import threading
+import asyncio
+
+
+
+class CustomSaasAPI:
+    def __init__(self, infer_params: Dict[str, str]) -> None:
+        self.api_key: str = infer_params["saas.api_key"]  
+        self.model = infer_params.get("saas.model", "qwen-turbo")
+        self.meta = {
+            "model_deploy_type": "saas",
+            "backend":"saas",
+            "support_stream": True
+        } 
+        
+        self.meta["embedding_mode"] = "embedding"  in  self.model.lower()
+
+        try:
+            ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+        except ValueError:            
+            ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()     
+
+     # saas/proprietary
+    def get_meta(self):
+        return [self.meta] 
+
+    
+    def embed_query(self, ins: str, **kwargs): 
+        # text-embedding-v1或者text-embedding-v2              
+        resp = dashscope.TextEmbedding.call(
+        api_key=self.api_key,
+        model=self.model,
+        input=ins)
+        if resp.status_code == HTTPStatus.OK:
+            return resp.output["embeddings"][0]["embedding"]
+        else:
+            raise Exception(resp.message)
+
+
+    async def async_stream_chat(
+            self,
+            tokenizer,
+            ins: str,
+            his: List[dict] = [],
+            max_length: int = 1024,
+            top_p: float = 0.9,
+            temperature: float = 0.1,
+            **kwargs
+    ):
+        
+        messages = his + [{"role": "user", "content": ins}]        
+        
+        start_time = time.monotonic()
+
+        other_params = {}
+                
+        if "top_k" in kwargs:
+            other_params["top_k"] = int(kwargs["top_k"])
+
+        if "stop" in kwargs:
+            other_params["stop"] = kwargs["stop"]
+
+        if "enable_search" in kwargs:
+            other_params["enable_search"] = kwargs["enable_search"]        
+
+        if "enable_search_enhance" in kwargs:
+            other_params["enable_search_enhance"] = kwargs["enable_search_enhance"]
+
+        if "stream" in kwargs:        
+            other_params["stream"] = kwargs["stream"]
+
+        if "incremental_output" in kwargs:
+            other_params["incremental_output"] = kwargs["incremental_output"]    
+
+        stream = kwargs.get("stream",False)    
+        
+        res_data = dashscope.Generation.call(model = self.model,
+                                            messages=[Message(**message) for message in messages],
+                                            api_key=self.api_key,
+                                            max_tokens=max_length,
+                                            temperature=temperature,
+                                            top_p=top_p,
+                                            result_format='message',**other_params)
+        
+        if stream:            
+            server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+            request_id = [None]
+
+            def writer(): 
+                for response in res_data:                                        
+                    if response.status_code == HTTPStatus.OK:
+                        v = response.output.choices[0]['message']['content']                        
+                        request_id[0] = response.request_id                        
+                        ray.get(server.add_item.remote(request_id[0], 
+                                                       StreamOutputs(outputs=[SingleOutput(text=v,metadata=SingleOutputMeta(
+                                                           input_tokens_count=response["usage"]["input_tokens"],
+                                                           generated_tokens_count=response["usage"]["output_tokens"],
+                                                       ))])
+                                                       ))
+                        
+                    else:
+                        print('Request id: %s, Status code: %s, error code: %s, error message: %s' % (
+                            response.request_id, response.status_code,
+                            response.code, response.message
+                        ),flush=True) 
+                ray.get(server.mark_done.remote(request_id[0]))
+
+            threading.Thread(target=writer,daemon=True).start()            
+                               
+            time_count= 10*100
+            while request_id[0] is None and time_count > 0:
+                time.sleep(0.01)
+                time_count -= 1
+            
+            if request_id[0] is None:
+                raise Exception("Failed to get request id")
+            
+            def write_running():
+                return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
+                        
+            await asyncio.to_thread(write_running)
+            return [("",{"metadata":{"request_id":request_id[0],"stream_server":"BLOCK_VLLM_STREAM_SERVER"}})]  
+              
+        time_cost = time.monotonic() - start_time
+        
+        if res_data["status_code"] == HTTPStatus.OK:
+             generated_text = res_data["output"]["choices"][0]["message"]["content"]
+             generated_tokens_count = res_data["usage"]["output_tokens"]
+             input_tokens_count = res_data["usage"]["input_tokens"]
+
+             return [(generated_text,{"metadata":{
+                        "request_id":res_data["request_id"],
+                        "input_tokens_count":input_tokens_count,
+                        "generated_tokens_count":generated_tokens_count,
+                        "time_cost":time_cost,
+                        "first_token_time":0,
+                        "speed":float(generated_tokens_count)/time_cost,        
+                    }})] 
+        else:
+            s = 'Request id: %s, Status code: %s, error code: %s, error message: %s' % (
+                res_data.request_id, res_data.status_code,
+                res_data.code, res_data.message
+            )
+            print(s)
+            raise Exception(s)
+
+    
+        
+
+
+
+##File: /home/winubuntu/projects/byzer-llm/src/byzerllm/saas/qianfan/__init__.py
+import traceback
+from typing import List, Dict
+import os
+import time
+import qianfan
+from byzerllm.utils import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
+import threading
+import asyncio
+import ray
+
+
+class CustomSaasAPI:
+    def __init__(self, infer_params: Dict[str, str]) -> None:        
+        self.api_key: str = infer_params["saas.api_key"]
+        self.secret_key: str = infer_params["saas.secret_key"]
+        os.environ["QIANFAN_ACCESS_KEY"] = self.api_key
+        os.environ["QIANFAN_SECRET_KEY"] = self.secret_key
+        qianfan.AK(self.api_key)
+        qianfan.SK(self.secret_key)
+        self.model: str = infer_params.get("saas.model", "ERNIE-Bot-turbo")   
+        self.client = qianfan.ChatCompletion()   
+        try:
+            ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+        except ValueError:            
+            ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote() 
+
+     # saas/proprietary
+    def get_meta(self):
+        return [{
+            "model_deploy_type": "saas",
+            "backend":"saas",
+            "support_stream": True
+        }]    
+
+    async def async_stream_chat(
+            self,
+            tokenizer,
+            ins: str,
+            his: List[dict] = [],
+            max_length: int = 4096,
+            top_p: float = 0.7,
+            temperature: float = 0.9,
+            **kwargs
+    ):
+
+        other_params = {}
+        
+        if "request_timeout" in kwargs:
+            other_params["request_timeout"] = int(kwargs["request_timeout"])
+        
+        if "retry_count" in kwargs:
+            other_params["retry_count"] = int(kwargs["retry_count"])
+        
+        if "backoff_factor" in kwargs:
+            other_params["backoff_factor"] = float(kwargs["backoff_factor"])  
+
+        if "penalty_score" in kwargs:
+            other_params["penalty_score"] = float(kwargs["penalty_score"])  
+
+        stream = kwargs.get("stream",False)                                  
+
+        messages = qianfan.Messages()
+        for item in his:
+            role, content = item['role'], item['content']
+            # messages must have an odd number of members
+            # look for details: https://cloud.baidu.com/doc/WENXINWORKSHOP/s/clntwmv7t
+            if role == 'system':
+                messages.append(content, qianfan.Role.User)
+                messages.append("OK", qianfan.Role.Assistant)
+                continue
+            messages.append(content, role)
+
+        if ins:
+            messages.append(ins, qianfan.Role.User)
+        
+        start_time = time.monotonic()
+        
+        res_data = self.client.do(
+            model=self.model,            
+            messages=messages,
+            top_p=top_p,
+            temperature=temperature,
+            stream=stream,
+            **other_params
+        )
+        
+        if stream:
+            server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+            request_id = [None]
+
+            def writer(): 
+                for response in res_data:                                        
+                    if response["code"] == 200:
+                        v = response["result"]
+                        request_id[0] = f'qianfan_{response["id"]}'
+                        ray.get(server.add_item.remote(request_id[0], 
+                                                       StreamOutputs(outputs=[SingleOutput(text=v,metadata=SingleOutputMeta(
+                                                           input_tokens_count=response["usage"]["prompt_tokens"],
+                                                           generated_tokens_count=response["usage"]["completion_tokens"],
+                                                       ))])
+                                                       ))                                            
+                ray.get(server.mark_done.remote(request_id[0]))
+
+            threading.Thread(target=writer,daemon=True).start()            
+                               
+            time_count= 10*100
+            while request_id[0] is None and time_count > 0:
+                time.sleep(0.01)
+                time_count -= 1
+            
+            if request_id[0] is None:
+                raise Exception("Failed to get request id")
+            
+            def write_running():
+                return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
+                        
+            await asyncio.to_thread(write_running)
+            return [("",{"metadata":{"request_id":request_id[0],"stream_server":"BLOCK_VLLM_STREAM_SERVER"}})] 
+
+        time_cost = time.monotonic() - start_time
+
+        generated_text = res_data["result"]
+        generated_tokens_count = res_data["usage"]["completion_tokens"]
+        input_tokens_count = res_data["usage"]["prompt_tokens"]
+
+        return [(generated_text,{"metadata":{
+                "request_id":res_data["id"],
+                "input_tokens_count":input_tokens_count,
+                "generated_tokens_count":generated_tokens_count,
+                "time_cost":time_cost,
+                "first_token_time":0,
+                "speed":float(generated_tokens_count)/time_cost,        
+            }})] 
+
+    
+
+参考qianwen/__init__.py 的代码实现，对 official_openai/__init__.py 进行优化。注意 official_openai 里使用 OpenAI 的SDK，
+需要保证你使用的准确性。
+    

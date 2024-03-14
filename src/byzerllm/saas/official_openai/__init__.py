@@ -64,14 +64,18 @@ class CustomSaasAPI:
             max_retries = kwargs["max_retries"]
 
         messages = his + [{"role": "user", "content": ins}]
+        
+        try:
+            response = self.client.chat.completions.create(
+                                messages=messages,
+                                model=model,
+                                max_tokens=max_length,
+                                temperature=temperature,
+                                top_p=top_p                            
+                            )
 
-        response = self.client.chat.completions.create(
-                            messages=messages,
-                            model=model,
-                            max_tokens=max_length,
-                            temperature=temperature,
-                            top_p=top_p                            
-                        )
-
-        res = response.choices[0].message.content
-        return [(res, "")]
+            res = response.choices[0].message.content
+            return [(res, "")]
+        except Exception as e:
+            print(f"Error: {e}")
+            raise e
