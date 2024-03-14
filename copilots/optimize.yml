@@ -1,5 +1,6 @@
-source_dir: /home/winubuntu/projects/byzer-llm/src/byzerllm/saas
+source_dir: /home/winubuntu/projects/byzer-llm/src/byzerllm/utils/client
 target_file: /home/winubuntu/projects/byzer-llm/output.txt
 query: |
-  参考qianwen/__init__.py 的代码实现，对 official_openai/__init__.py 进行优化。注意 official_openai 里使用 OpenAI 的SDK，
-  需要保证你使用的准确性。
+  优化 ByzerLLM 代码，添加事件回调机制，允许用户增加针对不同事件添加回调函数。
+  在 _query() 函数中，设置一个回调事件叫 BEFORE_CALL_MODEL，给该事件添加一个回调函数，
+  该函数的作用是在拦截请求，输出当前发往模型的请求参数，然后通过input 请求人工输入，最后返回人工结果作为 _query最后的返回值。

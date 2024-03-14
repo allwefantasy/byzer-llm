@@ -30,6 +30,7 @@ import inspect
 import pydantic
 import copy
 import traceback
+from enum import Enum
 
 
 logger = logging.getLogger(__name__)
@@ -101,6 +102,13 @@ class ExecuteCodeResponse:
       code: str
       prompt: str
       variables: Dict[str,Any]=dataclasses.field(default_factory=dict)
+
+class EventName(Enum):
+    BEFORE_CALL_MODEL = "before_call_model"
+    AFTER_CALL_MODEL = "after_call_model"
+
+EventCallbackResult = Tuple[bool, Optional[Any]]
+EventCallback = Callable[..., EventCallbackResult]    
 
 class Template:
     def __init__(self,
@@ -404,7 +412,20 @@ class ByzerLLM:
                 0,[],self.sys_conf
             ) 
             self.context.have_fetched = True
-            self.ray_context = self.context.rayContext                     
+            self.ray_context = self.context.rayContext 
+
+        self.event_callbacks: Dict[EventName, List[EventCallback]] = {}  
+
+    def add_event_callback(self, event_name: EventName, callback: EventCallback) -> None:
+        self.event_callbacks.setdefault(event_name, []).append(callback)
+
+    def _trigger_event(self, event_name: EventName, *args, **kwargs) -> Optional[Any]:
+        if event_name in self.event_callbacks:
+            for callback in self.event_callbacks[event_name]:
+                continue_flag, value = callback(*args, **kwargs)
+                if not continue_flag:
+                    return value
+        return None                         
         
     def setup_reset(self):
         self.sys_conf = self.default_sys_conf.copy()
@@ -1609,7 +1630,10 @@ cost {time.monotonic() - start_time} seconds
                 # dynamically update the max_length
                 input["max_length"] = input_size + max_output_length
 
-
+        event_result = self._trigger_event(EventName.BEFORE_CALL_MODEL, self, model, input_value)        
+        if event_result is not None:            
+            return event_result
+        
         udf_master = ray.get_actor(model)     
         
         try:   
@@ -1633,7 +1657,12 @@ cost {time.monotonic() - start_time} seconds
                     worker_id = self.pin_model_worker_mapping.get("meta",-1)                  
 
             [index, worker] = ray.get(udf_master.get.remote(worker_id))                        
-            res = ray.get(worker.async_apply.remote(new_input_value))                                    
+            res = ray.get(worker.async_apply.remote(new_input_value))
+            
+            event_result = self._trigger_event(EventName.AFTER_CALL_MODEL, model, json.loads(res["value"][0]))
+            if event_result is not None:
+                return event_result
+                                                
             return json.loads(res["value"][0])
         except Exception as inst:
             raise inst
