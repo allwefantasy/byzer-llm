@@ -1,0 +1,10 @@
+source_dir: /home/winubuntu/projects/byzer-llm/src/byzerllm/saas
+target_file: /home/winubuntu/projects/byzer-llm/output.txt
+urls: https://help.aliyun.com/zh/dashscope/developer-reference/tongyi-qianwen-vl-plus-api?disableWebsiteRedirect=true
+
+# model: qianwen_short_chat
+# model_max_length: 2000
+# anti_quota_limit: 5
+
+query: |
+  学习通义千问VL文档，然后参考 saas/qianwen 中的接口规范实现，实现一个 saas/qianyi_vl。

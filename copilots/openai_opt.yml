@@ -1,0 +1,6 @@
+source_dir: /home/winubuntu/projects/byzer-llm/src/byzerllm/saas
+target_file: /home/winubuntu/projects/byzer-llm/output.txt
+py_packages: openai
+query: |
+  参考 src/byzerllm/saas/qianwen 中的实现，重新实现 offical_openai。注意 offical_openai 中
+  使用的是openai 这个模块，你需要学习这个模块的使用方法，保证正确的使用其功能。
