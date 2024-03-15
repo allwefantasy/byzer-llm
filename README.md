@@ -64,6 +64,7 @@ The unique features of Byzer-LLM are:
     * [Model Worker Load Balance](#Model-Worker-Load-Balance)
 * [SaaS Models](#SaaS-Models)
     * [qianwen/通义千问](#qianwen/通义千问)
+    * [qianwen_vl/通义千问多模态](#qianwen_vl/通义千问多模态)
     * [baichuan/百川](#baichuan/百川)
     * [azure openai](#azure-openai)
     * [openai](#openai)
@@ -1757,6 +1758,74 @@ There are some enum values for the `saas.model`:
 
 1. qwen-turbo
 2. qwen-max
+
+### qianwen_vl/通义千问多模态
+
+```python
+import os
+os.environ["RAY_DEDUP_LOGS"] = "0" 
+
+import ray
+from byzerllm.utils.retrieval import ByzerRetrieval
+from byzerllm.utils.client import ByzerLLM,LLMRequest,LLMResponse,LLMHistoryItem,InferBackend
+from byzerllm.utils.client import Templates
+
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)  
+
+llm = ByzerLLM(verbose=True)
+
+llm.setup_cpus_per_worker(0.001).setup_num_workers(1).setup_gpus_per_worker(0)
+
+
+chat_name = "qianwen_vl_chat"
+if llm.is_model_exist(chat_name):
+    llm.undeploy(udf_name=chat_name)
+
+llm.deploy(model_path="",
+           pretrained_model_type="saas/qianwen_vl",
+           udf_name=chat_name,
+           infer_params={
+            "saas.api_key":"xxxxx" ,
+            "saas.model":"qwen-vl-plus"           
+           })
+```
+
+There are some enum values for the `saas.model`:
+
+1. qwen-vl-plus
+2. qwen-vl-max
+
+You can call the model like this:
+
+```python
+from dataclasses import asdict
+import json
+import base64
+
+import byzerllm
+
+byzerllm.connect_cluster()
+
+model_name = "qianwen_vl_chat"
+llm = byzerllm.ByzerLLM()
+llm.setup_template(model=model_name,template="auto")
+llm.setup_default_model_name(model_name)
+
+path = "/home/winubuntu/projects/jupyter-workspace/H/jupyter-workspace/serving/t.png"
+
+with open(path, 'rb') as image_file:
+    image = base64.b64encode(image_file.read()).decode('utf-8')
+
+t = llm.chat_oai(conversations=[{
+    "role":"user",
+    "content":json.dumps([{
+        "image":image,
+        "text":"图片里有什么"
+    }],ensure_ascii=False)
+}])
+print(t[0].output)
+```
+
 
 ### azure openai
 
