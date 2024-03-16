@@ -64,7 +64,7 @@ The unique features of Byzer-LLM are:
     * [Model Worker Load Balance](#Model-Worker-Load-Balance)
 * [SaaS Models](#SaaS-Models)
     * [qianwen/通义千问](#qianwen/通义千问)
-    * [qianwen_vl/通义千问多模态](#qianwen_vl/通义千问多模态)
+    * [qianwen_vl/通义千问多模态](#qianwen_vl通义千问多模态)
     * [baichuan/百川](#baichuan/百川)
     * [azure openai](#azure-openai)
     * [openai](#openai)
