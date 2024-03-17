@@ -134,7 +134,7 @@ Recommend Env:
 ## Make sure you python version is 3.10.11
 pip install -r requirements.txt
 ## Skip this step if you have no Nvidia GPU
-pip install vllm==0.2.6
+pip install vllm==0.3.3
 pip install -U byzerllm
 ray start --head
 ```
