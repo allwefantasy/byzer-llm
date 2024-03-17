@@ -84,7 +84,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
-- 0.1.48:  Add qwen_vl_saas model support
+- 0.1.48:  Add qwen_vl_saas model support/ Callback support for Byzer-LLM 
 - 0.1.47:  Fix prompt function bugs
 - 0.1.46:  Add stream_reply to Byzer-Agent, please check this [link](https://github.com/allwefantasy/byzer-agent)
 - 0.1.45:  Optimize Byzer-Agent, please check this [link](https://github.com/allwefantasy/byzer-agent)
