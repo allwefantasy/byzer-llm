@@ -39,8 +39,8 @@ locales = {
         "zh": "预训练模型类型"
     },
     "help_udf_name": {
-        "en": "Deployed model UDF name",
-        "zh": "部署后的模型 UDF 名称"
+        "en": "Deployed model name",
+        "zh": "部署后的模型名称"
     },
     "help_infer_params": {
         "en": "Model inference parameters",
@@ -69,6 +69,14 @@ locales = {
     "deploy_success": {
         "en": "Model {0} deployed successfully",
         "zh": "模型 {0} 部署成功"
+    },
+    "undeploy_success": {
+        "en": "Model {0} undeployed successfully",
+        "zh": "模型 {0} 卸载成功"
+    },
+    "already_deployed": {
+        "en": "Model {0} already deployed",
+        "zh": "模型 {0} 已经部署过了"
     }
 }
 
@@ -79,6 +87,14 @@ if lang.startswith("zh"):
 else:
     lang = "en"
 
+class StoreNestedDict(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        d = {}
+        for kv in values:
+            key, value = kv.split("=", maxsplit=1)
+            d[key]=value
+        setattr(namespace, self.dest, d)    
+
 def main():
     parser = argparse.ArgumentParser(description=locales["desc"][lang])
     subparsers = parser.add_subparsers(dest='command')
@@ -87,13 +103,17 @@ def main():
     deploy_cmd = subparsers.add_parser('deploy', help=locales["help_deploy"][lang])
     deploy_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
     deploy_cmd.add_argument('--num_workers', type=int, default=1, help=locales["help_num_workers"][lang])
-    deploy_cmd.add_argument('--gpus_per_worker', type=int, default=0, help=locales["help_gpus_per_worker"][lang])
-    deploy_cmd.add_argument('--cpus_per_worker', type=int, default=0.01, help=locales["help_cpus_per_worker"][lang])
-    deploy_cmd.add_argument('--model_path', required=True, help=locales["help_model_path"][lang])
+    deploy_cmd.add_argument('--gpus_per_worker', type=float, default=0, help=locales["help_gpus_per_worker"][lang])
+    deploy_cmd.add_argument('--cpus_per_worker', type=float, default=0.01, help=locales["help_cpus_per_worker"][lang])
+    deploy_cmd.add_argument('--model_path', default="",required=False, help=locales["help_model_path"][lang])
     deploy_cmd.add_argument('--pretrained_model_type', default="custom/llama2", help=locales["help_pretrained_model_type"][lang])
-    deploy_cmd.add_argument('--udf_name', required=True, help=locales["help_udf_name"][lang])
-    deploy_cmd.add_argument('--infer_params', default="{}", help=locales["help_infer_params"][lang])
+    deploy_cmd.add_argument('--model', required=True, help=locales["help_udf_name"][lang])    
     deploy_cmd.add_argument('--infer_backend', default="vllm", help=locales["help_infer_backend"][lang])
+    deploy_cmd.add_argument('--infer_params', nargs='+', action=StoreNestedDict, help=locales["help_infer_params"][lang])
+    
+    deploy_cmd = subparsers.add_parser('undeploy', help=locales["help_deploy"][lang])
+    deploy_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
+    deploy_cmd.add_argument('--model', required=True, help=locales["help_udf_name"][lang])    
 
     # Query 子命令
     query_cmd = subparsers.add_parser('query', help=locales["help_query"][lang])
@@ -108,6 +128,10 @@ def main():
         ray.init(address=args.ray_address, namespace="default", ignore_reinit_error=True)
 
         llm = ByzerLLM()
+        if llm.is_model_exist(args.model):
+            print(locales["already_deployed"][lang].format(args.model))
+            return
+        
         llm.setup_gpus_per_worker(args.gpus_per_worker).setup_cpus_per_worker(args.cpus_per_worker).setup_num_workers(args.num_workers)
         if not args.pretrained_model_type.startswith("saas"):
             if args.infer_backend == "vllm":
@@ -121,10 +145,10 @@ def main():
         
         llm.deploy(model_path=args.model_path,
                 pretrained_model_type=args.pretrained_model_type,
-                udf_name=args.udf_name,
-                infer_params=json.loads(args.infer_params))
+                udf_name=args.model,
+                infer_params=args.infer_params)
 
-        print(locales["deploy_success"][lang].format(args.udf_name))
+        print(locales["deploy_success"][lang].format(args.model))
 
     elif args.command == 'query':
         ray.init(address=args.ray_address, namespace="default", ignore_reinit_error=True)
@@ -137,6 +161,14 @@ def main():
             "content": args.query,
         }])
         print(resp[0].output,flush=True)
+
+    elif args.command == 'undeploy':
+        ray.init(address=args.ray_address, namespace="default", ignore_reinit_error=True)
+
+        llm = ByzerLLM()
+        llm.undeploy(args.model)
+
+        print(locales["undeploy_success"][lang].format(args.model))
 
 if __name__ == "__main__":
     main()

@@ -208,6 +208,47 @@ ROLE=worker ./setup-machine.sh
 
 ## Quick Start
 
+### Command Line
+
+Deploy a model:
+
+```shell
+byzerllm deploy --model_path /home/byzerllm/models/openbuddy-llama2-13b64k-v15 \
+--pretrained_model_type custom/llama2 \
+--gpu_gpus_per_worker 4 \
+--num_workers 1 \
+--udf_name llama2_chat 
+```
+
+
+Then you can chat with the model:
+
+```shell
+byzerllm query --model llama2_chat --query "你好"
+```
+
+You can undeploy the model like this:
+
+```shell
+byzerllm undeploy --model qianwen_short_chat
+```
+
+If you need to specify the Ray address, use `--ray_address`.
+
+Here is another case to show you how to deploy SaaS model:
+
+```shell
+byzerllm deploy  --pretrained_model_type saas/qianwen \
+--cpus_per_worker 0.01 \
+--gpus_per_worker 0 \
+--num_workers 1 \
+--infer_params saas.api_key="xxxxx" saas.model="qwen-max" \
+--model qianwen_short_chat 
+```
+
+
+
+### Python
 ```python
 import ray
 from byzerllm.utils.client import ByzerLLM,LLMRequest,InferBackend
