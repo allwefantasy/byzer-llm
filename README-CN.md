@@ -57,6 +57,7 @@ Byzer-LLM 的独特之处在于：
     * [openai](#openai)
     * [智谱](#智谱zhipu)
     * [星火](#星火sparkdesk)         
+    * [AmazonBedrock](#AmazonBedrock)
 * [多模态](#多模态) 
 * [StableDiffusion](#StableDiffusion)
 * [SQL 支持](#SQL-支持) 
@@ -1557,6 +1558,46 @@ and `gpt_url`="ws://spark-api.xf-yun.com/v1.1/chat"
 and udfName="sparkdesk_saas"
 and modelTable="command";
 ```
+
+### AmazonBedrock
+
+```python
+import ray
+
+from byzerllm.utils.client import ByzerLLM, Templates
+
+ray.init(address="auto",namespace="default",ignore_reinit_error=True)
+
+llm = ByzerLLM()
+
+chat_name = "aws_bedrock_llama2_70b_chat"
+
+llm.setup_num_workers(1).setup_gpus_per_worker(0)
+llm.setup_template(chat_name, Templates.llama())
+
+if llm.is_model_exist(chat_name):
+  llm.undeploy(udf_name=chat_name)
+
+llm.deploy(model_path="",
+           pretrained_model_type="saas/aws_bedrock",
+           udf_name=chat_name,
+           infer_params={
+               "saas.aws_access_key_id": "your access key",
+               "saas.aws_secret_access_key": "your secret key",
+               "saas.region_name": "your region name",
+               "saas.model": "meta.llama2-70b-chat-v1"
+           })
+
+v = llm.chat_oai(model=chat_name,conversations=[{
+  "role":"user",
+  "content":"your prompt content",
+}])
+```
+
+针对 `saas.model` 参数，目前支持以下几个模型：
+
+1. meta.llama2-70b-chat-v1
+2. meta.llama2-13b-chat-v1
 
 ---
 
