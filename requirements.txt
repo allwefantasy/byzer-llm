@@ -42,6 +42,9 @@ jieba
 # rouge_chinese
 # icetk
 
+# dependencies only for aws bedrock
+boto3
+
 ## TGI dependencies for quick inference
 # pip install flash-attn --no-build-isolation
 
