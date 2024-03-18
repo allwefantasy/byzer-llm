@@ -28,6 +28,11 @@ setup(
     author="allwefantasy",
     long_description=readme_contents,
     long_description_content_type="text/markdown",
+    entry_points={
+        'console_scripts': [
+            'byzerllm = byzerllm.byzerllm:main',
+        ],
+    },
     package_dir={"": "src"},
     packages=find_packages("src"),    
     package_data={
