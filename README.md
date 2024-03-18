@@ -2030,7 +2030,7 @@ v = llm.chat_oai(model=chat_name,conversations=[{
 }])
 ```
 
-针对 `saas.model` 参数，目前支持以下几个模型：
+There are some enum values for the `saas.model`:
 
 1. meta.llama2-70b-chat-v1
 2. meta.llama2-13b-chat-v1
