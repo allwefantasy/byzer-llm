@@ -8,7 +8,6 @@ model_max_input_length: 6000
 anti_quota_limit: 5
 
 skip_build_index: false
-execute: false
 
 search_engine: bing
 search_engine_token: ENV {{BING_SEARCH_TOKEN}}

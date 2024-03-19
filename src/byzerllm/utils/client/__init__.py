@@ -10,6 +10,7 @@ from byzerllm.utils import (function_calling_format,
                             FunctionCallList,
                             function_impl_format,
                             base_ability_format,
+                            BaseAbility,
                             sys_response_class_format,
                             sys_function_calling_format,
                             sys_function_impl_format,
@@ -319,7 +320,7 @@ class Templates:
                         "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly.",
                         "system_msg_func":sys_format
                         },
-                        generation_config={},                  
+                        generation_configexecute_response_format={},                  
                         clean_func=clean_func)   
 
     @staticmethod
@@ -978,8 +979,20 @@ class ByzerLLM:
             is_json = True
         except Exception as inst:
             pass
-        
+
         code = response.output
+            
+        if not is_json:
+            if code.strip().startswith("```json"): 
+                index = code.rfind("```")
+                if index != -1:
+                    code = code.strip()[7:index-1]                    
+                    try:
+                        json.loads(code)
+                        is_json = True
+                    except Exception as inst:
+                        pass
+                
         if not is_json:
             codes = code_utils.extract_code(response.output)         
             if len(codes) == 0:            
@@ -1079,6 +1092,17 @@ class ByzerLLM:
         code = response.output
 
         if not is_json:
+            if code.strip().startswith("```json"): 
+                index = code.rfind("```")
+                if index != -1:
+                    code = code.strip()[7:index-1]                    
+                    try:
+                        json.loads(code)
+                        is_json = True
+                    except Exception as inst:
+                        pass
+
+        if not is_json:
             codes = code_utils.extract_code(response.output)
             if len(codes) == 0:
                 r.metadata["reason"] = "No json block found"
@@ -1151,13 +1175,21 @@ class ByzerLLM:
 
         if enable_default_sys_message:
             first_message = conversations[0]
+            base_abilities = []
+            if response_class:
+                base_abilities.append(BaseAbility.RESPONSE_WITH_CLASS)
+            if impl_func:
+                base_abilities.append(BaseAbility.RESPONSE_WITH_IMPL_FUNC)
+            if tools or tool_choice:
+                base_abilities.append(BaseAbility.FUNCTION_CALLING)
+
             if first_message["role"] == "user":
                 conversations.insert(0,{
                     "role":"system",
-                    "content": self.mapping_base_system_message.get(model,base_ability_format())
+                    "content": self.mapping_base_system_message.get(model,base_ability_format(base_abilities=base_abilities))
                 })
             if first_message["role"] == "system":
-                first_message["content"] = f'''{self.mapping_base_system_message.get(model,base_ability_format())}
+                first_message["content"] = f'''{self.mapping_base_system_message.get(model,base_ability_format(base_abilities=base_abilities))}
 {first_message["content"]}'''
                 
         meta = self.get_meta(model=model)        

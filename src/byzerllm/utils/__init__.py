@@ -12,6 +12,7 @@ import pydantic
 import sys
 import traceback
 import io
+from enum import Enum
 
 T = TypeVar("T")
 
@@ -594,8 +595,18 @@ def response_class_format_after_chat(cls:Union[pydantic.BaseModel,str])->str:
 ''' 
     return msg 
 
+class BaseAbility(Enum):
+    RESPONSE_WITH_CLASS = "RESPONSE_WITH_CLASS"
+    FUNCTION_CALLING = "FUNCTION_CALLING"
+    FUNCTION_IMPL = "FUNCTION_IMPL"
+    OTHERS = "OTHERS"
 
-def base_ability_format(prompt:Optional[str]=None)->str:
+def base_ability_format(prompt:Optional[str]=None,base_abilities: List[BaseAbility]=[BaseAbility.FUNCTION_CALLING,
+                                                                                     BaseAbility.FUNCTION_IMPL,
+                                                                                     BaseAbility.RESPONSE_WITH_CLASS                                                                                     
+                                                                                     ])->str:
+    base_abilities.extend([BaseAbility.OTHERS])
+
     RESPONSE_WITH_CLASS_example_0='''{"title": "Item", "description": "时间抽取的返回结果", "type": "object", "properties": {"time": {"title": "Time", "description": "时间信息,比如内容里会提到天， 月份，年等相关词汇", "type": "string"}, "other": {"title": "Other", "description": "除了时间以外的其他部分", "type": "string"}}, "required": ["time", "other"]}'''
     RESPONSE_WITH_CLASS_example_output_0 = '''{
     "time": "最近三个月",
@@ -689,11 +700,7 @@ def caculate_current_time():
     
     return {"time": time_str}
 '''
-    msg = f'''下面是你具备的基础能力，当你回答用户问题的时候，随时回顾这些能力。
-
-JSON 格式是一种轻量级的数据交换格式，JSON Schema 是基于 JSON 的一个描述 JSON 数据结构的元数据，可以用来描述 JSON 数据的结构和内容，以及定义 JSON 数据的合法值范围。
-OpenAPI Specification (OAS) 使用 JSON Schema 来描述 Json 数据的结构和内容，你需要遵循 OpenAPI 3.1.0 版本的规范。
-
+    m_response_class_str = "" if BaseAbility.RESPONSE_WITH_CLASS not in base_abilities else f'''
 ===================RESPONSE_WITH_CLASS===================
 
 下面是一个根据用户的问题，并且结合 JSON Schema 生成对应的 JSON 数据的例子：
@@ -733,7 +740,8 @@ JSON Schema：
 ```
 
 当用户提到 RESPONSE_WITH_CLASS 时，请回顾该能力。
-
+'''
+    m_function_calling_str = "" if BaseAbility.FUNCTION_CALLING not in base_abilities else f'''
 ===================FUNCTION_CALLING===================
 
 用户会提供一个函数列表给你,你需要根据用户的问题，选择一个或者多个函数返回给用户。如果你无法使用上述函数解决用户的问题，请如实告诉我你没有办法回答。
@@ -758,7 +766,8 @@ JSON Schema：
 ```
 
 当用户提到 FUNCTION_CALLING 时，请回顾该能力。
-
+''' 
+    m_function_impl_str = "" if BaseAbility.FUNCTION_IMPL not in base_abilities else f'''
 ===================FUNCTION_IMPL===================
 
 你非常擅长 Python 语言。根据用户提供的一些信息以及问题，对用户提供的没有实现空函数函数进行实现。
@@ -792,6 +801,17 @@ JSON Schema：
 4. 不要展示你函数执行的结果
 
 当用户提到 FUNCTION_IMPL 时，请回顾该能力。
+'''
+    msg = f'''下面是你具备的基础能力，当你回答用户问题的时候，随时回顾这些能力。
+
+JSON 格式是一种轻量级的数据交换格式，JSON Schema 是基于 JSON 的一个描述 JSON 数据结构的元数据，可以用来描述 JSON 数据的结构和内容，以及定义 JSON 数据的合法值范围。
+OpenAPI Specification (OAS) 使用 JSON Schema 来描述 Json 数据的结构和内容，你需要遵循 OpenAPI 3.1.0 版本的规范。
+
+{m_response_class_str}
+
+{m_function_calling_str}
+
+{m_function_impl_str}
 
 ===================OTHERS===================
 '''
