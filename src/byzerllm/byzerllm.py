@@ -1,7 +1,9 @@
 import argparse
 import os
 import ray
-import json
+import shlex
+import jinja2
+import yaml
 from byzerllm.utils.client import ByzerLLM, InferBackend
 
 # 命令和参数的中英文映射字典
@@ -91,9 +93,13 @@ class StoreNestedDict(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         d = {}
         for kv in values:
-            key, value = kv.split("=", maxsplit=1)
-            d[key]=value
-        setattr(namespace, self.dest, d)    
+            try:
+                for clean_kv in shlex.split(kv):
+                    key, value =clean_kv.split("=", 1)
+                    d[key]=value
+            except ValueError:
+                raise argparse.ArgumentError(self, f"Invalid argument format: {kv}")
+        setattr(namespace, self.dest, d)  
 
 def main():
     parser = argparse.ArgumentParser(description=locales["desc"][lang])
@@ -110,10 +116,13 @@ def main():
     deploy_cmd.add_argument('--model', required=True, help=locales["help_udf_name"][lang])    
     deploy_cmd.add_argument('--infer_backend', default="vllm", help=locales["help_infer_backend"][lang])
     deploy_cmd.add_argument('--infer_params', nargs='+', action=StoreNestedDict, help=locales["help_infer_params"][lang])
+    deploy_cmd.add_argument("--file", default=None, required=False, help="")
     
+    # Undeploy 子命令
     deploy_cmd = subparsers.add_parser('undeploy', help=locales["help_deploy"][lang])
     deploy_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
     deploy_cmd.add_argument('--model', required=True, help=locales["help_udf_name"][lang])    
+    deploy_cmd.add_argument("--file", default=None, required=False, help="")
 
     # Query 子命令
     query_cmd = subparsers.add_parser('query', help=locales["help_query"][lang])
@@ -121,8 +130,26 @@ def main():
     query_cmd.add_argument('--model', required=True, help=locales["help_query_model"][lang])
     query_cmd.add_argument('--query', required=True, help=locales["help_query_text"][lang])
     query_cmd.add_argument('--template', default="auto", help=locales["help_template"][lang])
+    query_cmd.add_argument("--file", default=None, required=False, help="")
 
     args = parser.parse_args()
+    
+    if args.file:
+        with open(args.file, "r") as f:
+            config = yaml.safe_load(f)
+            for key, value in config.items():
+                if key != "file":  # 排除 --file 参数本身   
+                    ## key: ENV {{VARIABLE_NAME}}
+                    if isinstance(value, str) and value.startswith("ENV"):  
+                        template = jinja2.Template(value.removeprefix("ENV").strip())                  
+                        value = template.render(os.environ)                        
+                    setattr(args, key, value)
+    
+    print("Command Line Arguments:")
+    print("-" * 50)
+    for arg, value in vars(args).items():
+        print(f"{arg:20}: {value}")
+    print("-" * 50)    
 
     if args.command == 'deploy':
         ray.init(address=args.ray_address, namespace="default", ignore_reinit_error=True)

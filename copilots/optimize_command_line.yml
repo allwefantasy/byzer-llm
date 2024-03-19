@@ -8,10 +8,10 @@ model_max_input_length: 6000
 anti_quota_limit: 5
 
 skip_build_index: false
-execute: true
+execute: false
 
 search_engine: bing
 search_engine_token: ENV {{BING_SEARCH_TOKEN}}
 
 query: |
-  用Python 打印hello world
+  优化byzerllm.py 中StoreNestedDict，使其能解析标准的 KEY="VALUE" 或者 KEY=VALUE 的字符串

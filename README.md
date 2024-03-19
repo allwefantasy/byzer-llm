@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2024/03] Release Byzer-LLM 0.1.49
+- [2024/03] Release Byzer-LLM 0.1.50
 - [2024/02] Release Byzer-LLM 0.1.40
 - [2024/01] Release Byzer-LLM 0.1.39
 - [2023/12] Release Byzer-LLM 0.1.30
@@ -85,6 +85,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.50:  Add byzerllm command line tool
 - 0.1.48:  Add qwen_vl_saas model support/ Callback support for Byzer-LLM 
 - 0.1.47:  Fix prompt function bugs
 - 0.1.46:  Add stream_reply to Byzer-Agent, please check this [link](https://github.com/allwefantasy/byzer-agent)
@@ -242,7 +243,7 @@ byzerllm deploy  --pretrained_model_type saas/qianwen \
 --cpus_per_worker 0.01 \
 --gpus_per_worker 0 \
 --num_workers 1 \
---infer_params saas.api_key="xxxxx" saas.model="qwen-max" \
+--infer_params saas.api_key=xxxxx saas.model=qwen-max \
 --model qianwen_short_chat 
 ```
 

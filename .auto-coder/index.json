@@ -1,8 +1,8 @@
 {
   "/home/winubuntu/projects/byzer-llm/src/byzerllm/byzerllm.py": {
-    "symbols": "导入语句:\n- argparse\n- os\n- ray\n- json\n- from byzerllm.utils.client import ByzerLLM, InferBackend\n\n函数:\n- main\n- StoreNestedDict (类定义中包含的 __call__ 方法可视为函数)\n\n类:\n- StoreNestedDict\n- ByzerLLM (通过 from byzerllm.utils.client import ByzerLLM 导入)\n\n变量:\n- locales\n- lang",
-    "last_modified": 1710764795.203736,
-    "md5": "d4e0f3669dc65cf57f1fbf04c9584d0d"
+    "symbols": "导入语句: argparse, os, ray, shlex, ByzerLLM, InferBackend\n\n变量: locales, lang, StoreNestedDict\n\n类: StoreNestedDict\n\n函数: main",
+    "last_modified": 1710815758.9187648,
+    "md5": "2d5ab754480ff1111edfd7d630ec988c"
   },
   "/home/winubuntu/projects/byzer-llm/src/byzerllm/store.py": {
     "symbols": "函数: producer, worker, _transfer_from_ob, block_transfer_from_ob, transfer_from_ob\n导入语句: import asyncio, import ray, import time, import os, import tarfile, import tempfile, import uuid, from .utils import print_flush\n变量: items, udf_name, queue, count, tf_path, total_count, item, tf, model_refs, target_dir, time1, loop",
