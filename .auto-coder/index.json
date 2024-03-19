@@ -1,0 +1,852 @@
+{
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/byzerllm.py": {
+    "symbols": "导入语句:\n- argparse\n- os\n- ray\n- json\n- from byzerllm.utils.client import ByzerLLM, InferBackend\n\n函数:\n- main\n- StoreNestedDict (类定义中包含的 __call__ 方法可视为函数)\n\n类:\n- StoreNestedDict\n- ByzerLLM (通过 from byzerllm.utils.client import ByzerLLM 导入)\n\n变量:\n- locales\n- lang",
+    "last_modified": 1710764795.203736,
+    "md5": "d4e0f3669dc65cf57f1fbf04c9584d0d"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/store.py": {
+    "symbols": "函数: producer, worker, _transfer_from_ob, block_transfer_from_ob, transfer_from_ob\n导入语句: import asyncio, import ray, import time, import os, import tarfile, import tempfile, import uuid, from .utils import print_flush\n变量: items, udf_name, queue, count, tf_path, total_count, item, tf, model_refs, target_dir, time1, loop",
+    "last_modified": 1695636936.8282838,
+    "md5": "79d4a7cf70ae68cdca1417dd8e731f3d"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/version.py": {
+    "symbols": "根据提供的源代码，这个文件中并没有函数、类或导入语句，只定义了一个变量：\n\n变量: __version__\n\n所以，按照要求的格式返回结果为：\n\n变量: __version__",
+    "last_modified": 1710765013.0534115,
+    "md5": "7486e9a75771e210e9f7ee7cedebaa02"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/__init__.py": {
+    "symbols": "函数: restore_model, load_model, consume_model, common_init_model, parse_params, check_param_exists, log_to_file, prompt\n\n类: BlockRow\n\n变量: model_servers, model_binary, udf_name, new_params, msg, file_path, is_lambda, instance\n\n导入语句:\n1. from typing import Any,List,Dict\n2. from ray.util.client.common import ClientObjectRef\n3. from pyjava.api.mlsql import RayContext\n4. from pyjava.storage import streaming_tar\n5. import os\n6. import inspect\n7. import functools\n8. from typing import Dict,Generator,Optional\n9. from dataclasses import dataclass\n10. from byzerllm.utils import (print_flush,format_prompt,format_prompt_jinja2)\n11. from .store import transfer_from_ob\n12. import json\n13. from byzerllm.utils.client import ByzerLLM\n14. from byzerllm.utils.retrieval import ByzerRetrieval\n15. from byzerllm.utils.connect_ray import connect_cluster\n16. from byzerllm.apps.agent.registry import reply as agent_reply\n\n__all__: [\"ByzerLLM\",\"ByzerRetrieval\",\"connect_cluster\",\"prompt\",\"agent_reply\"]",
+    "last_modified": 1710418450.8936977,
+    "md5": "e087644b238670f4132e777caae0f111"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/bge_rerank/__init__.py": {
+    "symbols": "函数: embed_rerank, init_model\n导入语句: from typing import Union, List, Tuple, from FlagEmbedding import FlagReranker\n类: 无\n变量: 无",
+    "last_modified": 1705904756.8549943,
+    "md5": "88eeff01ef1d234dd424a8247949cd83"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/chatglm2/__init__.py": {
+    "symbols": "符号类型: 函数, 符号名称\n- 函数: get_meta\n- 函数: stream_chat\n- 函数: init_model\n- 函数: sft_train\n\n符号类型: 变量\n- 变量: config\n- 变量: device\n- 变量: tokens\n- 变量: response\n- 变量: answer\n- 变量: pretrained_model_dir\n- 变量: adaptor_model_dir\n- 变量: is_adaptor_model\n- 变量: params\n- 变量: load_in_4bit\n- 变量: tokenizer\n- 变量: model\n\n符号类型: 导入语句\n- 导入语句: from transformers import AutoTokenizer, AutoModel\n- 导入语句: import transformers\n- 导入语句: import torch\n- 导入语句: import os\n- 导入语句: from typing import Any, Dict, List, Tuple, Generator\n- 导入语句: from pyjava.api.mlsql import DataServer\n- 导入语句: from .. import BlockRow\n- 导入语句: from .. import parse_params\n- 导入语句: from peft import PeftModel (仅在 if 语句中导入，非全局导入)",
+    "last_modified": 1704197051.3566606,
+    "md5": "dae9fdd2995c8045a7c675f735e3059e"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/dolly/consts.py": {
+    "symbols": "变量:\nDEFAULT_INPUT_MODEL, SUGGESTED_INPUT_MODELS, INTRO_BLURB, INSTRUCTION_KEY, INPUT_KEY, RESPONSE_KEY, END_KEY, RESPONSE_KEY_NL, DEFAULT_SEED, PROMPT_NO_INPUT_FORMAT, PROMPT_WITH_INPUT_FORMAT, PROMPT_FOR_GENERATION_FORMAT\n\n该文件中没有函数和类，也没有导入语句。",
+    "last_modified": 1682425222.8819716,
+    "md5": "e4a88f5f6c0c2370301f486619c3f4dc"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/dolly/trainer.py": {
+    "symbols": "函数: preprocess_batch, load_training_dataset, load_tokenizer, load_model, get_model_tokenizer, preprocess_dataset, train, main\n类: DataCollatorForCompletionOnlyLM\n变量: logger, ROOT_PATH, DEFAULT_INPUT_MODEL, DEFAULT_SEED, PROMPT_WITH_INPUT_FORMAT, PROMPT_NO_INPUT_FORMAT, END_KEY, INSTRUCTION_KEY, RESPONSE_KEY_NL\n导入语句: \n1. import logging\n2. from functools import partial\n3. from pathlib import Path\n4. from typing import Any, Dict, List, Tuple, Union\n5. import click\n6. import numpy as np\n7. from datasets import Dataset, load_dataset\n8. from transformers import (\n   - AutoModelForCausalLM,\n   - AutoTokenizer,\n   - DataCollatorForLanguageModeling,\n   - PreTrainedTokenizer,\n   - Trainer,\n   - TrainingArguments,\n   - set_seed,\n)",
+    "last_modified": 1682425652.5231705,
+    "md5": "dc7ecd48520ca1713f5ba39a7bb95c30"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/dolly/dolly_inference.py": {
+    "symbols": "函数: restore_model\n类: Inference\n变量: model_servers, model_binary, target_dir, self.model_path, self.model, self.tokenizer, self.generation_pipeline, results\n导入语句:\n1. from .generate import InstructionTextGenerationPipeline, load_model_tokenizer_for_generate\n2. from typing import Union, List, Tuple, Optional, Dict\n3. from pyjava.api.mlsql import RayContext, PythonContext\n4. from pyjava.storage import streaming_tar",
+    "last_modified": 1682426720.8423321,
+    "md5": "dc0ec83d1af6d3e96ee4dd25dab91168"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/dolly/generate.py": {
+    "symbols": "函数: load_model_tokenizer_for_generate, get_special_token_id\n类: InstructionTextGenerationPipeline\n变量: logger, END_KEY, PROMPT_FOR_GENERATION_FORMAT, RESPONSE_KEY\n导入语句: import logging, import re, from typing import List, Tuple, import torch, from transformers import (AutoModelForCausalLM, AutoTokenizer, Pipeline, PreTrainedModel, PreTrainedTokenizer), from transformers.utils import is_tf_available, if is_tf_available(): import tensorflow as tf",
+    "last_modified": 1682426677.7906044,
+    "md5": "d0d954bd51693cc42b1fc76838d6b289"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/baichuan/__init__.py": {
+    "symbols": "符号类型: 函数, 符号名称\n- 函数: get_meta\n- 函数: stream_chat\n- 函数: init_model\n- 函数: sft_train\n- 函数: sfft_train\n\n符号类型: 类\n- 没有类\n\n符号类型: 变量\n- 变量: config\n- 变量: device\n- 变量: tokens\n- 变量: response\n- 变量: answer\n- 变量: pretrained_model_dir\n- 变量: adaptor_model_dir\n- 变量: is_adaptor_model\n- 变量: tokenizer\n- 变量: quatization\n- 变量: load_in_8bit\n- 变量: quantization_config\n- 变量: model\n- 变量: model.generation_config\n\n符号类型: 所有导入语句\n- 导入语句: from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig, BitsAndBytesConfig\n- 导入语句: from pyjava.api.mlsql import DataServer\n- 导入语句: import torch\n- 导入语句: import os\n- 导入语句: from typing import Any, Dict, List, Tuple, Generator\n- 导入语句: from .. import BlockRow",
+    "last_modified": 1703928191.0495443,
+    "md5": "b6936ff13bbf2f9eeb323093bf494044"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/llama/__init__.py": {
+    "symbols": "函数: get_meta, stream_chat, init_model, sft_train, sfft_train\n类: 无\n变量: device, timeout_s, skip_check_min_length, role_mapping, fin_ins, tokens, stopping_criteria, max_new_tokens, start_time, response, time_taken, new_tokens, answer, old_init, ntk_scaled_init, pretrained_model_dir, adaptor_model_dir, is_adaptor_model, tokenizer, longContextMode, quatization, load_in_8bit, quantization_config, model\n导入语句:\n1. from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, StoppingCriteriaList\n2. import transformers\n3. import torch\n4. from typing import Dict, List, Any, Generator\n5. from pyjava.api.mlsql import DataServer\n6. from byzerllm import BlockRow\n7. from byzerllm.utils import generate_instruction_from_history, compute_max_new_tokens, tokenize_stopping_sequences, StopSequencesCriteria\n8. from byzerllm.utils.types import StopSequencesCriteria\n9. import os\n10. import time",
+    "last_modified": 1709276073.9446077,
+    "md5": "8a90e8a497a80e7d77b3d502d78be838"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/falcon/__init__.py": {
+    "symbols": "函数: get_meta, stream_chat, init_model, sft_train\n类: 无\n变量: config, device, role_mapping, fin_ins, tokens, max_new_tokens, response, answer, pretrained_model_dir, adaptor_model_dir, is_adaptor_model, tokenizer, quatization, load_in_8bit, quantization_config, model\n导入语句:\n1. from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig\n2. import ray\n3. import torch\n4. import os\n5. from typing import Any, Dict, List, Tuple, Generator\n6. from byzerllm.utils import generate_instruction_from_history, compute_max_new_tokens\n7. from pyjava.api.mlsql import DataServer\n8. from .. import BlockRow",
+    "last_modified": 1703928191.0495443,
+    "md5": "9e3856b83fe35b19c28af780dca88a72"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/logger.py": {
+    "symbols": "符号类型: 函数, 符号名称: set_logger\n导入语句: \n1. import logging\n2. import logging.handlers\n3. import sys",
+    "last_modified": 1692026217.3899965,
+    "md5": "b33518f6ae6021112996857fd90b775a"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/config.py": {
+    "symbols": "函数: set_checkpoint, set_precision, set_model_dir, set_temp_dir, set_hf_token, set_xformers, get_checkpoint, get_precision, get_model_dir, get_temp_dir, get_hf_token, get_xformers\n类: StableDiffusionConfig\n变量: hf_token, temp_dir, xformers, model_dir, precision, checkpoint, stableDiffusionConfig\n导入语句: from typing import *",
+    "last_modified": 1692159109.0751336,
+    "md5": "5c4c25b1b01e81576d0e85b253daede1"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/shared.py": {
+    "symbols": "导入语句: os, torch, from byzerllm.stable_diffusion.config import stableDiffusionConfig\n\n函数: hf_diffusers_cache_dir, hf_transformers_cache_dir, get_device\n\n变量: cache_dir",
+    "last_modified": 1692159109.0751336,
+    "md5": "ac94d9153fddee85a09e748c21c8fb26"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/model.py": {
+    "symbols": "函数:\n- `available_modes`\n- `activate`\n- `teardown`\n- `change_mode`\n- `swap_scheduler`\n- `__call__`\n\n类:\n- `DiffusersModel`\n\n变量:\n- `ModelMode`\n- `PrecisionMap`\n- `queue`\n- `gc`\n- `random`\n- `torch`\n- `DiffusersPipeline`\n- `save_image_base64`\n- `SCHEDULERS`\n- `parser_schedulers_config`\n- `get_device`\n- `hf_diffusers_cache_dir`\n- `Version`\n\n导入语句:\n- `from queue import Queue`\n- `import gc`\n- `import random`\n- `from typing import Dict, List, Literal`\n- `from concurrent.futures import ThreadPoolExecutor`\n- `import torch`\n- `from byzerllm.stable_diffusion import utils`\n- `from byzerllm.stable_diffusion.api.models.diffusion import ImageGenerationOptions`\n- `from byzerllm.stable_diffusion.config import stableDiffusionConfig`\n- `from byzerllm.stable_diffusion.diffusion.piplines.diffusers import DiffusersPipeline`\n- `from byzerllm.stable_diffusion.images import save_image_base64`\n- `from byzerllm.stable_diffusion.lib.diffusers.scheduler import (SCHEDULERS, parser_schedulers_config)`\n- `from byzerllm.stable_diffusion.shared import get_device, hf_diffusers_cache_dir`\n- `from packaging.version import Version`",
+    "last_modified": 1692159109.0751336,
+    "md5": "f0a566aa4f884c4ab8debc0e50e546dd"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/images.py": {
+    "symbols": "符号类型: 函数, 符号名称: save_image_base64, get_image_parameter\n符号类型: 类, 无符号\n符号类型: 变量, 符号名称: img, opts, metadata, prompt, img64, text, parameters\n符号类型: 导入语句, 符号名称: json, Image, PngImagePlugin, ImageGenerationOptions, img2b64 (from byzerllm.stable_diffusion.api.models.diffusion import ImageGenerationOptions), (from byzerllm.stable_diffusion.utils import img2b64)",
+    "last_modified": 1692159109.0751336,
+    "md5": "ae26ae7369858dbe5b181b4415c4a6d6"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/__init__.py": {
+    "symbols": "函数: get_meta, stream_chat, init_model, generate_image\n类: HiresfixOptions, MultidiffusionOptions, ImageGenerationOptions, DiffusersModel\n变量: model_name, tokenizer, ins, his, max_length, top_p, temperature, prompt, negative_prompt, sampler_name, sampling_steps, batch_size, batch_count, cfg_scale, seed, width, height, enable_hires, enable_multidiff, upscaler_mode, scale_slider, views_batch_size, window_size, stride, init_image, strength, flatten, content, model_dir, infer_params, sys_conf, localPathPrefix, xformers, checkpoint, hf_token, variant, precision\n导入语句:\n```python\nimport json\nimport os\nimport time\nimport traceback\nfrom typing import Dict, List\n\nfrom byzerllm.stable_diffusion.api.models.diffusion import (\n    HiresfixOptions,\n    ImageGenerationOptions,\n    MultidiffusionOptions,\n)\nfrom byzerllm.stable_diffusion.config import stableDiffusionConfig\n\nfrom byzerllm.stable_diffusion.model import DiffusersModel\nfrom byzerllm.stable_diffusion.utils import b642img\n```",
+    "last_modified": 1704510695.3313212,
+    "md5": "0cebe277fe81641e06829fbe7aef56c6"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/utils.py": {
+    "symbols": "函数: \n- img2b64\n- b642img\n- ndarr2img\n- is_installed\n\n导入语句:\n- import base64\n- import importlib\n- from typing import *\n- import numpy as np\n- import torch\n- from PIL import Image",
+    "last_modified": 1692026217.3899965,
+    "md5": "c47607109751fbc708c0bed9d1439743"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/embeddings.py": {
+    "symbols": "函数: on_load_resource, on_prompt_tokenizing, init\n变量: token_replaces, loaded_embeddings, embeddings_dir, embeddings, safetensors, pt, state_dict, embedding, token, is_multi_vector, tokens, embeds, token_ids, weight\n导入语句:\n1. import glob\n2. import os\n3. from typing import *\n4. import torch\n5. from safetensors.torch import load_file\n6. from transformers import CLIPTextModel\n7. from byzerllm.stable_diffusion.api.events import event_handler\n8. from byzerllm.stable_diffusion.api.events.generation import LoadResourceEvent, PromptTokenizingEvent\n9. from byzerllm.stable_diffusion.config import stableDiffusionConfig",
+    "last_modified": 1692159109.0751336,
+    "md5": "896dcda146ecc06fbcf2e5ed999aeac5"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/utils.py": {
+    "symbols": "函数: convert_checkpoint_to_pipe, load_unet, load_text_encoder, load_vae_decoder, load_vae_encoder\n导入语句: gc, os, torch, AutoencoderKL, UNet2DConditionModel, convert_from_ckpt, CLIPTextModel, stableDiffusionConfig, hf_diffusers_cache_dir, hf_transformers_cache_dir",
+    "last_modified": 1692159109.0751336,
+    "md5": "83b3ae58250a3b5abbb23076e1d8b0a1"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/networks/lyco.py": {
+    "symbols": "函数: get_metadata, create_network_from_weights\n类: LoConModule, LohaModule, LycorisNetwork\n变量: use_cp, conv_alpha, conv_lora_dim, lora_alpha, lora_dim, additional_kwargs, network_module, network\n导入语句: \n1. import os\n2. import safetensors.torch\n3. import torch\n4. from lycoris import kohya\n5. from lycoris.modules import locon, loha",
+    "last_modified": 1692026217.3899965,
+    "md5": "e638a39885d5ed232a4029088463d614"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/networks/__init__.py": {
+    "symbols": "函数: get_networks_from_prompt, find_network_filepath, restore_networks, load_network_modules, init\n类: 无\n变量: latest_networks, logger\n导入语句: os, re, glob, typing, torch, byzerllm.stable_diffusion.diffusion.networks.lyco, byzerllm.stable_diffusion.logger.set_logger, byzerllm.stable_diffusion.api.events.event_handler, byzerllm.stable_diffusion.api.events.generation.LoadResourceEvent, byzerllm.stable_diffusion.api.models.diffusion.ImageGenerationOptions, byzerllm.stable_diffusion.config.stableDiffusionConfig",
+    "last_modified": 1692159109.0751336,
+    "md5": "5a2dcb82908d850b236ce883bfed0711"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/upscalers/multidiffusion.py": {
+    "symbols": "函数: \n- hijack_ancestral_scheduler\n- get_views\n- align_unet_inputs\n- views_denoise_latent\n\n类:\n- Multidiffusion\n\n变量:\n- vae\n- text_encoder\n- tokenizer\n- unet\n- scheduler\n- ancestral\n- config\n- latent_model_input\n- prompt_embeds\n- prompt_embeds_align\n- latent_align\n- views\n- latents\n- timesteps\n- num_inference_steps\n- guidance_scale\n- do_classifier_free_guidance\n- extra_step_kwargs\n- callback\n- callback_steps\n- cross_attention_kwargs\n- views_batch_size\n- views_batch\n- views_scheduler_status\n- count\n- value\n- num_warmup_steps\n- noise\n- vb_size\n- latents_for_view\n- noise_pred\n- noise_pred_uncond\n- noise_pred_text\n- scheduler_output\n- latents_denoised_batch\n- sigma_up\n\n导入语句:\n- import copy\n- from typing import *\n- import torch\n- from diffusers import (AutoencoderKL, DDPMScheduler, EulerAncestralDiscreteScheduler, KDPM2AncestralDiscreteScheduler, UNet2DConditionModel)\n- from tqdm import tqdm\n- from transformers import CLIPTextModel, CLIPTokenizer\n- from byzerllm.stable_diffusion.diffusion.upscalers.samplers import (EulerAncestralSampler, KDPM2AncestralSampler)",
+    "last_modified": 1692026217.3899965,
+    "md5": "719684eeb088c2bfe8e2513075e70943"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/upscalers/samplers.py": {
+    "symbols": "函数: step\n类: SamplerOutput, EulerAncestralSampler, KDPM2AncestralSampler\n变量: model_output, timestep, sample, generator, return_dict, step_index, sigma, pred_original_sample, sigma_from, sigma_to, sigma_up, sigma_down, derivative, dt, prev_sample, self.sigmas_interpol, self.sigmas_up, self.sigmas_down, gamma, sigma_hat, sigma_input\n导入语句: from dataclasses import dataclass, from typing import *, import torch, from diffusers import EulerAncestralDiscreteScheduler, KDPM2AncestralDiscreteScheduler, from torch import FloatTensor",
+    "last_modified": 1692026217.3899965,
+    "md5": "fcd6fc81ce8c2d518670bd1be0a796e3"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/piplines/lpw.py": {
+    "symbols": "函数: parse_prompt, pad_tokens_and_weights\n类: LongPromptWeightingPipeline\n变量: re_attention, logger, round_bracket_multiplier, square_bracket_multiplier\n导入语句: import re, from typing import *, import torch, from byzerllm.stable_diffusion.api.events.generation import PromptTokenizingEvent, from byzerllm.stable_diffusion.logger import set_logger",
+    "last_modified": 1692026217.3899965,
+    "md5": "6cb92089f658847cdf5bfc58ce2c18f9"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/api/plugin.py": {
+    "symbols": "根据提供的源码，以下是符号及其类型：\n\n1. 函数:\n   - get_plugin_id\n\n导入语句:\n   - import inspect\n\n没有类和变量定义在该代码片段中。\n\n最终结果:\n\n函数: get_plugin_id\n导入语句: import inspect",
+    "last_modified": 1692026217.3899965,
+    "md5": "ed5b76fa6501dc957ef8ea415fd52330"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/api/diffusion/pipelines/diffusers.py": {
+    "symbols": "函数:\n- from_pretrained\n- __init__\n- get_plugin_data\n- set_plugin_data\n- to\n- enterers\n- load_resources\n- get_timesteps\n- prepare_extra_step_kwargs\n- preprocess_image\n- _encode_prompt\n- prepare_latents\n- denoise_latent\n- decode_latents\n- decode_images\n- create_output\n- __call__\n- enable_xformers_memory_efficient_attention\n- enable_attention_slicing\n\n类:\n- PipeSession\n- DiffusersPipelineModel\n- AutoencoderKL (导入)\n- DDPMScheduler (导入)\n- UNet2DConditionModel (导入)\n- CLIPTextModel (导入)\n- CLIPTokenizer (导入)\n\n变量:\n- plugin_data\n- opts\n- vae\n- text_encoder\n- tokenizer\n- unet\n- scheduler\n- device\n- dtype\n- session\n\n导入语句:\n- import inspect\n- from dataclasses import dataclass\n- from typing import *\n- import numpy as np\n- import PIL.Image\n- import torch\n- from diffusers import AutoencoderKL, DDPMScheduler, UNet2DConditionModel\n- from transformers import CLIPTextModel, CLIPTokenizer\n- from byzerllm.stable_diffusion.api.models.diffusion import ImageGenerationOptions\n- from byzerllm.stable_diffusion.api.plugin import get_plugin_id",
+    "last_modified": 1692026217.3899965,
+    "md5": "d83f3bf2e8d439d28ff1d726d2c398b5"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/api/events/__init__.py": {
+    "symbols": "函数: register, call_event, event_handler\n类: BaseEvent, CancellableEvent, SkippableEvent\n变量: handlers, T\n导入语句: inspect, dataclass, Callable, ClassVar, Dict, List, Type, TypeVar",
+    "last_modified": 1692026217.3899965,
+    "md5": "d72acb623dbec6372d1110c165b676c7"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/api/events/generation.py": {
+    "symbols": "导入语句:\n1. from dataclasses import dataclass, field\n2. from typing import Any, Callable, Dict, List, Optional\n3. import torch\n4. from byzerllm.stable_diffusion.api.diffusion.pipelines.diffusers import (DiffusersPipelineModel,)\n5. from byzerllm.stable_diffusion.api.events import BaseEvent, SkippableEvent\n\n类:\n1. LoadResourceEvent\n2. PromptTokenizingEvent\n3. UNetDenoisingEvent\n\n变量（字段）:\n1. pipe (在LoadResourceEvent, PromptTokenizingEvent, UNetDenoisingEvent中)\n2. text_tokens (在PromptTokenizingEvent中)\n3. text_weights (在PromptTokenizingEvent中)\n4. latent_model_input (在UNetDenoisingEvent中)\n5. step (在UNetDenoisingEvent中)\n6. timestep (在UNetDenoisingEvent中)\n7. latents (在UNetDenoisingEvent中)\n8. timesteps (在UNetDenoisingEvent中)\n9. do_classifier_free_guidance (在UNetDenoisingEvent中)\n10. prompt_embeds (在UNetDenoisingEvent中)\n11. extra_step_kwargs (在UNetDenoisingEvent中)\n12. callback (在UNetDenoisingEvent中)\n13. callback_steps (在UNetDenoisingEvent中)\n14. cross_attention_kwargs (在UNetDenoisingEvent中)\n15. unet_additional_kwargs (在UNetDenoisingEvent中)\n\n注意：此处未列出函数，因为提供的源代码片段中没有定义任何函数。",
+    "last_modified": 1692159109.0751336,
+    "md5": "ac04c7f4bde753665b10ea98a71296e3"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/api/models/diffusion.py": {
+    "symbols": "函数: dict, json\n类: HiresfixOptions, MultidiffusionOptions, ImageGenerationOptions\n变量: HIRESFIX\n导入语句: \n1. from dataclasses import asdict, dataclass, field\n2. import json\n3. from typing import Optional\n4. import PIL.Image",
+    "last_modified": 1692026217.3899965,
+    "md5": "e00bafc73d7c8b2f8d03422df3790cee"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/lib/diffusers/scheduler.py": {
+    "symbols": "函数: parser_schedulers_config\n类: 无\n变量: SCHEDULERS\n导入语句: import diffusers",
+    "last_modified": 1692026217.3899965,
+    "md5": "5ef1e8a745c723ea11f4119c31385685"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/moss/moss_inference.py": {
+    "symbols": "函数: restore_model, stream_chat, init_model\n类: Inference\n变量: meta_instruction, web_search_switch, calculator_switch, equation_solver_switch, text_to_image_switch, image_edition_switch, text_to_speech_switch, PREFIX, DEFAULT_PARAS, num_layers, heads, hidden, vocab_size, moss_startwords, tool_startwords, tool_specialwords, innerthought_stopwords, tool_stopwords, result_stopwords, moss_stopwords\n导入语句: import time, import statistics, import json, import re, from typing import Union, List, Tuple, Optional, Dict, import torch, from .models.modeling_moss import MossForCausalLM, from .models.tokenization_moss import MossTokenizer, from .models.configuration_moss import MossConfig, from transformers.modeling_outputs import BaseModelOutputWithPast, from huggingface_hub import snapshot_download, from accelerate import init_empty_weights, from accelerate import load_checkpoint_and_dispatch, from pyjava.api.mlsql import RayContext, PythonContext, from pyjava.storage import streaming_tar",
+    "last_modified": 1687769250.5827765,
+    "md5": "1873cbc0cf6286c9255361219bfe6019"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/moss/finetune_moss.py": {
+    "symbols": "函数: train\n类: SFTDataset, SFTMetric\n变量: logger, accelerator, tokenizer, model, optimizer, train_dataloader, val_dataloader, lr_scheduler, global_step, metric\n导入语句: os, copy, json, torch, logging, argparse, tqdm, dist, DataLoader, SummaryWriter, Accelerator, DeepSpeedPlugin, set_seed, get_cosine_schedule_with_warmup, MossForCausalLM, MossTokenizer",
+    "last_modified": 1682255090.9585187,
+    "md5": "95796d411fb1a099df612590495c7d49"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/moss/models/quantization.py": {
+    "symbols": "导入语句:\n- import numpy as np\n- import torch\n- import torch.nn as nn\n- from torch.cuda.amp import custom_bwd, custom_fwd\n- import math\n\n函数:\n- find_layers\n- matmul_248_kernel\n- trans_matmul_248_kernel\n- matmul248\n- transpose_matmul248\n- QuantLinearFunction.forward (静态方法)\n- QuantLinearFunction.backward (静态方法)\n\n类:\n- QuantLinear\n- QuantLinearFunction\n\n变量:\n- infearure_per_bits (在matmul_248_kernel和trans_matmul_248_kernel中定义的局部变量)\n- grid (在matmul248和transpose_matmul248中定义的lambda函数)",
+    "last_modified": 1682251905.2928104,
+    "md5": "efb2593841ed54d3b96ab4aec12105cf"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/moss/models/tokenization_moss.py": {
+    "symbols": "函数:\n\n1. bytes_to_unicode\n2. get_pairs\n3. MossTokenizer.bpe\n4. MossTokenizer.build_inputs_with_special_tokens\n5. MossTokenizer._tokenize\n6. MossTokenizer._convert_token_to_id\n7. MossTokenizer._convert_id_to_token\n8. MossTokenizer.convert_tokens_to_string\n9. MossTokenizer.save_vocabulary\n10. MossTokenizer.prepare_for_tokenization\n11. MossTokenizer.decode\n12. MossTokenizer.truncate\n\n类:\n\n1. MossTokenizer\n\n变量:\n\n1. VOCAB_FILES_NAMES\n2. PRETRAINED_VOCAB_FILES_MAP\n3. PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES\n4. logger\n5. self.encoder\n6. self.decoder\n7. self.byte_encoder\n8. self.byte_decoder\n9. self.bpe_ranks\n10. self.cache\n11. self.add_prefix_space\n12. self.pat\n13. self.add_bos_token\n14. self.vocab_size\n15. self.get_vocab\n16. self.bos_token_id\n\n导入语句:\n\n1. import json\n2. import os\n3. import numpy as np\n4. import regex as re\n5. from functools import lru_cache\n6. from typing import TYPE_CHECKING, List, Optional, Tuple, Union\n7. from transformers.utils import is_tf_available, is_torch_available, logging\n8. from transformers.tokenization_utils import AddedToken, PreTrainedTokenizer\n\n（如果在TYPE_CHECKING块内导入的torch和tensorflow不算作实际导入，则忽略它们）",
+    "last_modified": 1682251905.340811,
+    "md5": "95a4441e879570f6c9fc3b0aae3b9fe6"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/moss/models/custom_autotune.py": {
+    "symbols": "函数: autotune\n类: Autotuner\n变量: prune_configs_by, reset_to_zero, nearest_power_of_two, self.configs, self.key_idx, self.nearest_power_of_two, self.cache, self.hook, self.reset_idx, self.arg_names, self.perf_model, self.configs_top_k, self.early_config_prune, self.fn, self.nargs, self.best_config, self.configs_timings, bench_start, bench_end, key, pruned_configs, timings, config, top_k, est_timing\n导入语句: \n1. import builtins\n2. import math\n3. import time\n4. from typing import Dict\n5. import triton",
+    "last_modified": 1682251905.0648081,
+    "md5": "3a8bfc07e5fc5e1c2c556d395b52af9e"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/moss/models/configuration_moss.py": {
+    "symbols": "导入语句: from transformers.utils import logging\n导入语句: from transformers.configuration_utils import PretrainedConfig\n\n类: MossConfig\n\n变量: logger\n变量: model_type\n变量: attribute_map\n\n函数: __init__",
+    "last_modified": 1684487249.4099793,
+    "md5": "44e108c6ec6dcc38d32ad14979c4d06a"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/auto/backend_ds.py": {
+    "symbols": "函数:\n- _init_distributed_environment\n- init_model\n- execute_model\n- DeepSpeedInference\n- stream_chat\n- _run_workers\n\n类:\n- ParallelConfig\n- Worker\n- DeepSpeedInference\n\n变量:\n- DeviceID\n- DEFAULT_NCCL_SOCKET_IFNAME\n\n导入语句:\n- from typing import List, Optional, Tuple, Any\n- from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig\n- import ray\n- import torch\n- import deepspeed\n- import os\n- from ray.air.util.torch_dist import (ActorHandle, _get_node_and_gpu_ids, _init_torch_distributed, get_address_and_port)\n- from ray.train.constants import DEFAULT_NCCL_SOCKET_IFNAME",
+    "last_modified": 1690769232.6170175,
+    "md5": "da03b65d34f3610a962fb021b883138b"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/auto/__init__.py": {
+    "symbols": "函数: get_bool, get_int, get_float, get_str, stream_chat, async_get_meta, async_vllm_chat, init_model, sft_train\n类: AsyncLLMEngine, SamplingParams, VLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, Metric, ClientActorHandle, AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, StoppingCriteriaList, GenerationConfig, StopSequencesCriteria\n变量: INFERENCE_NAME, INFER_TOKEN_METRICS\n导入语句: ray, os, time, types, copy, asyncio, typing, pyjava.api.mlsql.DataServer, byzerllm.utils.metrics.Metric, byzerllm.BlockRow, byzerllm.utils.VLLMStreamServer, byzerllm.utils.StreamOutputs, byzerllm.utils.SingleOutput, byzerllm.utils.SingleOutputMeta, byzerllm.utils.compute_max_new_tokens, byzerllm.utils.tokenize_stopping_sequences, byzerllm.utils.tokenizer.get_real_tokenizer, byzerllm.utils.tokenizer.get_local_tokenizer, byzerllm.utils.tokenizer.validate_args_engine_use_ray, byzerllm.utils.ray_utils.get_actor_info, vllm.engine.async_llm_engine.AsyncLLMEngine, vllm.engine.async_llm_engine.AsyncEngineArgs, vllm.SamplingParams, vllm.utils.random_uuid, torch, transformers.AutoTokenizer, transformers.AutoModelForCausalLM, transformers.BitsAndBytesConfig, transformers.StoppingCriteriaList, transformers.GenerationConfig, byzerllm.utils.types.StopSequencesCriteria, ray.util.client.common.ClientActorHandle",
+    "last_modified": 1709695718.412599,
+    "md5": "35c3d799e6281cc555d03e491fce6e0c"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/qwen_vl_chat/__init__.py": {
+    "symbols": "符号类型: 函数, 符号名称\n- get_meta\n- stream_chat\n- init_model\n\n符号类型: 变量\n- config\n- image\n- image_b\n- temp_image_dir\n- max_length\n- top_p\n- temperature\n- kwargs\n- input_history\n- temp_input_history\n- temp_input_history_length\n- query\n- response\n- history\n- temp_history\n- output\n- pretrained_model_dir\n- adaptor_model_dir\n- is_adaptor_model\n- tokenizer\n- model\n\n符号类型: 导入语句\n- from transformers import AutoModelForCausalLM, AutoTokenizer, GenerationConfig\n- import json\n- import os\n- import io\n- from typing import Any, Dict, List, Tuple, Generator\n- import base64\n- import uuid\n- import tempfile",
+    "last_modified": 1704510591.7798774,
+    "md5": "7a318e2d08cbf6a4eb7704a526677a7e"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/tokenizer.py": {
+    "symbols": "函数: validate_args_engine_use_ray, get_local_tokenizer, get_real_tokenizer\n导入语句: from vllm.transformers_utils.tokenizer import TokenizerGroup, from vllm.engine.arg_utils import AsyncEngineArgs\n\n变量: engine_args, engine_configs, model_config, scheduler_config, lora_config, init_kwargs, tokenizer, is_tokenizer_group, final_tokenizer\n\n注意：没有类符号。",
+    "last_modified": 1709460754.327885,
+    "md5": "0df20b80a709bba8f4dd4dbd7bd683cc"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/types.py": {
+    "symbols": "函数: \n- `__init__`\n- `to_str`\n- `__call__`\n\n类:\n- `StopSequencesCriteria`\n\n变量:\n- `stops`\n- `input_start`\n- `skip_check_min_length`\n- `stop_words`\n- `tokenizer`\n\n导入语句:\n- `from transformers import StoppingCriteria`\n- `import torch`",
+    "last_modified": 1709276631.7333455,
+    "md5": "b12362ab6ab17d2ec80579ca68e46e96"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/openai_utils.py": {
+    "symbols": "函数: _create_retry_decorator, completion_with_retry, async_completion_with_retry, get_completion_endpoint\n类: 无\n变量: logger, CompletionClientType, min_seconds, max_seconds, retry_decorator\n导入语句: \n1. import logging\n2. from typing import Any, Callable, Type, Union\n3. import openai\n4. from openai import Completion, ChatCompletion, APITimeoutError, APIConnectionError, RateLimitError, APIError\n5. from tenacity import before_sleep_log, retry, retry_if_exception_type, stop_after_attempt, wait_exponential",
+    "last_modified": 1703928191.0495443,
+    "md5": "640067b99f3202187b58c10c6e39c35b"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/emb.py": {
+    "symbols": "函数:\n- _encode\n- embed_documents\n- embed_query\n- get_embedding_with_token_count\n\n类:\n- ByzerSentenceTransformerEmbeddings\n- ByzerLLMEmbeddings\n\n变量:\n- Embeddings (导入自 langchain.embeddings.base)\n- List\n- Union\n- torch\n- F (导入自 torch.nn.functional)\n- pipeline (导入自 transformers)\n- device\n- model\n- tokenizer\n- self.pipeline\n- ignore_keys\n- token_count\n- sentence_embeddings\n- inputs\n- token_embeddings\n- input_mask_expanded\n\n导入语句:\n- from langchain.embeddings.base import Embeddings\n- from typing import List, Union\n- import torch\n- from torch.nn.functional import F\n- from transformers import pipeline",
+    "last_modified": 1693833960.229296,
+    "md5": "2e67d135935f463658236c7cd0a1db05"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/text_generator.py": {
+    "symbols": "函数: simple_predict_func, chatglm_predict_func, qa_predict_func\n类: ByzerLLMGenerator\n变量: model, tokenizer, use_feature_extraction, history, ins, query, new_params, his, v, results, item, metadata\n导入语句:\n1. from typing import List, Tuple, Any, Dict\n2. import json\n3. from byzerllm.utils.tokenizer import get_real_tokenizer\n4. from .emb import ByzerLLMEmbeddings, ByzerSentenceTransformerEmbeddings",
+    "last_modified": 1709820280.512742,
+    "md5": "ce2c1e6f2e9fa33c0a961b65a2154b40"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/connect_ray.py": {
+    "symbols": "函数: _check_java_version, connect_cluster\n导入语句: from typing import List, Optional, import os, import subprocess, import re\n变量: java_home, output, version_line, version_match, version, version_parts, major_version, address, code_search_path, path, env_vars, job_config, e",
+    "last_modified": 1709987629.6005607,
+    "md5": "a7e5c3d2d2814aeeff711a27984979de"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/langutil.py": {
+    "symbols": "函数: switch_cwd, patch, asyncfy, asyncfy_with_semaphore, is_valid_url, _is_valid_url, _is_local_url, find_available_port, to_bool\n导入语句: anyio, contextlib, contextlib2, functools, inspect, os, socket, typing, re, urllib.parse, warnings, rich.console\n\n(注：该文件中没有类和变量类型的符号)",
+    "last_modified": 1706616913.1753545,
+    "md5": "37ba6aa5e2c7e472db61e9b468ceedfd"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/ray_utils.py": {
+    "symbols": "函数: cancel_placement_group, get_actor_info\n类: PlacementGroup, PlacementGroupID, StateApiClient, GetApiOptions, RayStateApiException\n变量: DEFAULT_LIMIT, DEFAULT_LOG_LIMIT, DEFAULT_RPC_TIMEOUT, GetApiOptions, ListApiOptions, PredicateType, StateResource, StateSchema, SupportedFilterType, resource_to_schema\n导入语句:\n1. from ray.util.placement_group import (remove_placement_group, PlacementGroup)\n2. from ray._private.utils import hex_to_binary\n3. from ray._raylet import PlacementGroupID\n4. from ray.util.state import (get_log, list_logs, summarize_actors, summarize_objects, summarize_tasks)\n5. from ray.util.state.common import (DEFAULT_LIMIT, DEFAULT_LOG_LIMIT, DEFAULT_RPC_TIMEOUT, GetApiOptions, ListApiOptions, PredicateType, StateResource, StateSchema, SupportedFilterType, resource_to_schema)\n6. from ray.util.state.exception import RayStateApiException\n7. from ray.util.annotations import PublicAPI",
+    "last_modified": 1709466414.7870998,
+    "md5": "55b5534ec287b52574d6b0493178e948"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/object_store_ref_util.py": {
+    "symbols": "符号类型: 函数, 符号名称: get_locations, 符号名称: get_object_ids\n符号类型: 变量, 符号名称: core_worker\n符号类型: 导入语句, 符号名称: ray, 符号名称: client_mode_wrap",
+    "last_modified": 1696849339.4318228,
+    "md5": "2ca1d67a715f0da659ee2ab787f91309"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/retrieval/rest.py": {
+    "symbols": "函数: deploy_retrieval_rest_server\n类: ClusterSettingsParam, EnvSettingsParam, JVMSettingsParam, ResourceRequirementParam, ResourceRequirementSettingsParam, TableSettingsParam, SearchQueryParam, SimpleRest\n变量: app\n导入语句:\n1. from fastapi import Body, FastAPI\n2. import ray\n3. from ray import serve\n4. from pydantic import BaseModel, Field\n5. from typing import List, Dict, Any, Annotated, Optional\n6. import json\n7. from byzerllm.records import (ClusterSettings, EnvSettings, JVMSettings, TableSettings, SearchQuery, ResourceRequirement, ResourceRequirementSettings)\n8. from byzerllm.utils.retrieval import ByzerRetrieval",
+    "last_modified": 1697380853.0747285,
+    "md5": "ba0915fc486bd717805aed500a8f1dc6"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/retrieval/udf.py": {
+    "symbols": "函数:\n1. search_func\n2. init_retrieval_client\n\n类:\n无\n\n变量:\n无\n\n所有导入语句:\n1. import ray\n2. from pyjava import RayContext\n3. from pyjava.udf import UDFMaster, UDFWorker, UDFBuilder, UDFBuildInFunc\n4. from typing import Any, NoReturn, Callable, Dict, List\n5. from ray.util.client.common import ClientActorHandle, ClientObjectRef\n6. from byzerllm import consume_model\n7. from byzerllm.records import SearchQuery\n8. from byzerllm.utils.retrieval import ByzerRetrieval",
+    "last_modified": 1697521040.7351801,
+    "md5": "4b14938516ddc99e75d2e0a7a278b6d7"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/retrieval/__init__.py": {
+    "symbols": "函数:\n- launch_gateway\n- gateway\n- cluster_builder\n- start_cluster\n- cluster\n- cluster_info\n- is_cluster_exists\n- get_table_settings\n- check_table_exists\n- restore_from_cluster_info\n- create_table\n- build\n- build_from_dicts\n- delete_by_ids\n- get_tables\n- get_databases\n- shutdown_cluster\n- commit\n- truncate\n- close\n- closeAndDeleteFile\n- search_keyword\n- search_vector\n- search\n- filter\n- delete_by_filter\n\n类:\n- ClusterBuilder\n- ByzerRetrieval\n\n变量:\n- ray\n- ObjectRef\n- ClusterSettings\n- EnvSettings\n- JVMSettings\n- SearchQuery\n- ResourceRequirementSettings\n- ResourceRequirement\n- custom_resources\n- br\n- launched\n- retrieval_gateway\n- clusters\n\n导入语句:\n- import ray\n- from ray.types import ObjectRef\n- from byzerllm.records import ClusterSettings, EnvSettings, JVMSettings, TableSettings, SearchQuery, ResourceRequirementSettings, ResourceRequirement\n- from typing import List, Dict, Any, Optional, Union\n- import byzerllm.utils.object_store_ref_util as ref_utils\n- import json",
+    "last_modified": 1708507936.1804585,
+    "md5": "8ee0667e4004c7b1fde4693c2dc64c26"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/sft/dataset.py": {
+    "symbols": "导入语句: \n- import json\n- from torch.utils.data import Dataset\n\n类:\n- SFTDataset\n\n函数:\n- __init__\n- __len__\n- __getitem__\n\n变量:\n- file\n- tokenizer\n- max_seq_length\n- kwargs\n- self.tokenizer\n- self.bos_token_id\n- self.eos_token_id\n- self.eos_token\n- self.bos_token\n- self.max_seq_length\n- data_list\n- self.system_msg\n- self.user_role\n- self.assistant_role\n- self.user_role_prefix\n- self.assistant_role_prefix\n- self.dataset_tokens_count\n- data\n- conversation\n- utterances\n- utterances_ids\n- input_ids\n- target_mask\n- input_ids_suffix\n- target_mask_suffix\n- i",
+    "last_modified": 1695001154.1745489,
+    "md5": "f2181d83e387b3ccffa6e5544c2ef3e2"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/sft/loss.py": {
+    "symbols": "导入语句: torch, torch.nn as nn\n\n函数: __call__\n\n类: Loss, TargetLMLoss\n\n变量: ignore_index, loss_fn, input_ids, attention_mask, target_mask, outputs, logits, labels, shift_logits, shift_labels",
+    "last_modified": 1687688900.9022956,
+    "md5": "e5bbddf3af38267fce3a5179223b1e49"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/sft/collator.py": {
+    "symbols": "函数: __init__, __call__\n类: SFTDataCollator\n变量: tokenizer, max_seq_length, pad_token_id, lengths, batch_max_len, input_ids_batch, attention_mask_batch, target_mask_batch, input_ids, attention_mask, target_mask, padding_len\n导入语句: from typing import Any, Dict, List, import torch",
+    "last_modified": 1695001021.4058053,
+    "md5": "5d0366fac821843ac91a7b1053e1d18d"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/sft/trainer.py": {
+    "symbols": "函数: \n- compute_loss\n- _save\n\n类: \n- Trainer\n- LoRATrainer\n\n变量: \n- TRAINING_ARGS_NAME\n- TRAINER_STATE_NAME\n- OPTIMIZER_NAME\n- SCHEDULER_NAME\n- SCALER_NAME\n- logger\n\n导入语句: \n- import transformers\n- from transformers import PreTrainedModel, TrainingArguments, DataCollator, PreTrainedTokenizerBase, EvalPrediction, TrainerCallback\n- from typing import Callable, Dict, List, Optional, Tuple, Union, Any\n- from torch import nn\n- from torch.utils.data import Dataset, DataLoader\n- from transformers.utils import logging\n- import os\n- import torch",
+    "last_modified": 1687345170.9990034,
+    "md5": "cf3aa3a46a5d8d2713ef2815f74e119c"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/sft/argument.py": {
+    "symbols": "导入语句: from dataclasses import dataclass, field\n导入语句: from typing import Optional\n\n类: CustomizedArguments\n类: QLoRAArguments\n\n变量: max_seq_length, train_file, model_name_or_path, eval_file, task_type, lora_rank, lora_alpha, lora_dropout",
+    "last_modified": 1687745787.9486048,
+    "md5": "a0ba1a4f2bb1e60e3a0dc434fcfe3c5c"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/sft/model.py": {
+    "symbols": "函数: \n- forward\n\n类: \n- BloomForCausalLM\n\n变量: \n- logger\n\n导入语句: \n- import transformers\n- from typing import Tuple, Union\n- import torch\n- from transformers.modeling_outputs import CausalLMOutputWithCrossAttentions, CausalLMOutputWithPast\n- from .loss import TargetLMLoss\n- from transformers.utils import logging",
+    "last_modified": 1687688550.0389953,
+    "md5": "fa39a366c2a8a4c9a10394159177e173"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/sft/__init__.py": {
+    "symbols": "函数: setup_tensorboard, train, sft_train\n类: SFT\n变量: DEFAULT_QLORA_CONFIG, localPathPrefix, current_time, formatted_time, sft_name, rd, model_dir, output_dir, logging_dir, data_dir, data_file, train_worker_conf, custom_resources, train_params_sft, sft_config, detached, items, obj_count\n导入语句:\n1. import ray\n2. import json\n3. import os\n4. import uuid\n5. import shutil\n6. from typing import Optional, Tuple, List, Dict, Any\n7. from datetime import datetime\n8. from pyjava.storage import streaming_tar as STar\n9. from pyjava import RayContext\n10. from pyjava.api.mlsql import DataServer\n11. from byzerllm import BlockRow, restore_model\n12. from .. import print_flush\n13. from ray.air.util.torch_dist import (\n    ActorHandle,\n    _get_node_and_gpu_ids,\n    _init_torch_distributed,\n    get_address_and_port,\n)\n14. from . import qlora as QLoraTrainer",
+    "last_modified": 1703067507.345053,
+    "md5": "aefe109bcf4246f8388a2180885ec7f5"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/sft/merge_lora.py": {
+    "symbols": "函数:\nmerge_lora_to_base_model\n\n类:\nMergeLoraActor\n\n变量:\nmodel_name_or_path, adapter_name_or_path, save_path, tokenizer, model, worker_conf, merge_job_name, worker\n\n导入语句:\n1. from peft import PeftModel\n2. from transformers import AutoModelForCausalLM, AutoTokenizer\n3. from pyjava.api.mlsql import DataServer\n4. from pyjava.storage import streaming_tar as STar\n5. import torch\n6. from typing import Any, Dict, List, Tuple, Generator\n7. from byzerllm import BlockRow\n8. import os\n9. import ray",
+    "last_modified": 1703068130.3254817,
+    "md5": "17bf0d788cea8bd2c551648de6f5e15a"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/sft/qlora.py": {
+    "symbols": "函数: verify_model_dtype, find_all_linear_names, setup_everything, init_components, train\n类: LoraConfig, Metric, SFTDataCollator, SFTDataset, LoRATrainer, TargetLMLoss\n变量: dtype2param_num, dtype2param_name, dtype2trainable_param_num, dtype2trainable_param_name, lora_module_names, total, total_trainable, parser, args, training_args, world_size, ddp, device_map, local_rank, tokenizer, model_type, model, target_modules, config, loss_func, train_dataset, data_collator, trainer, sft_name, parsed_args, train_result, final_save_path, token_metrics, metrics\n导入语句:\n1. from typing import List, Dict\n2. import json\n3. from transformers import AutoTokenizer, BitsAndBytesConfig\n4. from byzerllm.utils.metrics import Metric\n5. from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training\n6. from transformers import set_seed, HfArgumentParser, TrainingArguments, AutoModelForCausalLM, AutoModel\n7. import argparse\n8. import os\n9. from os.path import join\n10. import torch\n11. import bitsandbytes as bnb\n12. from collections import defaultdict\n\n注意：在Python中，类和函数名称被视为符号。此外，虽然变量在代码中有定义，但它们不是导出的公共符号，而是内部使用的局部变量或全局变量。这里为了全面起见，将它们也一并列出。",
+    "last_modified": 1696298816.6690795,
+    "md5": "adb6db9742c789f935d4bd3521ea8d8b"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/metrics/__init__.py": {
+    "symbols": "导入语句:\n1. from prometheus_client import CollectorRegistry, Gauge, Counter, pushadd_to_gateway\n2. from byzerllm.utils.config import get_mlsql_config_pushgateway_address, get_mlsql_config\n3. from typing import Union, Dict\n4. import ray\n\n类:\n1. Metric\n\n变量:\n1. self.registry\n2. config\n3. self.metric_enabled\n4. self.pushgateway_address\n5. self.gauges\n6. self.counters\n\n函数:\n1. __init__\n2. inc\n3. push",
+    "last_modified": 1696386632.6065345,
+    "md5": "6852ca14eb865250a53218341acb434e"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/client/parallel_utils.py": {
+    "symbols": "符号类型: 函数, 变量, 导入语句\n\n函数:\n- chat_oai\n- get_single_result\n\n变量:\n无（注：代码中的 `workers` 和 `kwargs` 是函数参数，不是变量）\n\n导入语句:\n- import concurrent.futures",
+    "last_modified": 1705133923.9602394,
+    "md5": "6c114758c150105771773e3e9f77ee58"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/client/message_utils.py": {
+    "symbols": "函数: termindate_message, un_termindate_message, success_message, fail_message, is_success, copy_error_count, get_error_count, inc_error_count, check_error_count, padding_messages_merge, padding_messages_expand\n导入语句: from typing import List, Dict, Any, import copy",
+    "last_modified": 1705398923.1096375,
+    "md5": "51eb8e7b0e1b3c3092009b3610ff43fe"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/client/img_utils.py": {
+    "symbols": "函数: get_image_data, llava_formater, convert_base64_to_data_uri, gpt4v_formatter, extract_img_paths, _to_pil\n导入语句: \n- import base64\n- import mimetypes\n- import re\n- from io import BytesIO\n- from typing import Any, Dict, List, Optional, Tuple, Union\n- import requests\n- from PIL import Image",
+    "last_modified": 1699757326.6212258,
+    "md5": "4081aaa5c23f224159dd422b1575a68c"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/client/math_utils.py": {
+    "symbols": "导入语句: from typing import Optional\n\n变量:\n- _MATH_PROMPT\n- _MATH_CONFIG\n\n函数:\n- solve_problem\n- remove_boxed\n- last_boxed_only_string\n- _fix_fracs\n- _fix_a_slash_b\n- _remove_right_units\n- _fix_sqrt\n- _strip_string\n- get_answer\n- is_equiv\n- is_equiv_chain_of_thought\n- voting_counts\n- eval_math_responses",
+    "last_modified": 1699757338.321244,
+    "md5": "f503226db40f7d1a3bfacabc2ef132e7"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/client/code_utils.py": {
+    "symbols": "函数:\n- get_value_from_llm_str\n- content_str\n- infer_lang\n- check_target_codes_exists\n- get_target_codes\n- extract_code\n- _cmd\n- execute_code\n- _remove_check\n- eval_function_completions\n- PassAssertionFilter.pass_assertions\n\n类:\n- PassAssertionFilter\n\n变量:\n- DEFAULT_MODEL\n- CODE_BLOCK_PATTERN\n- WORKING_DIR\n- UNKNOWN\n- TIMEOUT_MSG\n- DEFAULT_TIMEOUT\n- WIN32\n- PATH_SEPARATOR\n- logger\n\n导入语句:\n- import logging\n- import os\n- import pathlib\n- import re\n- import subprocess\n- import sys\n- import time\n- import json\n- from concurrent.futures import ThreadPoolExecutor, TimeoutError\n- from hashlib import md5\n- from typing import Callable, Dict, List, Optional, Tuple, Union\n- try: import docker except ImportError: docker = None",
+    "last_modified": 1705490848.9399083,
+    "md5": "c8f3ade5b7137263cc2885c2f9040c80"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/client/entrypoints/openai/tool.py": {
+    "symbols": "函数: _original_type_backward_compatibility, _get_type_spec, get_tools_spec\n导入语句: inspect, Optional, Callable, Dict, List, Any, get_type_hints, get_origin, _AnnotatedAlias (from typing), _AnnotatedAlias (from typing_extensions), str, int, float, bool, list",
+    "last_modified": 1706616138.0394342,
+    "md5": "962ec74d4fc3cb41f7e8e794888dea42"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/client/entrypoints/openai/protocol.py": {
+    "symbols": "函数: \n- random_uuid\n\n类:\n- ErrorResponse\n- ModelPermission\n- ModelCard\n- ModelList\n- UsageInfo\n- ChatCompletionRequest\n- CompletionRequest\n- LogProbs\n- CompletionResponseChoice\n- CompletionResponse\n- CompletionResponseStreamChoice\n- CompletionStreamResponse\n- ChatMessage\n- ChatCompletionResponseChoice\n- ChatCompletionResponse\n- DeltaMessage\n- ChatCompletionResponseStreamChoice\n- ChatCompletionStreamResponse\n\n变量:\n- time\n\n导入语句:\n- from typing import Dict, List, Literal, Optional, Union\n- from pydantic import BaseModel, Field\n- from vllm.utils import random_uuid",
+    "last_modified": 1706510316.8400023,
+    "md5": "282f352b3ff87b30f6dd8ce523dbf6f9"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/client/entrypoints/openai/api_server.py": {
+    "symbols": "函数:\n\n1. random_uuid\n2. parse_args\n3. create_error_response\n4. validation_exception_handler\n5. health\n6. show_available_models\n7. create_chat_completion\n8. create_completion\n\n类:\n\n1. JSONResponse\n2. StreamingResponse\n3. Response\n4. argparse.ArgumentParser\n5. ModelCard\n6. ModelList\n7. ModelPermission\n8. UsageInfo\n9. CompletionRequest\n10. CompletionResponse\n11. CompletionResponseChoice\n12. CompletionResponseStreamChoice\n13. CompletionStreamResponse\n14. ChatCompletionRequest\n15. ChatCompletionResponse\n16. ChatCompletionResponseChoice\n17. ChatCompletionResponseStreamChoice\n18. ChatCompletionStreamResponse\n19. ChatMessage\n20. DeltaMessage\n21. ErrorResponse\n22. LogProbs\n\n变量:\n\n1. TIMEOUT_KEEP_ALIVE\n2. logger\n3. app\n4. response_role\n\n导入语句:\n\n1. argparse\n2. asyncio\n3. codecs\n4. json\n5. time\n6. ray\n7. HTTPStatus\n8. AsyncGenerator\n9. Dict\n10. List\n11. Optional\n12. Tuple\n13. Union\n14. aioprometheus\n15. MetricsMiddleware\n16. fastapi\n17. uvicorn\n18. ByzerLLM\n19. LLMResponse\n20. SingleOutputMeta\n21. uuid\n22. logging",
+    "last_modified": 1706510323.531991,
+    "md5": "cfd8a77b30c52df21ab45b31027948cd"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/config/__init__.py": {
+    "symbols": "符号类型: 变量, 符号名称: MLSQL_CONFIG\n符号类型: 函数, 符号名称: create_mlsql_config\n符号类型: 函数, 符号名称: get_mlsql_config\n符号类型: 函数, 符号名称: get_mlsql_config_item\n符号类型: 函数, 符号名称: get_mlsql_config_pushgateway_address\n符号类型: 类, 符号名称: MLSQLConifg (注意源码中此处类名定义为 MLSQLConifg，可能存在拼写错误，应为 MLSQLConfig)",
+    "last_modified": 1696388483.8133087,
+    "md5": "98bda58700838958d820ed7b8b98f1a8"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/fulltune/deepspeed_trainner.py": {
+    "symbols": "函数: exec_command, start_command, get_cmd, check_passwordless_ssh, try_connect_and_get_fingerprint, setup_passwordless_ssh, encode_str\n类: TrainParameters, TrainMaster, TrainWorker\n变量: base_deepspeed_cnofig\n导入语句: \n1. import subprocess\n2. import os\n3. import ray\n4. import json\n5. import paramiko\n6. import dataclasses\n7. import uuid\n8. import hashlib\n9. from pyjava import RayContext\n10. from typing import List\n11. import getpass\n12. from byzerllm import transfer_from_ob\n13. from pyjava.udf.store import transfer_to_ob\n14. from pyjava.storage import streaming_tar as STar",
+    "last_modified": 1688118041.4822032,
+    "md5": "a257c3dbbca6d7dda0f066844a585c60"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/fulltune/launch.py": {
+    "symbols": "函数: get_argument_parser, prepare_data, prepare_model, train\n类: DataEngine\n变量: arg_parser, args, data_engine, model_engine, epoch\n导入语句: import json, import os, import argparse, import deepspeed, from .base_model.configuration_baichuan import BaiChuanConfig, from .base_model.modeling_baichuan import BaiChuanForCausalLM",
+    "last_modified": 1688043623.0850425,
+    "md5": "93b4ea10294f798d169d68b4064705d2"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/fulltune/trainner.py": {
+    "symbols": "函数: trainer_init_per_worker, distribute_train\n类: DataEngine, FulltuneDataset\n变量: deepspeed_confg, MIN_TEXT_LEN, EOS_TOKEN_ID, data_dir, sp, micro_batch_size, max_length, data, global_input_paths, local_input_paths, batch_size, epochs, warmup_steps, learning_rate, weight_decay, training_args, data_refs, index, model, trainer\n导入语句:\n1. import json\n2. import os\n3. import deepspeed\n4. import deepspeed.comm as dist\n5. import numpy as np\n6. import sentencepiece as spm\n7. import torch\n8. from torch.utils.data import Dataset\n9. from pyjava import RayContext\n10. from transformers import Trainer, TrainingArguments, default_data_collator\n11. from .base_model.configuration_baichuan import BaiChuanConfig\n12. from .base_model.modeling_baichuan import BaiChuanForCausalLM\n13. from . import TrainParameters\n14. from ray.train.huggingface import TransformersTrainer\n15. from ray.air.config import ScalingConfig\n16. from ray.air import session",
+    "last_modified": 1688007279.1832397,
+    "md5": "d310a2a832bd095c2487e5bb7eadf7fe"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/fulltune/__init__.py": {
+    "symbols": "函数: sfft_train\n导入语句: \n1. import os\n2. import ray\n3. from datetime import datetime\n4. import uuid\n5. import json\n6. from typing import Dict, Any,List,Generator\n7. from ray.util.client.common import ClientObjectRef\n8. from pyjava.storage import streaming_tar as STar\n9. from pyjava.api.mlsql import DataServer\n10. from byzerllm import BlockRow\n11. from .deepspeed_trainner import distribute_train,TrainParameters\n12. from pyjava.udf.store import transfer_to_ob\n13. from byzerllm import consume_model\n\n变量:\n1. localPathPrefix\n2. current_time\n3. formatted_time\n4. rd\n5. sfft_name\n6. model_dir\n7. model_refs\n8. output_dir\n9. data_dir\n10. config_dir\n11. train_params_sfft\n12. new_model_refs",
+    "last_modified": 1688118086.61861,
+    "md5": "7b49fa140758f7bddc1a7f128f127f9b"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/fulltune/base_model/configuration_baichuan.py": {
+    "symbols": "导入语句: \n- from transformers.configuration_utils import PretrainedConfig\n- from transformers.utils import logging\n\n类:\n- BaiChuanConfig\n\n变量:\n- logger\n\n函数: 无",
+    "last_modified": 1690463648.3112955,
+    "md5": "8019b9d81c3196cc2cd411f2ce04d650"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/fulltune/pretrain/convert_to_transformers.py": {
+    "symbols": "函数: convert\n类: DeepSpeedConvert\n变量: train_params, sys_conf, temp_dir, temp_pytorch_model_file, tag, model, tokenizer, worker_conf, merge_job_name, worker\n导入语句:\n1. from deepspeed.utils import zero_to_fp32\n2. from typing import NoReturn\n3. import torch\n4. import os\n5. import ray\n6. from transformers import WEIGHTS_NAME, CONFIG_NAME\n7. from transformers import AutoTokenizer, AutoModelForCausalLM",
+    "last_modified": 1695179371.0251381,
+    "md5": "c3aae4a2a439d516b9057f287e5cd46e"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/zephyr/__init__.py": {
+    "symbols": "函数:\nstream_chat\ninit_model\nsft_train\nsfft_train\n\n类:\n无\n\n变量:\ndevice\ntimeout_s\nskip_check_min_length\nrole_mapping\nfin_ins\ntokens\nstopping_criteria\nmax_new_tokens\nstart_time\nresponse\nnew_tokens\nanswer\npretrained_model_dir\nadaptor_model_dir\nis_adaptor_model\ntokenizer\nquantization\nload_in_8bit\nquantization_config\nmodel\nllm_int8_threshold\n\n导入语句:\nfrom transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, StoppingCriteriaList\nimport transformers\nimport torch\nfrom typing import Dict, List, Tuple\nfrom byzerllm.utils import generate_instruction_from_history, compute_max_new_tokens, tokenize_stopping_sequences\nfrom byzerllm.utils.types import StopSequencesCriteria\nfrom typing import Dict, Any, List, Generator\nfrom pyjava.storage import streaming_tar as STar\nfrom pyjava import RayContext\nfrom pyjava.api.mlsql import DataServer\nfrom byzerllm import BlockRow\nimport os\nimport time",
+    "last_modified": 1709276110.260938,
+    "md5": "093121de21ce48a29398096218aaf6c3"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/qwen/__init__.py": {
+    "symbols": "函数: get_meta, stream_chat, init_model, sft_train, sfft_train\n类: 无\n变量: device, timeout_s, skip_check_min_length, role_mapping, fin_ins, tokens, stopping_criteria, max_new_tokens, start_time, response, time_taken, new_tokens, answer, pretrained_model_dir, adaptor_model_dir, is_adaptor_model, tokenizer, quantization, load_in_8bit, quantization_config, model\n导入语句:\n1. from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, StoppingCriteriaList\n2. import transformers\n3. import torch\n4. from typing import Dict, List, Tuple\n5. from byzerllm.utils import generate_instruction_from_history, compute_max_new_tokens, tokenize_stopping_sequences\n6. from byzerllm.utils.types import StopSequencesCriteria\n7. from typing import Dict, Any, List, Generator\n8. from pyjava.storage import streaming_tar as STar\n9. from pyjava import RayContext\n10. from pyjava.api.mlsql import DataServer\n11. from byzerllm import BlockRow\n12. import os\n13. import time",
+    "last_modified": 1709276101.3528574,
+    "md5": "6a031c9d6bac4666c386349e0383338d"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/visualglm/__init__.py": {
+    "symbols": "函数:\n- stream_chat\n- init_model\n- sft_train\n\n导入语句:\n- from transformers import AutoTokenizer, AutoModel\n- import transformers\n- import torch\n- import os\n- import io\n- from typing import Any, Dict, List, Tuple, Generator\n- import base64\n- import uuid\n- import tempfile\n- from pyjava.api.mlsql import DataServer\n- from .. import BlockRow\n- from .. import parse_params\n\n变量:\n- image_b\n- temp_image_dir\n- image_file\n- response\n- history\n- pretrained_model_dir\n- adaptor_model_dir\n- is_adaptor_model\n- params\n- load_in_4bit\n- tokenizer\n- model",
+    "last_modified": 1689471271.119446,
+    "md5": "734a379b71d16e9ef9eef761eba39d44"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/m3e/__init__.py": {
+    "symbols": "函数: init_model\n导入语句: from sentence_transformers import SentenceTransformer",
+    "last_modified": 1689471252.6992433,
+    "md5": "6a629edad87a8c7a2165eb6dcc3d99f5"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/whisper/whisper_inference.py": {
+    "symbols": "函数: \n- write (来自 scipy.io.wavfile)\n- __init__\n- __call__\n\n类:\n- Inference\n\n变量:\n- model_dir\n- device_index\n- self.model_dir\n- self.model\n- rate\n- t\n- initial_prompt\n- byte_file\n- segments\n- info\n\n导入语句:\n- import numpy as np\n- from typing import Union, List, Tuple, Optional, Dict\n- from faster_whisper import WhisperModel\n- import ray\n- import os\n- from scipy.io.wavfile import write as write_wav\n- import io",
+    "last_modified": 1683788878.0028372,
+    "md5": "d940cf78b34690b98867302d34d3aa8b"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/qa.py": {
+    "symbols": "函数:\n- streaming_tar.save_rows_as_file\n- time.time\n- ray.get\n- sorted\n- json.dumps\n\n类:\n- ByzerLLMQAQueryWorker\n- ByzerLLMQA\n- RayByzerLLMQAWorker\n- RayByzerLLMQA\n\n变量:\n- db_path\n- refs\n- client\n- query_param\n- prompt\n- q\n- k\n- docs_with_score\n- time1\n- submit_q\n- q_func\n- t\n- query_vector_db_time\n- docs\n- strategy\n- newq\n- temp_metas\n- show_full_query\n- prompt_template\n- final_query\n- top_p\n- temperature\n- max_length\n- v\n- chat_time\n- data_ref\n- params\n- extra_params\n- data_path\n- db_dir\n- db\n- item_ref\n- self.db_dir\n- data\n- workers\n- build_func\n- sub_data\n- temp_dir\n\n导入语句:\n- import json\n- from langchain import PromptTemplate\n- import ray\n- import os\n- from typing import Dict, List, Any, Tuple\n- from uuid import uuid4\n- from ray.util.client.common import ClientActorHandle, ClientObjectRef\n- from pyjava.storage import streaming_tar\n- import time\n- from . import BuilderParams, QueryParams\n- from .qa_strategy import FullDocCombineFormatFactory, DocRetrieveStrategyFactory\n- from .vector_db import VectorDB\n- from .client import ByzerLLMClient",
+    "last_modified": 1697515255.1874273,
+    "md5": "e871bf0de682b0234b6923f6e21ca59e"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/vector_db.py": {
+    "symbols": "函数:\n- `_is_visible`\n- `save`\n- `build_from`\n- `merge_from`\n- `query`\n\n类:\n- `VectorDB`\n- `BuilderParams` (导入自 `. BuilderParams`)\n- `OnceWay` (导入自 `.builder.OnceWay`)\n- `MergeWay` (导入自 `.builder.MergeWay`)\n- `ByzerLLMClient` (导入自 `.client.ByzerLLMClient`)\n- `LocalEmbeddings` (导入自 `.client.LocalEmbeddings`)\n- `FAISS` (导入自 `langchain.vectorstores.FAISS`)\n\n变量:\n- `db_dir`\n- `db`\n- `client`\n- `embeddings`\n\n导入语句:\n- `from langchain.vectorstores import FAISS`\n- `from langchain.docstore.document import Document`\n- `from pathlib import Path`\n- `from typing import List`\n- `from . import BuilderParams`\n- `from .builder import OnceWay,MergeWay`\n- `from .client import ByzerLLMClient, LocalEmbeddings`",
+    "last_modified": 1693981152.4966273,
+    "md5": "85705c5150607de4b5adeb66fdcad639"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/builder.py": {
+    "symbols": "函数: build\n类: OnceWay, MergeWay\n变量: db_dir, embeddings, p, docs, items, i, f, doc, text_splitter, split_docs, db, max_doc_size, counter, paths, temp_path, t_db, item\n导入语句:\n1. from langchain.text_splitter import RecursiveCharacterTextSplitter\n2. from typing import Any, List, Dict\n3. import os\n4. import json\n5. from langchain.vectorstores import FAISS\n6. from langchain.docstore.document import Document\n7. from pathlib import Path\n8. from . import BuilderParams",
+    "last_modified": 1693980141.4569476,
+    "md5": "8d97d771aea7a8ca8d3777ed615ef8cb"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/qa_strategy.py": {
+    "symbols": "导入语句: import io\n导入语句: from langchain.docstore.document import Document\n导入语句: from abc import ABC, abstractmethod\n导入语句: from typing import List, Tuple, Dict, Any\n\n函数: DocRetrieveStrategy.retrieve\n函数: FullDocRetrieveStrategy.retrieve\n函数: DocRetrieveStrategyFactory.retrieve\n函数: DocCombineFormat.combine\n函数: FullDocCombineFormatList.combine\n函数: FullDocCombineFormatDefault.combine\n函数: JsonCombineFormat.combine\n函数: CsvCombineFormat.combine\n函数: FullDocCombineFormatFactory.combine\n\n类: DocRetrieveStrategy\n类: FullDocRetrieveStrategy\n类: DocRetrieveStrategyFactory\n类: DocCombineFormat\n类: FullDocCombineFormatList\n类: FullDocCombineFormatDefault\n类: JsonCombineFormat\n类: CsvCombineFormat\n类: FullDocCombineFormatFactory\n\n变量: doc_hits (在FullDocRetrieveStrategy类中)\n变量: source (在FullDocRetrieveStrategy类中)\n变量: strategy (在DocRetrieveStrategyFactory类中)\n变量: params (在FullDocCombineFormatList、FullDocCombineFormatDefault、JsonCombineFormat、CsvCombineFormat和FullDocCombineFormatFactory类中)\n变量: input (在FullDocCombineFormatList、FullDocCombineFormatDefault、JsonCombineFormat、CsvCombineFormat和FullDocCombineFormatFactory类的构造函数中)\n变量: csv_buffer (在CsvCombineFormat类中)\n变量: csv_writer (在CsvCombineFormat类中)\n变量: value (在CsvCombineFormat类中)",
+    "last_modified": 1693585358.7665758,
+    "md5": "79404b64f2727eb35bab782c2d28515c"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/client.py": {
+    "symbols": "函数: request, emb, chat, embed_documents, embed_query, _call, _identifying_params\n\n类: ByzerLLMClient, LocalEmbeddings, Chatglm6bLLM\n\n变量: url, params, data, response, t, t2, newhis, json_data\n\n导入语句:\n1. from langchain.embeddings.base import Embeddings\n2. from typing import Any, List, Mapping, Optional, Tuple\n3. from langchain.callbacks.manager import CallbackManagerForLLMRun\n4. from langchain.llms.base import LLM\n5. import requests\n6. import json\n7. from . import ClientParams",
+    "last_modified": 1693980405.7686057,
+    "md5": "46cb4f9c6484e5fa5c84d0c079e64f0b"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/__init__.py": {
+    "symbols": "导入语句: from dataclasses import dataclass\n\n函数: 无\n\n类:\n- ClientParams\n- BuilderParams\n- QueryParams\n\n变量:\n- owner (在ClientParams类中)\n- llm_embedding_func (在ClientParams类中)\n- llm_chat_func (在ClientParams类中)\n- url (在ClientParams类中)\n- batch_size (在BuilderParams类中)\n- chunk_size (在BuilderParams类中)\n- chunk_overlap (在BuilderParams类中)\n- local_path_prefix (在BuilderParams类和QueryParams类中)",
+    "last_modified": 1688482228.0277925,
+    "md5": "b384d823c44ce787ff8266d9bbf8fc78"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/groupchat.py": {
+    "symbols": "函数:\n- colored\n- get_agent_name\n- run_agent_func\n- GroupChat.reset\n- GroupChat.agent_by_name\n- GroupChat.next_agent\n- GroupChat.select_speaker_msg\n- GroupChat.select_speaker\n- GroupChat._participant_roles\n- GroupChatManager.run_chat\n- GroupChatManager.get_groupchat\n- GroupChatManager.reset_agents\n- ConversableAgent.register_reply\n\n类:\n- GroupChat\n- GroupChatManager\n\n变量:\n- logger\n- ClientActorHandle\n- ClientObjectRef\n- ByzerLLM\n- code_utils\n- ByzerRetrieval\n- ChatResponse\n\n导入语句:\n- from dataclasses import dataclass\n- import sys\n- from typing import Dict, List, Optional, Union\n- from .agent import Agent\n- from .conversable_agent import ConversableAgent\n- import logging\n- from ray.util.client.common import ClientActorHandle, ClientObjectRef\n- from ...utils.client import ByzerLLM, code_utils\n- from byzerllm.utils.retrieval import ByzerRetrieval\n- import json\n- try: from termcolor import colored",
+    "last_modified": 1702551779.910535,
+    "md5": "4768aae35a60aa6fa53d5a82c1402f00"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/user_proxy_agent.py": {
+    "symbols": "导入语句:\n1. from .conversable_agent import ConversableAgent\n2. from typing import Callable, Dict, Optional, Union\n3. from byzerllm.utils.retrieval import ByzerRetrieval\n4. from byzerllm.utils.client import ByzerLLM\n\n类:\n1. UserProxyAgent (继承自 ConversableAgent)\n\n函数:\n无（在提供的代码片段中没有定义函数）\n\n变量:\n1. name\n2. llm\n3. retrieval\n4. is_termination_msg\n5. max_consecutive_auto_reply\n6. human_input_mode\n7. function_map\n8. code_execution_config\n9. default_auto_reply\n10. system_message",
+    "last_modified": 1702552045.6389523,
+    "md5": "4c4f259cf1d36ee5ff6685a6f43f4482"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/registry.py": {
+    "symbols": "符号类型: 函数, 符号名称: reply, \n符号类型: 变量, 符号名称: _agents, is_lambda\n符号类型: 导入语句, 符号名称: functools, inspect\n符号类型: 类, 符号名称: 无",
+    "last_modified": 1709620414.2117689,
+    "md5": "777e72240b6cdc2f494893fa6a5976ea"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/agent.py": {
+    "symbols": "导入语句: typing, TYPE_CHECKING, Dict, List, Optional, Union, ray.util.client.common, ClientActorHandle\n\n类: Agent\n\n变量: _name\n\n函数:\n- __init__\n- send\n- receive\n- reset\n- generate_reply",
+    "last_modified": 1701518568.7250829,
+    "md5": "7d1f425376c730df466d809a35fa400c"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/conversable_agent.py": {
+    "symbols": "导入语句:\n- asyncio\n- collections\n- copy\n- inspect\n- time\n- logging\n- uuid\n- typing\n- ray\n- concurrent\n- ray.util.client.common\n- byzerllm.utils.client.message_utils\n- .agent.Agent\n- ...utils.retrieval.ByzerRetrieval\n- ...utils.client.ByzerLLM\n- ...utils.client.default_chat_wrapper\n- ...utils.client.LLMResponse\n- .get_agent_name\n- .run_agent_func\n- .ChatResponse\n- .store.MessageStore\n- .store.Message (as ChatStoreMessage)\n- .store.stores.Stores\n- termcolor (可选)\n\n变量:\n- logger\n- colored (如果termcolor未导入，则为自定义的空函数)\n- ConversableAgent\n\n类:\n- ConversableAgent\n\n函数:\n- get_then_increment_error_count\n- auto_register_reply\n- stream_reply\n- _put_stream_reply\n- stream_get_message\n- _stream_get_message_from_self\n- get_name\n- get_function_map\n- get_agent_description\n- update_agent_description\n- register_reply\n- max_consecutive_auto_reply\n- _message_to_dict\n- _append_message\n- _prepare_chat\n- generate_init_message\n- initiate_chat\n- send\n- _process_received_message\n- receive\n- generate_reply\n- generate_llm_reply\n- get_human_input\n- check_termination_and_human_reply",
+    "last_modified": 1710211168.3756542,
+    "md5": "8fb9c13229a4add957972780b01dfd24"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/__init__.py": {
+    "symbols": "函数:\n\n1. get_agent_name\n2. run_agent_func\n3. count_messages_length\n4. copy_message\n5. modify_message_metadata\n6. modify_message_content\n7. modify_last_message\n\n类:\n\n1. ChatResponse\n2. Agents\n\n变量:\n\n1. Agent (导入自 .agent 模块)\n2. ClientActorHandle, ClientObjectRef (导入自 ray.util.client.common 模块)\n3. ByzerLLM, ByzerRetrieval (如果在 TYPE_CHECKING 条件下导入自 byzerllm.utils.client 模块)\n\n导入语句:\n\n1. from dataclasses import dataclass, field\n2. from typing import TYPE_CHECKING, Dict, List, Optional, Union, Any, get_type_hints, Annotated, get_args\n3. import typing\n4. from .agent import Agent\n5. import ray\n6. import dataclasses\n7. import inspect\n8. import json\n9. import pydantic\n10. (条件导入) from .conversable_agent import ConversableAgent\n11. (条件导入) from byzerllm.utils.client import ByzerLLM, ByzerRetrieval",
+    "last_modified": 1709989781.5221796,
+    "md5": "352af622d2ecef8583073028aa6a4a95"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/load_data_agent.py": {
+    "symbols": "函数:\n- colored\n- get_agent_name\n- run_agent_func\n- AgentData\n- LoadDataAgent\n- generate_load_reply\n- gen\n\n类:\n- ConversableAgent\n- ByzerLLM\n- ByzerRetrieval\n- ClientActorHandle\n- ClientObjectRef\n- ChatResponse\n- SimpleRetrieval\n- Agent\n- AgentData\n- LoadDataAgent\n- DocumentSummaryIndex\n- pydantic.BaseModel\n- SentenceSplitter\n- SentenceWindowNodeParser\n- Document\n- ServiceContext\n- SimpleDirectoryReader\n- VectorStoreIndex\n- PromptTemplate\n\n变量:\n- DEFAULT_SYSTEM_MESSAGE\n- id\n- service_context\n- storage_context\n- retrieval_client\n- sp\n- nodes\n- _\n- self._reply_func_list\n\n导入语句:\n- from ..conversable_agent import ConversableAgent\n- from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\n- from ....utils.client import ByzerLLM\n- from byzerllm.utils.retrieval import ByzerRetrieval\n- from ..agent import Agent\n- import ray\n- from ray.util.client.common import ClientActorHandle, ClientObjectRef\n- from .. import get_agent_name,run_agent_func,ChatResponse\n- from byzerllm.apps.llama_index.simple_retrieval import SimpleRetrieval\n- import uuid\n- import json\n- from langchain import PromptTemplate\n- from byzerllm.apps.llama_index import get_service_context,get_storage_context\n- from llama_index import SimpleDirectoryReader, VectorStoreIndex, ServiceContext\n- from llama_index.node_parser import SentenceSplitter, SentenceWindowNodeParser\n- from llama_index import (  Document,  get_response_synthesizer,)\n- from llama_index.indices.document_summary import DocumentSummaryIndex\n- import pydantic\n- try: from termcolor import colored except ImportError: def colored(x, *args, **kwargs): return x\n- import jieba",
+    "last_modified": 1710211304.4245493,
+    "md5": "dddf31c653e040b285ac24177bd67d34"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/assistant_agent.py": {
+    "symbols": "函数: \n1. get_agent_name\n2. run_agent_func\n3. AssistantAgent.reply_python_code_agent\n4. AssistantAgent.generate_code_reply\n5. ConversableAgent.generate_llm_reply\n\n类:\n1. AssistantAgent\n2. ConversableAgent\n\n变量:\n1. DEFAULT_SYSTEM_MESSAGE\n2. self.code_agent\n3. self._reply_func_list\n\n导入语句:\n1. from .conversable_agent import ConversableAgent\n2. from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\n3. from ...utils.client import ByzerLLM,message_utils\n4. from byzerllm.utils.retrieval import ByzerRetrieval\n5. from .agent import Agent\n6. from ray.util.client.common import ClientActorHandle, ClientObjectRef\n7. import time",
+    "last_modified": 1710124488.8409457,
+    "md5": "9fcfe86efbf0e911809b54bb7a1a9674"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/visualization_agent.py": {
+    "symbols": "函数:\n- `get_agent_name`\n- `run_agent_func`\n- `modify_last_message`\n- `modify_message_content`\n- `count_messages_length`\n- `VisualizationAgent.__init__`\n- `VisualizationAgent.create_temp_message`\n- `VisualizationAgent.reply_python_code_agent`\n- `VisualizationAgent.generate_code_reply`\n\n类:\n- `ConversableAgent`\n- `VisualizationAgent`\n\n变量:\n- `DEFAULT_SYSTEM_MESSAGE`\n- `DEFAULT_USER_MESSAGE`\n- `self.code_agent`\n- `self._reply_func_list`\n\n导入语句:\n- `from ..conversable_agent import ConversableAgent`\n- `from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union`\n- `from ....utils.client import ByzerLLM,message_utils`\n- `from byzerllm.utils.retrieval import ByzerRetrieval`\n- `from ..agent import Agent`\n- `from ray.util.client.common import ClientActorHandle, ClientObjectRef`\n- `import time`\n- `from .. import get_agent_name, run_agent_func, ChatResponse, modify_last_message, modify_message_content, count_messages_length`\n- `from langchain import PromptTemplate`",
+    "last_modified": 1705405652.138902,
+    "md5": "afa05e9793c667a566d9ebda1184b7eb"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/output_agent.py": {
+    "symbols": "函数:\n- generate_retrieval_based_reply\n\n类:\n- OutputAgent\n- ConversableAgent\n\n变量:\n- SYSTEM_PROMPT\n- USER_PROMPT\n- self._reply_func_list\n\n导入语句:\n- from ..conversable_agent import ConversableAgent\n- from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\n- from ....utils.client import ByzerLLM\n- from byzerllm.utils.retrieval import ByzerRetrieval\n- from ..agent import Agent\n- from ray.util.client.common import ClientActorHandle, ClientObjectRef\n- from .. import get_agent_name, run_agent_func, ChatResponse\n- from langchain import PromptTemplate",
+    "last_modified": 1702551834.3946207,
+    "md5": "997bde874da5aa7c5273819600200834"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/llama_index_retrieval_agent.py": {
+    "symbols": "函数:\ngenerate_retrieval_based_reply\n\n类:\nLlamaIndexRetrievalAgent\nAgentData\n\n变量:\nPROMPT_DEFAULT\nDEFAULT_SYSTEM_MESSAGE\nself\nupdate_context_retry\nself._reply_func_list\nraw_message\nmessages\nsender\nconfig\nnew_message\ncontent\nagent_data\nservice_context\nstorage_context\nindex\nquery_engine\nid\nstreaming_response\ngen\nt\nresponse\n\n导入语句:\nfrom ..conversable_agent import ConversableAgent\nfrom typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, Generator\nfrom ....utils.client import ByzerLLM\nfrom byzerllm.utils.retrieval import ByzerRetrieval\nfrom ..agent import Agent\nimport ray\nfrom ray.util.client.common import ClientActorHandle, ClientObjectRef\nfrom .. import get_agent_name, run_agent_func, ChatResponse\nfrom byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient\nimport uuid\nimport json\nfrom byzerllm.apps.llama_index import get_service_context, get_storage_context\nfrom llama_index import VectorStoreIndex\ntry: from termcolor import colored\nexcept ImportError: colored\nimport jieba\nimport pydantic",
+    "last_modified": 1710211262.7482758,
+    "md5": "a2626e746a466dd488c0f11cf1b260cd"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/subquestion_agent.py": {
+    "symbols": "函数:\n- colored\n- get_agent_name\n- run_agent_func\n- LlamaIndexSubQuestionAgent.generate_retrieval_based_reply\n\n类:\n- ConversableAgent\n- ByzerLLM\n- ByzerRetrieval\n- ClientActorHandle\n- ClientObjectRef\n- Agent\n- SimpleRetrievalClient\n- LlamaIndexSubQuestionAgent\n\n变量:\n- PROMPT_DEFAULT\n- DEFAULT_SYSTEM_MESSAGE\n- name\n- llm\n- retrieval\n- chat_name\n- owner\n- update_context_retry\n- system_message\n- is_termination_msg\n- max_consecutive_auto_reply\n- human_input_mode\n- code_execution_config\n- _reply_func_list\n- self.service_context\n- self.storage_context\n- new_message\n- index\n- vector_query_engine\n- query_engine_tools\n- query_engine\n- response\n\n导入语句:\n- from ..conversable_agent import ConversableAgent\n- from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\n- from ....utils.client import ByzerLLM\n- from byzerllm.utils.retrieval import ByzerRetrieval\n- from ..agent import Agent\n- import ray\n- from ray.util.client.common import ClientActorHandle, ClientObjectRef\n- from .. import get_agent_name, run_agent_func, ChatResponse\n- from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient\n- import uuid\n- import json\n- from byzerllm.apps.llama_index import get_service_context,get_storage_context\n- from llama_index import VectorStoreIndex\n- from llama_index.query_engine import SubQuestionQueryEngine\n- from termcolor import colored (尝试导入，如果未安装则提供替代实现)\n- from llama_index.tools import QueryEngineTool, ToolMetadata",
+    "last_modified": 1707034134.9232457,
+    "md5": "0eb6f75ac4673db51317060f81b487ef"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/simple_retrieval_client.py": {
+    "symbols": "导入语句:\n```python\nfrom byzerllm.utils.retrieval import ByzerRetrieval\nfrom typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\nfrom ....utils.client import ByzerLLM\nfrom ....utils import generate_str_md5\nfrom byzerllm.utils.retrieval import TableSettings, SearchQuery\nimport time\nfrom byzerllm.utils.client import LLMHistoryItem, LLMRequest\nimport uuid\nimport json\nfrom langchain import PromptTemplate\nfrom langchain.text_splitter import RecursiveCharacterTextSplitter, Document\ntry:\n    from termcolor import colored\nexcept ImportError:\n    def colored(x, *args, **kwargs):\n        return x\nimport jieba\n```\n函数:\n```python\ndef colored(x, *args, **kwargs)\ndef split_text_into_chunks(self, s: str)\ndef search_tokenize(self, s: str)\n```\n类:\n```python\nclass SimpleRetrievalClient:\n```\n变量:\n```python\nself.retrieval_cluster\nself.retrieval_db\nself.max_output_length\nself.llm\nself.retrieval\nself.emb\n```",
+    "last_modified": 1706678020.9387512,
+    "md5": "64a56ec0685b9c07f64cf9896937a188"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/retrieval_agent.py": {
+    "symbols": "函数:\n- colored\n- RetrievalAgent.__init__\n- RetrievalAgent.generate_retrieval_based_reply\n\n类:\n- RetrievalAgent\n- ConversableAgent\n- ByzerLLM\n- ByzerRetrieval\n- ClientActorHandle\n- ClientObjectRef\n- ChatResponse\n- SimpleRetrievalClient\n- PromptTemplate\n\n变量:\n- PROMPT_DEFAULT\n- PROMPT_CODE\n- PROMPT_QA\n- DEFAULT_SYSTEM_MESSAGE\n- self.chat_name\n- self.owner\n- self.code_agent\n- self.byzer_engine_url\n- self.update_context_retry\n- self.chunk_size_in_context\n- self._reply_func_list\n- self.retrieval_cluster\n- self.retrieval_db\n- self.simple_retrieval_client\n- new_message\n- file_path\n- content\n- top_k\n- contents\n- item\n- temp\n- input_context\n- prompt\n- id\n- v\n\n导入语句:\n- from ..conversable_agent import ConversableAgent\n- from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\n- from ....utils.client import ByzerLLM\n- from byzerllm.utils.retrieval import ByzerRetrieval\n- from ..agent import Agent\n- import ray\n- from ray.util.client.common import ClientActorHandle, ClientObjectRef\n- from .. import get_agent_name, run_agent_func, ChatResponse\n- from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient\n- import uuid\n- import json\n- from langchain import PromptTemplate\n- try: (from termcolor import colored) except ImportError: (def colored(x, *args, **kwargs): return x)\n- import jieba",
+    "last_modified": 1710211332.9687364,
+    "md5": "c6a55b821a28b1675648e07287e7e21f"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/planner.py": {
+    "symbols": "函数: \n无\n\n类:\nPlannerAgent\n\n变量:\nSYSTEM_PROMPT\n\n导入语句:\n1. from ..conversable_agent import ConversableAgent\n2. from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\n3. from ....utils.client import ByzerLLM\n4. from byzerllm.utils.retrieval import ByzerRetrieval",
+    "last_modified": 1702551831.0986154,
+    "md5": "afed80b9c050c14eee384488cb42a23a"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/byzer_engine_agent.py": {
+    "symbols": "函数:\n- colored\n- ByzerEngineAgent.generate_custom_reply\n- ByzerEngineAgent.execute_spark_sql\n\n类:\n- ConversableAgent\n- ByzerEngineAgent\n\n变量:\n- DEFAULT_SYSTEM_MESSAGE\n- self._reply_func_list\n\n导入语句:\n- from ..conversable_agent import ConversableAgent\n- from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, Annotated\n- from ....utils.client import ByzerLLM,message_utils,code_utils\n- from byzerllm.utils.retrieval import ByzerRetrieval\n- from ..agent import Agent\n- from ray.util.client.common import ClientActorHandle, ClientObjectRef\n- from .. import get_agent_name, run_agent_func, ChatResponse\n- import json\n- try: from termcolor import colored",
+    "last_modified": 1705236213.6080394,
+    "md5": "de3e55a8305ca034acee1ce9ac1a3987"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/python_codesandbox_agent.py": {
+    "symbols": "函数:\n- set_value\n- get_value\n- get_file_path\n- execute_code\n- exec_capture_output\n- __init__\n- generate_execute_code_reply\n- check_sandbox_timeout\n- check_sandbox_exists\n- get_sandbox\n- force_clear\n- get_or_create_sandbox\n\n类:\n- CodeSandbox\n- PythonSandboxAgent\n\n变量:\n- session_variables\n- parent_dir\n- buffer\n- name\n- value\n- code\n- timeout\n- filename\n- work_dir\n- use_docker\n- lang\n- variables\n- response\n- self\n- sandboxes\n- lasted_updated\n- raw_message\n- messages\n- sender\n- config\n- code_execution_config\n- last_n_messages\n- message\n- code_blocks\n- codes\n- code_str\n- file_path\n- file_ref\n- target_names\n- exitcode\n- output\n- exitcode2str\n\n导入语句:\n- from ..conversable_agent import ConversableAgent\n- from ..agent import Agent\n- from .. import get_agent_name,run_agent_func,ChatResponse\n- import ray\n- from ray.util.client.common import ClientActorHandle, ClientObjectRef\n- from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\n- from typing import Callable, Dict, Optional, Union\n- import time\n- import sys\n- import io\n- import traceback\n- import json\n- import os\n- from byzerllm.utils.retrieval import ByzerRetrieval\n- from byzerllm.utils.client import ByzerLLM,code_utils,message_utils",
+    "last_modified": 1705913676.5610187,
+    "md5": "9c24cf08171c2c183747e68cace0e89f"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/data_analysis_pipeline_agent.py": {
+    "symbols": "函数:\n- get_agent_chat_messages\n- update_system_message_by_agent\n- clear_agent_message_box\n- get_agent_names\n- get_agent_system_message\n- send_from_agent_to_agent\n- preview_file\n- select_agent\n- get_agent_stream_messages\n- reply_reheorical_agent\n- reply_agent\n- run_pipeline\n\n类:\n- DataAnalysisPipeline\n- DataAnalysisPipelineManager\n\n变量:\n- DEFAULT_SYSTEM_MESSAGE\n- DEFAULT_USER_MESSAGE\n- DataAnalysisPipelineManager.pipelines\n- DataAnalysisPipelineManager.lasted_updated\n\n导入语句:\n- from ..conversable_agent import ConversableAgent\n- from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\n- from ....utils.client import ByzerLLM\n- from byzerllm.utils.retrieval import ByzerRetrieval\n- from ..agent import Agent\n- from ray.util.client.common import ClientActorHandle, ClientObjectRef\n- import time\n- import ray\n- from .. import get_agent_name, run_agent_func, ChatResponse, modify_message_metadata, modify_message_content\n- from byzerllm.utils.client import default_chat_wrapper, LLMResponse\n- from byzerllm.apps.agent import Agents\n- from byzerllm.apps.agent.extensions.preview_file_agent import PreviewFileAgent\n- from byzerllm.apps.agent.extensions.python_codesandbox_agent import PythonSandboxAgent\n- from byzerllm.apps.agent.extensions.visualization_agent import VisualizationAgent\n- from byzerllm.apps.agent.extensions.assistant_agent import AssistantAgent\n- from byzerllm.apps.agent.extensions.common_agent import CommonAgent\n- from byzerllm.apps.agent.extensions.spark_sql_agent import SparkSQLAgent\n- from byzerllm.apps.agent.extensions.rhetorical_agent import RhetoricalAgent\n- from byzerllm.apps.agent.extensions.sql_reviewer_agent import SQLReviewerAgent\n- from byzerllm.apps.agent.extensions.byzer_engine_agent import ByzerEngineAgent\n- from byzerllm.apps.agent.extensions.retrieval_agent import RetrievalAgent\n- from byzerllm.apps.agent.extensions.llama_index_retrieval_agent import LlamaIndexRetrievalAgent\n- from byzerllm.apps.agent.extensions.load_data_agent import LoadDataAgent\n- from byzerllm.apps.agent.store import MessageStore",
+    "last_modified": 1710124843.0981894,
+    "md5": "602fd30d775e3d34045603e6c7762465"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/rhetorical_agent.py": {
+    "symbols": "函数: \n1. get_agent_name\n2. run_agent_func\n3. RhetoricalAgent.my_reply\n4. RhetoricalAgent.check_termination_and_human_reply\n5. ConversableAgent.generate_llm_reply\n6. code_utils.extract_code\n\n类:\n1. ConversableAgent\n2. RhetoricalAgent\n\n变量:\n1. DEFAULT_SYSTEM_MESSAGE\n2. self.update_context_retry\n3. self.chunk_size_in_context\n4. self._reply_func_list\n5. self.retrieval_cluster\n6. self.retrieval_db\n7. self.simple_retrieval_client\n8. self.chat_name\n9. self.owner\n\n导入语句:\n1. from ..conversable_agent import ConversableAgent\n2. from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\n3. from ....utils.client import ByzerLLM,message_utils,code_utils\n4. from byzerllm.utils.retrieval import ByzerRetrieval\n5. from ..agent import Agent\n6. from ray.util.client.common import ClientActorHandle, ClientObjectRef\n7. from .. import get_agent_name,run_agent_func,ChatResponse\n8. from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient\n9. from byzerllm.utils.retrieval import SearchQuery\n10. import json",
+    "last_modified": 1706620456.13519,
+    "md5": "f23c82c19e8cb9992dd0fe916b0c79ee"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/preview_file_agent.py": {
+    "symbols": "函数:\n- `get_agent_name`\n- `run_agent_func`\n- `modify_last_message`\n- `modify_message_content`\n- `PreviewFileAgent.__init__`\n- `PreviewFileAgent.reply_python_code_agent`\n- `PreviewFileAgent.generate_code_reply`\n- `PreviewFileAgent.create_temp_message`\n\n类:\n- `ConversableAgent`\n- `PreviewFileAgent`\n\n变量:\n- `DEFAULT_SYSTEM_MESSAGE`\n- `DEFAULT_USER_MESSAGE`\n- `self.code_agent`\n- `self._reply_func_list`\n- `raw_message`\n- `messages`\n- `sender`\n- `config`\n- `message`\n- `new_message`\n- `file_path`\n- `content`\n- `new_messages`\n- `_`\n- `code`\n- `last_message`\n- `response`\n- `file_preview`\n- `temp_message`\n- `original_message`\n\n导入语句:\n- `from ..conversable_agent import ConversableAgent`\n- `from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union`\n- `from ....utils.client import ByzerLLM,message_utils`\n- `from byzerllm.utils.retrieval import ByzerRetrieval`\n- `from ..agent import Agent`\n- `from ray.util.client.common import ClientActorHandle, ClientObjectRef`\n- `import time`\n- `from .. import get_agent_name,run_agent_func,ChatResponse,modify_last_message,modify_message_content`\n- `from langchain import PromptTemplate`\n- `import json`",
+    "last_modified": 1705402309.7020273,
+    "md5": "1e8af4b826f4b20a959c67f3f0febed5"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/sql_reviewer_agent.py": {
+    "symbols": "符号类型: 函数\n符号名称: colored, get_agent_name, run_agent_func, json.loads, print, flush, super().__init__, self.register_reply, self.generate_review_reply, message_utils.padding_messages_merge, code_utils.extract_code, len, join, self.llm.chat_oai, json.dumps\n\n符号类型: 类\n符号名称: ConversableAgent, SQLReviewerAgent\n\n符号类型: 变量\n符号名称: DEFAULT_SYSTEM_MESSAGE, self, self._reply_func_list, messages, message, v, checks, c, t, fields, new_message\n\n符号类型: 导入语句\n符号名称: from ..conversable_agent import ConversableAgent, from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, from ....utils.client import ByzerLLM,message_utils,code_utils, from byzerllm.utils.retrieval import ByzerRetrieval, from ..agent import Agent, from ray.util.client.common import ClientActorHandle, ClientObjectRef, import json, try, from termcolor import colored (如果termcolor模块已安装)，except ImportError",
+    "last_modified": 1706012869.5824394,
+    "md5": "72cfb1be3cbae761771157491068ff2c"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/data_analysis.py": {
+    "symbols": "函数: \n- colored\n- generate_str_md5\n- get_agent_name\n- run_agent_func\n- modify_message_metadata\n- modify_message_content\n\n类:\n- DataAnalysis\n- Agent\n- Agents\n- UserProxyAgent\n- DataAnalysisPipeline\n- DataAnalysisPipelineManager\n- SimpleRetrievalClient\n- MessageStore\n- MemoryStore\n- ChatStoreMessage\n- Stores\n\n变量:\n- file_path\n- use_shared_disk\n- chat_wrapper\n- skip_preview_file\n- retrieval_cluster\n- retrieval_db\n- suffix\n- name\n- manager\n- message_store\n- llm\n- retrieval\n- simple_retrieval_client\n- file_ref\n- client\n\n导入语句:\n- import ray\n- import os\n- from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\n- from byzerllm.utils import generate_str_md5, ByzerLLM, default_chat_wrapper, LLMResponse\n- from byzerllm.utils.retrieval import ByzerRetrieval\n- from ray.util.client.common import ClientActorHandle, ClientObjectRef\n- from byzerllm.apps.agent import Agent, Agents, get_agent_name, run_agent_func, ChatResponse, modify_message_metadata, modify_message_content\n- from byzerllm.apps.agent.user_proxy_agent import UserProxyAgent\n- from byzerllm.apps.agent.extensions.data_analysis_pipeline_agent import DataAnalysisPipeline, DataAnalysisPipelineManager\n- from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient\n- from byzerllm.apps.agent.store.memory_store import MessageStore, MemoryStore, ChatStoreMessage\n- from byzerllm.apps.agent.store.stores import Stores\n- try/except ImportError: (colored function)",
+    "last_modified": 1708516725.2741868,
+    "md5": "04563e2687ca5829f8690eee890261f4"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/spark_sql_agent.py": {
+    "symbols": "函数:\n\n1. `get_agent_name`\n2. `run_agent_func`\n3. `generate_str_md5`\n4. `SparkSQLAgent.generate_sql_reply`\n5. `SparkSQLAgent.generate_execute_sql_reply`\n6. `SparkSQLAgent.generate_reply_for_reviview`\n\n类:\n\n1. `ConversableAgent`\n2. `ByzerRetrieval`\n3. `ClientActorHandle`\n4. `ClientObjectRef`\n5. `SimpleRetrievalClient`\n6. `pydantic.BaseModel` (虽然未直接导入，但通过 `from pydantic import BaseModel` 可推断存在)\n7. `SparkSQLAgent`\n\n变量:\n\n1. `DEFAULT_SYSTEM_MESSAGE`\n2. `name`\n3. `llm`\n4. `retrieval`\n5. `chat_name`\n6. `owner`\n7. `sql_reviewer_agent`\n8. `byzer_engine_agent`\n9. `retrieval_cluster`\n10. `retrieval_db`\n11. `system_message`\n12. `is_termination_msg`\n13. `max_consecutive_auto_reply`\n14. `human_input_mode`\n15. `code_execution_config`\n16. `byzer_url`\n17. `_reply_func_list`\n18. `old_memory`\n19. `c`\n20. `temp_conversation`\n21. `v`\n22. `codes`\n23. `has_sql_code`\n24. `key_msg`\n25. `conversation`\n26. `execute_result`\n27. `target_message`\n28. `t`\n29. `new_code`\n30. `new_message`\n\n导入语句:\n\n1. `from ..conversable_agent import ConversableAgent`\n2. `from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, Annotated`\n3. `from ....utils.client import ByzerLLM, code_utils, message_utils, parallel_utils`\n4. `from byzerllm.utils.retrieval import ByzerRetrieval`\n5. `from ..agent import Agent`\n6. `import numpy as np`\n7. `from ray.util.client.common import ClientActorHandle, ClientObjectRef`\n8. `import re`\n9. `from .. import get_agent_name, run_agent_func, ChatResponse`\n10. `from ....utils import generate_str_md5`\n11. `from byzerllm.utils.client import LLMHistoryItem, LLMRequest`\n12. `import json`\n13. `from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient`\n14. `import pydantic`\n15. `from datetime import datetime`\n16. `from byzerllm.apps.agent.extensions.query_rewrite.context import QueryContext`\n17. `from byzerllm.apps.agent.extensions.query_rewrite.condition import QueryCondition`\n18. `from byzerllm.apps.agent.extensions.query_rewrite.time import QueryTime`\n19. `from byzerllm.apps.agent.extensions.query_rewrite import Action`\n20. `try: from termcolor import colored except ImportError:`",
+    "last_modified": 1705834420.109265,
+    "md5": "ab58fc0dd0b15ff836f08b0aa79e4aa9"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/common_agent.py": {
+    "symbols": "函数:\n- get_agent_name\n- run_agent_func\n\n类:\n- CommonAgent\n- ConversableAgent\n\n变量:\n- DEFAULT_SYSTEM_MESSAGE\n- self.code_agent\n- self._reply_func_list\n\n导入语句:\n- from .conversable_agent import ConversableAgent\n- from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\n- from ...utils.client import ByzerLLM\n- from byzerllm.utils.retrieval import ByzerRetrieval\n- from .agent import Agent\n- from ray.util.client.common import ClientActorHandle, ClientObjectRef\n- import time\n- from . import get_agent_name, run_agent_func, ChatResponse",
+    "last_modified": 1710124488.8409457,
+    "md5": "9afa9a724907ffbf7aade990929ff92b"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/query_rewrite/context.py": {
+    "symbols": "函数: apply\n类: QueryContext, SingleLine\n变量: m, temp_conversation, t, new_query, sim\n导入语句:\n1. from typing import List,Dict,Annotated,Any\n2. from byzerllm.utils.client import ByzerLLM,message_utils,code_utils,LLMRequest\n3. from byzerllm.utils.retrieval import ByzerRetrieval\n4. import json\n5. import numpy as np\n6. import copy\n7. import pydantic\n8. from . import QueryRewriteResult,Action",
+    "last_modified": 1705834449.0015051,
+    "md5": "2573e667f01d61036417b05ad3b0cf6b"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/query_rewrite/condition.py": {
+    "symbols": "函数: apply\n类: QueryCondition, KV, Conditions\n变量: m, time_msg, temp_conversation, t, action, key_msg, old_content\n导入语句:\n1. from typing import List,Dict,Annotated,Any,Optional\n2. from byzerllm.utils.client import ByzerLLM,message_utils,code_utils\n3. from byzerllm.utils.retrieval import ByzerRetrieval\n4. import copy\n5. import json\n6. import pydantic\n7. from . import QueryRewriteResult,Action",
+    "last_modified": 1705560713.8369792,
+    "md5": "062fe61af8429930e4e48549e1081df3"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/query_rewrite/time.py": {
+    "symbols": "导入语句: from typing import List, Dict, Annotated, Any\n导入语句: from byzerllm.utils.client import ByzerLLM, message_utils\n导入语句: from byzerllm.utils.retrieval import ByzerRetrieval\n导入语句: import copy\n导入语句: import pydantic\n导入语句: from datetime import datetime\n\n类: QueryTime\n函数: apply\n变量: m, time_msg, Item, t, now, TimeRange, time_range",
+    "last_modified": 1705552771.6612036,
+    "md5": "0805a9f4a88e26b806c7005adc88d04d"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/query_rewrite/rhetorical.py": {
+    "symbols": "函数: reply_with_clarify, reply_with_key_messages\n类: QueryRhetorical\n变量: m, time_msg, key_msg, temp_conversation, t, v, old_content\n导入语句:\n1. from typing import List,Dict,Annotated,Any\n2. from byzerllm.utils.client import ByzerLLM,message_utils\n3. from byzerllm.utils.retrieval import ByzerRetrieval\n4. import copy\n5. from . import QueryRewriteResult,Action",
+    "last_modified": 1705234477.3984034,
+    "md5": "61b953e20e4ecc08d013c63c46516cfd"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/extensions/query_rewrite/__init__.py": {
+    "symbols": "导入语句: \n- `import pydantic`\n- `from typing import Optional, List, Dict, Any`\n- `from enum import Enum`\n\n类:\n- `Action`\n- `QueryRewriteResult`",
+    "last_modified": 1705225911.2831275,
+    "md5": "b6c0bfe56cd72271bc6fb5052bcdb7aa"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/store/stores.py": {
+    "symbols": "函数: put, get, clear\n类: Stores\n变量: store\n导入语句: from typing import Union, from . import MessageStore, import ray, from ray.util.client.common import ClientActorHandle",
+    "last_modified": 1706714038.6849442,
+    "md5": "a365b7762e967399b7d97071a3489745"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/store/memory_store.py": {
+    "symbols": "符号类型: 类, 变量, 函数, 导入语句\n\n类:\n- MemoryStore\n\n变量:\n- self\n- messages\n- target\n- idx\n- item\n- v\n- key\n- remove_keys\n\n函数:\n- __init__\n- put\n- get\n- clear\n\n导入语句:\n- from . import Message, MessageStore\n- import time",
+    "last_modified": 1706714010.0879645,
+    "md5": "cdbfe697698aa7ad6c9c44dc6a979635"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/agent/store/__init__.py": {
+    "symbols": "导入语句: pydantic, typing\n类: Message, MessageStore\n函数: put (在MessageStore中), get (在MessageStore中), clear (在MessageStore中)\n变量: 无",
+    "last_modified": 1706713983.9270325,
+    "md5": "801a2993e84e9b20f2c5747288bba502"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/byzer_sql/__init__.py": {
+    "symbols": "符号类型: 函数, 变量, 导入语句\n\n函数:\n- chat\n- deploy\n\n变量:\n- conf\n- udf_name\n- llm\n- input_value\n- result\n- value\n- v\n- history\n- key\n- conversations\n- t\n- response\n- new_history\n- infer_params\n- num_gpus\n- num_workers\n- pretrained_model_type\n- model_path\n\n导入语句:\n- from typing import Dict\n- from dataclasses import asdict\n- from byzerllm.utils.client import ByzerLLM\n- import json",
+    "last_modified": 1709030692.7852497,
+    "md5": "dc06aa4d6126079a904a7c6ff33774d9"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/llama_index/byzerai_docstore.py": {
+    "symbols": "函数: \n- `__init__`\n\n类: \n- `ByzerAIDocumentStore`\n- `BaseNode`\n- `TextNode`\n- `KVDocumentStore`\n- `BaseKVStore`\n- `SimpleRetrieval`\n- `ByzerAIKVStore`\n\n变量:\n- `DEFAULT_BATCH_SIZE`\n- `self._llm`\n- `self._retrieval`\n- `kv_store`\n\n导入语句:\n- `from typing import Dict, List, Optional, Sequence, Tuple`\n- `import json`\n- `from llama_index.schema import BaseNode, TextNode`\n- `from llama_index.storage.docstore.keyval_docstore import KVDocumentStore`\n- `from llama_index.storage.docstore.utils import doc_to_json, json_to_doc`\n- `from llama_index.storage.kvstore.types import DEFAULT_BATCH_SIZE, BaseKVStore`\n- `from byzerllm.utils.client import ByzerLLM`\n- `from byzerllm.utils.retrieval import ByzerRetrieval`\n- `from byzerllm.utils.langutil import asyncfy_with_semaphore`\n- `from byzerllm.apps.llama_index.simple_retrieval import SimpleRetrieval`\n- `from byzerllm.apps.llama_index.byzerai_kvstore import ByzerAIKVStore`",
+    "last_modified": 1707029413.2734294,
+    "md5": "a45a719d3ac09fced9c416baf00f0a43"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/llama_index/byzerai_kvstore.py": {
+    "symbols": "函数:\nput, aput, put_all, get, aget, get_all, aget_all, delete, adelete\n\n类:\nByzerAIKVStore\n\n变量:\nDEFAULT_BATCH_SIZE, DEFAULT_COLLECTION, BaseKVStore, ByzerLLM, ByzerRetrieval, SimpleRetrieval, asyncfy_with_semaphore\n\n导入语句:\nimport json\nfrom typing import Any, Dict, List, Optional, Tuple, cast\nfrom llama_index.storage.kvstore.types import (\n    DEFAULT_BATCH_SIZE,\n    DEFAULT_COLLECTION,\n    BaseKVStore,\n)\nfrom byzerllm.utils.client import ByzerLLM\nfrom byzerllm.utils.retrieval import ByzerRetrieval\nfrom byzerllm.apps.llama_index.simple_retrieval import SimpleRetrieval\nfrom byzerllm.utils.langutil import asyncfy_with_semaphore",
+    "last_modified": 1708700169.2165186,
+    "md5": "0fbe41cea4b33bcbf83a2806ac763157"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/llama_index/byzerai.py": {
+    "symbols": "函数:\n- chat\n- stream_chat\n- complete\n- stream_complete\n\n类:\n- ByzerAI\n- CustomLLM\n\n变量:\n- verbose\n- _model\n\n导入语句:\n- import os\n- from typing import Any, Callable, Dict, Optional, Sequence\n- from llama_index.bridge.pydantic import Field, PrivateAttr\n- from llama_index.core.llms.types import (ChatMessage, ChatResponse, ChatResponseGen, CompletionResponse, CompletionResponseGen, LLMMetadata)\n- from llama_index.llms.base import llm_chat_callback, llm_completion_callback\n- from llama_index.llms.custom import CustomLLM\n- from llama_index.llms.generic_utils import (completion_response_to_chat_response, stream_completion_response_to_chat_response)\n- from llama_index.types import BaseOutputParser, PydanticProgramMode\n- from llama_index.utils import get_cache_dir\n- from byzerllm.utils.client import ByzerLLM",
+    "last_modified": 1708509612.677299,
+    "md5": "4d1bb5604a5d1085c0b1508d37d6d356"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/llama_index/byzerai_embedding.py": {
+    "symbols": "函数:\n- `_get_query_embedding`\n- `_aget_query_embedding`\n- `_aget_text_embedding`\n- `_get_text_embedding`\n- `_get_text_embeddings`\n\n类:\n- `ByzerAIEmbedding`\n- `BaseEmbedding` (导入的类)\n\n变量:\n- `_llm`\n- `DEFAULT_EMBED_BATCH_SIZE`\n\n导入语句:\n- `from typing import TYPE_CHECKING, List, Optional`\n- `from llama_index.core.embeddings.base import DEFAULT_EMBED_BATCH_SIZE, BaseEmbedding`\n- `from llama_index.bridge.pydantic import PrivateAttr`\n- `from byzerllm.utils.client import ByzerLLM`\n- `from byzerllm.utils.langutil import asyncfy_with_semaphore`",
+    "last_modified": 1707027332.7083883,
+    "md5": "bfe6606ff32cfb6016281548e7f4ef31"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/llama_index/byzerai_index_store.py": {
+    "symbols": "函数: \n- __init__\n\n类:\n- ByzerAIIndexStore\n- KVIndexStore (导入的基类)\n\n变量:\n- self._llm\n- self._retrieval\n- kv_store\n- self._namespace\n- self._collection\n\n导入语句:\n- from typing import Dict, List, Optional, Sequence, Tuple\n- import json\n- from llama_index.schema import BaseNode, TextNode\n- from llama_index.storage.index_store.keyval_index_store import KVIndexStore\n- from llama_index.storage.docstore.utils import doc_to_json, json_to_doc\n- from llama_index.storage.kvstore.types import DEFAULT_BATCH_SIZE, BaseKVStore\n- from byzerllm.utils.client import ByzerLLM\n- from byzerllm.utils.retrieval import ByzerRetrieval\n- from byzerllm.apps.llama_index.simple_retrieval import SimpleRetrieval\n- from byzerllm.utils.langutil import asyncfy_with_semaphore\n- from byzerllm.apps.llama_index.byzerai_kvstore import ByzerAIKVStore",
+    "last_modified": 1707029520.5784607,
+    "md5": "e40e945d9e23548d2d79b73a97d4cdbf"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/llama_index/simple_retrieval.py": {
+    "symbols": "函数:\n\n- colored\n- save_doc\n- _owner_filter\n- search_content_chunks\n- search_content_by_filename\n- search_content\n- get_chunk_by_id\n- get_chunks_by_docid\n- delete_chunk_by_ids\n- save_chunks\n- get_doc\n- delete_doc\n- truncate_table\n- delete_from_doc_collection\n- delete_from_chunk_collection\n- commit_doc\n- commit_chunk\n- emb\n- split_text_into_chunks\n- search_tokenize\n\n类:\n\n- SimpleRetrieval\n\n变量:\n\n- chunk_collection\n- retrieval_cluster\n- retrieval_db\n- max_output_length\n- llm\n- retrieval\n- self\n\n导入语句:\n\n- from byzerllm.utils.retrieval import ByzerRetrieval\n- from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\n- from byzerllm.utils.client import ByzerLLM\n- from byzerllm.utils import generate_str_md5\n- from byzerllm.utils.retrieval import TableSettings, SearchQuery\n- import time\n- from byzerllm.utils.client import LLMHistoryItem, LLMRequest\n- import uuid\n- import json\n- from langchain import PromptTemplate\n- from langchain.text_splitter import RecursiveCharacterTextSplitter, Document\n- try: from termcolor import colored (如果termcolor模块存在)\n- import jieba",
+    "last_modified": 1708702745.2194736,
+    "md5": "ddedb04840d9bb0fa446480363c32ac2"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/llama_index/byzerai_vectordb.py": {
+    "symbols": "函数:\n- _build_metadata_filter_fn\n- metadata_dict_to_node\n\n类:\n- ByzerAIVectorStore\n\n变量:\n- logger\n- stores_text\n\n导入语句:\n- import json\n- import logging\n- from typing import Any, Callable, Dict, List, Mapping, Optional, cast\n- from llama_index.schema import BaseNode, ImageNode, IndexNode, NodeRelationship, RelatedNodeInfo, TextNode\n- from llama_index.vector_stores.types import MetadataFilters, VectorStore, VectorStoreQuery, VectorStoreQueryResult\n- from llama_index.vector_stores.utils import node_to_metadata_dict\n- from byzerllm.utils.client import ByzerLLM\n- from byzerllm.utils.retrieval import ByzerRetrieval\n- from byzerllm.apps.llama_index.simple_retrieval import SimpleRetrieval",
+    "last_modified": 1708770723.4660368,
+    "md5": "111ee18be1be284ec992667aca71ca09"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/apps/llama_index/__init__.py": {
+    "symbols": "函数: \n- get_service_context\n- get_storage_context\n\n类: \n- ByzerLLM\n- ByzerRetrieval\n- ByzerAI\n- ByzerAIEmbedding\n- ByzerAIDocumentStore\n- ByzerAIIndexStore\n- ByzerAIVectorStore\n- ServiceContext\n- StorageContext\n\n导入语句:\n- from byzerllm.utils.client import ByzerLLM\n- from byzerllm.utils.retrieval import ByzerRetrieval\n- from byzerllm.apps.llama_index.byzerai import ByzerAI\n- from byzerllm.apps.llama_index.byzerai_embedding import ByzerAIEmbedding\n- from byzerllm.apps.llama_index.byzerai_docstore import ByzerAIDocumentStore\n- from byzerllm.apps.llama_index.byzerai_index_store import ByzerAIIndexStore\n- from byzerllm.apps.llama_index.byzerai_vectordb import ByzerAIVectorStore\n- from llama_index.service_context import ServiceContext\n- from llama_index.storage import StorageContext\n- from typing import Optional",
+    "last_modified": 1707029573.7469597,
+    "md5": "bce44102108b1dab712ea693fb7e5db6"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/processor/__init__.py": {
+    "symbols": "符号类型: 函数, 符号名称: process_pdf\n符号类型: 变量, 符号名称: binnary_data, temp_dir, pdf_content, temp_pdf, f, loader, docs, content\n符号类型: 导入语句, 符号名称: io, os, uuid, tempfile\n\n注意：在上述格式中，导入的模块（如io, os等）被归类为“导入语句”，而非变量。同时，由于这段代码中没有定义任何类，所以“类”这一类别下没有符号名称。",
+    "last_modified": 1691995487.779225,
+    "md5": "aa849709728e2069400d603286cbb75a"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/bge/__init__.py": {
+    "symbols": "符号类型: 函数, 符号名称: _encode, embed_documents, embed_query\n符号类型: 变量, 符号名称: embeddings, embedding, model_dir, infer_params, sys_conf, model\n符号类型: 导入语句, 符号名称: from sentence_transformers import SentenceTransformer, from typing import Dict, List, Tuple",
+    "last_modified": 1705148786.772291,
+    "md5": "a135d283b7ca3b4632dc1a26626d6993"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/bark/bark_voice.py": {
+    "symbols": "导入语句: from typing import List, numpy as np, from .generation import GenerateModel, SAMPLE_RATE, from .api import VoiceGenerateAPI\n变量: ZH_SPEAKER, EN_SPEAKER, silence\n函数: is_chinese, raw_sentence, not_toolong, Inference类的四个方法(add, generate, batch_generate, text_to_voice), build_void_infer\n类: Inference",
+    "last_modified": 1693039964.2351344,
+    "md5": "42dcece33ab948da77e5fa3264efcfb9"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/bark/model_fine.py": {
+    "symbols": "函数: \nforward (NonCausalSelfAttention类中)\nget_num_params (FineGPT类中)\n\n类:\nNonCausalSelfAttention\nFineBlock\nFineGPT\nFineGPTConfig\n\n变量:\nconfig (在多个类和函数中作为参数或属性使用)\ndropout (NonCausalSelfAttention类中)\nflash (NonCausalSelfAttention类中)\nn_head (NonCausalSelfAttention类中)\nn_embd (NonCausalSelfAttention类中)\ny (NonCausalSelfAttention类中)\nln_1 (FineBlock类中)\nattn (FineBlock类中)\nln_2 (FineBlock类中)\nmlp (FineBlock类中)\nn_codes_total (FineGPT类中)\ntransformer (FineGPT类中)\nlm_heads (FineGPT类中)\npos (FineGPT.forward函数中)\ntok_embs (FineGPT.forward函数中)\ntok_emb (FineGPT.forward函数中)\npos_emb (FineGPT.forward函数中)\nlogits (FineGPT.forward函数中)\nn_params (FineGPT.get_num_params函数中)\n\n导入语句:\nfrom dataclasses import dataclass\nimport math\nimport torch\nimport torch.nn as nn\nfrom torch.nn import functional as F\nfrom .model import GPT, GPTConfig, MLP",
+    "last_modified": 1683770783.055432,
+    "md5": "f60c8fdc7fe44295317b276948501034"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/bark/api.py": {
+    "symbols": "函数: text_to_semantic, semantic_to_waveform, save_as_prompt, generate_audio\n类: VoiceGenerateAPI\n变量: model, x_semantic, coarse_tokens, fine_tokens, audio_arr, full_generation\n导入语句: from typing import Dict, Optional, Union, numpy as np, .generation import GenerateModel",
+    "last_modified": 1683770783.055432,
+    "md5": "9344aea689a34a79565d30699d93d9aa"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/bark/model.py": {
+    "symbols": "函数: get_num_params, forward\n类: LayerNorm, CausalSelfAttention, MLP, Block, GPTConfig, GPT\n变量: config, bias, dropout, n_embd, n_head, block_size, input_vocab_size, output_vocab_size, n_layer, transformer, lm_head\n导入语句: math, torch, nn, functional as F, dataclasses",
+    "last_modified": 1683770783.055432,
+    "md5": "a626c164224345d893fe8bec8c2c14bc"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/records/__init__.py": {
+    "symbols": "导入语句:\nfrom typing import Optional,List,Dict,Any,Union\nimport json\n\n函数:\njson (在每个类中定义的staticmethod)\n\n类:\nClusterSettings\nTableSettings\nEnvSettings\nResourceRequirement\nResourceRequirementSettings\nJVMSettings\nSearchQuery\n(注：原本源码中还包含了EqualFilter, RangeFilter, OrRelation, AndRelation, FilterBuilder, QueryBuilder等类，但它们被注释掉了，因此这里不作展示)\n\n变量:\n无",
+    "last_modified": 1700053797.7984672,
+    "md5": "8cca92d7c63f851a8449d1014eb1368d"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/saas/minimax/__init__.py": {
+    "symbols": "导入语句: logging, requests, json, traceback, Enum, dataclass, Optional, List, Dict, Union, Any, str\n\n函数:\n- _minimax_api_retry_if_need\n- get_meta\n- stream_chat\n- request_with_retry\n\n类:\n- MiniMaxError\n- CustomSaasAPI\n- MiniMaxMessageRole\n- MiniMaxBotSettings\n- MiniMaxBotSettings.Setting\n- MiniMaxMessages\n- MiniMaxMessages.Message",
+    "last_modified": 1703928191.0495443,
+    "md5": "e297c19e0470a85edcf7e517a40729ac"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/saas/baichuan/__init__.py": {
+    "symbols": "导入语句: requests, json, time, hashlib, traceback, retrying, typing\n\n变量:\n- BaiChuanErrorCodes\n- CustomSaasAPI\n- infer_params\n- self.api_key\n- self.model\n- self.meta\n- self.api_url\n- data\n- start_time\n- res_data\n- time_cost\n- generated_text\n- generated_tokens_count\n- other_params\n\n函数:\n- get_meta\n- embed_query\n- async_stream_chat\n- request_with_retry (装饰器: retry)\n\n类:\n- CustomSaasAPI",
+    "last_modified": 1705487692.3597004,
+    "md5": "1c251e2ea8e6215bce274e05090a885f"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/saas/chatglm/__init__.py": {
+    "symbols": "导入语句: from wudao.api_request import executeSSE, getToken, queryTaskResult\n导入语句: from random import randint\n导入语句: import time\n导入语句: import uuid\n导入语句: from typing import Union, List, Tuple, Optional, Dict, Any\n\n函数: randomTaskCode\n类: ChatGLMAPI\n变量: api_key, public_key, params, self.api_key, self.public_key, self.ability_type, self.engine_type, self.temp_token",
+    "last_modified": 1703928191.0495443,
+    "md5": "69562087dc4f48b8cda1bafc8008b66e"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/saas/official_openai/__init__.py": {
+    "symbols": "函数: \n- get_meta\n- stream_chat\n\n类:\n- CustomSaasAPI\n\n变量:\n- infer_params\n- api_key\n- model\n- other_params\n- api_base\n- api_version\n- api_type\n- base_url\n- timeout\n- max_retries\n- proxies\n- local_address\n- client\n- ins\n- his\n- max_length\n- top_p\n- temperature\n- messages\n- model (在stream_chat函数内部)\n- max_retries (在stream_chat函数内部)\n- response\n- res\n\n导入语句:\n- from typing import List, Tuple, Dict, Any\n- import httpx\n- from openai import OpenAI",
+    "last_modified": 1710414015.7212265,
+    "md5": "f0a7144ecdb980c0e2d17830000b7d7d"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/saas/aws_bedrock/__init__.py": {
+    "symbols": "导入语句: json, typing.List, typing.Tuple, typing.Dict, boto3\n\n类: CustomSaasAPI\n\n函数: \n1. get_meta\n2. stream_chat\n3. _generate_instruction_from_history\n\n变量:\n1. aws_access_key_id\n2. aws_secret_access_key\n3. region_name\n4. model\n5. bedrock",
+    "last_modified": 1710763296.1297693,
+    "md5": "7882ac71316bb7409a994cd8bd5760c3"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/saas/qianwen_vl/__init__.py": {
+    "symbols": "函数:\n- get_meta\n- async_stream_chat\n- process_input\n\n类:\n- CustomSaasAPI\n\n变量:\n- HTTPStatus\n- List\n- Dict\n- dashscope\n- MultiModalConversationResponse\n- time\n- ray\n- BlockVLLMStreamServer\n- StreamOutputs\n- SingleOutput\n- SingleOutputMeta\n- threading\n- asyncio\n- json\n- base64\n- os\n- uuid\n- infer_params\n- self.api_key\n- self.model\n- self.meta\n- start_time\n- other_params\n- stream\n- res_data\n- request_id\n- v\n- time_count\n\n导入语句:\n- from http import HTTPStatus\n- from typing import List, Dict\n- import dashscope\n- from dashscope.api_entities.dashscope_response import MultiModalConversationResponse\n- import time\n- import ray\n- from byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta\n- import threading\n- import asyncio\n- import json\n- import base64\n- import os\n- import uuid",
+    "last_modified": 1710508318.3335774,
+    "md5": "e7e4787350547f9a2ceb29d5dc0864f7"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/saas/azure_openai/__init__.py": {
+    "symbols": "函数: get_meta, stream_chat\n类: CustomSaasAPI\n变量: infer_params, api_type, api_key, api_base, api_version, deployment_id, max_retries, messages, response, chat_completion, temperature, top_p, max_length, his, e\n导入语句:\n1. from typing import List, Tuple, Dict, Any\n2. import openai\n3. from byzerllm.utils.openai_utils import completion_with_retry",
+    "last_modified": 1703928191.0495443,
+    "md5": "0e4f1978b3bc7d91448e17eea293b100"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/saas/sparkdesk/__init__.py": {
+    "symbols": "导入语句:\nimport _thread as thread\nimport base64\nimport datetime\nimport hashlib\nimport hmac\nimport json\nfrom urllib.parse import urlparse\nimport ssl\nfrom datetime import datetime\nfrom time import mktime\nfrom urllib.parse import urlencode\nfrom wsgiref.handlers import format_date_time\nfrom typing import List, Tuple, Dict, Any\nimport time\nimport queue\nimport websocket\n\n函数:\non_error(ws, error)\non_close(ws, a, b)\non_open(ws)\nrun(ws, *args)\nget_meta(self)\nget_value(self, infer_params: Dict[str, str], keys_to_get)\nstream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [], max_length: int = 4096, top_p: float = 0.7, temperature: float = 0.9)\n\n类:\nSparkDeskAPIParams\nCustomSaasAPI\n\n变量:\nreponse_queue",
+    "last_modified": 1706011740.9802232,
+    "md5": "685c3091a8bf276c05a8dfb233b3d57f"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/saas/zhipu/__init__.py": {
+    "symbols": "导入语句:\n```python\nimport json\nfrom zhipuai import ZhipuAI\nimport time\nimport traceback\nfrom typing import List, Tuple, Dict, Any\nimport ray\nfrom byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta\nimport threading\nimport asyncio\n```\n函数:\n- `get_meta`\n- `embed_query`\n- `async_stream_chat`\n- `writer` (内部函数)\n- `write_running` (内部函数)\n\n类:\n- `CustomSaasAPI`\n\n变量:\n- `infer_params`\n- `self.api_key`\n- `self.model`\n- `self.client`\n- `self.meta`\n- `start_time`\n- `response`\n- `time_cost`\n- `request_id`\n- `messages`\n- `stream`\n- `other_params`\n- `v`\n- `r`\n- `max_length`\n- `top_p`\n- `temperature`\n- `res_data`\n- `server`\n- `generated_text`\n- `generated_tokens_count`",
+    "last_modified": 1705492249.2008595,
+    "md5": "c7d24b42c792eec50bf0755066ade5ba"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/saas/qianwen/__init__.py": {
+    "symbols": "函数:\n- get_meta\n- embed_query\n- async_stream_chat\n\n类:\n- CustomSaasAPI\n\n变量:\n- HTTPStatus\n- infer_params\n- self.api_key\n- self.model\n- self.meta\n- start_time\n- other_params\n- messages\n- res_data\n- request_id\n- v\n- time_count\n\n导入语句:\n- from http import HTTPStatus\n- from typing import List, Dict\n- import dashscope\n- from dashscope.api_entities.dashscope_response import Message\n- import time\n- import ray\n- from byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta\n- import threading\n- import asyncio",
+    "last_modified": 1710413956.7249465,
+    "md5": "efeb3dc031b8880b9c91b8ecb46411b6"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/saas/qianfan/__init__.py": {
+    "symbols": "函数:\n- get_meta\n- async_stream_chat\n\n类:\n- CustomSaasAPI\n\n变量:\n- infer_params\n- self.api_key\n- self.secret_key\n- os.environ[\"QIANFAN_ACCESS_KEY\"]\n- os.environ[\"QIANFAN_SECRET_KEY\"]\n- self.model\n- self.client\n- request_id\n- time_count\n\n导入语句:\n- traceback\n- typing.List\n- typing.Dict\n- os\n- time\n- qianfan\n- byzerllm.utils.BlockVLLMStreamServer\n- byzerllm.utils.StreamOutputs\n- byzerllm.utils.SingleOutput\n- byzerllm.utils.SingleOutputMeta\n- threading\n- asyncio\n- ray",
+    "last_modified": 1705578299.520797,
+    "md5": "c57ab67120d39cb34dbbe86c8c71375c"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/llama2/__init__.py": {
+    "symbols": "函数: get_meta, stream_chat, init_model, sft_train, sfft_train\n类: 无\n变量: device, timeout_s, skip_check_min_length, role_mapping, fin_ins, tokens, stopping_criteria, max_new_tokens, start_time, response, time_taken, new_tokens, answer, old_init, pretrained_model_dir, adaptor_model_dir, is_adaptor_model, tokenizer, longContextMode, quatization, load_in_8bit, quantization_config, model\n导入语句:\n1. from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, StoppingCriteriaList\n2. import transformers\n3. import torch\n4. from typing import Dict, List, Tuple\n5. from byzerllm.utils import generate_instruction_from_history, compute_max_new_tokens, tokenize_stopping_sequences\n6. from byzerllm.utils.types import StopSequencesCriteria\n7. from typing import Dict, Any, List, Generator\n8. from pyjava.storage import streaming_tar as STar\n9. from pyjava import RayContext\n10. from pyjava.api.mlsql import DataServer\n11. from byzerllm import BlockRow\n12. import os\n13. import time",
+    "last_modified": 1709276087.4087307,
+    "md5": "5cbbf31432055eb550e252854d93aa9a"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/starcode/__init__.py": {
+    "symbols": "符号类型: 函数, 符号名称: get_meta, stream_chat, init_model\n符号类型: 变量, 符号名称: config, device, tokens, response, answer, tokenizer, model\n符号类型: 导入语句,\n    - 符号名称: transformers (from transformers import AutoTokenizer, AutoModelForCausalLM)\n    - 符号名称: torch (import torch)\n    - 符号名称: typing (from typing import Dict,List,Tuple)",
+    "last_modified": 1703928191.0495443,
+    "md5": "2dcaebd0e26f67559cfc1476f2ed6b1f"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/chatglm6b/finetune.py": {
+    "symbols": "函数:\n- restore_model\n- load_model\n- init_model\n- predict\n- finetune_or_infer\n- preprocess_function_eval\n- preprocess_function_train\n- print_dataset_example\n- compute_metrics\n\n类:\n- BlockRow\n- CustomCallback\n\n变量:\n- logger\n- model_servers\n- model_binary\n- model\n- tokenizer\n- config\n- label_pad_token_id\n- data_collator\n- trainer\n- predict_data\n- prompt_column\n- response_column\n- max_target_length\n- prefix\n- raw_datasets\n- train_dataset\n- eval_dataset\n- predict_dataset\n- score_dict\n- checkpoint\n- train_result\n- results\n- metrics\n- predictions\n- labels\n- output_prediction_file\n- state\n- control\n\n导入语句:\n- import logging\n- import os\n- import sys\n- import json\n- import numpy as np\n- from datasets import load_dataset, Dataset\n- import jieba\n- from rouge_chinese import Rouge\n- from nltk.translate.bleu_score import sentence_bleu\n- from typing import Any, Tuple, List, Dict\n- import transformers\n- from transformers import (AutoConfig, AutoModel, AutoTokenizer, DataCollatorForSeq2Seq, Seq2SeqTrainingArguments, set_seed)\n- from byzerllm.chatglm6b.trainer_seq2seq import Seq2SeqTrainer\n- from byzerllm.chatglm6b.arguments import ModelArguments, DataTrainingArguments\n- from pyjava.api.mlsql import RayContext, PythonContext\n- from pyjava.storage import streaming_tar\n- from typing import Dict, Generator\n- from dataclasses import dataclass",
+    "last_modified": 1683190390.6485746,
+    "md5": "6506c662e1f2551ccd7c91ec89ebc7b4"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/chatglm6b/trainer_seq2seq.py": {
+    "symbols": "函数: evaluate, predict, prediction_step\n类: Seq2SeqTrainer\n变量: logger\n导入语句: torch, nn, Dataset (from torch.utils.data), is_deepspeed_zero3_enabled (from transformers.deepspeed), Trainer (from transformers.trainer), PredictionOutput (from transformers.trainer_utils), logging (from transformers.utils)",
+    "last_modified": 1680580505.41024,
+    "md5": "08046cca41a165e1803faa7eb105446e"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/chatglm6b/arguments.py": {
+    "symbols": "符号类型: 类, 符号名称\n- 类: ModelArguments, DataTrainingArguments\n\n符号类型: 变量\n- 变量: model_name_or_path, config_name, tokenizer_name, cache_dir, use_fast_tokenizer, model_revision, use_auth_token, resize_position_embeddings, quantization_bit, pre_seq_len, prefix_projection, lang, dataset_name, dataset_config_name, prompt_column, response_column, train_file, validation_file, test_file, overwrite_cache, preprocessing_num_workers, max_source_length, max_target_length, val_max_target_length, pad_to_max_length, max_train_samples, max_eval_samples, max_predict_samples, num_beams, ignore_pad_token_for_loss, source_prefix, forced_bos_token\n\n符号类型: 函数\n- 函数: __post_init__\n\n符号类型: 导入语句\n- 导入语句: from dataclasses import dataclass, field\n- 导入语句: from typing import Optional",
+    "last_modified": 1680580505.41024,
+    "md5": "159c3c438e974ceb427a9280b40446a6"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/chatglm6b/tunning/finetune.py": {
+    "symbols": "函数: run\n类: Seq2SeqDataCollatorForChatGLM, ComputeMetrics, Seq2SeqTrainerForChatGLM\n变量: model_args, data_args, training_args, finetuning_args, dataset, model, tokenizer, data_collator, trainer, gen_kwargs, train_result, metrics, predict_results\n导入语句:\n1. from typing import Optional, List\n2. from .utils import (load_pretrained, prepare_args, prepare_data, preprocess_data, plot_loss, Seq2SeqDataCollatorForChatGLM, ComputeMetrics, Seq2SeqTrainerForChatGLM)",
+    "last_modified": 1683381022.1637597,
+    "md5": "28f2223bc78450bd24037e33218ac9ec"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/chatglm6b/tunning/infer.py": {
+    "symbols": "函数: init_model, predict, extract_history\n类: 无\n变量: parser, args, pretrained_model, model_args, training_args, finetuning_args, model, tokenizer, max_length, top_p, temperature, response, last, history, item\n导入语句:\n1. from .utils import load_pretrained\n2. from .utils.config import ModelArguments, DataTrainingArguments, FinetuningArguments\n3. from transformers import HfArgumentParser\n4. import os",
+    "last_modified": 1683870510.4778595,
+    "md5": "c5e1a608c206e48b273373c3b7e7e5a3"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/chatglm6b/tunning/utils/other.py": {
+    "symbols": "函数: print_trainable_params, filter_model_params, save_trainable_params, load_trainable_params, prepare_model_for_training, merge_lora_weights, plot_loss\n类: 无\n变量: logger, trainable_params, all_param, filtered_state_dict, FIGURE_NAME, IGNORE_INDEX, FINETUNING_ARGS_NAME, PREDICTION_FILE_NAME\n导入语句:\n1. os\n2. sys\n3. json\n4. torch\n5. logging\n6. typing (Dict, List, Optional)\n7. transformers.Seq2SeqTrainingArguments\n8. transformers.trainer.TRAINER_STATE_NAME\n9. transformers.modeling_utils.PreTrainedModel\n10. peft.utils.other.WEIGHTS_NAME\n11. peft.utils.other.CONFIG_NAME",
+    "last_modified": 1683381022.1637597,
+    "md5": "6f948e5398838ed87098c5b3f640720c"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/chatglm6b/tunning/utils/config.py": {
+    "symbols": "导入语句: os, json, typing, dataclasses\n\n类: DatasetAttr, ModelArguments, DataTrainingArguments, FinetuningArguments",
+    "last_modified": 1683381022.1637597,
+    "md5": "a094b01c241980cc05e58c8c8cca20ab"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/chatglm6b/tunning/utils/common.py": {
+    "symbols": "函数:\n- init_adapter\n- load_pretrained\n- prepare_args\n- prepare_data\n- preprocess_data\n\n类:\n- ModelArguments\n- DataTrainingArguments\n- Seq2SeqTrainingArguments\n- FinetuningArguments\n\n变量:\n- logger\n\n所有导入语句:\n- os\n- sys\n- torch\n- hashlib\n- logging\n- typing\n- Optional\n- Tuple\n- List\n- transformers\n- AutoConfig\n- AutoModel\n- AutoTokenizer\n- HfArgumentParser\n- Seq2SeqTrainingArguments\n- set_seed\n- transformers.utils.check_min_version\n- transformers.utils.versions.require_version\n- transformers.modeling_utils.PreTrainedModel\n- transformers.tokenization_utils.PreTrainedTokenizer\n- datasets\n- datasets.Dataset\n- datasets.concatenate_datasets\n- datasets.load_dataset\n- peft.PeftModel\n- peft.TaskType\n- peft.LoraConfig\n- peft.get_peft_model\n- .config.ModelArguments\n- .config.DataTrainingArguments\n- .config.FinetuningArguments\n- .other.load_trainable_params\n- .other.print_trainable_params\n- .other.prepare_model_for_training\n- .other.merge_lora_weights\n- .other.IGNORE_INDEX\n- .other.FINETUNING_ARGS_NAME",
+    "last_modified": 1683381022.1637597,
+    "md5": "0de81a3a9359b3e19d24d1aca4f624d2"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/chatglm6b/tunning/utils/seq2seq.py": {
+    "symbols": "函数: \n- save_trainable_params\n- sentence_bleu\n- logging.basicConfig\n- os.makedirs\n\n类:\n- Seq2SeqDataCollatorForChatGLM\n- ComputeMetrics\n- Seq2SeqTrainerForChatGLM\n\n变量:\n- IGNORE_INDEX\n- FINETUNING_ARGS_NAME\n- PREDICTION_FILE_NAME\n- logger\n- Rouge\n- SmoothingFunction\n\n导入语句:\n- import os\n- import sys\n- import json\n- import torch\n- import logging\n- from dataclasses import dataclass\n- from typing import Any, Dict, List, Optional, Sequence, Tuple, Union\n- from transformers import Seq2SeqTrainer, DataCollatorForSeq2Seq\n- from transformers.trainer import PredictionOutput, TRAINING_ARGS_NAME\n- from transformers.deepspeed import is_deepspeed_zero3_enabled\n- from transformers.modeling_utils import PreTrainedModel\n- from transformers.tokenization_utils import PreTrainedTokenizer\n- import jieba\n- from rouge_chinese import Rouge\n- from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction\n- from .config import FinetuningArguments\n- from .other import (save_trainable_params, IGNORE_INDEX, FINETUNING_ARGS_NAME, PREDICTION_FILE_NAME)",
+    "last_modified": 1683381022.16776,
+    "md5": "867c289f2a99809a8b34fafb98fc0671"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/chatglm6b/tunning/utils/__init__.py": {
+    "symbols": "符号类型: 函数, 符号名称: load_pretrained, prepare_args, prepare_data, preprocess_data\n符号类型: 类, 符号名称: Seq2SeqDataCollatorForChatGLM, ComputeMetrics, Seq2SeqTrainerForChatGLM\n符号类型: 变量, 符号名称: 无\n符号类型: 导入语句, 符号名称: from .common import (..., from .seq2seq import (...), from .config import ModelArguments, from .other import plot_loss",
+    "last_modified": 1683381022.1637597,
+    "md5": "18fbe13f8bc09acf3c06a10c6c611c9e"
+  },
+  "/home/winubuntu/projects/byzer-llm/setup-machine/convert_safetensor.py": {
+    "symbols": "函数: convert_single, convert_multi, check_file_size, rename, convert_file, create_diff, check_final_model, convert_generic, convert\n类: AlreadyExists\n变量: COMMIT_DESCRIPTION, ConversionResult\n导入语句: argparse, json, os, shutil, defaultdict, inspect, TemporaryDirectory, torch, CommitInfo, CommitOperationAdd, Discussion, HfApi, hf_hub_download, repo_folder_name, safetensors.torch.load_file, safetensors.torch.save_file, transformers.AutoConfig, transformers.pipelines.base.infer_framework_load_model",
+    "last_modified": 1689057422.9836955,
+    "md5": "1682a87c9af90c6696b7d45ee9343b3f"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/alpha_moss/__init__.py": {
+    "symbols": "导入语句: transformers, re, os, json, torch, time, traceback, statistics, typing\n\n函数:\n- get_args\n- update_prefix\n- update_capability\n- cut\n\n类:\n- Preprocess",
+    "last_modified": 1688716894.7061086,
+    "md5": "70fbd36bfca4037761a12796c80d7478"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/piplines/diffusers.py": {
+    "symbols": "函数:\nfrom_pretrained\n__init__\nto\nenterers\nswap_vae\n\n类:\nPipeSession\nDiffusersPipeline\n\n变量:\nplugin_data\nopts\npretrained_model_id\nuse_auth_token\ntorch_dtype\ncache_dir\ndevice\nvariant\nsubfolder\ncheckpoint\ntemporary_pipe\nvae\ntext_encoder\ntext_encoder_2\ntokenizer\ntokenizer_2\nunet\nscheduler\nid\nmultidiff\nstage_1st\nsession\nself.device\nself.dtype\nself.checkpoint\n\n导入语句:\nimport copy\nimport gc\nimport inspect\nimport os\nfrom dataclasses import dataclass\nfrom typing import *\nimport numpy as np\nimport PIL.Image\nimport torch\nfrom diffusers import (AutoencoderKL, DDPMScheduler, DiffusionPipeline, StableDiffusionPipeline, UNet2DConditionModel)\nfrom diffusers.pipelines.stable_diffusion import (StableDiffusionPipelineOutput, convert_from_ckpt)\nfrom diffusers.utils import PIL_INTERPOLATION, numpy_to_pil, randn_tensor\nfrom packaging.version import Version\nfrom safetensors.torch import load_file\nfrom tqdm import tqdm\nfrom transformers import CLIPTextModel, CLIPTokenizer\nfrom byzerllm.stable_diffusion.api.diffusion.pipelines.diffusers import (DiffusersPipelineModel)\nfrom byzerllm.stable_diffusion.api.events.generation import (LoadResourceEvent, UNetDenoisingEvent)\nfrom byzerllm.stable_diffusion.api.models.diffusion import ImageGenerationOptions\nfrom byzerllm.stable_diffusion.diffusion.piplines.lpw import LongPromptWeightingPipeline\nfrom byzerllm.stable_diffusion.diffusion.upscalers.multidiffusion import (Multidiffusion)",
+    "last_modified": 1692159109.0751336,
+    "md5": "c6292f24c2dcd99f0245649e329783b1"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/moss/models/modeling_moss.py": {
+    "symbols": "函数:\n- create_sinusoidal_positions\n- rotate_every_two\n- apply_rotary_pos_emb\n\n类:\n- MossAttention\n- MossConfig (虽然在该文件中未直接定义，但通过`from .configuration_moss import MossConfig`导入)\n\n变量:\n- _CHECKPOINT_FOR_DOC\n- _CONFIG_FOR_DOC\n- MOSS_PRETRAINED_MODEL_ARCHIVE_LIST\n- logger\n\n导入语句:\n- from typing import Optional, Tuple, Union\n- import torch\n- import torch.utils.checkpoint\n- from torch import nn\n- from torch.nn import CrossEntropyLoss\n- import transformers\n- from transformers.activations import ACT2FN\n- from transformers.modeling_utils import PreTrainedModel\n- from transformers.modeling_outputs import BaseModelOutputWithPast, CausalLMOutputWithPast\n- from transformers.utils import add_code_sample_docstrings, add_start_docstrings, add_start_docstrings_to_model_forward, logging\n- from .configuration_moss import MossConfig",
+    "last_modified": 1682251905.148809,
+    "md5": "5fab66e08fd810186863012295329335"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/__init__.py": {
+    "symbols": "函数:\n- print_flush\n- timeout_handler\n- timeit\n- generate_instruction_from_history\n- compute_max_new_tokens\n- tokenize_string\n- tokenize_stopping_sequences_where_needed\n- tokenize_stopping_sequences\n- load_json_str\n- generate_file_md5\n- generate_str_md5\n\n类:\n- TimeoutException\n- SingleOutputMeta\n- SingleOutput\n- StreamOutputs\n- BlockVLLMStreamServer\n\n变量:\n- T\n- Path\n- wraps\n- time\n- json\n- hashlib\n- threading\n- TYPE_CHECKING\n- TypeVar\n- Dict\n- List\n- Optional\n- Union\n- Any\n- Tuple\n- get_type_hints\n- Annotated\n- get_args\n- Callable\n- typing\n- ClientActorHandle\n- ClientObjectRef\n- inspect\n- pydantic\n- sys\n- traceback\n- io\n- signal\n- contextmanager\n\n导入语句:\n- from pathlib import Path\n- from functools import wraps\n- import time\n- import json\n- import hashlib\n- import threading\n- from typing import TYPE_CHECKING, TypeVar, Dict, List, Optional, Union, Any, Tuple, get_type_hints, Annotated, get_args, Callable\n- import typing\n- from ray.util.client.common import ClientActorHandle, ClientObjectRef\n- import inspect\n- import pydantic\n- import sys\n- import traceback\n- import io\n- import signal\n- from contextlib import contextmanager",
+    "last_modified": 1709857506.4957318,
+    "md5": "970c06fc60797e57ba7e9f86581c79b5"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/client/__init__.py": {
+    "symbols": "这段代码定义了一个Python模块，用于ByzerLLM项目的客户端工具包。模块中包含多个类、枚举和函数，主要用于与大型语言模型（LLM）交互，处理请求和响应，并提供模板方法以格式化用户、助手和系统的消息。\n\n1. 首先，通过`logging`库创建一个名为`logger`的日志记录器并设置日志级别为INFO。\n\n2. 定义了一个枚举`Role`，用于表示用户、助手和系统的角色。\n\n3. 定义了几个`dataclass`结构体：\n   - `LLMHistoryItem`：存储历史交互中的角色和内容。\n   - `LLMResponse`：存储LLM的输出结果、输入数据以及元数据信息。\n   - `LLMFunctionCallResponse` 和 `LLMClassResponse`：分别封装了函数调用和类调用的LLM响应结果，扩展了LLMResponse并添加了具体的返回值。\n   - `LLMRequest`：用于向LLM发送指令时使用的参数结构体，包括指令内容、是否使用embedding、最大长度等。\n   - `FintuneRequestExtra`：定义微调模型训练时额外的参数选项。\n   - `FintuneRequest`：包含了预训练模型路径、类型、输入数据路径及额外参数的微调请求结构体。\n   - `ExecuteCodeResponse`：执行代码后的响应结果，包括状态码、输出、执行代码和提示符等内容。\n\n4. 定义了`InferBackend`枚举，表示推理后端引擎类型。\n\n5. `EventName`是一个枚举，定义了在调用模型前后的事件名称。\n\n6. `EventCallbackResult`和`EventCallback`分别定义了事件回调函数的结果类型和回调函数类型。\n\n7. `Template`类用于定义不同场景下的消息格式化模板，它接受角色映射、生成配置、清理函数以及格式化函数作为参数。\n\n8. `Templates`类提供了两个静态方法`qwen()`和`llama()`，分别返回两种不同的消息格式化模板实例，针对不同的对话风格进行定制。\n\n9. `deepseek_code_chat()`方法虽然未完全展示，但根据注释推测是用于DeepSeek Coder Chat模式的模板方法，该模板关注于从代码中提取特定类型的符号。",
+    "last_modified": 1710460582.3810089,
+    "md5": "85b14a91d5471b755994ea9be5a48ad6"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/fulltune/base_model/modeling_baichuan.py": {
+    "symbols": "函数:\n- _make_causal_mask\n- _expand_mask\n\n类:\n- RMSNorm\n- RotaryEmbedding\n\n变量:\n- logger\n- dtype\n- device\n- past_key_values_length\n- bsz\n- tgt_len\n- mask\n- mask_cond\n- inverted_mask\n- hidden_size\n- eps\n- variance\n- inv_freq\n- t\n- freqs\n- emb\n- cos_cached\n- sin_cached\n- max_position_embeddings\n- base\n- self.max_seq_len_cached\n\n导入语句:\n- math\n- typing\n- Optional\n- List\n- Tuple\n- Union\n- torch\n- nn\n- BCEWithLogitsLoss\n- CrossEntropyLoss\n- MSELoss\n- torch.utils.checkpoint\n- transformers\n- PreTrainedModel\n- add_start_docstrings\n- ACT2FN\n- BaseModelOutputWithPast\n- CausalLMOutputWithPast\n- SequenceClassifierOutputWithPast\n- logging\n- add_start_docstrings_to_model_forward\n- replace_return_docstrings\n- xformers\n- ops as xops\n- BaiChuanConfig",
+    "last_modified": 1690463648.431297,
+    "md5": "0ce5503dfbf5ec3fa205a1957fc711f1"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/utils/fulltune/pretrain/__init__.py": {
+    "symbols": "函数:\n- _init_distributed_environment\n\n类:\n- TrainArgs\n- DeviceID\n- DataEngine\n- ParallelConfig\n\n变量:\n- DEFUALT_CONFIG\n\n导入语句:\n- from typing import List, Optional, Tuple, Any, Dict, Callable, Generator\n- from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig\n- import ray\n- import torch\n- import deepspeed\n- import deepspeed.comm as dist\n- import sentencepiece as spm\n- import numpy as np\n- import datetime\n- import uuid\n- import json\n- import os\n- from pyjava.storage import streaming_tar as STar\n- from pyjava import RayContext\n- from pyjava.api.mlsql import DataServer\n- from byzerllm import BlockRow\n- from ray.air.util.torch_dist import (\n    - ActorHandle,\n    - _get_node_and_gpu_ids,\n    - _init_torch_distributed,\n    - get_address_and_port,\n)\n- import dataclasses\n- from ... import print_flush\n- import shutil\n- from ray.train.constants import DEFAULT_NCCL_SOCKET_IFNAME",
+    "last_modified": 1703068820.854804,
+    "md5": "c70dfe3b8d6c2c272b614bc26f0b03e2"
+  },
+  "/home/winubuntu/projects/byzer-llm/src/byzerllm/bark/generation.py": {
+    "symbols": "函数: \n- _cast_bool_env_var\n- autocast\n- _inference_mode\n- _clear_cuda_cache\n- _grab_best_device\n- _get_ckpt_path\n- _download\n- clean_models\n- _load_model\n\n类:\n- InferenceContext\n- GenerateModel\n\n变量:\n- CONTEXT_WINDOW_SIZE\n- SEMANTIC_RATE_HZ\n- SEMANTIC_VOCAB_SIZE\n- CODEBOOK_SIZE\n- N_COARSE_CODEBOOKS\n- N_FINE_CODEBOOKS\n- COARSE_RATE_HZ\n- SAMPLE_RATE\n- SUPPORTED_LANGS\n- ALLOWED_PROMPTS\n- logger\n- CUR_PATH\n- default_cache_dir\n- CACHE_DIR\n- USE_SMALL_MODELS\n- GLOBAL_ENABLE_MPS\n- OFFLOAD_CPU\n- REMOTE_MODEL_PATHS\n- TEXT_ENCODING_OFFSET\n- SEMANTIC_PAD_TOKEN\n- TEXT_PAD_TOKEN\n- SEMANTIC_INFER_TOKEN\n- COARSE_SEMANTIC_PAD_TOKEN\n- COARSE_INFER_TOKEN\n\n导入语句:\n- import contextlib\n- import gc\n- import os\n- import re\n- from encodec import EncodecModel\n- import funcy\n- import logging\n- import numpy as np\n- from scipy.special import softmax\n- import torch\n- from torch.nn.functional import F\n- import tqdm\n- from transformers import BertTokenizer\n- from huggingface_hub import hf_hub_download\n- from .model import GPTConfig, GPT\n- from .model_fine import FineGPT, FineGPTConfig",
+    "last_modified": 1683770783.055432,
+    "md5": "2a1d73b2824d663bcd557d10725dca76"
+  }
+}

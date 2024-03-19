@@ -1,9 +1,9 @@
 source_dir: /home/winubuntu/projects/byzer-llm/saas
 target_file: /home/winubuntu/projects/byzer-llm/output.txt
 
-# model: qianwen_short_chat
-# model_max_length: 2000
-# anti_quota_limit: 5
+model: qianwen_short_chat
+model_max_length: 2000
+anti_quota_limit: 5
 
 urls: https://raw.githubusercontent.com/allwefantasy/byzer-llm/master/README.md
 

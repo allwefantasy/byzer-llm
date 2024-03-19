@@ -230,7 +230,7 @@ byzerllm query --model llama2_chat --query "你好"
 You can undeploy the model like this:
 
 ```shell
-byzerllm undeploy --model qianwen_short_chat
+byzerllm undeploy --model llama2_chat
 ```
 
 If you need to specify the Ray address, use `--ray_address`.
