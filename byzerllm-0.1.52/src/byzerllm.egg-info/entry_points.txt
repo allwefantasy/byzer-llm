@@ -1,0 +1,2 @@
+[console_scripts]
+byzerllm = byzerllm.byzerllm:main
