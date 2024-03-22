@@ -124,21 +124,26 @@ class CustomSaasAPI:
                 # input_tokens_count = 0     
                 # generated_tokens_count = 0
                 
-                request_id[0] = str(uuid.uuid4())
+                request_id[0] = str(uuid.uuid4())                
 
-                for chunk in response:                                          
-                    content = chunk.choices[0].delta.content
-                    r += content                                       
+                for chunk in response:                                                              
+                    content = chunk.choices[0].delta.content or ""
+                    r += content        
+                    if hasattr(chunk,"usage"):
+                        input_tokens_count = chunk.usage.prompt_tokens
+                        generated_tokens_count = chunk.usage.completion_tokens
+                    else:
+                        input_tokens_count = 0
+                        generated_tokens_count = 0
                     ray.get(server.add_item.remote(request_id[0], 
                                                     StreamOutputs(outputs=[SingleOutput(text=r,metadata=SingleOutputMeta(
-                                                        input_tokens_count=response.usage.prompt_tokens,
-                                                        generated_tokens_count=response.usage.completion_tokens,
+                                                        input_tokens_count=input_tokens_count,
+                                                        generated_tokens_count=generated_tokens_count,
                                                     ))])
-                                                    ))                 
-                ray.get(server.mark_done.remote(request_id[0]))
+                                                    ))                                                   
             except:
-                traceback.print_exc()
-                ray.get(server.add_error.remote(request_id[0], traceback.format_exc()))
+                traceback.print_exc()            
+            ray.get(server.mark_done.remote(request_id[0]))
 
         if stream:
             threading.Thread(target=writer,daemon=True).start()            
