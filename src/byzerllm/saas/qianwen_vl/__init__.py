@@ -40,9 +40,8 @@ class CustomSaasAPI:
             top_p: float = 0.9,
             temperature: float = 0.1,
             **kwargs
-    ):
-        ins_json = json.loads(ins)
-        messages = his + [{"role": "user", "content": self.process_input(ins_json)}]        
+    ):        
+        messages = his + [{"role": "user", "content": self.process_input(ins)}]        
         
         start_time = time.monotonic()
         
@@ -130,13 +129,28 @@ class CustomSaasAPI:
             print(s)
             raise Exception(s)
 
-    def process_input(self, ins_json: List[Dict]):
+    def process_input(self, ins: str):
+        content = []
+        try:
+            ins_json = json.loads(ins)
+        except:
+            return ins
+        
         content = []
         for item in ins_json:
             if "image" in item:
                 image_data = item["image"]
+                ## "data:image/jpeg;base64," 
+                if image_data.startswith("data:"):
+                    [data_type,image] = image_data.split(";")
+                    [_,image_data] = image.split(",")
+                    [_,image_type] = data_type.split(":")
+                else:
+                    image_type = "jpg"
+                    image_data = image_data
+                
                 image_b = base64.b64decode(image_data)
-                image_file = os.path.join("/tmp",f"{str(uuid.uuid4())}.jpg")
+                image_file = os.path.join("/tmp",f"{str(uuid.uuid4())}.{image_type}")
                 with open(image_file,"wb") as f:
                     f.write(image_b)
 
@@ -144,4 +158,7 @@ class CustomSaasAPI:
             elif "text" in item:
                 text_data = item["text"]
                 content.append({"text": text_data})
+
+        if not content:
+            return ins        
         return content

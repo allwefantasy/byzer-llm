@@ -1,7 +1,10 @@
 
 from typing import List, Tuple, Dict,Any
 import httpx
-from openai import OpenAI   
+from openai import OpenAI 
+import base64
+import os  
+import json
 
 class CustomSaasAPI:    
 
@@ -50,20 +53,40 @@ class CustomSaasAPI:
             "backend":"saas"
         }]
 
-    def stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
+    def process_input(self, ins: str):
+        content = []
+        try:
+            ins_json = json.loads(ins)
+        except:            
+            return ins
+        
+        content = []
+        for item in ins_json:
+            if "image" in item or "image_url" in item:
+                image_data = item.get("image",item.get("image_url",""))
+                ## "data:image/jpeg;base64," 
+                if not image_data.startswith("data:"):
+                    image_data = "data:image/jpeg;base64," + image_data                                                                                
+                content.append({"image_url": {"url":image_data},"type": "image_url",})
+            elif "text" in item:
+                text_data = item["text"]
+                content.append({"text": text_data,"type":"text"})
+        if not content:
+            return ins
+        
+        return content   
+
+    async def async_stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
                     max_length: int = 4096,
                     top_p: float = 0.7,
                     temperature: float = 0.9, **kwargs):
 
-        model = self.model
-        max_retries = self.max_retries
+        model = self.model        
 
         if "model" in kwargs:
-            model = kwargs["model"]
-        if "max_retries" in kwargs:
-            max_retries = kwargs["max_retries"]
+            model = kwargs["model"]                  
 
-        messages = his + [{"role": "user", "content": ins}]
+        messages = his + [{"role": "user", "content": self.process_input(ins)}]
         
         try:
             response = self.client.chat.completions.create(
