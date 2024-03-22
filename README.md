@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2024/03] Release Byzer-LLM 0.1.52
+- [2024/03] Release Byzer-LLM 0.1.53
 - [2024/02] Release Byzer-LLM 0.1.40
 - [2024/01] Release Byzer-LLM 0.1.39
 - [2023/12] Release Byzer-LLM 0.1.30
@@ -86,6 +86,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.53:  Optimize saas/official_openai model
 - 0.1.52:  Add Yi-VL-Plus Saas model support
 - 0.1.50:  Add byzerllm command line tool
 - 0.1.48:  Add qwen_vl_saas model support/ Callback support for Byzer-LLM 
