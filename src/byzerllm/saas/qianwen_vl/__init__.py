@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import List, Dict
+from typing import List, Dict,Union,Any
 import dashscope
 from dashscope.api_entities.dashscope_response import MultiModalConversationResponse
 import time
@@ -41,7 +41,7 @@ class CustomSaasAPI:
             temperature: float = 0.1,
             **kwargs
     ):        
-        messages = his + [{"role": "user", "content": self.process_input(ins)}]        
+        messages = [{"role":message["role"],"content":self.process_input(message["content"])} for message in his] + [{"role": "user", "content": self.process_input(ins)}]        
         
         start_time = time.monotonic()
         
@@ -129,7 +129,10 @@ class CustomSaasAPI:
             print(s)
             raise Exception(s)
 
-    def process_input(self, ins: str):
+    def process_input(self, ins: Union[str, List[Dict[str, Any]]]):
+        if isinstance(ins, list):
+            return ins
+        
         content = []
         try:
             ins_json = json.loads(ins)
