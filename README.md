@@ -218,10 +218,10 @@ Deploy a model:
 
 ```shell
 byzerllm deploy --model_path /home/byzerllm/models/openbuddy-llama2-13b64k-v15 \
---pretrained_model_type custom/llama2 \
+--pretrained_model_type custom/auto \
 --gpu_gpus_per_worker 4 \
 --num_workers 1 \
---udf_name llama2_chat 
+--model llama2_chat 
 ```
 
 
