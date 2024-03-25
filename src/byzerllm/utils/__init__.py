@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 from functools import wraps
 import time
@@ -941,7 +942,7 @@ def format_prompt_jinja2(func,**kargs):
     prompt = "\n".join([line[prefix_whitespace_length:] for line in lines])
     tpl = Template(prompt)
     return tpl.render(kargs)
-  
 
-
+def random_uuid() -> str:
+    return str(uuid.uuid4().hex)
 
