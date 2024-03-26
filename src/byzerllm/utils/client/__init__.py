@@ -32,10 +32,7 @@ import pydantic
 import copy
 import traceback
 from enum import Enum
-
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+from loguru import logger
 
 # create a enum for the role
 class Role:
@@ -1373,7 +1370,7 @@ class ByzerLLM:
                     del self.func_impl_cache[k]
             return self        
 
-    def prompt(self,model:Optional[str]=None,render:Optional[str]="simple",print_prompt:bool=False):              
+    def prompt(self,model:Optional[str]=None,render:Optional[str]="simple",check_result:bool=False):              
             if model is None:
                 model = self.default_model_name            
 
@@ -1403,7 +1400,15 @@ class ByzerLLM:
                         }], 
                             response_class=response_class,                     
                             impl_func_params=input_dict)                    
-                        r:LLMClassResponse = t[0]                        
+                        r:LLMClassResponse = t[0]     
+                        if r.value is None and check_result:
+                            logger.warning(f'''
+                                {func.__name__} return None.
+                                metadata:
+                                {r.metadata}
+                                response:
+                                {r.response}
+                            ''')                   
                         return r.value
                     elif issubclass(signature.return_annotation,str):
                         t = self.chat_oai(model=model,conversations=[{
@@ -1412,7 +1417,7 @@ class ByzerLLM:
                         }])
                         return t[0].output
                     else:
-                        raise Exception("impl function should return a pydantic model or string")
+                        raise Exception(f"{func.__name__} should return a pydantic model or string")
                 return wrapper      
             return _impl
     
@@ -1691,7 +1696,7 @@ cost {time.monotonic() - start_time} seconds
             [index, worker] = ray.get(udf_master.get.remote(worker_id))                        
             res = ray.get(worker.async_apply.remote(new_input_value))
             
-            event_result = self._trigger_event(EventName.AFTER_CALL_MODEL, model, json.loads(res["value"][0]))
+            event_result = self._trigger_event(EventName.AFTER_CALL_MODEL,self, model, json.loads(res["value"][0]))
             if event_result is not None:
                 return event_result
                                                 

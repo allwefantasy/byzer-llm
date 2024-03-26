@@ -92,7 +92,7 @@ def log_to_file(msg:str,file_path:str):
         f.write("\n")
 
 
-def prompt(llm=None,render:str="simple",print_prompt:bool=False):    
+def prompt(llm=None,render:str="simple",check_result:bool=False):    
     '''
     decorator to add prompt function to a method
     render: simple,jinja/jinja2
@@ -111,7 +111,7 @@ def prompt(llm=None,render:str="simple",print_prompt:bool=False):
                 instance = input_dict.pop("self") 
                 is_lambda = inspect.isfunction(llm) and llm.__name__ == '<lambda>'                
                 if is_lambda:                                        
-                    return llm(instance).prompt(render=render,print_prompt=print_prompt)(func)(instance,**input_dict)             
+                    return llm(instance).prompt(render=render,check_result=check_result)(func)(instance,**input_dict)             
             
             if render == "jinja2" or render == "jinja":                  
                 return format_prompt_jinja2(func,**input_dict)
