@@ -1573,7 +1573,6 @@ llm = ByzerLLM()
 chat_name = "aws_bedrock_llama2_70b_chat"
 
 llm.setup_num_workers(1).setup_gpus_per_worker(0)
-llm.setup_template(chat_name, Templates.llama())
 
 if llm.is_model_exist(chat_name):
   llm.undeploy(udf_name=chat_name)
@@ -1582,9 +1581,10 @@ llm.deploy(model_path="",
            pretrained_model_type="saas/aws_bedrock",
            udf_name=chat_name,
            infer_params={
-               "saas.aws_access_key_id": "your access key",
-               "saas.aws_secret_access_key": "your secret key",
+               "saas.aws_access_key": "your access key",
+               "saas.aws_secret_key": "your secret key",
                "saas.region_name": "your region name",
+               "saas.model_api_version": "model api version",
                "saas.model": "meta.llama2-70b-chat-v1"
            })
 
@@ -1598,6 +1598,8 @@ v = llm.chat_oai(model=chat_name,conversations=[{
 
 1. meta.llama2-70b-chat-v1
 2. meta.llama2-13b-chat-v1
+3. anthropic.claude-3-sonnet-20240229-v1:0
+4. anthropic.claude-3-haiku-20240307-v1:0
 
 ---
 
