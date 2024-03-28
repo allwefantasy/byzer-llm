@@ -6,3 +6,4 @@ flash-attention/
 vllm/
 notebooks/
 **/__pycache__/**
+*.log
