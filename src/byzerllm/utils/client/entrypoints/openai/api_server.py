@@ -230,7 +230,7 @@ if __name__ == "__main__":
     )
 
     ray.init(
-        "ray://172.16.10.245:10001", namespace="default", ignore_reinit_error=True
+        "auto", namespace="default", ignore_reinit_error=True
     )
 
     if token := os.environ.get("BYZERLLM_API_KEY") or args.api_key:
