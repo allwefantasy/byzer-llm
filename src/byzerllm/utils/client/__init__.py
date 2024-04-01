@@ -412,7 +412,19 @@ class ByzerLLM:
             self.context.have_fetched = True
             self.ray_context = self.context.rayContext 
 
-        self.event_callbacks: Dict[EventName, List[EventCallback]] = {}  
+        self.event_callbacks: Dict[EventName, List[EventCallback]] = {} 
+        self.sub_clients = {}
+
+    def setup_sub_client(self,client_name:str,client:Optional['ByzerLLM']=None)->'ByzerLLM':
+        self.sub_clients[client_name] = client
+        return self
+
+    def get_sub_client(self,client_name:str)->'ByzerLLM':
+        return self.sub_clients[client_name]
+
+    def remove_sub_client(self,client_name:str)->'ByzerLLM':
+        del self.sub_clients[client_name]
+        return self  
 
     def add_event_callback(self, event_name: EventName, callback: EventCallback) -> None:
         self.event_callbacks.setdefault(event_name, []).append(callback)
