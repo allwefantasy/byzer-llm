@@ -1,24 +1,32 @@
-import traceback
 from typing import List, Dict
-import os
 import time
 import qianfan
-from byzerllm.utils import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
 import threading
 import asyncio
 import ray
 
+from byzerllm.utils import random_uuid
+from byzerllm.log import init_logger
+from byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta
+
+logger = init_logger(__name__)
+
 
 class CustomSaasAPI:
-    def __init__(self, infer_params: Dict[str, str]) -> None:        
-        self.api_key: str = infer_params["saas.api_key"]
-        self.secret_key: str = infer_params["saas.secret_key"]
-        os.environ["QIANFAN_ACCESS_KEY"] = self.api_key
-        os.environ["QIANFAN_SECRET_KEY"] = self.secret_key
-        qianfan.AK(self.api_key)
-        qianfan.SK(self.secret_key)
-        self.model: str = infer_params.get("saas.model", "ERNIE-Bot-turbo")   
-        self.client = qianfan.ChatCompletion()   
+    def __init__(self, infer_params: Dict[str, str]) -> None:
+        self.api_key: str = infer_params.get("saas.api_key", "")
+        self.secret_key: str = infer_params.get("saas.secret_key", "")
+        self.access_token: str = infer_params.get("saas.access_token", "")
+
+        if not self.access_token and (not self.api_key or not self.secret_key):
+            raise ValueError("Please specify either access_token or ak/sk")
+
+        # os.environ["QIANFAN_ACCESS_KEY"] = self.api_key
+        # os.environ["QIANFAN_SECRET_KEY"] = self.secret_key
+        # qianfan.AK(self.api_key)
+        # qianfan.SK(self.secret_key)
+        self.model: str = infer_params.get("saas.model", "ERNIE-Bot-turbo")
+        self.client = qianfan.ChatCompletion(ak=self.api_key, sk=self.secret_key, access_token=self.access_token)
         try:
             ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
         except ValueError:            
@@ -42,7 +50,7 @@ class CustomSaasAPI:
             temperature: float = 0.9,
             **kwargs
     ):
-
+        request_id = kwargs.get("request_id", random_uuid())
         other_params = {}
         
         if "request_timeout" in kwargs:
@@ -74,7 +82,9 @@ class CustomSaasAPI:
             messages.append(ins, qianfan.Role.User)
         
         start_time = time.monotonic()
-        
+
+        logger.info(f"Receiving request {request_id} model: {self.model}")
+
         res_data = self.client.do(
             model=self.model,            
             messages=messages,
@@ -122,6 +132,13 @@ class CustomSaasAPI:
         generated_text = res_data["result"]
         generated_tokens_count = res_data["usage"]["completion_tokens"]
         input_tokens_count = res_data["usage"]["prompt_tokens"]
+
+        logger.info(
+            f"Completed request {request_id} "
+            f"model: {self.model} "
+            f"cost: {time_cost} "
+            f"result: {res_data}"
+        )
 
         return [(generated_text,{"metadata":{
                 "request_id":res_data["id"],
