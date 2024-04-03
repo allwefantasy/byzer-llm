@@ -419,11 +419,12 @@ class ByzerLLM:
         self.sub_clients[client_name] = client
         return self
 
-    def get_sub_client(self,client_name:str)->'ByzerLLM':
-        return self.sub_clients[client_name]
+    def get_sub_client(self,client_name:str)->Optional['ByzerLLM']:
+        return self.sub_clients.get(client_name,None)
 
     def remove_sub_client(self,client_name:str)->'ByzerLLM':
-        del self.sub_clients[client_name]
+        if client_name in self.sub_clients:
+            del self.sub_clients[client_name]
         return self  
 
     def add_event_callback(self, event_name: EventName, callback: EventCallback) -> None:

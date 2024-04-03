@@ -147,7 +147,9 @@ class CustomSaasAPI:
                 if image_data.startswith("data:"):
                     [data_type,image] = image_data.split(";")
                     [_,image_data] = image.split(",")
-                    [_,image_type] = data_type.split(":")
+                    [_,image_and_type] = data_type.split(":")
+                    image_type = image_and_type.split("/")[1]
+
                 else:
                     image_type = "jpg"
                     image_data = image_data
