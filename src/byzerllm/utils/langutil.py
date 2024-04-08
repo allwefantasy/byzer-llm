@@ -9,10 +9,9 @@ from typing import Any, Optional
 import re
 from urllib.parse import urlparse
 import warnings
-from rich.console import Console
 
-console = Console(highlight=False)
-
+import json
+from typing import Any, Dict, List, Union
 
 @contextmanager
 def switch_cwd(path):
@@ -132,8 +131,8 @@ def find_available_port(port=None):
             return s.connect_ex(("localhost", port)) == 0
 
     while is_port_occupied(port):
-        console.print(
-            f"Port [yellow]{port}[/] already in use. Incrementing port number to"
+        print(
+            f"Port [yellow]{port}[/] already in use. Incrementing port number to",
             " find an available one."
         )
         port += 1
@@ -156,5 +155,8 @@ def to_bool(s: str) -> bool:
         raise ValueError(
             f"Invalid boolean value: {s}. Valid true values: {true_values}. Valid false"
             f" values: {false_values}."
-        )
+        )    
+
+
+
 

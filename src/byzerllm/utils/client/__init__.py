@@ -19,6 +19,7 @@ from byzerllm.utils import (function_calling_format,
                             format_prompt_jinja2
                             )
 from byzerllm.utils.ray_utils import cancel_placement_group,get_actor_info
+from byzerllm.utils.json_repaire import repair_json_str
 from langchain.prompts import PromptTemplate
 import json
 import dataclasses
@@ -1125,7 +1126,12 @@ class ByzerLLM:
                 return r
         
         try:
-            ms = response_class.parse_obj(json.loads(code))            
+            try:
+                obj = json.loads(code)
+            except Exception as inst:
+                print("Fail to parse json. Error:\n" + str(inst) + "\n" + traceback.format_exc(),flush=True)
+                obj = json.loads(repair_json_str(code))
+            ms = response_class.parse_obj(obj)            
         except Exception as inst:
             r.metadata["reason"] = str(inst) + "\n" + traceback.format_exc()
             return r                                       
@@ -1162,7 +1168,7 @@ class ByzerLLM:
                  func_params:Optional[Dict[str,Any]]=None,
                  response_class:Optional[Union[pydantic.BaseModel,str]] = None, 
                  response_after_chat:Optional[Union[pydantic.BaseModel,str]] = False,
-                 enable_default_sys_message:bool=False,                 
+                 enable_default_sys_message:bool=True,                 
                  model:Optional[str] = None,
                  role_mapping=None,llm_config:Dict[str,Any]={}
                  )->Union[List[LLMResponse],List[LLMFunctionCallResponse],List[LLMClassResponse]]:        

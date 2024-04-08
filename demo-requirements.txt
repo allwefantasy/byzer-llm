@@ -25,7 +25,6 @@ uvicorn
 retrying
 zhipuai
 dashscope
-tiktoken
 
 # dependencies only for sparkdesk
 # websockets
