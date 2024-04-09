@@ -107,11 +107,31 @@ def prompt(llm=None,render:str="jinja2",check_result:bool=False):
             input_dict = {}
             for param in signature.parameters:
                 input_dict.update({ param: arguments.arguments[param] })
-            if "self" in input_dict:
-                instance = input_dict.pop("self")                 
-                is_lambda = inspect.isfunction(llm) and llm.__name__ == '<lambda>'                
-                if is_lambda:                                        
-                    return llm(instance).prompt(render=render,check_result=check_result)(func)(instance,**input_dict)             
+
+            is_lambda = inspect.isfunction(llm) and llm.__name__ == '<lambda>'
+            if is_lambda:    
+                if "self" in input_dict:
+                    instance = input_dict.pop("self")                                                                 
+                    return llm(instance).prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
+                
+            if isinstance(llm,ByzerLLM):
+                if "self" in input_dict:
+                    instance = input_dict.pop("self")                                                                 
+                    return llm.prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
+                else:    
+                    return llm.prompt(render=render,check_result=check_result)(func)(**input_dict)
+            
+            if isinstance(llm,str):
+                _llm = ByzerLLM()
+                _llm.setup_default_model_name(llm)
+                _llm.setup_template(llm,"auto")
+                
+                if "self" in input_dict:
+                    instance = input_dict.pop("self")                                                                 
+                    return _llm.prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
+                else:    
+                    return _llm.prompt(render=render,check_result=check_result)(func)(**input_dict)    
+
             
             new_input_dic = func(**input_dict)                
             if new_input_dic and not isinstance(new_input_dic,dict):
