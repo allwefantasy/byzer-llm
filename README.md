@@ -1219,7 +1219,7 @@ Prompt Class is a class which contains the prompt function.
 Here is a simple example for prompt function:
 
 ```python
-@llm.prompt()
+@llm.prompt(render="simple")
 def generate_answer(context:str,question:str)->str:
     '''
     Answer the question based on only the following context:
@@ -1257,7 +1257,7 @@ class RAG():
         self.llm.setup_template(model="sparkdesk_chat",template="auto")
         self.llm.setup_default_model_name("sparkdesk_chat")        
     
-    @byzerllm.prompt(lambda self: self.llm)
+    @byzerllm.prompt(lambda self: self.llm,render="simple")
     def generate_answer(self,context:str,question:str)->str:
         '''
         Answer the question based on only the following context:
@@ -1270,6 +1270,14 @@ class RAG():
 t = RAG()
 print(t.generate_answer(context=context,question="Byzer SQL是什么？"))    
 ```
+
+The first parameter of the `byzerllm.prompt` is the `llm` instance, the following type can be accepted:
+
+1. lambda function: the lambda function will accept the `self` as the parameter, and then you can access the llm instance by self
+2. string: the string is the model name, we will create the llm instance by the model name automatically.
+3. llm: the llm instance.
+
+Notice that the llm instance we mentioned above is the `ByzerLLM` instance.
 
 If you only want to get the prompt which is bind the parameters instead of execute the prompt, you can use the following code:
 
@@ -1286,7 +1294,7 @@ class RAG():
         self.llm.setup_template(model="sparkdesk_chat",template="auto")
         self.llm.setup_default_model_name("sparkdesk_chat")        
     
-    @byzerllm.prompt()
+    @byzerllm.prompt(render="simple")
     def generate_answer(self,context:str,question:str)->str:
         '''
         Answer the question based on only the following context:
@@ -1301,6 +1309,7 @@ print(t.generate_answer(context=context,question="Byzer SQL是什么？"))
 ```
 
 The difference between the two code is that the `byzerllm.prompt whether have delived the `llm` instance to the prompt function.
+
 Here is the output:
 
 ```text
@@ -1350,7 +1359,7 @@ class RAG():
         self.llm.setup_template(model="sparkdesk_chat",template="auto")
         self.llm.setup_default_model_name("sparkdesk_chat")        
     
-    @byzerllm.prompt(lambda self: self.llm)
+    @byzerllm.prompt(lambda self: self.llm,render="simple")
     def generate_answer(self,context:str,question:str)->ByzerProductDesc:
         '''
         Answer the question based on only the following context:
@@ -1419,6 +1428,57 @@ print(response)
 
 ## output:Hello! Is there anything else I can assist you with?
 ```
+
+If you want to handle the parameters in the prompt function using Python code instead of Jinjia2, you can use the following code:
+
+```python
+import byzerllm
+
+byzerllm.connect_cluster()
+
+data = {
+    'name': 'Jane Doe',
+    'task_count': 3,
+    'tasks': [
+        {'name': 'Submit report', 'due_date': '2024-03-10'},
+        {'name': 'Finish project', 'due_date': '2024-03-15'},
+        {'name': 'Reply to emails', 'due_date': '2024-03-08'}
+    ]
+}
+
+
+class RAG():
+    def __init__(self):        
+        self.llm = byzerllm.ByzerLLM()
+        self.llm.setup_template(model="sparkdesk_chat",template="auto")
+        self.llm.setup_default_model_name("sparkdesk_chat")        
+    
+    @byzerllm.prompt(lambda self:self.llm,render="jinja2")
+    def generate_answer(self,name,task_count,tasks)->str:
+        '''
+        Hello {{ name }},
+
+        This is a reminder that you have {{ task_count }} pending tasks:
+            
+        {{ tasks }}
+
+        Best regards,
+        Your Reminder System
+        '''
+        
+        tasks_str = "\n".join([f"- Task: {task['name']} | Due: { task['due_date'] }" for task in tasks])
+        return {"tasks": tasks_str}
+
+t = RAG()
+
+response = t.generate_answer(**data)
+print(response)
+```
+
+Make sure the return value is a dict, and the key is the parameter name in the prompt function. 
+The return value will override the parameter value and then use the new value to render the prompt function.
+
+
 
 ## LLM Default Generation Parameters
 
