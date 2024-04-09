@@ -92,7 +92,7 @@ def log_to_file(msg:str,file_path:str):
         f.write("\n")
 
 
-def prompt(llm=None,render:str="simple",check_result:bool=False):    
+def prompt(llm=None,render:str="jinja2",check_result:bool=False):    
     '''
     decorator to add prompt function to a method
     render: simple,jinja/jinja2
@@ -101,17 +101,23 @@ def prompt(llm=None,render:str="simple",check_result:bool=False):
     def _impl(func):                       
         @functools.wraps(func)
         def wrapper(*args, **kwargs):                      
-            signature = inspect.signature(func)
+            signature = inspect.signature(func)                       
             arguments = signature.bind(*args, **kwargs)
             arguments.apply_defaults()
             input_dict = {}
             for param in signature.parameters:
                 input_dict.update({ param: arguments.arguments[param] })
             if "self" in input_dict:
-                instance = input_dict.pop("self") 
+                instance = input_dict.pop("self")                 
                 is_lambda = inspect.isfunction(llm) and llm.__name__ == '<lambda>'                
                 if is_lambda:                                        
                     return llm(instance).prompt(render=render,check_result=check_result)(func)(instance,**input_dict)             
+            else:
+                new_input_dic = func(**input_dict)                
+                if new_input_dic and not isinstance(new_input_dic,dict):
+                    raise TypeError(f"Return value of {func.__name__} should be a dict")                
+                if new_input_dic:
+                    input_dict = {**input_dict,**new_input_dic}
             
             if render == "jinja2" or render == "jinja":                  
                 return format_prompt_jinja2(func,**input_dict)

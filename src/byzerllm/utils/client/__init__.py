@@ -1389,7 +1389,7 @@ class ByzerLLM:
                     del self.func_impl_cache[k]
             return self        
 
-    def prompt(self,model:Optional[str]=None,render:Optional[str]="simple",check_result:bool=False):              
+    def prompt(self,model:Optional[str]=None,render:Optional[str]="jinja2",check_result:bool=False):              
             if model is None:
                 model = self.default_model_name            
 
@@ -1404,7 +1404,18 @@ class ByzerLLM:
                         input_dict.update({ param: arguments.arguments[param] })
                     
                     if "self" in input_dict:
-                        _ = input_dict.pop("self") 
+                        instance = input_dict.pop("self") 
+                        new_input_dic = func(instance,**input_dict)
+                        if new_input_dic and not isinstance(new_input_dic,dict):
+                            raise TypeError(f"Return value of {func.__name__} should be a dict")
+                        if new_input_dic:                
+                            input_dict = {**input_dict,**new_input_dic}
+                    else:
+                        new_input_dic = func(**input_dict)
+                        if new_input_dic and not isinstance(new_input_dic,dict):
+                            raise TypeError(f"Return value of {func.__name__} should be a dict")
+                        if new_input_dic:
+                            input_dict = {**input_dict,**new_input_dic}                    
                     
                     if render == "jinja2" or render == "jinja":                  
                         prompt_str = format_prompt_jinja2(func,**input_dict)
