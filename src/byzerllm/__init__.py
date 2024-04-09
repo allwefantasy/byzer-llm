@@ -112,12 +112,12 @@ def prompt(llm=None,render:str="jinja2",check_result:bool=False):
                 is_lambda = inspect.isfunction(llm) and llm.__name__ == '<lambda>'                
                 if is_lambda:                                        
                     return llm(instance).prompt(render=render,check_result=check_result)(func)(instance,**input_dict)             
-            else:
-                new_input_dic = func(**input_dict)                
-                if new_input_dic and not isinstance(new_input_dic,dict):
-                    raise TypeError(f"Return value of {func.__name__} should be a dict")                
-                if new_input_dic:
-                    input_dict = {**input_dict,**new_input_dic}
+            
+            new_input_dic = func(**input_dict)                
+            if new_input_dic and not isinstance(new_input_dic,dict):
+                raise TypeError(f"Return value of {func.__name__} should be a dict")                
+            if new_input_dic:
+                input_dict = {**input_dict,**new_input_dic}
             
             if render == "jinja2" or render == "jinja":                  
                 return format_prompt_jinja2(func,**input_dict)
