@@ -1,13 +1,13 @@
-source_dir: /home/winubuntu/projects/byzer-llm/src/byzerllm/saas
-target_file: /home/winubuntu/projects/byzer-llm/output.txt
-urls: https://raw.githubusercontent.com/anthropics/anthropic-sdk-python/main/README.md
+source_dir: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas
+target_file: /Users/allwefantasy/projects/byzer-llm/output.txt
+urls: /tmp/README.md
 
 model: qianwen_chat
 model_max_length: 2000
 model_max_input_length: 6000
 anti_quota_limit: 5
 
-skip_build_index: false
+skip_build_index: true
 execute: true
 auto_merge: true
 human_as_model: true

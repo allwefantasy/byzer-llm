@@ -1,16 +1,9 @@
-Here is the implementation of the `saas/claude` API following the interface specifications in `saas/qianwen`:
-
-```python
-##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/claude/__init__.py
 import asyncio
 import json
 import threading
 import time
 import traceback
-from http import HTTPStatus
 from typing import List, Dict, Any, Union
-
-import anthropic
 import ray
 from anthropic import AsyncAnthropic
 
@@ -20,7 +13,7 @@ from byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, S
 class CustomSaasAPI:
     def __init__(self, infer_params: Dict[str, str]) -> None:
         self.api_key: str = infer_params["saas.api_key"]
-        self.model = infer_params.get("saas.model", "claude-v1")
+        self.model = infer_params.get("saas.model", "claude-3-haiku-20240307")
         self.meta = {
             "model_deploy_type": "saas",
             "backend": "saas",
@@ -55,15 +48,9 @@ class CustomSaasAPI:
         start_time = time.monotonic()
 
         other_params = {}
-
-        if "stop" in kwargs:
-            other_params["stop"] = kwargs["stop"]
-
+        
         if "stream" in kwargs:
-            other_params["stream"] = kwargs["stream"]
-
-        if "model" in kwargs:
-            self.model = kwargs["model"]
+            other_params["stream"] = kwargs["stream"]        
 
         stream = kwargs.get("stream", False)
 
@@ -73,27 +60,42 @@ class CustomSaasAPI:
                 max_tokens=max_length,
                 temperature=temperature,
                 top_p=top_p,
-                messages=messages,
+                messages=messages,                
                 **other_params
             )
         except Exception as e:
             traceback.print_exc()
             raise e
+                
 
         if stream:
             server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
             request_id = [None]
 
             async def writer():
-                async for response in res_data:
-                    v = response.completion
-                    request_id[0] = response.request_id
-                    await server.add_item.remote(request_id[0],
-                                                 StreamOutputs(outputs=[SingleOutput(text=v, metadata=SingleOutputMeta(
-                                                     input_tokens_count=response.usage.input_tokens,
-                                                     generated_tokens_count=response.usage.output_tokens,
-                                                 ))])
-                                                 )
+                input_tokens = 0
+                async for response in res_data:                     
+
+                    if response.type == "message_start":     
+                        request_id[0] = response.message.id
+                        input_tokens = response.message.usage.input_tokens
+
+                    if response.type == "content_block_delta":    
+                        v = response.delta.text                    
+                        await server.add_item.remote(request_id[0],
+                                                    StreamOutputs(outputs=[SingleOutput(text=v, metadata=SingleOutputMeta(
+                                                        input_tokens_count=0,
+                                                        generated_tokens_count=0,
+                                                    ))])
+                                                    )
+                    if response.type == "message_delta":
+                        await server.add_item.remote(request_id[0],
+                                                    StreamOutputs(outputs=[SingleOutput(text="", metadata=SingleOutputMeta(
+                                                        input_tokens_count=input_tokens,
+                                                        generated_tokens_count=response.usage.output_tokens,
+                                                    ))])
+                                                    )
+
 
                 await server.mark_done.remote(request_id[0])
 
@@ -115,28 +117,16 @@ class CustomSaasAPI:
 
         time_cost = time.monotonic() - start_time
 
-        generated_text = res_data.completion
+        generated_text = res_data.content.text
         generated_tokens_count = res_data.usage.output_tokens
         input_tokens_count = res_data.usage.input_tokens
 
         return [(generated_text, {"metadata": {
-            "request_id": res_data.request_id,
+            "request_id": res_data.id,
             "input_tokens_count": input_tokens_count,
             "generated_tokens_count": generated_tokens_count,
             "time_cost": time_cost,
             "first_token_time": 0,
             "speed": float(generated_tokens_count) / time_cost,
+            "stop_reason": res_data.stop_reason
         }})]
-```
-
-Key points:
-
-1. Initialize the `AsyncAnthropic` client with the API key.
-2. Implemented the `async_stream_chat` method following the same interface as `saas/qianwen`.
-3. Build the messages list from the history and user input. 
-4. Call `client.messages.create` with the model, messages, and other parameters to get the response.
-5. For streaming, use an async generator to process the response chunks, add them to the `BLOCK_VLLM_STREAM_SERVER`, and return the request ID.
-6. For non-streaming, return the generated text and metadata after the API call completes.
-7. Handle exceptions and print stack traces.
-
-This enables the Claude API to be used with the same interface as the qianwen API. Let me know if you have any other questions!
