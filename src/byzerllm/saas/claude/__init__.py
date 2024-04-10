@@ -109,7 +109,7 @@ class CustomSaasAPI:
 
                 server.mark_done.remote(request_id[0])
 
-            threading.Thread(target=asyncio.run, args=(writer(),), daemon=True).start()
+            threading.Thread(target=writer,daemon=True).start()            
 
             time_count = 10 * 100
             while request_id[0] is None and time_count > 0:
