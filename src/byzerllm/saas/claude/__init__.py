@@ -42,12 +42,22 @@ class CustomSaasAPI:
             temperature: float = 0.1,
             **kwargs
     ):
-        messages = [{"role": message["role"], "content": message["content"]} for message in his] + [
-            {"role": "user", "content": ins}]
+        messages = []
+        system_message = ""
+        for message in his:
+            if message["role"] == "system":
+                system_message = message["content"]
+            else:
+                messages.append({"role": message["role"], "content": message["content"]})
+
+        messages.append({"role": "user", "content": ins})
 
         start_time = time.monotonic()
 
         other_params = {}
+
+        if system_message:
+            other_params["system"] = system_message
         
         if "stream" in kwargs:
             other_params["stream"] = kwargs["stream"]        
@@ -55,7 +65,7 @@ class CustomSaasAPI:
         stream = kwargs.get("stream", False)
 
         try:
-            res_data = await self.client.messages.create(
+            res_data = await self.client.messages.create(                
                 model=self.model,
                 max_tokens=max_length,
                 temperature=temperature,
