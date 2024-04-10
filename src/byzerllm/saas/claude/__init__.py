@@ -65,7 +65,7 @@ class CustomSaasAPI:
         stream = kwargs.get("stream", False)
 
         try:
-            res_data = await self.client.messages.create(                
+            res_data = self.client.messages.create(                
                 model=self.model,
                 max_tokens=max_length,
                 temperature=temperature,
@@ -82,9 +82,9 @@ class CustomSaasAPI:
             server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
             request_id = [None]
 
-            async def writer():
+            def writer():
                 input_tokens = 0
-                async for response in res_data:                     
+                for response in res_data:                     
 
                     if response.type == "message_start":     
                         request_id[0] = response.message.id
@@ -92,14 +92,14 @@ class CustomSaasAPI:
 
                     if response.type == "content_block_delta":    
                         v = response.delta.text                    
-                        await server.add_item.remote(request_id[0],
+                        server.add_item.remote(request_id[0],
                                                     StreamOutputs(outputs=[SingleOutput(text=v, metadata=SingleOutputMeta(
                                                         input_tokens_count=0,
                                                         generated_tokens_count=0,
                                                     ))])
                                                     )
                     if response.type == "message_delta":
-                        await server.add_item.remote(request_id[0],
+                        server.add_item.remote(request_id[0],
                                                     StreamOutputs(outputs=[SingleOutput(text="", metadata=SingleOutputMeta(
                                                         input_tokens_count=input_tokens,
                                                         generated_tokens_count=response.usage.output_tokens,
@@ -107,7 +107,7 @@ class CustomSaasAPI:
                                                     )
 
 
-                await server.mark_done.remote(request_id[0])
+                server.mark_done.remote(request_id[0])
 
             threading.Thread(target=asyncio.run, args=(writer(),), daemon=True).start()
 
