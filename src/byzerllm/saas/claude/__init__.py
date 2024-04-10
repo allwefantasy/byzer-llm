@@ -5,7 +5,7 @@ import time
 import traceback
 from typing import List, Dict, Any, Union
 import ray
-from anthropic import AsyncAnthropic
+from anthropic import Anthropic
 
 from byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta
 
@@ -20,7 +20,7 @@ class CustomSaasAPI:
             "support_stream": True
         }
 
-        self.client = AsyncAnthropic(api_key=self.api_key)
+        self.client = Anthropic(api_key=self.api_key)
 
         try:
             ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
@@ -127,7 +127,7 @@ class CustomSaasAPI:
 
         time_cost = time.monotonic() - start_time
 
-        generated_text = res_data.content.text
+        generated_text = res_data.content[0].text
         generated_tokens_count = res_data.usage.output_tokens
         input_tokens_count = res_data.usage.input_tokens
 
