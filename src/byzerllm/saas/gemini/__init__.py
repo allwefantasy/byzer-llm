@@ -67,13 +67,15 @@ class CustomSaasAPI:
         if stream:            
             server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
             request_id = [None]
-
+           
             def writer(): 
+                r = ""
                 for response in res_data:                                        
                     v = response.text
+                    r += v
                     request_id[0] = str(uuid.uuid4())                        
                     ray.get(server.add_item.remote(request_id[0], 
-                                                    StreamOutputs(outputs=[SingleOutput(text=v,metadata=SingleOutputMeta(
+                                                    StreamOutputs(outputs=[SingleOutput(text=r,metadata=SingleOutputMeta(
                                                         input_tokens_count=0,
                                                         generated_tokens_count=0,
                                                     ))])

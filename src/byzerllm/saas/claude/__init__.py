@@ -84,23 +84,25 @@ class CustomSaasAPI:
 
             def writer():
                 input_tokens = 0
+                r = ""  
                 for response in res_data:                     
-
+                    
                     if response.type == "message_start":     
                         request_id[0] = response.message.id
                         input_tokens = response.message.usage.input_tokens
 
                     if response.type == "content_block_delta":    
-                        v = response.delta.text                    
+                        v = response.delta.text  
+                        r += v                  
                         server.add_item.remote(request_id[0],
-                                                    StreamOutputs(outputs=[SingleOutput(text=v, metadata=SingleOutputMeta(
+                                                    StreamOutputs(outputs=[SingleOutput(text=r, metadata=SingleOutputMeta(
                                                         input_tokens_count=0,
                                                         generated_tokens_count=0,
                                                     ))])
                                                     )
                     if response.type == "message_delta":
                         server.add_item.remote(request_id[0],
-                                                    StreamOutputs(outputs=[SingleOutput(text="", metadata=SingleOutputMeta(
+                                                    StreamOutputs(outputs=[SingleOutput(text=r, metadata=SingleOutputMeta(
                                                         input_tokens_count=input_tokens,
                                                         generated_tokens_count=response.usage.output_tokens,
                                                     ))])

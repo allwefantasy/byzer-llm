@@ -1199,11 +1199,13 @@ class ByzerLLM:
             if tools or tool_choice:
                 base_abilities.append(BaseAbility.FUNCTION_CALLING)
 
-            if first_message["role"] == "user":
+
+            if base_abilities and first_message["role"] == "user":
                 conversations.insert(0,{
                     "role":"system",
                     "content": self.mapping_base_system_message.get(model,base_ability_format(base_abilities=base_abilities))
                 })
+
             if first_message["role"] == "system":
                 first_message["content"] = f'''{self.mapping_base_system_message.get(model,base_ability_format(base_abilities=base_abilities))}
 {first_message["content"]}'''
