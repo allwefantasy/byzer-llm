@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2024/04] Release Byzer-LLM 0.1.58
+- [2024/04] Release Byzer-LLM 0.1.59
 - [2024/03] Release Byzer-LLM 0.1.55
 - [2024/02] Release Byzer-LLM 0.1.40
 - [2024/01] Release Byzer-LLM 0.1.39
@@ -73,6 +73,8 @@ The unique features of Byzer-LLM are:
     * [zhipu/智谱](#zhipu/智谱)
     * [sparkdesk/星火](#sparkdesk/星火)         
     * [AmazonBedrock](#AmazonBedrock)
+    * [Claude](#calude)
+    * [Gemini](#gemini)
 * [Multi Modal](#Multi-Modal)
 * [StableDiffusion](#StableDiffusion)
 * [SQL Support](#SQL-Support)
@@ -2173,6 +2175,28 @@ There are some enum values for the `saas.model`:
 2. meta.llama2-13b-chat-v1
 3. anthropic.claude-3-sonnet-20240229-v1:0
 4. anthropic.claude-3-haiku-20240307-v1:0
+
+### Claude
+
+```bash
+byzerllm deploy --pretrained_model_type saas/claude \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 1 \
+--infer_params saas.api_key=xxxxx saas.model=claude-3-haiku-20240307 \
+--model haiku_chat
+```
+
+### Gemini
+
+```bash
+byzerllm deploy --pretrained_model_type saas/gemini \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 1 \
+--infer_params saas.api_key=xxxxx saas.model=gemini-pro \
+--model gemini_chat
+```
 
 ---
 
