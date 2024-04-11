@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2024/04] Release Byzer-LLM 0.1.59
+- [2024/04] Release Byzer-LLM 0.1.60
 - [2024/03] Release Byzer-LLM 0.1.55
 - [2024/02] Release Byzer-LLM 0.1.40
 - [2024/01] Release Byzer-LLM 0.1.39
@@ -73,7 +73,7 @@ The unique features of Byzer-LLM are:
     * [zhipu/智谱](#zhipu/智谱)
     * [sparkdesk/星火](#sparkdesk/星火)         
     * [AmazonBedrock](#AmazonBedrock)
-    * [Claude](#calude)
+    * [Claude](#claude)
     * [Gemini](#gemini)
 * [Multi Modal](#Multi-Modal)
 * [StableDiffusion](#StableDiffusion)
@@ -2187,6 +2187,13 @@ byzerllm deploy --pretrained_model_type saas/claude \
 --model haiku_chat
 ```
 
+Here is the list of the claude models:
+
+```
+Claude 3 Opus	claude-3-opus-20240229
+Claude 3 Sonnet	claude-3-sonnet-20240229
+Claude 3 Haiku	claude-3-haiku-20240307
+```
 ### Gemini
 
 ```bash
@@ -2197,6 +2204,8 @@ byzerllm deploy --pretrained_model_type saas/gemini \
 --infer_params saas.api_key=xxxxx saas.model=gemini-pro \
 --model gemini_chat
 ```
+
+
 
 ---
 
