@@ -75,7 +75,7 @@ The unique features of Byzer-LLM are:
     * [AmazonBedrock](#AmazonBedrock)
     * [Claude](#claude)
     * [Gemini](#gemini)
-    * [Kimi](#kimi)
+    * [Kimi](#moonshot/kimi)
 * [Multi Modal](#Multi-Modal)
 * [StableDiffusion](#StableDiffusion)
 * [SQL Support](#SQL-Support)
@@ -2206,7 +2206,7 @@ byzerllm deploy --pretrained_model_type saas/gemini \
 --model gemini_chat
 ```
 
-### Kimi
+### Moonshot/Kimi
 
 You can use the saas/offical_openai to deploy the Kimi model.
 
