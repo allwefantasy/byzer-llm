@@ -91,6 +91,87 @@ def log_to_file(msg:str,file_path:str):
         f.write(msg)
         f.write("\n")
 
+class PromptWraper():        
+    def __init__(self,func,llm,render,check_result,*args,**kwargs) -> None:
+        self.func = func
+        self.llm = llm
+        self.render = render
+        self.check_result = check_result
+        self.args = args
+        self.kwargs = kwargs        
+    
+    def prompt(self):  
+        func = self.func        
+        render = self.render                                
+        signature = inspect.signature(func)                       
+        arguments = signature.bind(self.args, self.kwargs)
+        arguments.apply_defaults()
+        input_dict = {}
+        for param in signature.parameters:
+            input_dict.update({ param: arguments.arguments[param] })   
+        
+        new_input_dic = func(**input_dict)                
+        if new_input_dic and not isinstance(new_input_dic,dict):
+            raise TypeError(f"Return value of {func.__name__} should be a dict")                
+        if new_input_dic:
+            input_dict = {**input_dict,**new_input_dic}
+        
+        if render == "jinja2" or render == "jinja":                  
+            return format_prompt_jinja2(func,**input_dict)
+        
+        return format_prompt(func,**input_dict) 
+        
+    def run(self):        
+        func = self.func
+        llm = self.llm
+        render = self.render
+        check_result = self.check_result
+        args = self.args
+        kwargs = self.kwargs
+        
+        signature = inspect.signature(func)                       
+        arguments = signature.bind(*args, **kwargs)
+        arguments.apply_defaults()
+        input_dict = {}
+        for param in signature.parameters:
+            input_dict.update({ param: arguments.arguments[param] })        
+
+        is_lambda = inspect.isfunction(llm) and llm.__name__ == '<lambda>'
+        if is_lambda:    
+            if "self" in input_dict:
+                instance = input_dict.pop("self")                                                                 
+                return llm(instance).prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
+            
+        if isinstance(llm,ByzerLLM):
+            if "self" in input_dict:
+                instance = input_dict.pop("self")                                                                 
+                return llm.prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
+            else:    
+                return llm.prompt(render=render,check_result=check_result)(func)(**input_dict)
+        
+        if isinstance(llm,str):
+            _llm = ByzerLLM()
+            _llm.setup_default_model_name(llm)
+            _llm.setup_template(llm,"auto")
+            
+            if "self" in input_dict:
+                instance = input_dict.pop("self")                                                                 
+                return _llm.prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
+            else:    
+                return _llm.prompt(render=render,check_result=check_result)(func)(**input_dict)    
+
+        
+        raise ValueError("llm should be a lambda function or ByzerLLM instance")   
+
+def lazy_prompt(llm=None,render:str="jinja2",check_result:bool=False):    
+    def _impl(func):                                   
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):             
+            pw = PromptWraper(func,llm,render,check_result,*args,**kwargs)
+            return pw
+
+        return wrapper      
+    return _impl
 
 def prompt(llm=None,render:str="jinja2",check_result:bool=False):    
     '''
@@ -98,9 +179,9 @@ def prompt(llm=None,render:str="jinja2",check_result:bool=False):
     render: simple,jinja/jinja2
     llm: lambda function to get the ByzerLLM instance from the method instance
     '''
-    def _impl(func):                       
+    def _impl(func):                                   
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):                      
+        def wrapper(*args, **kwargs):             
             signature = inspect.signature(func)                       
             arguments = signature.bind(*args, **kwargs)
             arguments.apply_defaults()

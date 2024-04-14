@@ -1188,6 +1188,12 @@ class ByzerLLM:
         if impl_func and not response_class:
             raise Exception("impl_func is enabled,response_class should be set.")
         
+        if isinstance(conversations,str):
+            conversations = [{
+                "role":"user",
+                "content": conversations
+            }]
+        
 
         if enable_default_sys_message:
             first_message = conversations[0]
@@ -1394,8 +1400,8 @@ class ByzerLLM:
     def prompt(self,model:Optional[str]=None,render:Optional[str]="jinja2",check_result:bool=False):              
             if model is None:
                 model = self.default_model_name            
-
-            def _impl(func):               
+            
+            def _impl(func):                                
                 @functools.wraps(func)
                 def wrapper(*args, **kwargs):                                                                                                   
                     signature = inspect.signature(func)

@@ -6,6 +6,9 @@ import json
 def chat(ray_context):   
     conf = ray_context.conf()
     udf_name = conf["UDF_CLIENT"] 
+    
+    input_value = [json.loads(row["value"]) for row in ray_context.python_context.fetch_once_as_rows()]
+    
     llm = ByzerLLM()
     llm.setup_template(model=udf_name,template="auto")
     llm.setup_default_emb_model_name("emb")
@@ -14,7 +17,7 @@ def chat(ray_context):
         "temperature":0.01,
         "top_p":0.99
     })
-    input_value = [json.loads(row["value"]) for row in ray_context.python_context.fetch_once_as_rows()]
+    
     result = []
     for value in input_value:
         v = value.get("query",value.get("instruction",""))

@@ -1,0 +1,78 @@
+source_dir: /Users/allwefantasy/projects/byzer-llm
+target_file: /Users/allwefantasy/projects/byzer-llm/output.txt
+urls: /tmp/README.md
+
+model: kimi_chat
+# model_max_length: 2000
+# model_max_input_length: 6000
+# anti_quota_limit: 5
+
+index_model: sparkdesk_chat
+index_model_max_length: 2000
+index_model_max_input_length: 10000
+index_model_anti_quota_limit: 1
+
+skip_build_index: false
+index_filter_level: 0
+
+
+execute: true
+auto_merge: true
+human_as_model: true
+
+query: >
+  import byzerllm
+  class Wow:
+      def __init__(self,llm):
+          self.llm = llm
+
+      @byzerllm.prompt(lambda:llm)
+      def test(self,s:str)->str: 
+          '''
+          Hello, {{ s }}!
+          '''
+  w = Wow(llm)
+      
+  print(w.test.prompt("william"))
+  print(w.test.run("william"))
+
+  print(w.test("william"))   
+
+  运行上面的的代码，会出现如下错误：
+
+  TypeError                                 Traceback (most recent call last)
+  Cell In[1], line 22
+      17         '''
+      18         Hello, {{ s }}!
+      19         '''
+      20 w = Wow(llm)
+  ---> 22 print(w.test.prompt("william"))
+      23 print(w.test.run("william"))
+      25 print(w.test("william"))     
+
+  File ~/projects/byzer-llm/src/byzerllm/__init__.py:98, in _func_prompt_wrapper.<locals>._func_prompt(*args, **kwargs)
+      96 signature = inspect.signature(func)   
+      97 print(args,kwargs)                    
+  ---> 98 arguments = signature.bind(*args, **kwargs)
+      99 arguments.apply_defaults()
+      100 input_dict = {}
+
+  File /opt/miniconda3/envs/byzerllm/lib/python3.10/inspect.py:3186, in Signature.bind(self, *args, **kwargs)
+    3181 def bind(self, /, *args, **kwargs):
+    3182     """Get a BoundArguments object, that maps the passed `args`
+    3183     and `kwargs` to the function's signature.  Raises `TypeError`
+    3184     if the passed arguments can not be bound.
+    3185     """
+  -> 3186     return self._bind(args, kwargs)
+
+  File /opt/miniconda3/envs/byzerllm/lib/python3.10/inspect.py:3101, in Signature._bind(self, args, kwargs, partial)
+    3099                 msg = 'missing a required argument: {arg!r}'
+    3100                 msg = msg.format(arg=param.name)
+  -> 3101                 raise TypeError(msg) from None
+    3102 else:
+    3103     # We have a positional argument to process
+    3104     try:
+
+  TypeError: missing a required argument: 's'  
+
+  注意：过滤的时候，请只过滤 byzerllm.__init__.py 文件。

@@ -848,5 +848,890 @@
     "symbols": "函数: \n- _cast_bool_env_var\n- autocast\n- _inference_mode\n- _clear_cuda_cache\n- _grab_best_device\n- _get_ckpt_path\n- _download\n- clean_models\n- _load_model\n\n类:\n- InferenceContext\n- GenerateModel\n\n变量:\n- CONTEXT_WINDOW_SIZE\n- SEMANTIC_RATE_HZ\n- SEMANTIC_VOCAB_SIZE\n- CODEBOOK_SIZE\n- N_COARSE_CODEBOOKS\n- N_FINE_CODEBOOKS\n- COARSE_RATE_HZ\n- SAMPLE_RATE\n- SUPPORTED_LANGS\n- ALLOWED_PROMPTS\n- logger\n- CUR_PATH\n- default_cache_dir\n- CACHE_DIR\n- USE_SMALL_MODELS\n- GLOBAL_ENABLE_MPS\n- OFFLOAD_CPU\n- REMOTE_MODEL_PATHS\n- TEXT_ENCODING_OFFSET\n- SEMANTIC_PAD_TOKEN\n- TEXT_PAD_TOKEN\n- SEMANTIC_INFER_TOKEN\n- COARSE_SEMANTIC_PAD_TOKEN\n- COARSE_INFER_TOKEN\n\n导入语句:\n- import contextlib\n- import gc\n- import os\n- import re\n- from encodec import EncodecModel\n- import funcy\n- import logging\n- import numpy as np\n- from scipy.special import softmax\n- import torch\n- from torch.nn.functional import F\n- import tqdm\n- from transformers import BertTokenizer\n- from huggingface_hub import hf_hub_download\n- from .model import GPTConfig, GPT\n- from .model_fine import FineGPT, FineGPTConfig",
     "last_modified": 1683770783.055432,
     "md5": "2a1d73b2824d663bcd557d10725dca76"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/setup-machine/convert_safetensor.py": {
+    "symbols": "```\n函数：convert_safetensor, auto_implement_function_template, check_file_size, create_diff, convert_generic, convert_multi, convert_single, convert_file, shared_pointers, rename, check_final_model\n变量：a\n类：AlreadyExists\n导入语句：import os, time, from loguru import logger, import byzerllm\n```",
+    "last_modified": 1696905908.698807,
+    "md5": "1682a87c9af90c6696b7d45ee9343b3f"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/store.py": {
+    "symbols": "函数：producer,worker,_transfer_from_ob,block_transfer_from_ob,transfer_from_ob\n变量：tf_path,count,total_count,item_ref,item\n类：\n导入语句：import asyncio,import ray,import time,import os,import tarfile,import tempfile,import uuid,from .utils import print_flush",
+    "last_modified": 1696905908.7751791,
+    "md5": "79d4a7cf70ae68cdca1417dd8e731f3d"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/version.py": {
+    "symbols": "```\n变量：__version__\n导入语句：\n类：\n函数：\n```",
+    "last_modified": 1712814237.6697047,
+    "md5": "90c35af76e4dff017f5e48ec55ebbd31"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm.py": {
+    "symbols": "```\n函数：auto_implement_function_template,main\n变量：a\n类：StoreNestedDict\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```",
+    "last_modified": 1711891197.7985895,
+    "md5": "0023328e6cbf9c805d5c13aa389b6c14"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/log.py": {
+    "symbols": "函数：_setup_logger,init_logger\n变量：BYZERLLM_CONFIGURE_LOGGING,_FORMAT,_DATE_FORMAT,_root_logger,_default_handler\n类：NewLineFormatter\n导入语句：import logging,import os,import sys",
+    "last_modified": 1711965834.7426043,
+    "md5": "9ee2045feb6ba9e943f643a95e33bf34"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/__init__.py": {
+    "symbols": "函数：auto_implement_function_template, parse_params, check_param_exists, log_to_file, _func_prompt_wrapper, _func_run_wrapper, prompt\n类：BlockRow\n变量：a\n导入语句：import os, import time, from loguru import logger, import byzerllm",
+    "last_modified": 1713091010.0597808,
+    "md5": "df1d90454d55af9eff7f59ed195072f6"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/bark/generation.py": {
+    "symbols": "```python\n函数：auto_implement_function_template\n变量：a\n类：GenerateModel,GPTConfig,FineGPTConfig,EncodecModel\n导入语句：import os,time,from logger import loguru,import byzerllm\n```\n函数：_tokenize, _detokenize, _normalize_whitespace, _load_history_prompt, generate_text_semantic, _flatten_codebooks\n变量：a\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```python\n函数：auto_implement_function_template,generate_fine\n变量：a,x_coarse_gen,x_fine_history\n类：无\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```\n函数：codec_decode, auto_implement_function_template\n变量：in_arr, gen_fine_arr, audio_arr\n类：\n导入语句：import os,import time,from loguru import logger,import byzerllm",
+    "last_modified": 1696905908.764218,
+    "md5": "2a1d73b2824d663bcd557d10725dca76"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/bark/model.py": {
+    "symbols": "```\n函数：GPT,Block,LayerNorm,CausalSelfAttention,MLP,GPTConfig,get_num_params,forward\n变量：config,idx,merge_context,past_kv,position_ids,use_cache,tok_emb,pos_emb,x,new_kv,logits\n类：GPTConfig\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```",
+    "last_modified": 1696905908.7643585,
+    "md5": "a626c164224345d893fe8bec8c2c14bc"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/bark/api.py": {
+    "symbols": "函数：VoiceGenerateAPI, text_to_semantic, semantic_to_waveform, save_as_prompt, generate_audio\n类：VoiceGenerateAPI\n变量：self.model\n导入语句：from typing import Dict, Optional, Union,import numpy as np,from .generation import GenerateModel",
+    "last_modified": 1696905908.7017379,
+    "md5": "9344aea689a34a79565d30699d93d9aa"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/bark/model_fine.py": {
+    "symbols": "```\n函数：__init__,forward,get_num_params\n变量：config,non_embedding\n类：NonCausalSelfAttention,FineBlock,FineGPT,FineGPTConfig\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```",
+    "last_modified": 1696905908.7644713,
+    "md5": "f60c8fdc7fe44295317b276948501034"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/bark/bark_voice.py": {
+    "symbols": "```python\n函数：is_chinese, raw_sentence, not_toolong, build_void_infer\n变量：ZH_SPEAKER, EN_SPEAKER, silence\n类：Inference\n导入语句：from typing import List,import numpy as np,from .generation import GenerateModel, SAMPLE_RATE,from .api import VoiceGenerateAPI\n```",
+    "last_modified": 1696905908.7640247,
+    "md5": "42dcece33ab948da77e5fa3264efcfb9"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/moss/finetune_moss.py": {
+    "symbols": "```python\n函数：auto_implement_function_template\n变量：a\n类：SFTDataset, SFTMetric\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n函数：train, set_seed\n变量：args\n类：\n导入语句：import argparse",
+    "last_modified": 1696905908.7685227,
+    "md5": "95796d411fb1a099df612590495c7d49"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/moss/moss_inference.py": {
+    "symbols": "```python\n函数：auto_implement_function_template, restore_model\n变量：a\n类：Inference\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：__call__, stream_chat, infer_, top_k_top_p_filtering\n变量：tokenizer, ins, his, max_length, top_p, temperature, reponses, model_dir\n类：MossTokenizer, MossForCausalLM\n导入语句：import types, torch, List, Tuple, BaseModelOutputWithPast, Optional\n```",
+    "last_modified": 1696905908.7696981,
+    "md5": "1873cbc0cf6286c9255361219bfe6019"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/moss/models/configuration_moss.py": {
+    "symbols": "```python\n函数：__init__, bos_token_id, eos_token_id, super\n类：MossConfig\n变量：vocab_size, n_ctx, n_positions, n_embd, n_layer, n_head, n_inner, rotary_dim, activation_function, resid_pdrop, embd_pdrop, attn_pdrop, layer_norm_epsilon, initializer_range, use_cache, wbits, groupsize, tie_word_embeddings\n导入语句：from transformers.utils import logging, from transformers.configuration_utils import PretrainedConfig\n```",
+    "last_modified": 1696905908.768854,
+    "md5": "44e108c6ec6dcc38d32ad14979c4d06a"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/moss/models/quantization.py": {
+    "symbols": "```\n函数：auto_implement_function_template\n变量：a\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```\n函数：auto_implement_function_template, matmul248, transpose_matmul248, QuantLinearFunction.forward, QuantLinearFunction.backward, QuantLinear.pack, QuantLinear.forward, make_quant, quantize_with_gptq\n变量：a\n类：QuantLinear\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```",
+    "last_modified": 1696905908.7693791,
+    "md5": "efb2593841ed54d3b96ab4aec12105cf"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/moss/models/custom_autotune.py": {
+    "symbols": "```python\n函数：Autotuner,warmup,autotune\n变量：nargs,key_idx,nearest_power_of_two,cache,hook,reset_idx,arg_names,perf_model,configs_top_k,early_config_prune,fn,num_warps,num_stages,kwargs,current,meta,kernel_call,rep,fast_flush,pruned_configs,timings,bench_start,bench_end,self.bench_time,self.cache,self.hook,self.configs_timings,config,self.best_config,self.configs,top_k\n类：triton.KernelInterface\n导入语句：import builtins,math,time,typing,triton\n```",
+    "last_modified": 1696905908.7689977,
+    "md5": "3a8bfc07e5fc5e1c2c556d395b52af9e"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/moss/models/modeling_moss.py": {
+    "symbols": "```\n函数：auto_implement_function_template\n类：MossAttention\n变量：a\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：auto_implement_function_template,forward\n变量：a,config,head_mask,position_ids,attention_mask,token_type_ids,inputs_embeds,use_cache,output_attentions,output_hidden_states,return_dict,past_key_values,input_ids\n类：MossPreTrainedModel,MossModel\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```\n```python\n函数：auto_implement_function_template,MossForCausalLM\n变量：a\n类：\n导入语句：import os,time,from loguru import logger,import byzerllm\n```\n函数：_reorder_cache, quantize\n变量：loss_fct, loss, hidden_states, output, lm_logits, transformer_outputs, beam_idx\n类：\n导入语句：from .quantization import quantize_with_gptq",
+    "last_modified": 1696905908.769181,
+    "md5": "5fab66e08fd810186863012295329335"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/moss/models/tokenization_moss.py": {
+    "symbols": "```python\n函数：auto_implement_function_template\n变量：a\n类：MossTokenizer\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```\n函数：_tokenize,convert_tokens_to_string,save_vocabulary,prepare_for_tokenization,decode,truncate\n变量：a\n类：无\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```",
+    "last_modified": 1696905908.7695377,
+    "md5": "95a4441e879570f6c9fc3b0aae3b9fe6"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/llama2/__init__.py": {
+    "symbols": "```python\n函数：init_model, stream_chat, get_meta, sft_train, sfft_train\n变量：pretrained_model_dir, adaptor_model_dir, is_adaptor_model, tokenizer, longContextMode, quatization, load_in_8bit, llm_int8_threshold, model, a, max_new_tokens, start_time, response, time_taken, new_tokens, answer, dim, max_position_embeddings, base, device, quantization_config, timeout_s, skip_check_min_length, role_mapping, fin_ins, tokens, stopping_criteria, input_length, stopping_sequences, input_start, skip_check_min_length, repetition_penalty, temperature, attention_mask, eos_token_id, pad_token_id, bos_token_id, early_stopping, max_time, infer_params, sys_conf, data_refs, train_params, conf\n导入语句：import os, import time, from loguru import logger, import byzerllm, import transformers, import torch, from typing import Dict, List, Tuple, from byzerllm.utils import (generate_instruction_from_history, compute_max_new_tokens, tokenize_stopping_sequences), from byzerllm.utils.types import StopSequencesCriteria, from pyjava.storage import streaming_tar as STar, from pyjava import RayContext, from pyjava.mlsql import DataServer, from byzerllm import BlockRow\n```",
+    "last_modified": 1711891197.7995245,
+    "md5": "5cbbf31432055eb550e252854d93aa9a"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/records/__init__.py": {
+    "symbols": "```python\n函数：ClusterSettings, TableSettings, EnvSettings, ResourceRequirement, ResourceRequirementSettings, JVMSettings, SearchQuery\n变量：无\n类：ClusterSettings, TableSettings, EnvSettings, ResourceRequirement, ResourceRequirementSettings, JVMSettings, SearchQuery\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```",
+    "last_modified": 1702351831.207425,
+    "md5": "8cca92d7c63f851a8449d1014eb1368d"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/visualglm/__init__.py": {
+    "symbols": "函数：stream_chat,init_model,sft_train\n变量：无\n类：无\n导入语句：from transformers import AutoTokenizer, AutoModel,import transformers,import torch,import os,import io,from typing import Any,Any,Dict, List,Tuple,Generator,import base64,import uuid,import tempfile,from pyjava.api.mlsql import DataServer,from .. import BlockRow,from .. import parse_params",
+    "last_modified": 1696905908.7858207,
+    "md5": "734a379b71d16e9ef9eef761eba39d44"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/auto/__init__.py": {
+    "symbols": "```python\n函数：async_vllm_chat,get_bool,get_int,get_float,get_str,async_get_meta\n变量：a,temperature,top_p,max_length,kwargs,tokenizer,ins,his,presence_penalty,frequency_penalty,top_k,use_beam_search,stop,ignore_eos,max_tokens,logprobs,other_params,model,n,best_of,sampling_params\n类：无\n导入语句：import os,time,from loguru import logger,import byzerllm\n```\n```python\n函数：init_model, auto_implement_function_template, stream_chat, async_vllm_chat, async_get_meta, sft_train\n变量：a\n类：AsyncLLMEngine, DeepSpeedInference, ParallelConfig\n导入语句：import os, time, loguru, from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig, BitsAndBytesConfig, torch, ray\n```\n函数：common_sft_train\n变量：data_refs, train_params, conf\n类：\n导入语句：from ..utils.sft import sft_train as common_sft_train",
+    "last_modified": 1711891197.79783,
+    "md5": "35c3d799e6281cc555d03e491fce6e0c"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/auto/backend_ds.py": {
+    "symbols": "```python\n函数：_init_distributed_environment,execute_model,init_model,stream_chat,_run_workers\n变量：a,parallel_config,rank,distributed_init_method,gpu_ids\n类：ParallelConfig,Worker,DeepSpeedInference\n导入语句：import os,time,from loguru import logger,import byzerllm,ActorHandle,get_address_and_port,BitsAndBytesConfig,torch,deepspeed,ray,os,from typing import List, Optional, Tuple,Any\n```",
+    "last_modified": 1696905908.7012436,
+    "md5": "da03b65d34f3610a962fb021b883138b"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/alpha_moss/__init__.py": {
+    "symbols": "```python\n函数：auto_implement_function_template\n变量：a\n类：Preprocess, Inference\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：init_paras, set_paras, forward, postprocess_remove_prefix, sample, top_k_top_p_filtering\n变量：ignored_tokens, device, bsz, seqlen, past_seqlen, num_layers, heads, hidden, moss_startwords, tool_startwords, moss_stopwords, innerthought_stopwords, tool_stopwords, result_stopwords, kvbuffer1, kvbuffer2, queue_for_moss_startwords, queue_for_moss_stopwords, queue_for_tool_startwords, queue_for_tool_specialwords, queue_for_tool_stopwords, generations, start_time, tool_start, tool_shall_stop, all_shall_stop, moss_start, moss_stop, slide_windows, past_key_values, max_iterations, logits, score, input_ids, last_token_indices, attention_mask, temperature, repetition_penalty, top_k, top_p, regulation_start, length_penalty, max_time\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：stream_chat, init_model, Init_Model_Parallelism, infer_, top_k_top_p_filtering\n变量：a\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```",
+    "last_modified": 1696905908.6999068,
+    "md5": "70fbd36bfca4037761a12796c80d7478"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/processor/__init__.py": {
+    "symbols": "函数：process_pdf\n变量：binnary_data, docs, pdf_content, temp_dir, temp_pdf, loader\n类：\n导入语句：import io, import os, import uuid, import tempfile, from langchain.document_loaders import PyPDFLoader",
+    "last_modified": 1696905908.769869,
+    "md5": "aa849709728e2069400d603286cbb75a"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/qwen/__init__.py": {
+    "symbols": "```python\n函数：init_model, stream_chat, get_meta, sft_train, sfft_train\n变量：pretrained_model_dir, tokenizer, model, infer_params, sys_conf, data_refs, train_params, conf, adaptor_model_dir, is_adaptor_model, quantization_config, llm_int8_threshold, timeout_s, stopping_sequences, input_length, stopping_criteria, max_new_tokens, start_time, response, time_taken, new_tokens, answer, dim, a, base, device, load_in_8bit, llm_int8_threshold, quantization_config, model, device_map, peft_model, types\n导入语句：import os, time, from loguru import logger, import byzerllm, import transformers, import torch, import typing, import from pytorch_lightning import streaming_tar as STar, import pytorch_lightning as pl, import RayContext, import mlsql.api.mlsql as DataServer\n```",
+    "last_modified": 1711891197.7999659,
+    "md5": "6a031c9d6bac4666c386349e0383338d"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/json_repaire.py": {
+    "symbols": "函数：parse_json, parse_object, parse_array, parse_string, parse_number, parse_boolean_or_null\n变量：self.json_str, self.index, self.context\n类：JSONParser\n导入语句：import json, typing, os, time, loguru, byzerllm\n函数：parse_boolean_or_null, insert_char_at, get_char_at, remove_char_at, skip_whitespaces_at\n变量：number_str, number_chars, char, self.index, self.json_str\n类：JSONParser\n导入语句：import json",
+    "last_modified": 1712551963.330515,
+    "md5": "0e0bd4f87a1f1303c8d3da39297e923d"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/object_store_ref_util.py": {
+    "symbols": "函数：get_locations, get_object_ids\n变量：core_worker\n类：\n导入语句：import ray,from ray._private.client_mode_hook import client_mode_wrap",
+    "last_modified": 1696905908.7842195,
+    "md5": "2ca1d67a715f0da659ee2ab787f91309"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/__init__.py": {
+    "symbols": "```python\n函数：auto_implement_function_template\n类：BlockVLLMStreamServer, VLLMStreamServer\n变量：a\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：auto_implement_function_template\n变量：a\n类：\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```\n```python\n函数：auto_implement_function_template,sys_response_class_format,sys_function_calling_format,sys_function_impl_format,format_prompt,format_prompt_jinja2,random_uuid\n变量：a\n类：\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```",
+    "last_modified": 1711965834.7445304,
+    "md5": "266df8ca08ee9920bb6ff22114e2347a"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/types.py": {
+    "symbols": "函数：__call__, to_str\n类：StopSequencesCriteria\n变量：self.stops, self.input_start, self.skip_check_min_length, self.stop_words, self.tokenizer\n导入语句：from transformers import StoppingCriteria,import torch",
+    "last_modified": 1711891197.8074884,
+    "md5": "b12362ab6ab17d2ec80579ca68e46e96"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/tokenizer.py": {
+    "symbols": "函数：validate_args_engine_use_ray,get_local_tokenizer,get_real_tokenizer\n变量：无\n类：无\n导入语句：from vllm.transformers_utils.tokenizer import TokenizerGroup,from vllm.engine.arg_utils import AsyncEngineArgs",
+    "last_modified": 1711891197.8072872,
+    "md5": "0df20b80a709bba8f4dd4dbd7bd683cc"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/openai_utils.py": {
+    "symbols": "函数：_create_retry_decorator,completion_with_retry,async_completion_with_retry,get_completion_endpoint\n变量：logger,CompletionClientType\n类：\n导入语句：import logging,from typing import Any, Callable, Type, Union,import openai,from openai import (Completion,ChatCompletion,APITimeoutError,APIConnectionError,RateLimitError,APIError),from tenacity import (before_sleep_log,retry,retry_if_exception_type,stop_after_attempt,wait_exponential)",
+    "last_modified": 1703571773.077826,
+    "md5": "640067b99f3202187b58c10c6e39c35b"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/ray_utils.py": {
+    "symbols": "函数：cancel_placement_group, get_actor_info\n变量：无\n类：无\n导入语句：from ray.util.placement_group import remove_placement_group, PlacementGroup, from ray._private.utils import hex_to_binary, from ray._raylet import PlacementGroupID, from ray.util.state import StateApiClient, get_log, list_logs, summarize_actors, summarize_objects, summarize_tasks, from ray.util.state.common import DEFAULT_LIMIT, DEFAULT_LOG_LIMIT, DEFAULT_RPC_TIMEOUT, GetApiOptions, ListApiOptions, PredicateType, StateResource, StateSchema, SupportedFilterType, resource_to_schema, from ray.util.state.exception import RayStateApiException, from ray.util.annotations import PublicAPI",
+    "last_modified": 1711891197.8062646,
+    "md5": "55b5534ec287b52574d6b0493178e948"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/text_generator.py": {
+    "symbols": "```python\n函数：simple_predict_func,chatglm_predict_func,qa_predict_func\n变量：model,v\n类：ByzerLLMGenerator\n导入语句：import os,import time,from loguru import logger,import byzerllm,from typing import List,Tuple,Any,Dict\n```",
+    "last_modified": 1711891197.8070896,
+    "md5": "ce2c1e6f2e9fa33c0a961b65a2154b40"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/emb.py": {
+    "symbols": "```python\n函数：_encode, embed_documents, embed_query, get_embedding_with_token_count\n变量：self, texts, extract_params, text, model, tokenizer, device, use_feature_extraction, sentences, ignore_keys\n类：ByzerSentenceTransformerEmbeddings, ByzerLLMEmbeddings\n导入语句：from langchain.embeddings.base import Embeddings, from typing import List, Union, import torch, import torch.nn.functional as F, from transformers import pipeline\n```",
+    "last_modified": 1696905908.7755883,
+    "md5": "2e67d135935f463658236c7cd0a1db05"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/connect_ray.py": {
+    "symbols": "函数：_check_java_version,connect_cluster\n变量：output,version_line,version_match,version,version_parts,major_version,java_home,path,env_vars,job_config\n类：\n导入语句：from typing import List,Optional,import os,import subprocess,import re",
+    "last_modified": 1711891197.8058445,
+    "md5": "a7e5c3d2d2814aeeff711a27984979de"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/langutil.py": {
+    "symbols": "函数：asyncfy, asyncfy_with_semaphore, is_valid_url, _is_valid_url, _is_local_url, find_available_port, to_bool\n变量：无\n类：无\n导入语句：import anyio, import contextlib, from contextlib import closing, from contextlib2 import nullcontext, from functools import wraps, partial, import inspect, import os, import socket, from typing import Any, Optional, import re, from urllib.parse import urlparse, import warnings, import json, from typing import Any, Dict, List, Union",
+    "last_modified": 1712551965.4324431,
+    "md5": "78ac26dc5decf3e3c3a2afecaf9327b0"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/fulltune/deepspeed_trainner.py": {
+    "symbols": "```python\n函数：auto_implement_function_template, setup_passwordless_ssh, exec_command, start_command, get_cmd, check_passwordless_ssh, try_connect_and_get_fingerprint, setup_passwordless_ssh, encode_str, TrainMaster.fit, TrainWorker.fit\n变量：a\n类：TrainParameters\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n函数：distribute_train, setup_pubkey, get_gpus, get_ip\n变量：args, data_refs, model_refs, new_model_refs\n类：TrainMaster\n导入语句：import ray, json",
+    "last_modified": 1696905908.7762692,
+    "md5": "a257c3dbbca6d7dda0f066844a585c60"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/fulltune/__init__.py": {
+    "symbols": "函数：sfft_train\n变量：localPathPrefix, current_time, formatted_time, rd, sfft_name, model_dir, model_refs, output_dir, data_dir, config_dir, train_params_sfft, new_model_refs\n类：\n导入语句：import os, import ray, from datetime import datetime, import uuid, import json, from typing import Dict, Any, List, Generator, from ray.util.client.common import ClientObjectRef, from pyjava.storage import streaming_tar as STar, from pyjava.api.mlsql import DataServer, from byzerllm import BlockRow, from .deepspeed_trainner import distribute_train, TrainParameters, from pyjava.udf.store import transfer_to_ob, from byzerllm import consume_model",
+    "last_modified": 1696905908.7757297,
+    "md5": "7b49fa140758f7bddc1a7f128f127f9b"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/fulltune/launch.py": {
+    "symbols": "函数：get_argument_parser, prepare_data, prepare_model, train\n变量：arg_parser, args, ds_config, micro_batch_size, max_length, data_engine, model_engine, step, loss, epoch\n类：DataEngine\n导入语句：import json, import os, import argparse, import deepspeed, import deepspeed.comm as dist, import numpy as np, import sentencepiece as spm, import torch",
+    "last_modified": 1696905908.7763798,
+    "md5": "93b4ea10294f798d169d68b4064705d2"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/fulltune/trainner.py": {
+    "symbols": "```python\n函数：distribute_train, trainer_init_per_worker\n变量：a, args, data_refs, train_args, micro_batch_size, model, trainer, fulltune_dataset, deepspeed_confg\n类：DataEngine, FulltuneDataset\n导入语句：import os, import json, import deepspeed, import numpy as np, import sentencepiece as spm, import torch, from torch.utils.data import Dataset, from pyjava import RayContext, from transformers import Trainer, TrainingArguments, default_data_collator, from .base_model.configuration_baichuan import BaiChuanConfig, from .base_model.modeling_baichuan import BaiChuanForCausalLM, from . import TrainParameters, from ray.train.huggingface import TransformersTrainer, from ray.air.config import ScalingConfig, from ray.air import session\n```",
+    "last_modified": 1696905908.7768514,
+    "md5": "d310a2a832bd095c2487e5bb7eadf7fe"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/fulltune/base_model/configuration_baichuan.py": {
+    "symbols": "函数：BaiChuanConfig\n类：BaiChuanConfig\n变量：logger\n导入语句：from transformers.configuration_utils import PretrainedConfig, from transformers.utils import logging",
+    "last_modified": 1696905908.7759364,
+    "md5": "8019b9d81c3196cc2cd411f2ce04d650"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/fulltune/base_model/modeling_baichuan.py": {
+    "symbols": "```python\n函数：auto_implement_function_template\n变量：a\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：auto_implement_function_template, a\n变量：a\n类：DecoderLayer, PreTrainedModel, Model\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：auto_implement_function_template\n变量：a\n类：BaiChuanForCausalLM\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n函数：reordered_past\n变量：beam_idx, layer_past\n类：\n导入语句：",
+    "last_modified": 1696905908.7761135,
+    "md5": "0ce5503dfbf5ec3fa205a1957fc711f1"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/fulltune/pretrain/__init__.py": {
+    "symbols": "```python\n函数：auto_implement_function_template\n变量：a\n类：DataEngine, ParallelConfig, ResourceWorker, Worker\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：_init_distributed_environment,get_address_and_port,get_node_and_gpu_ids,get_network_interface\n变量：ip, port, log_dir, job_name, tensorboard_pid, a, micro_batch_size, max_length, world_size, rank, model_engine\n类：ResourceWorker, Worker\n导入语句：import os, time, from loguru import logger, import byzerllm\n```\n```python\n函数：auto_implement_function_template, sfft_train, get_checkpoint_path, _run_workers, DeepSpeedTrainer, sfft_train\n变量：a, dst, sft_name, data_refs, train_params, sys_conf, chunks, count, current_time, formatted_time, detached, options, worker_cls, trainer, obj_count, checkpoint_path, node\n类：DeepSpeedTrainer\n导入语句：import os, time, from loguru import logger, import byzerllm\n```",
+    "last_modified": 1703337840.8122306,
+    "md5": "c70dfe3b8d6c2c272b614bc26f0b03e2"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/fulltune/pretrain/convert_to_transformers.py": {
+    "symbols": "函数：convert_deepspeed_checkpoint_to_transformers, convert\n变量：temp_dir, temp_pytorch_model_file, model, tokenizer, custom_resources, worker_conf, merge_job_name, worker\n类：DeepSpeedConvert\n导入语句：from deepspeed.utils import zero_to_fp32, from typing import NoReturn, import torch, import os, import ray, from transformers import WEIGHTS_NAME, CONFIG_NAME, from transformers import AutoTokenizer,AutoModelForCausalLM",
+    "last_modified": 1696905908.776737,
+    "md5": "c3aae4a2a439d516b9057f287e5cd46e"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/metrics/__init__.py": {
+    "symbols": "函数：inc, push\n类：Metric\n变量：self.registry, config, self.metric_enabled, self.pushgateway_address, self.gauges, self.counters\n导入语句：from prometheus_client import CollectorRegistry, Gauge,Counter, pushadd_to_gateway,from byzerllm.utils.config import get_mlsql_config_pushgateway_address,get_mlsql_config,import ray",
+    "last_modified": 1696905908.78413,
+    "md5": "6852ca14eb865250a53218341acb434e"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/config/__init__.py": {
+    "symbols": "函数：create_mlsql_config, get_mlsql_config, get_mlsql_config_item, get_mlsql_config_pushgateway_address\n类：MLSQLConifg\n变量：MLSQL_CONFIG\n导入语句：import ray",
+    "last_modified": 1696905908.7754862,
+    "md5": "98bda58700838958d820ed7b8b98f1a8"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/retrieval/rest.py": {
+    "symbols": "```\n函数：cluster, cluster_info, restore_from_cluster_info, create_table, build, commit, search, close, truncate, closeAndDeleteFile\n变量：app\n类：SimpleRest\n导入语句：from fastapi import Body, FastAPI, ray, serve, pydantic BaseModel, Field, List, Dict, Any, Annotated, Optional, json\n```",
+    "last_modified": 1702351831.2109852,
+    "md5": "ba0915fc486bd717805aed500a8f1dc6"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/retrieval/__init__.py": {
+    "symbols": "```python\n函数：auto_implement_function_template, build, create_table, check_table_exists, restore_from_cluster_info, delete_by_ids, get_tables, get_databases, shutdown_cluster, commit\n变量：a, br, cluster_settings, env_settings, jvm_settings, resource_requirement_settings, custom_resources, name, location, numNodes, nodeMemory, nodeCPU, enableZGC, javaHome, path, tableSettings, database, table, ids\n类：ClusterBuilder, ByzerRetrieval\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n函数：truncate, close, closeAndDeleteFile, search_keyword, search_vector, search, filter, delete_by_filter\n变量：无\n类：无\n导入语句：无",
+    "last_modified": 1711891197.8066967,
+    "md5": "8ee0667e4004c7b1fde4693c2dc64c26"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/retrieval/udf.py": {
+    "symbols": "函数：search_func, init_retrieval_client\n变量：model_refs, conf\n类：ByzerRetrieval\n导入语句：import ray,from pyjava import RayContext,from pyjava.udf import UDFMaster,UDFWorker,UDFBuilder,UDFBuildInFunc,from typing import Any, NoReturn, Callable, Dict, List,from ray.util.client.common import ClientActorHandle, ClientObjectRef,from byzerllm import consume_model,from byzerllm.records import SearchQuery,from byzerllm.utils.retrieval import ByzerRetrieval,from byzerllm.records import SearchQuery,import json",
+    "last_modified": 1702351831.2110999,
+    "md5": "4b14938516ddc99e75d2e0a7a278b6d7"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/sft/argument.py": {
+    "symbols": "函数：\n类：CustomizedArguments,QLoRAArguments\n变量：\n导入语句：from dataclasses import dataclass, field,from typing import Optional",
+    "last_modified": 1696905908.7846487,
+    "md5": "a0ba1a4f2bb1e60e3a0dc434fcfe3c5c"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/sft/collator.py": {
+    "symbols": "函数：__call__, __init__\n变量：self, batch, lengths, input_ids_batch, attention_mask_batch, target_mask_batch, x, input_ids, attention_mask, target_mask, padding_len, inputs\n类：SFTDataCollator\n导入语句：from typing import Any, Dict, List,import torch",
+    "last_modified": 1696905908.784755,
+    "md5": "5d0366fac821843ac91a7b1053e1d18d"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/sft/qlora.py": {
+    "symbols": "```python\n函数：auto_implement_function_template, verify_model_dtype, find_all_linear_names, setup_everything, init_components, train\n变量：a\n类：LoRATrainer\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```",
+    "last_modified": 1696905908.7852736,
+    "md5": "adb6db9742c789f935d4bd3521ea8d8b"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/sft/__init__.py": {
+    "symbols": "```python\n函数：auto_implement_function_template, sft_train\n变量：a\n类：SFT\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n函数：print_flush\n变量：count, sft_name, obj_count, items\n类：\n导入语句：",
+    "last_modified": 1703337840.8124938,
+    "md5": "aefe109bcf4246f8388a2180885ec7f5"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/sft/model.py": {
+    "symbols": "函数：forward\n类：BloomForCausalLM\n变量：logger\n导入语句：import transformers,from typing import Tuple, Union,import torch,from transformers.modeling_outputs import CausalLMOutputWithCrossAttentions, CausalLMOutputWithPast,from .loss import TargetLMLoss,from transformers.utils import logging",
+    "last_modified": 1696905908.785147,
+    "md5": "fa39a366c2a8a4c9a10394159177e173"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/sft/dataset.py": {
+    "symbols": "函数：__init__, __len__, __getitem__\n变量：self.tokenizer, self.bos_token_id, self.eos_token_id, self.eos_token, self.bos_token, self.max_seq_length, data_list, self.system_msg, self.user_role, self.assistant_role, self.user_role_prefix, self.assistant_role_prefix, self.dataset_tokens_count, data, conversation, utterances, utterances_ids, input_ids, target_mask, input_ids_suffix, target_mask_suffix, attention_mask, inputs\n类：SFTDataset\n导入语句：import json,from torch.utils.data import Dataset",
+    "last_modified": 1696905908.784856,
+    "md5": "f2181d83e387b3ccffa6e5544c2ef3e2"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/sft/loss.py": {
+    "symbols": "函数：__call__, __init__\n类：Loss, TargetLMLoss\n变量：ignore_index, loss_fn, input_ids, attention_mask, target_mask, outputs, logits, labels, shift_logits, shift_labels\n导入语句：import torch,import torch.nn as nn",
+    "last_modified": 1696905908.784952,
+    "md5": "e5bbddf3af38267fce3a5179223b1e49"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/sft/merge_lora.py": {
+    "symbols": "函数：merge_lora_to_base_model, merge_lora_to_base_model\n类：MergeLoraActor\n变量：无\n导入语句：from peft import PeftModel, from transformers import AutoModelForCausalLM, AutoTokenizer, from pyjava.api.mlsql import DataServer, from pyjava.storage import streaming_tar as STar, import torch, from typing import Any,Any,Dict, List,Tuple,Generator, from byzerllm import BlockRow, import os",
+    "last_modified": 1696905908.7850482,
+    "md5": "17bf0d788cea8bd2c551648de6f5e15a"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/sft/trainer.py": {
+    "symbols": "函数：Trainer,LoRATrainer\n变量：logger,TRAINING_ARGS_NAME,TRAINER_STATE_NAME,OPTIMIZER_NAME,SCHEDULER_NAME,SCALER_NAME\n类：Trainer,LoRATrainer\n导入语句：import transformers,from transformers import (PreTrainedModel,TrainingArguments,DataCollator,PreTrainedTokenizerBase,EvalPrediction,TrainerCallback,)from typing import Callable, Dict, List, Optional, Tuple, Union, Any,from torch import nn,from torch.utils.data import Dataset, DataLoader,from transformers.utils import (logging,),from typing import Optional,import os,import torch",
+    "last_modified": 1696905908.7853813,
+    "md5": "cf3aa3a46a5d8d2713ef2815f74e119c"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/client/message_utils.py": {
+    "symbols": "函数：termindate_message,un_termindate_message,success_message,fail_message,is_success,copy_error_count,get_error_count,inc_error_count,check_error_count,padding_messages_merge,padding_messages_expand\n变量：无\n类：无\n导入语句：from typing import List, Dict,Any,import copy",
+    "last_modified": 1705548780.4114633,
+    "md5": "51eb8e7b0e1b3c3092009b3610ff43fe"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/client/math_utils.py": {
+    "symbols": "```python\n函数：auto_implement_function_template\n变量：a\n类：\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```\n函数：\n变量：votes\n类：\n导入语句：\n```",
+    "last_modified": 1702351831.2102025,
+    "md5": "f503226db40f7d1a3bfacabc2ef132e7"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/client/parallel_utils.py": {
+    "symbols": "函数：chat_oai,get_single_result\n变量：无\n类：无\n导入语句：import concurrent.futures",
+    "last_modified": 1705548780.4116185,
+    "md5": "6c114758c150105771773e3e9f77ee58"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/client/__init__.py": {
+    "symbols": "```\n函数：auto_implement_function_template\n变量：a\n类：Role,LLMHistoryItem,LLMResponse,LLMFunctionCallResponse,LLMCasssResponse,FintuneRequestExtra,FintuneRequest,InferBackend,ExecuteCodeResponse,EventName,EventCallbackResult,Template,Templates\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```\n```python\n函数：auto_implement_function_template\n变量：a\n类：ByzerLLM\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：auto_implement_function_template,sft,merge_lora,pretrain,raw_sft,raw_pretrain,raw_merge_lora,raw_deepspeed_to_huggingface,undeploy,generate_instruction_from_history,is_model_exist,deploy\n变量：a\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：_generate_ins, _to_openai_format, execute_function_calling\n变量：sys_msg, conversations, final_ins, code, lang, temp, ms, _func_maps\n类：无\n导入语句：import json, traceback\n```\n```python\n函数：abort,execute_generate_func,execute_response_format,chat_oai\n变量：request_id,model,conversations,tools,tool_choice,execute_tool,impl_func,execute_impl_func,impl_func_params,func_params,response_class,response_after_chat,enable_default_sys_message,role_mapping,llm_config\n类：无\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```\n```python\n函数：prompt, _impl, clear_impl_cache, stream_chat_oai, async_stream_chat_oai, response\n变量：self, args, kwargs, input_dict, new_input_dic, prompt_str, t, r, model, instruction, verbose, instance\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：_impl, impl, chat, raw_chat, apply_sql_func, _rest_byzer_script, _rest_byzer_engine, get_max_model_length, get_max_output_length, get_max_input_length, _query\n变量：self, model, instruction, verbose, skip_cache, key, signature, arguments, response_class, func, extract_params, request, default_config, default_role_mapping, final_input, v, clean_func, sql, data, owner, url, res, metadata, input, table, url, data, response, text, json, dataType, data, content, role, impl_func, execute_impl_func, impl_func_params\n变量值：无\n\n导入语句：import os, time, from loguru import logger, import byzerllm\n```\n函数：default_chat_wrapper\n类：\n变量：llm,conversations,llm_config\n导入语句：from typing import List, Dict, Optional",
+    "last_modified": 1713090081.2367647,
+    "md5": "b52c6db1467730fd0ca07caecbc80432"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/client/code_utils.py": {
+    "symbols": "```python\n函数：auto_implement_function_template, get_value_from_llm_str, content_str, infer_lang, check_target_codes_exists, get_target_codes, extract_code, _cmd, execute_code\n变量：a\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：_remove_check, eval_function_completions, PassAssertionFilter\n变量：timeout, entry_point, test, definition, responses, n, use_docker, i, response, code, succeed_assertions, gen_cost, assertions, success_list, code_test, success\n类：无\n导入语句：import os, time, loguru, byzerllm, subprocess, threading, pathlib, re, docker\n```",
+    "last_modified": 1705548780.4112515,
+    "md5": "c8f3ade5b7137263cc2885c2f9040c80"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/client/img_utils.py": {
+    "symbols": "函数：get_image_data, llava_formater, convert_base64_to_data_uri, gpt4v_formatter, extract_img_paths, _to_pil\n变量：无\n类：无\n导入语句：import base64, import mimetypes, import re, from io import BytesIO, from typing import Any, Dict, List, Optional, Tuple, Union, import requests, from PIL import Image",
+    "last_modified": 1702351831.2100513,
+    "md5": "4081aaa5c23f224159dd422b1575a68c"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/client/entrypoints/openai/protocol.py": {
+    "symbols": "```python\n函数：auto_implement_function_template\n变量：a\n类：ErrorResponse, ModelPermission, ModelCard, ModelList, UsageInfo, ResponseFormat, ChatCompletionRequest, CompletionRequest\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：check_guided_decoding_count, Logprob, CompletionResponseChoice, CompletionResponse, CompletionResponseStreamChoice, CompletionStreamResponse, ChatMessage, ChatCompletionResponseChoice, ChatCompletionResponse, DeltaMessage, ChatCompletionResponseStreamChoice, ChatCompletionStreamResponse, EmbeddingsUsage, Embeddings, EmbeddingsData, EmbeddingsOutput\n类：LogProbs, CompletionResponseChoice, CompletionResponse, CompletionResponseStreamChoice, CompletionStreamResponse, ChatCompletionResponseChoice, ChatCompletionResponse, ChatCompletionResponseStreamChoice, ChatCompletionStreamResponse, EmbeddingsUsage, Embeddings, EmbeddingsData, EmbeddingsOutput\n变量：logprob, text_offset, token_logprobs, tokens, top_logprobs, index, text, logprobs, finish_reason, id, object, created, model, choices, usage, role, content, prompt_tokens, total_tokens, model, input, user, embedding, index, object, created, model, usage\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```",
+    "last_modified": 1711965834.7454789,
+    "md5": "2f76ed8ef261a0bbf6d268f509efb97f"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/client/entrypoints/openai/serving_chat.py": {
+    "symbols": "```python\n函数：create_chat_completion, chat_completion_stream_generator, chat_completion_full_generator\n类：OpenAIServingChat\n变量：response_role, llm_client, server_model_name, prompt_template\n导入语句：import asyncio, time, from fastapi Request, typing AsyncGenerator, Union, Optional, import byzerllm, import random_uuid\n```",
+    "last_modified": 1711965834.7458203,
+    "md5": "7c7181027b482188ab4772346c7928b8"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/client/entrypoints/openai/api_server.py": {
+    "symbols": "```\n函数：parse_args, health, show_available_models, show_version, models, create_completion, create_chat_completion, embed\n变量：args, logger, router_app, TIMEOUT_KEEP_ALIVE, TIMEOUT, llm_client, openai_serving_chat, openai_serving_completion\n类：CORSMiddleware, LLMRequest, ModelList, ModelCard, ModelPermission, ChatCompletionRequest, ErrorResponse, CompletionRequest, Embeddings, EmbeddingsOutput, EmbeddingsData, EmbeddingsUsage\n导入语句：import argparse, import json, import os, import time, from loguru import logger, import byzerllm\n```",
+    "last_modified": 1711966414.603561,
+    "md5": "0c3d889e1a8ab585b5336d91854e9297"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/client/entrypoints/openai/serving_engine.py": {
+    "symbols": "```python\n函数：_create_logprobs, _validate_prompt_and_tokenize, _detect_prompt_template, create_error_response, create_streaming_error_response, _check_model\n变量：logger, self.llm_client, self.max_model_len, self.tokenizer\n类：LoRA, OpenAIServing\n导入语句：import json,from dataclasses import dataclass,from http import HTTPStatus,from typing import Dict, List, Optional, Union,from byzerllm.log import init_logger,from byzerllm.utils.client import ByzerLLM, Templates,from byzerllm.utils.client.entrypoints.openai.protocol import CompletionRequest,ChatCompletionRequest,ErrorResponse,LogProbs,ModelCard,ModelList,ModelPermission,Logprob\n```",
+    "last_modified": 1711965834.7464464,
+    "md5": "a8d38ab6968f15091f9f89071f93257f"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/client/entrypoints/openai/serving_completion.py": {
+    "symbols": "```\n函数：create_completion, create_stream_response_json, completion_stream_generator\n类：OpenAIServingCompletion\n变量：a\n导入语句：import asyncio, import time, from typing import AsyncGenerator, Optional, from fastapi import Request, from byzerllm.utils import SingleOutputMeta, random_uuid, from byzerllm.utils.client import ByzerLLM, LLMResponse, from byzerllm.utils.client.entrypoints.openai.protocol import CompletionRequest, CompletionResponse, CompletionResponseChoice, CompletionResponseStreamChoice, CompletionStreamResponse, LogProbs, UsageInfo, from byzerllm.utils.client.entrypoints.openai.serving_engine import OpenAIServing\n```",
+    "last_modified": 1711965834.7461345,
+    "md5": "28b561d4cc884b95a8d6492a4f736f14"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/client/entrypoints/openai/tool.py": {
+    "symbols": "```python\n函数：get_tools_spec, auto_implement_function_template, _original_type_backward_compatibility, _get_type_spec\n变量：a\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```",
+    "last_modified": 1711891197.8056397,
+    "md5": "962ec74d4fc3cb41f7e8e794888dea42"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/chatglm2/__init__.py": {
+    "symbols": "函数：get_meta, stream_chat, init_model, sft_train\n变量：config, device, tokens, response, answer, pretrained_model_dir, adaptor_model_dir, is_adaptor_model, params, load_in_4bit, tokenizer, model\n类：\n导入语句：from transformers import AutoTokenizer, AutoModel,import transformers,import torch,import os,from typing import Any,Any,Dict, List,Tuple,Generator,from pyjava.api.mlsql import DataServer,from .. import BlockRow,from .. import parse_params",
+    "last_modified": 1705548780.4059868,
+    "md5": "dae9fdd2995c8045a7c675f735e3059e"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/baichuan/__init__.py": {
+    "symbols": "函数：get_meta, stream_chat, init_model, sft_train, sfft_train\n变量：无\n类：无\n导入语句：from transformers import AutoTokenizer, AutoModelForCausalLM,GenerationConfig,BitsAndBytesConfig, from pyjava.api.mlsql import DataServer, import torch, import os, from typing import Any,Any,Dict, List,Tuple,Generator",
+    "last_modified": 1705548780.4056504,
+    "md5": "b6936ff13bbf2f9eeb323093bf494044"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/m3e/__init__.py": {
+    "symbols": "函数：init_model\n导入语句：from sentence_transformers import SentenceTransformer",
+    "last_modified": 1696905908.768281,
+    "md5": "6a629edad87a8c7a2165eb6dcc3d99f5"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/config.py": {
+    "symbols": "函数：set_checkpoint, set_precision, set_model_dir, set_temp_dir, set_hf_token, set_xformers, get_checkpoint, get_precision, get_model_dir, get_temp_dir, get_hf_token, get_xformers\n变量：stableDiffusionConfig\n类：StableDiffusionConfig\n导入语句：from typing import *",
+    "last_modified": 1696905908.772718,
+    "md5": "5c4c25b1b01e81576d0e85b253daede1"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/__init__.py": {
+    "symbols": "```\n函数：generate_image, init_model, get_meta, stream_chat\n变量：a\n类：\n导入语句：import json, os, time, traceback, typing\n```",
+    "last_modified": 1705548780.4085753,
+    "md5": "0cebe277fe81641e06829fbe7aef56c6"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/logger.py": {
+    "symbols": "函数：set_logger\n导入语句：import logging,import logging.handlers,import sys",
+    "last_modified": 1696905908.7745976,
+    "md5": "b33518f6ae6021112996857fd90b775a"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/shared.py": {
+    "symbols": "函数：hf_diffusers_cache_dir,hf_transformers_cache_dir,get_device\n变量：无\n类：无\n导入语句：import os,import torch,from byzerllm.stable_diffusion.config import stableDiffusionConfig",
+    "last_modified": 1696905908.774833,
+    "md5": "ac94d9153fddee85a09e748c21c8fb26"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/model.py": {
+    "symbols": "```python\n函数：__init__,activate,available_modes,change_mode,teardown,swap_scheduler,__call__\n变量：ModelMode,PrecisionMap,self\n类：DiffusersModel\n导入语句：from queue import Queue,import gc,import random,from typing import Dict, List, Literal,import torch,from byzerllm.stable_diffusion import utils,from byzerllm.stable_diffusion.api.models.diffusion import ImageGenerationOptions,from byzerllm.stable_diffusion.config import stableDiffusionConfig,from byzerllm.stable_diffusion.diffusion.piplines.diffusers import DiffusersPipeline,from byzerllm.stable_diffusion.images import save_image_base64,from byzerllm.stable_diffusion.lib.diffusers.scheduler import SCHEDULERS,parser_schedulers_config,from byzerllm.stable_diffusion.shared import get_device,hf_diffusers_cache_dir,from packaging.version import Version\n```",
+    "last_modified": 1696905908.7747138,
+    "md5": "f0a566aa4f884c4ab8debc0e50e546dd"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/utils.py": {
+    "symbols": "函数：img2b64, b642img, ndarr2img, is_installed\n变量：无\n类：无\n导入语句：import base64, import importlib, import io, from typing import *, import numpy as np, import torch, from PIL import Image",
+    "last_modified": 1696905908.7749345,
+    "md5": "c47607109751fbc708c0bed9d1439743"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/images.py": {
+    "symbols": "函数：save_image_base64, get_image_parameter\n变量：metadata, prompt, img64, text, parameters\n类：\n导入语句：import json,from PIL import Image,from PIL.PngImagePlugin import PngInfo,from byzerllm.stable_diffusion.api.models.diffusion import ImageGenerationOptions,from byzerllm.stable_diffusion.utils import img2b64",
+    "last_modified": 1696905908.7741597,
+    "md5": "ae26ae7369858dbe5b181b4415c4a6d6"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/embeddings.py": {
+    "symbols": "函数：on_load_resource, on_prompt_tokenizing, init\n变量：token_replaces, loaded_embeddings\n类：\n导入语句：import glob, import os, from typing import *, import torch, from safetensors.torch import load_file, from transformers import CLIPTextModel, from byzerllm.stable_diffusion.api.events import event_handler, from byzerllm.stable_diffusion.api.events.generation import LoadResourceEvent, PromptTokenizingEvent, from byzerllm.stable_diffusion.config import stableDiffusionConfig",
+    "last_modified": 1696905908.7729235,
+    "md5": "896dcda146ecc06fbcf2e5ed999aeac5"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/utils.py": {
+    "symbols": "函数：convert_checkpoint_to_pipe, load_unet, load_text_encoder, load_vae_decoder, load_vae_encoder\n变量：无\n类：无\n导入语句：import gc, import os, from typing import *, import torch, from diffusers import AutoencoderKL, UNet2DConditionModel, from diffusers.pipelines.stable_diffusion import convert_from_ckpt, from transformers import CLIPTextModel, from byzerllm.stable_diffusion.config import stableDiffusionConfig, from byzerllm.stable_diffusion.shared import hf_diffusers_cache_dir, hf_transformers_cache_dir",
+    "last_modified": 1696905908.7740126,
+    "md5": "83b3ae58250a3b5abbb23076e1d8b0a1"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/networks/lyco.py": {
+    "symbols": "```python\n函数：auto_implement_function_template,create_network_from_weights,get_metadata\n变量：a\n类：LoConModule,LohaModule,LycorisNetwork\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```",
+    "last_modified": 1696905908.7731986,
+    "md5": "e638a39885d5ed232a4029088463d614"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/networks/__init__.py": {
+    "symbols": "函数：get_networks_from_prompt, find_network_filepath, restore_networks, load_network_modules, init\n变量：logger, latest_networks\n类：\n导入语句：import os,import re,from glob import glob,from typing import *,import torch,import byzerllm.stable_diffusion.diffusion.networks.lyco as lyco,from byzerllm.stable_diffusion.logger import set_logger,from byzerllm.stable_diffusion.api.events import event_handler,from byzerllm.stable_diffusion.api.events.generation import LoadResourceEvent,from byzerllm.stable_diffusion.config import stableDiffusionConfig",
+    "last_modified": 1696905908.7730799,
+    "md5": "5a2dcb82908d850b236ce883bfed0711"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/upscalers/multidiffusion.py": {
+    "symbols": "```python\n函数：hijack_ancestral_scheduler, align_unet_inputs, views_denoise_latent, get_views\n变量：vae, text_encoder, tokenizer, unet, scheduler, ancestral\n类：Multidiffusion\n导入语句：import copy, from typing import *, import torch, from diffusers import (AutoencoderKL, DDPMScheduler, EulerAncestralDiscreteScheduler, KDPM2AncestralDiscreteScheduler, UNet2DConditionModel), from tqdm import tqdm, from transformers import CLIPTextModel, CLIPTokenizer, from byzerllm.stable_diffusion.diffusion.upscalers.samplers import (EulerAncestralSampler, KDPM2AncestralSampler)\n```",
+    "last_modified": 1696905908.7738054,
+    "md5": "719684eeb088c2bfe8e2513075e70943"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/upscalers/samplers.py": {
+    "symbols": "```python\n函数：step, step\n类：SamplerOutput, EulerAncestralSampler, KDPM2AncestralSampler\n变量：a, model_output, timestep, sample, generator, return_dict, prev_sample, sigma_up, step_index, sigma, pred_original_sample, sigma_from, sigma_to, derivative, dt, sigma_interpol, sigma_hat, gamma, sigma_input\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```",
+    "last_modified": 1696905908.77391,
+    "md5": "fcd6fc81ce8c2d518670bd1be0a796e3"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/piplines/lpw.py": {
+    "symbols": "```\n函数：auto_implement_function_template\n变量：a\n类：LongPromptWeightingPipeline\n导入语句：import re,torch,from byzerllm.stable_diffusion.api.events.generation import PromptTokenizingEvent,from byzerllm.stable_diffusion.logger import set_logger,logger\n```\n函数：\n变量：text_embeddings, prompt_weights, previous_mean, current_mean, uncond_embeddings, uncond_weights\n类：\n导入语句：",
+    "last_modified": 1696905908.7735772,
+    "md5": "6cb92089f658847cdf5bfc58ce2c18f9"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/diffusion/piplines/diffusers.py": {
+    "symbols": "```python\n函数：auto_implement_function_template, PipeSession, DiffusersPipeline, DiffusersPipeline.from_pretrained, DiffusersPipeline.to, DiffusersPipeline.enterers, DiffusersPipeline.swap_vae, DiffusersPipeline.load_resources, DiffusersPipeline.get_timesteps, DiffusersPipeline.prepare_extra_step_kwargs, DiffusersPipeline.preprocess_image, DiffusersPipeline._get_add_time_ids, DiffusersPipeline._encode_prompt\n变量：a\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：auto_implement_function_template,prepare_latents,denoise_latent\n变量：a,batch_size,bs_embed,callback,callback_steps,cross_attention_kwargs,do_classifier_free_guidance,dtype,extra_step_kwargs,generator,height,image,init_latents,init_latent_dist,latents,latent_model_input,lpw,max_embeddings_multiples,model_input,negative_prompt,negative_prompt_embeds,num_images_per_prompt,num_inference_steps,num_warmup_steps,padding,pooled_prompt_embeds,prompt,prompt_embeds,prompt_embeds_list,prompt_input_ids,self,shape,text_encoder,text_inputs,text_input_ids,timestep,timesteps,tokenizer,tokenizers,unet_additional_kwargs,unet_in_channels,vae_scale_factor,vae,width,word_embeddings\n```\n```python\n函数：auto_implement_function_template, decode_latents, decode_images, create_output, __call__\n变量：a\n类：\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n函数：create_output, enable_xformers_memory_efficient_attention, enable_attention_slicing\n变量：num_inference_steps,guidance_scale,do_classifier_free_guidance,prompt_embeds,extra_step_kwargs,callback,callback_steps,cross_attention_kwargs,unet_additional_kwargs,latents,output_type,return_dict,enterers,self.stage_1st,self.session\n类：\n导入语句：",
+    "last_modified": 1696905908.7734406,
+    "md5": "c6292f24c2dcd99f0245649e329783b1"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/lib/diffusers/scheduler.py": {
+    "symbols": "函数：parser_schedulers_config\n变量：SCHEDULERS\n类：\n导入语句：import diffusers",
+    "last_modified": 1696905908.7745063,
+    "md5": "5ef1e8a745c723ea11f4119c31385685"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/api/plugin.py": {
+    "symbols": "函数：get_plugin_id\n导入语句：import inspect",
+    "last_modified": 1696905908.7726297,
+    "md5": "ed5b76fa6501dc957ef8ea415fd52330"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/api/models/diffusion.py": {
+    "symbols": "函数：dict, json, parse_obj\n类：HiresfixOptions, MultidiffusionOptions, ImageGenerationOptions\n变量：HIRESFIX\n导入语句：from dataclasses import asdict, dataclass, field, Optional, from typing import Optional, import PIL.Image",
+    "last_modified": 1696905908.7725427,
+    "md5": "e00bafc73d7c8b2f8d03422df3790cee"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/api/diffusion/pipelines/diffusers.py": {
+    "symbols": "```python\n函数：__init__,from_pretrained,get_plugin_data,set_plugin_data,to,enterers,load_resources,get_timesteps,prepare_extra_step_kwargs,preprocess_image,_encode_prompt,prepare_latents,denoise_latent,decode_latents,decode_images,create_output,__call__,enable_xformers_memory_efficient_attention,enable_attention_slicing\n变量：vae,text_encoder,tokenizer,unet,scheduler,device,dtype,session,id\n类：PipeSession,DiffusersPipelineModel\n导入语句：import inspect,import numpy as np,import PIL.Image,import torch,from diffusers import AutoencoderKL, DDPMScheduler, UNet2DConditionModel,from transformers import CLIPTextModel, CLIPTokenizer,from byzerllm.stable_diffusion.api.models.diffusion import ImageGenerationOptions,from byzerllm.stable_diffusion.api.plugin import get_plugin_id\n```",
+    "last_modified": 1696905908.7720258,
+    "md5": "d83f3bf2e8d439d28ff1d726d2c398b5"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/api/events/generation.py": {
+    "symbols": "函数：LoadResourceEvent,PromptTokenizingEvent,UNetDenoisingEvent\n类：DiffusersPipelineModel,BaseEvent,SkippableEvent\n变量：pipe,text_tokens,text_weights,latent_model_input,step,timestep,latents,timesteps,do_classifier_free_guidance,prompt_embeds,extra_step_kwargs,callback,callback_steps,cross_attention_kwargs,unet_additional_kwargs\n导入语句：from dataclasses import dataclass, field,from typing import Any, Callable, Dict, List, Optional,import torch,from byzerllm.stable_diffusion.api.diffusion.pipelines.diffusers import (DiffusersPipelineModel,),from byzerllm.stable_diffusion.api.events import BaseEvent, SkippableEvent",
+    "last_modified": 1696905908.7723417,
+    "md5": "ac04c7f4bde753665b10ea98a71296e3"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/stable_diffusion/api/events/__init__.py": {
+    "symbols": "函数：event_handler, decorator\n类：BaseEvent, CancellableEvent, SkippableEvent\n变量：handlers, T\n导入语句：import inspect,from dataclasses import dataclass,from typing import Callable, ClassVar, Dict, List, Type, TypeVar",
+    "last_modified": 1696905908.77218,
+    "md5": "d72acb623dbec6372d1110c165b676c7"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/bge/__init__.py": {
+    "symbols": "函数：_encode,embed_documents,embed_query,init_model\n变量：self\n类：\n导入语句：from sentence_transformers import SentenceTransformer,from typing import Dict,List,Tuple",
+    "last_modified": 1696905908.7646277,
+    "md5": "a135d283b7ca3b4632dc1a26626d6993"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/bge_rerank/__init__.py": {
+    "symbols": "函数：embed_rerank,init_model\n类：FlagReranker\n变量：self,sentence_pairs,extract_params,scores,model_dir,infer_params,sys_conf,model\n导入语句：from typing import Union, List, Tuple,from FlagEmbedding import FlagReranker",
+    "last_modified": 1711891197.7982836,
+    "md5": "88eeff01ef1d234dd424a8247949cd83"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/client.py": {
+    "symbols": "函数：ByzerLLMClient,request,emb,chat,LocalEmbeddings,embed_documents,embed_query,Chatglm6bLLM,_call\n变量：url,client_params,s,json_data,response,t,t2,newhis,text,embeddings,embedding,text\n类：ByzerLLMClient,LocalEmbeddings,Chatglm6bLLM\n导入语句：from langchain.embeddings.base import Embeddings,from typing import Any, List, Mapping, Optional,Tuple,from langchain.callbacks.manager import CallbackManagerForLLMRun,from langchain.llms.base import LLM,import requests,import json,from . import ClientParams",
+    "last_modified": 1696905908.700518,
+    "md5": "46cb4f9c6484e5fa5c84d0c079e64f0b"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/qa_strategy.py": {
+    "symbols": "```\n函数：DocRetrieveStrategyFactory, FullDocRetrieveStrategy, DocCombineFormat, FullDocCombineFormatList, FullDocCombineFormatDefault, JsonCombineFormat, CsvCombineFormat, FullDocCombineFormatFactory\n变量：self, input, k, index, doc, value, temp_docs, temp_metas, csv_buffer, csv_writer\n类：ABC, DocRetrieveStrategy, DocCombineFormat\n导入语句：import io, from langchain.docstore.document import Document, from abc import ABC, abstractmethod, from typing import List, Tuple,Dict,Any, import json, import csv\n```",
+    "last_modified": 1696905908.7007792,
+    "md5": "79404b64f2727eb35bab782c2d28515c"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/__init__.py": {
+    "symbols": "函数：\n类：ClientParams, BuilderParams, QueryParams\n变量：\n导入语句：from dataclasses import dataclass",
+    "last_modified": 1696905908.7001967,
+    "md5": "b384d823c44ce787ff8266d9bbf8fc78"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/builder.py": {
+    "symbols": "函数：OnceWay,MergeWay\n变量：db_dir,embeddings\n类：BuilderParams\n导入语句：from langchain.text_splitter import RecursiveCharacterTextSplitter,import os,import json,import shutil,from langchain.vectorstores import FAISS,from langchain.docstore.document import Document,from pathlib import Path,from . import BuilderParams",
+    "last_modified": 1696905908.700337,
+    "md5": "8d97d771aea7a8ca8d3777ed615ef8cb"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/vector_db.py": {
+    "symbols": "函数：_is_visible,save,build_from,merge_from,query\n变量：db_dir,db,client,embeddings,p,parts,_p,b,path,params,extra_params,target_path,result\n类：VectorDB\n导入语句：from langchain.vectorstores import FAISS,from langchain.docstore.document import Document,from pathlib import Path,from typing import List,from . import BuilderParams,from .builder import OnceWay,MergeWay,from .client import ByzerLLMClient,LocalEmbeddings",
+    "last_modified": 1696905908.7009022,
+    "md5": "85705c5150607de4b5adeb66fdcad639"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/qa.py": {
+    "symbols": "```\n函数：ByzerLLMQAQueryWorker,query,__init__\n类：RayByzerLLMQAWorker,ByzerLLMQAQueryWorker,RayByzerLLMQA,ByzerLLMQA\n变量：a,db_path,client,refs,q,k,prompt,v,qa,input,hint,strategy,docs_with_score,time1,t,query_vector_db_time,docs,temp_metas,show_full_query,newq,top_p,temperature,max_length,chat_time,data_path,params,extra_params,builder_params,data_refs,index,build_func,sub_data,temp_dir\n导入语句：import os,import time,from loguru import logger,import byzerllm,import json,from langchain import PromptTemplate,import ray,from typing import List,Dict,Any,Tuple,uuid,from pyjava.storage  import streaming_tar,import time,from . import BuilderParams,QueryParams,from .qa_strategy import FullDocCombineFormatFactory, DocRetrieveStrategyFactory,from .vector_db import VectorDB,from .client import ByzerLLMClient\n```",
+    "last_modified": 1696905908.7006698,
+    "md5": "e871bf0de682b0234b6923f6e21ca59e"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_sql/__init__.py": {
+    "symbols": "函数：chat, deploy\n变量：conf, infer_params, v, value, response, new_history, result, t, num_gpus, num_workers, pretrained_model_type, model_path, chat_name\n类：\n导入语句：from typing import Dict, from dataclasses import asdict, from byzerllm.utils.client import ByzerLLM, import json",
+    "last_modified": 1712893312.5429573,
+    "md5": "11f9fe53d9d630f44097eef4bd4f5f30"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/llama_index/byzerai_vectordb.py": {
+    "symbols": "```\n函数：_build_metadata_filter_fn, metadata_dict_to_node, get, add, delete, query\n变量：stores_text, llm, retrieval, chunk_collection, node_json, node_type, node, text_id, nodes, node, ref_doc_id, query, query_embedding, chunks, chunks_map, query_filter_fn, top_similarities, top_ids, counter, v\n类：ByzerAIVectorStore\n导入语句：import json, logging, from typing import Any, Callable, Dict, List, Mapping, Optional, cast\n    from llama_index.schema import BaseNode\n    from llama_index.vector_stores.types import MetadataFilters, VectorStore, VectorStoreQuery, VectorStoreQueryResult\n    from llama_index.schema import ImageNode, IndexNode, NodeRelationship, RelatedNodeInfo, TextNode\n    from llama_index.vector_stores.utils import node_to_metadata_dict\n    from byzerllm.utils.client import ByzerLLM\n    from byzerllm.utils.retrieval import ByzerRetrieval\n    from byzerllm.apps.llama_index.simple_retrieval import SimpleRetrieval\n```",
+    "last_modified": 1711891197.7964392,
+    "md5": "111ee18be1be284ec992667aca71ca09"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/llama_index/byzerai.py": {
+    "symbols": "```python\n函数：__init__, _model, class_name, chat, stream_chat, complete, stream_complete, metadata\n变量：verbose, _model\n类：ByzerAI\n导入语句：import os,from typing import Any, Callable, Dict, Optional, Sequence,from llama_index.bridge.pydantic import Field, PrivateAttr,from llama_index.core.llms.types import ChatMessage,ChatResponse,ChatResponseGen,CompletionResponse,CompletionResponseGen,LLMMetadata,from llama_index.llms.base import llm_chat_callback, llm_completion_callback,from llama_index.llms.custom import CustomLLM,from llama_index.llms.generic_utils import completion_response_to_chat_response, stream_completion_response_to_chat_response,from llama_index.types import BaseOutputParser, PydanticProgramMode,from llama_index.utils import get_cache_dir,from byzerllm.utils.client import ByzerLLM\n```",
+    "last_modified": 1711891197.7952344,
+    "md5": "4d1bb5604a5d1085c0b1508d37d6d356"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/llama_index/byzerai_embedding.py": {
+    "symbols": "函数：_get_query_embedding, _aget_query_embedding, _aget_text_embedding, _get_text_embeddings, class_name\n变量：_llm\n类：ByzerAIEmbedding\n导入语句：from typing import TYPE_CHECKING, List, Optional, from llama_index.core.embeddings.base import DEFAULT_EMBED_BATCH_SIZE, BaseEmbedding, from llama_index.bridge.pydantic import PrivateAttr, from byzerllm.utils.client import ByzerLLM, from byzerllm.utils.langutil import asyncfy_with_semaphore",
+    "last_modified": 1711891197.795713,
+    "md5": "bfe6606ff32cfb6016281548e7f4ef31"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/llama_index/__init__.py": {
+    "symbols": "函数：get_service_context, get_storage_context\n变量：llm, retrieval, chunk_collection, namespace, kargs\n类：ByzerLLM, ByzerRetrieval, ByzerAI, ByzerAIEmbedding, ByzerAIDocumentStore, ByzerAIIndexStore, ByzerAIVectorStore, ServiceContext, StorageContext\n导入语句：from byzerllm.utils.client import ByzerLLM,from byzerllm.utils.retrieval import ByzerRetrieval,from byzerllm.apps.llama_index.byzerai import ByzerAI,from byzerllm.apps.llama_index.byzerai_embedding import ByzerAIEmbedding,from byzerllm.apps.llama_index.byzerai_docstore import ByzerAIDocumentStore,from byzerllm.apps.llama_index.byzerai_index_store import ByzerAIIndexStore,from byzerllm.apps.llama_index.byzerai_vectordb import ByzerAIVectorStore,from llama_index.service_context import ServiceContext,from llama_index.storage import StorageContext,from typing import Optional",
+    "last_modified": 1711891197.794964,
+    "md5": "bce44102108b1dab712ea693fb7e5db6"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/llama_index/byzerai_index_store.py": {
+    "symbols": "函数：\n类：ByzerAIIndexStore\n变量：self, llm, retrieval, namespace\n导入语句：from typing import Dict, List, Optional, Sequence, Tuple,import json,from llama_index.schema import BaseNode, TextNode,from llama_index.storage.index_store.keyval_index_store import KVIndexStore,from llama_index.storage.docstore.utils import doc_to_json, json_to_doc,from llama_index.storage.kvstore.types import DEFAULT_BATCH_SIZE, BaseKVStore,from byzerllm.utils.client import ByzerLLM,from byzerllm.utils.retrieval import ByzerRetrieval,from byzerllm.apps.llama_index.simple_retrieval import SimpleRetrieval,from byzerllm.utils.langutil import asyncfy_with_semaphore,from byzerllm.apps.llama_index.byzerai_kvstore import ByzerAIKVStore",
+    "last_modified": 1711891197.795926,
+    "md5": "e40e945d9e23548d2d79b73a97d4cdbf"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/llama_index/byzerai_docstore.py": {
+    "symbols": "函数：\n类：ByzerAIDocumentStore\n变量：self, llm, retrieval, namespace, batch_size, kv_store\n导入语句：from typing import Dict, List, Optional, Sequence, Tuple,import json,from llama_index.schema import BaseNode, TextNode,from llama_index.storage.docstore.keyval_docstore import KVDocumentStore,from llama_index.storage.docstore.utils import doc_to_json, json_to_doc,from llama_index.storage.kvstore.types import DEFAULT_BATCH_SIZE, BaseKVStore,from byzerllm.utils.client import ByzerLLM,from byzerllm.utils.retrieval import ByzerRetrieval,from byzerllm.utils.langutil import asyncfy_with_semaphore,from byzerllm.apps.llama_index.simple_retrieval import SimpleRetrieval,from byzerllm.apps.llama_index.byzerai_kvstore import ByzerAIKVStore",
+    "last_modified": 1711891197.7954807,
+    "md5": "a45a719d3ac09fced9c416baf00f0a43"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/llama_index/simple_retrieval.py": {
+    "symbols": "```python\n函数：__init__,save_doc,_owner_filter,search_content_chunks,search_content_by_filename,search_content,get_chunk_by_id,get_chunks_by_docid,delete_chunk_by_ids,save_chunks,get_doc\n变量：self.chunk_collection,self.retrieval_cluster,self.retrieval_db,self.max_output_length,self.llm,self.retrieval\n类：SimpleRetrieval\n导入语句：from byzerllm.utils.retrieval import ByzerRetrieval,time,LLMHistoryItem,LLMRequest,TableSettings,SearchQuery,uuid,json,PromptTemplate,RecursiveCharacterTextSplitter,Document,colored,jieba\n```\n函数：delete_doc,truncate_table,delete_from_doc_collection,delete_from_chunk_collection,commit_doc,commit_chunk,emb,split_text_into_chunks,search_tokenize\n变量：ids\n类：\n导入语句：import jieba",
+    "last_modified": 1711891197.7968676,
+    "md5": "ddedb04840d9bb0fa446480363c32ac2"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/llama_index/byzerai_kvstore.py": {
+    "symbols": "```\n函数：__init__, put, aput, put_all, get, aget, delete, adelete\n变量：self, llm, retrieval, key, val, collection, kv_pairs, batch_size, cur_batch, v, doc, val_str\n类：ByzerAIKVStore\n导入语句：import json,from typing import Any, Dict, List, Optional, Tuple, cast,from llama_index.storage.kvstore.types import (DEFAULT_BATCH_SIZE,DEFAULT_COLLECTION,BaseKVStore),from byzerllm.utils.client import ByzerLLM,from byzerllm.utils.retrieval import ByzerRetrieval,from byzerllm.apps.llama_index.simple_retrieval import SimpleRetrieval,from byzerllm.utils.langutil import asyncfy_with_semaphore\n```",
+    "last_modified": 1711891197.7961583,
+    "md5": "0fbe41cea4b33bcbf83a2806ac763157"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/conversable_agent.py": {
+    "symbols": "```python\n函数：auto_implement_function_template,get_name,get_function_map,get_agent_description,update_agent_description,register_reply,get_system_message,update_system_message,update_max_consecutive_auto_reply,max_consecutive_auto_reply\n类：ConversableAgent\n变量：a,llm,retrieval,system_message,is_termination_msg,human_input_mode,function_map,code_execution_config,_max_consecutive_auto_reply,_code_execution_config,_consecutive_auto_reply_counter,_max_consecutive_auto_reply_dict,_function_map,_default_auto_reply,_reply_func_list,reply_at_receive,_agent_description,message_store,group_name,stream_replies,error_count\n导入语句：import asyncio,from collections import defaultdict,import copy,import inspect,import time,import logging,import uuid,from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,Generator,ray,concurrent.futures\n```\n```python\n函数：reset, initiate_chat, send, _process_received_message, clear_history, reset_consecutive_auto_reply_counter, stop_reply_at_receive, get_reply_at_receive, set_reply_at_receive, _prepare_chat, generate_init_message, last_message, chat_messages, _append_message, _message_to_dict\n变量：self._max_consecutive_auto_reply, self._messages, self.reply_at_receive, self._consecutive_auto_reply_counter\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：check_termination_and_human_reply,generate_reply,generate_llm_reply,get_human_input,receive\n变量：self._consecutive_auto_reply_counter,self._max_consecutive_auto_reply_dict,self._messages,self._reply_func_list,self.chat_wrapper,self.human_input_mode,self.message_store,self.name,config\n类：无\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```",
+    "last_modified": 1711891197.7869375,
+    "md5": "8fb9c13229a4add957972780b01dfd24"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/registry.py": {
+    "symbols": "函数：reply, _impl\n变量：agents, _agents, is_lambda\n类：\n导入语句：import functools,from byzerllm.apps.agent import get_agent_name,import inspect",
+    "last_modified": 1711891197.793216,
+    "md5": "777e72240b6cdc2f494893fa6a5976ea"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/groupchat.py": {
+    "symbols": "```python\n函数：select_speaker,reset,agent_by_name,next_agent,select_speaker_msg,_participant_roles,run_chat,get_groupchat,reset_agents\n变量：self.messages,self.agents,self.max_round,self.admin_name,self.func_call_filter,logger,colored,groupchat,message,speaker,i,agent,reply\n类：GroupChat,GroupChatManager\n导入语句：import os,import time,from loguru import logger,import byzerllm,import json\n```\n函数：last_message\n类：GroupChat\n导入语句：无",
+    "last_modified": 1702964934.535184,
+    "md5": "4768aae35a60aa6fa53d5a82c1402f00"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/user_proxy_agent.py": {
+    "symbols": "```python\n函数：__init__, super\n类：UserProxyAgent\n导入语句：from .conversable_agent import ConversableAgent, from typing import Callable, Dict, Optional, Union, from byzerllm.utils.retrieval import ByzerRetrieval, from byzerllm.utils.client import ByzerLLM\n变量：name, llm, retrieval, is_termination_msg, max_consecutive_auto_reply, human_input_mode, function_map, code_execution_config, default_auto_reply, system_message, kwargs\n```",
+    "last_modified": 1702964934.535389,
+    "md5": "4c4f259cf1d36ee5ff6685a6f43f4482"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/__init__.py": {
+    "symbols": "函数：get_agent_name, run_agent_func, count_messages_length, copy_message, modify_message_metadata, modify_message_content, modify_last_message\n类：Agents\n变量：无\n导入语句：from dataclasses import dataclass, from typing import TYPE_CHECKING,Dict, List, Optional, Union,Any,get_type_hints,Annotated,get_args, import typing, import ray, import dataclasses, import copy, import inspect, import json, import pydantic",
+    "last_modified": 1711891197.7860084,
+    "md5": "352af622d2ecef8583073028aa6a4a95"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/agent.py": {
+    "symbols": "函数：send, receive, reset, generate_reply\n变量：self, name, message, recipient, request_reply, raw_message, messages, sender, kwargs\n类：Agent\n导入语句：from typing import TYPE_CHECKING,Dict, List, Optional, Union, from ray.util.client.common import ClientActorHandle",
+    "last_modified": 1702351831.2037303,
+    "md5": "7d1f425376c730df466d809a35fa400c"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/simple_retrieval_client.py": {
+    "symbols": "```python\n函数：_owner_filter, colored, search_content, search_content_chunks, save_conversation, get_conversations, get_conversations_as_history, save_text_content, get_doc, get_doc_by_url\n变量：a\n类：SimpleRetrievalClient\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n函数：search_memory, emb, split_text_into_chunks, search_tokenize\n变量：self\n类：\n导入语句：无",
+    "last_modified": 1711891197.7916675,
+    "md5": "64a56ec0685b9c07f64cf9896937a188"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/planner.py": {
+    "symbols": "```\n类：PlannerAgent\n导入语句：from ..conversable_agent import ConversableAgent,from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,from ....utils.client import ByzerLLM,from byzerllm.utils.retrieval import ByzerRetrieval\n```",
+    "last_modified": 1702964934.53375,
+    "md5": "afed80b9c050c14eee384488cb42a23a"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/python_codesandbox_agent.py": {
+    "symbols": "```python\n函数：generate_execute_code_reply,check_sandbox_timeout,check_sandbox_exists,get_sandbox,force_clear,get_or_create_sandbox\n类：PythonSandboxAgent\n变量：file_path,file_ref,num_gpus,num_cpus\n导入语句：import ray\n          from ray.util.client.common import ClientActorHandle, ClientObjectRef\n          from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\n          import time\n          import sys\n          import io\n          import traceback\n          import json\n          from byzerllm.utils.retrieval import ByzerRetrieval\n          from byzerllm.utils.client import ByzerLLM,code_utils,message_utils\n          from ..conversable_agent import ConversableAgent\n          from ..agent import Agent\n          from .. import get_agent_name,run_agent_func,ChatResponse\n```",
+    "last_modified": 1705548780.4011705,
+    "md5": "9c24cf08171c2c183747e68cace0e89f"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/preview_file_agent.py": {
+    "symbols": "```python\n函数：generate_code_reply,reply_python_code_agent,create_temp_message\n类：PreviewFileAgent\n变量：file_path,content,self.code_agent,config,sender,messages,raw_message,new_messages,response,file_preview\n导入语句：from ..conversable_agent import ConversableAgent\nfrom typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\nfrom ....utils.client import ByzerLLM,message_utils\nfrom byzerllm.utils.retrieval import ByzerRetrieval\nfrom ..agent import Agent\nfrom ray.util.client.common import ClientActorHandle, ClientObjectRef\nimport time\nfrom . import get_agent_name,run_agent_func,ChatResponse,modify_last_message,modify_message_content\nfrom langchain import PromptTemplate\nimport json\n```",
+    "last_modified": 1705548780.4007893,
+    "md5": "1e8af4b826f4b20a959c67f3f0febed5"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/llama_index_retrieval_agent.py": {
+    "symbols": "函数：generate_retrieval_based_reply, __init__\n变量：self.chat_name, self.owner, self.update_context_retry, self.llm, self.retrieval, self._messages, new_message, content, agent_data, service_context, storage_context, index, query_engine, id, streaming_response, t\n类：AgentData, LlamaIndexRetrievalAgent\n导入语句：from ..conversable_agent import ConversableAgent, from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, Generator, from ....utils.client import ByzerLLM, from byzerllm.utils.retrieval import ByzerRetrieval, from ..agent import Agent, import ray, from ray.util.client.common import ClientActorHandle, ClientObjectRef, from .. import get_agent_name, run_agent_func, ChatResponse, from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient, import uuid, import json, from byzerllm.apps.llama_index import get_service_context, get_storage_context, from llama_index import VectorStoreIndex",
+    "last_modified": 1711891197.7897117,
+    "md5": "a2626e746a466dd488c0f11cf1b260cd"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/visualization_agent.py": {
+    "symbols": "```python\n函数：__init__, create_temp_message, reply_python_code_agent, generate_code_reply\n类：VisualizationAgent\n变量：DEFAULT_SYSTEM_MESSAGE, DEFAULT_USER_MESSAGE, code_agent, _reply_func_list\n导入语句：from ..conversable_agent import ConversableAgent\nfrom typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\nfrom ....utils.client import ByzerLLM,message_utils\nfrom byzerllm.utils.retrieval import ByzerRetrieval\nfrom ..agent import Agent\nfrom ray.util.client.common import ClientActorHandle, ClientObjectRef\nimport time\nfrom .. import get_agent_name,run_agent_func,ChatResponse,modify_last_message,modify_message_content,count_messages_length\nfrom langchain import PromptTemplate\n```",
+    "last_modified": 1705548780.404776,
+    "md5": "afa05e9793c667a566d9ebda1184b7eb"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/assistant_agent.py": {
+    "symbols": "```python\n函数：generate_code_reply, reply_python_code_agent, generate_llm_reply\n类：AssistantAgent\n变量：a, DEFAULT_SYSTEM_MESSAGE, code_agent, chat_name, human_input_mode, is_termination_msg, llm, max_consecutive_auto_reply, name, owner, retrieval, system_message\n导入语句：import os, import time, from loguru import logger, from byzerllm import prompt\n```",
+    "last_modified": 1711891197.7875001,
+    "md5": "9fcfe86efbf0e911809b54bb7a1a9674"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/load_data_agent.py": {
+    "symbols": "函数：generate_load_reply, extract_data\n变量：agent_data, id, content, service_context, storage_context, retrieval_client, documents, nodes\n类：AgentData, LoadDataAgent\n导入语句：from ..conversable_agent import ConversableAgent, from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, from ....utils.client import ByzerLLM, from byzerllm.utils.retrieval import ByzerRetrieval, from ..agent import Agent, import ray, from ray.util.client.common import ClientActorHandle, ClientObjectRef, from .. import get_agent_name,run_agent_func,ChatResponse, from byzerllm.apps.llama_index.simple_retrieval import SimpleRetrieval, import uuid, import json, from langchain import PromptTemplate, from byzerllm.apps.llama_index import get_service_context,get_storage_context, from llama_index import SimpleDirectoryReader, from llama_index.node_parser import SentenceSplitter,SentenceWindowNodeParser, from llama_index import (Document, get_response_synthesizer,) from llama_index.indices.document_summary import DocumentSummaryIndex, import pydantic\n",
+    "last_modified": 1711891197.7900453,
+    "md5": "dddf31c653e040b285ac24177bd67d34"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/retrieval_agent.py": {
+    "symbols": "```python\n函数：generate_retrieval_based_reply, __init__\n变量：self.chat_name, self.owner, self.code_agent, self.byzer_engine_url, self.update_context_retry, self.chunk_size_in_context, self._reply_func_list, self.retrieval_cluster, self.retrieval_db, self.simple_retrieval_client\n类：ConversableAgent, RetrievalAgent\n导入语句：import os, import time, from loguru import logger, import byzerllm, import ray, import json, import langchain\n```",
+    "last_modified": 1711891197.7911527,
+    "md5": "c6a55b821a28b1675648e07287e7e21f"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/output_agent.py": {
+    "symbols": "函数：OutputAgent,generate_retrieval_based_reply\n类：OutputAgent\n变量：SYSTEM_PROMPT,USER_PROMPT\n导入语句：from ..conversable_agent import ConversableAgent,from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,from ....utils.client import ByzerLLM,from byzerllm.utils.retrieval import ByzerRetrieval,from ..agent import Agent,from ray.util.client.common import ClientActorHandle, ClientObjectRef,from .. import get_agent_name,run_agent_func,ChatResponse,from langchain import PromptTemplate",
+    "last_modified": 1702964934.5335622,
+    "md5": "997bde874da5aa7c5273819600200834"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/byzer_engine_agent.py": {
+    "symbols": "函数：generate_custom_reply, execute_spark_sql\n变量：self._reply_func_list\n类：ByzerEngineAgent\n导入语句：from ..conversable_agent import ConversableAgent, from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,Annotated, from ....utils.client import ByzerLLM,message_utils,code_utils, from byzerllm.utils.retrieval import ByzerRetrieval, from ..agent import Agent, from ray.util.client.common import ClientActorHandle, ClientObjectRef, from .. import get_agent_name,run_agent_func,ChatResponse, import json",
+    "last_modified": 1705548780.3998678,
+    "md5": "de3e55a8305ca034acee1ce9ac1a3987"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/subquestion_agent.py": {
+    "symbols": "函数：LlamaIndexSubQuestionAgent, generate_retrieval_based_reply\n变量：self.chat_name, self.owner, self.update_context_retry, self._reply_func_list, self.service_context, self.storage_context\n类：LlamaIndexSubQuestionAgent\n导入语句：from ..conversable_agent import ConversableAgent, from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, from ....utils.client import ByzerLLM, from byzerllm.utils.retrieval import ByzerRetrieval, from ..agent import Agent, import ray, from ray.util.client.common import ClientActorHandle, ClientObjectRef, from .. import get_agent_name,run_agent_func,ChatResponse, from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient, import uuid, import json, from byzerllm.apps.llama_index import get_service_context,get_storage_context, from llama_index import VectorStoreIndex, from llama_index.query_engine import SubQuestionQueryEngine",
+    "last_modified": 1711891197.7929423,
+    "md5": "0eb6f75ac4673db51317060f81b487ef"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/sql_reviewer_agent.py": {
+    "symbols": "函数：generate_review_reply, __init__\n类：SQLReviewerAgent\n变量：self._reply_func_list, self._system_message, self._messages, self.llm, self.retrieval, self.chat_name, self.owner, self.is_termination_msg, self.max_consecutive_auto_reply, self.human_input_mode, self.code_execution_config\n导入语句：from ..conversable_agent import ConversableAgent, from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union, from ....utils.client import ByzerLLM, message_utils, code_utils, from byzerllm.utils.retrieval import ByzerRetrieval, from ..agent import Agent, from ray.util.client.common import ClientActorHandle, ClientObjectRef",
+    "last_modified": 1711891197.792689,
+    "md5": "72cfb1be3cbae761771157491068ff2c"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/spark_sql_agent.py": {
+    "symbols": "```python\n函数：generate_llm_reply,generate_sql_reply,generate_execute_sql_reply\n变量：a,self.chat_name,self.owner,self.sql_reviewer_agent,self.byzer_engine_agent,self.retrieval_cluster,self.retrieval_db,self.simple_retrieval_client,self.byzer_url,self._reply_func_list\n类：SparkSQLAgent\n导入语句：import os,time,from loguru import logger,ConversableAgent,Any,Callable,Dict,List,Optional,Tuple,Type,Union,Annotated\n```\n函数：generate_reply_for_reviview, run_code, ignore\n变量：t, target_message, temp_conversation, ts\n类：\n导入语句：无",
+    "last_modified": 1711891197.7922459,
+    "md5": "ab58fc0dd0b15ff836f08b0aa79e4aa9"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/rhetorical_agent.py": {
+    "symbols": "```python\n函数：my_reply,check_termination_and_human_reply\n类：RhetoricalAgent\n变量：self.chat_name,self.owner,self.update_context_retry,self.chunk_size_in_context,self._reply_func_list,self.retrieval_cluster,self.retrieval_db,self.simple_retrieval_client\n导入语句：from ..conversable_agent import ConversableAgent,from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,from ....utils.client import ByzerLLM,message_utils,code_utils,from byzerllm.apps.agent.extensions.simple_retrieval_client import SimpleRetrievalClient,from byzerllm.utils.retrieval import SearchQuery,import json\n```",
+    "last_modified": 1705548780.4033628,
+    "md5": "f23c82c19e8cb9992dd0fe916b0c79ee"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/data_analysis.py": {
+    "symbols": "```python\n函数：__init__,analyze,close,output,update_pipeline_system_message,update_agent_system_message,get_agent_system_message,get_pipeline_system_message,get_agent_names,clear_agent_message_box,get_pipeline_manager\n变量：chat_name,owner,file_path,llm,retrieval,use_shared_disk,chat_wrapper,skip_preview_file,retrieval_cluster,retrieval_db,message_store\n类：DataAnalysis\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```\n函数：remote\n变量：manager\n类：\n导入语句：",
+    "last_modified": 1711891197.7885725,
+    "md5": "04563e2687ca5829f8690eee890261f4"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/data_analysis_pipeline_agent.py": {
+    "symbols": "```python\n函数：__init__, run_pipeline, reply_agent, reply_reheorical_agent, check_termination_and_human_reply\n变量：name, llm, retrieval, system_message, is_termination_msg, max_consecutive_auto_reply, human_input_mode, code_execution_config, message_store, chat_name, owner, file_path, file_ref, _reply_func_list, python_interpreter, preview_file_agent, visualization_agent, assistant_agent, common_agent, sql_reviewer_agent, byzer_engine_agent, spark_sql_agent, rhetoorical_agent, retrieval_agent, llama_index_query_agent, load_data_agent\n类：DataAnalysisPipeline\n导入语句：from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union\n          from ..conversable_agent import ConversableAgent\n          from ....utils.client import ByzerLLM\n          from byzerllm.utils.retrieval import ByzerRetrieval\n          from ..agent import Agent\n          from ray.util.client.common import ClientActorHandle, ClientObjectRef\n          import time\n          import ray\n          from .. import get_agent_name,run_agent_func,ChatResponse,modify_message_metadata,modify_message_content\n          from byzerllm.utils.client import default_chat_wrapper,LLMResponse\n          from byzerllm.apps.agent import Agents\n          from byzerllm.apps.agent.extensions.preview_file_agent import PreviewFileAgent\n          from byzerllm.apps.agent.extensions.python_codesandbox_agent import PythonSandboxAgent\n          from byzerllm.apps.agent.extensions.visualization_agent import VisualizationAgent\n          from byzerllm.apps.agent.extensions.assistant_agent import AssistantAgent\n          from byzerllm.apps.agent.extensions.common_agent import CommonAgent\n          from byzerllm.apps.agent.extensions.spark_sql_agent import SparkSQLAgent\n          from byzerllm.apps.agent.extensions.rhetorical_agent import RhetoricalAgent\n          from byzerllm.apps.agent.extensions.sql_reviewer_agent import SQLReviewerAgent\n          from byzerllm.apps.agent.extensions.byzer_engine_agent import ByzerEngineAgent\n          from byzerllm.apps.agent.extensions.retrieval_agent import RetrievalAgent\n          from byzerllm.apps.agent.extensions.llama_index_retrieval_agent import LlamaIndexRetrievalAgent\n          from byzerllm.apps.agent.extensions.load_data_agent import LoadDataAgent\n          from byzerllm.apps.agent.store import MessageStore\n```\n```python\n函数：auto_implement_function_template,get_agent_chat_messages,update_system_message_by_agent,clear_agent_message_box,get_agent_names,get_agent_system_message,send_from_agent_to_agent,preview_file,select_agent,get_agent_stream_messages,reply_reheorical_agent,reply_agent,run_pipeline\n变量：a\n类：DataAnalysisPipelineManager\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```",
+    "last_modified": 1711891197.7892795,
+    "md5": "602fd30d775e3d34045603e6c7762465"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/common_agent.py": {
+    "symbols": "函数：__init__, register_reply\n类：CommonAgent\n变量：DEFAULT_SYSTEM_MESSAGE, code_agent, llm, name, owner, retrieval, system_message, chat_name, is_termination_msg, max_consecutive_auto_reply, human_input_mode, code_execution_config, kwargs, self\n导入语句：from .conversable_agent import ConversableAgent,from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,from ...utils.client import ByzerLLM,from byzerllm.utils.retrieval import ByzerRetrieval,from .agent import Agent,from ray.util.client.common import ClientActorHandle, ClientObjectRef,import time,from . import get_agent_name,run_agent_func,ChatResponse",
+    "last_modified": 1711891197.7878497,
+    "md5": "9afa9a724907ffbf7aade990929ff92b"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/query_rewrite/time.py": {
+    "symbols": "函数：QueryTime.apply\n类：QueryTime\n变量：self.messages, self._system_message, self.llm, self.retrieval, self.params, m, time_msg, t, now, time_range\n导入语句：from typing import List,Dict,Annotated,Any, from byzerllm.utils.client import ByzerLLM,message_utils, from byzerllm.utils.retrieval import ByzerRetrieval, import copy, import pydantic, from datetime import datetime, from . import QueryRewriteResult,Action",
+    "last_modified": 1705548780.402345,
+    "md5": "0805a9f4a88e26b806c7005adc88d04d"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/query_rewrite/rhetorical.py": {
+    "symbols": "函数：QueryRhetorical, __init__, apply\n变量：self.messages, self._system_message, self.llm, self.retrieval, self.params, m, time_msg, key_msg, temp_conversation, t, action, v, old_content\n类：QueryRewriteResult\n导入语句：from typing import List,Dict,Annotated,Any, from byzerllm.utils.client import ByzerLLM,message_utils, from byzerllm.utils.retrieval import ByzerRetrieval, import copy, from . import QueryRewriteResult,Action",
+    "last_modified": 1705548780.4021833,
+    "md5": "61b953e20e4ecc08d013c63c46516cfd"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/query_rewrite/__init__.py": {
+    "symbols": "函数：\n类：Action,QueryRewriteResult\n变量：message,action,extra_info\n导入语句：import pydantic,from typing import Optional, List, Dict, Any,from enum import Enum",
+    "last_modified": 1705548780.401539,
+    "md5": "b6c0bfe56cd72271bc6fb5052bcdb7aa"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/query_rewrite/condition.py": {
+    "symbols": "函数：apply, __init__\n变量：messages, _system_message, llm, retrieval, params, m, time_msg, temp_conversation, t, action, key_msg, old_content\n类：QueryCondition, KV, Conditions\n导入语句：from typing import List,Dict,Annotated,Any,Optional, from byzerllm.utils.client import ByzerLLM,message_utils,code_utils, from byzerllm.utils.retrieval import ByzerRetrieval, import copy, import json, import pydantic, from . import QueryRewriteResult,Action",
+    "last_modified": 1705637799.5717638,
+    "md5": "062fe61af8429930e4e48549e1081df3"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/query_rewrite/context.py": {
+    "symbols": "函数：apply, __init__\n变量：messages, _system_message, llm, retrieval, params, m, temp_conversation, t, new_query\n类：QueryContext\n导入语句：from typing import List,Dict,Annotated,Any,from byzerllm.utils.client import ByzerLLM,message_utils,code_utils,LLMRequest,from byzerllm.utils.retrieval import ByzerRetrieval,import json,import numpy as np,import copy,import pydantic,from . import QueryRewriteResult,Action",
+    "last_modified": 1711891197.7906425,
+    "md5": "2573e667f01d61036417b05ad3b0cf6b"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/store/memory_store.py": {
+    "symbols": "函数：put, get, clear\n类：MemoryStore\n变量：self.messages\n导入语句：from . import Message, MessageStore,import time",
+    "last_modified": 1711891197.7938557,
+    "md5": "cdbfe697698aa7ad6c9c44dc6a979635"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/store/__init__.py": {
+    "symbols": "函数：put,get,clear\n类：Message,MessageStore\n变量：id,m,sender,receiver,timestamp\n导入语句：import pydantic,from typing import Any, Dict,from abc import ABC, abstractmethod",
+    "last_modified": 1711891197.793589,
+    "md5": "801a2993e84e9b20f2c5747288bba502"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/store/stores.py": {
+    "symbols": "函数：__init__, put, get, clear\n类：Stores\n变量：store\n导入语句：from typing import Union, from . import MessageStore, import ray, from ray.util.client.common import ClientActorHandle",
+    "last_modified": 1711891197.7941084,
+    "md5": "a365b7762e967399b7d97071a3489745"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/chatglm/__init__.py": {
+    "symbols": "函数：randomTaskCode, get_meta, get_token_or_refresh, stream_chat\n变量：self.api_key, self.public_key, self.ability_type, self.engine_type, self.temp_token, token_result, token, ins, his, max_length, top_p, temperature, q, data, output_text\n类：ChatGLMAPI\n导入语句：from wudao.api_request import executeSSE, getToken, queryTaskResult, from random import randint, import time, import uuid, from typing import Union, List, Tuple, Optional, Dict, Any",
+    "last_modified": 1703571773.0757358,
+    "md5": "69562087dc4f48b8cda1bafc8008b66e"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/sparkdesk/__init__.py": {
+    "symbols": "函数：CustomSaasAPI.stream_chat, CustomSaasAPI.run, CustomSaasAPI.on_message, CustomSaasAPI.on_error, CustomSaasAPI.on_close, CustomSaasAPI.on_open, SparkDeskAPIParams.create_url\n变量：reponse_queue, wsUrl, q, result\n类：SparkDeskAPIParams, CustomSaasAPI",
+    "last_modified": 1711891197.8021882,
+    "md5": "685c3091a8bf276c05a8dfb233b3d57f"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/gemini/__init__.py": {
+    "symbols": "```\n函数：__init__,get_meta,async_stream_chat\n变量：api_key,model,meta,client,start_time,other_params,stream,new_messages,res_data,request_id,r,v,time_count,generated_text,generated_tokens_count,input_tokens_count,time_cost\n类：CustomSaasAPI\n导入语句：from http import HTTPStatus,from typing import List, Dict,import uuid,import google.generativeai as genai,from google.generativeai.types import content_types,import time,import ray,from byzerllm.utils import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,import threading,import asyncio\n```",
+    "last_modified": 1712746266.0090246,
+    "md5": "5726f2554be69dc6f3d09a8efa90e062"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/azure_openai/__init__.py": {
+    "symbols": "函数：CustomSaasAPI, get_meta, stream_chat\n变量：logger\n类：CustomSaasAPI\n导入语句：import time,from typing import List, Dict, Any,from openai import AzureOpenAI,from byzerllm.log import init_logger,from byzerllm.utils import random_uuid",
+    "last_modified": 1711965834.7439628,
+    "md5": "d0b7752d9264adc32f009227248978c5"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/qianfan/__init__.py": {
+    "symbols": "```python\n函数：__init__, get_meta, async_stream_chat\n变量：api_key, secret_key, access_token, model, client\n类：CustomSaasAPI\n导入语句：from typing import List, Dict, from byzerllm.utils import random_uuid, from byzerllm.log import init_logger, from byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, os, time, qianfan, threading, asyncio, ray\n```",
+    "last_modified": 1712138525.8926785,
+    "md5": "fef4609fa945e05904ae3d2d21de005f"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/claude/__init__.py": {
+    "symbols": "```python\n函数：__init__, get_meta, async_stream_chat\n变量：api_key, model, meta, client, messages, system_message, start_time, other_params, stream, res_data, input_tokens, r, request_id, v, generated_text, generated_tokens_count, input_tokens_count, time_cost\n类：CustomSaasAPI\n导入语句：import asyncio, import json, import threading, import time, import traceback, from typing import List, Dict, Any, Union, import ray, from anthropic import Anthropic, from byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta\n```",
+    "last_modified": 1712745839.468566,
+    "md5": "c680ac3dcf69860ec1a0038ee65ca90c"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/qianwen/__init__.py": {
+    "symbols": "```python\n函数：CustomSaasAPI, __init__, get_meta, embed_query, async_stream_chat\n变量：self, infer_params, api_key, model, meta, HTTPStatus, List, Dict, dashscope, Message, time, ray, BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, threading, asyncio\n类：无\n导入语句：from http import HTTPStatus, from typing import List, Dict, import dashscope, from dashscope.api_entities.dashscope_response import Message, import time, import ray, from byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, import threading, import asyncio\n```",
+    "last_modified": 1711891197.801148,
+    "md5": "efeb3dc031b8880b9c91b8ecb46411b6"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/minimax/__init__.py": {
+    "symbols": "```python\n函数：auto_implement_function_template,minimax_api_retry_if_need,request_with_retry,stream_chat,append\n变量：a,DEFAULT_BOT_SETTING,bot_settings,content,glyph,headers,http_body,http_status,json_body,logger,messages,payload,res_data,response,role,top_p,temperature\n类：MiniMaxError,MiniMaxBotSettings,MiniMaxMessageRole,MiniMaxMessages,CustomSaasAPI\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```\n函数：to_list\n变量：sender_name, msg, self, sender_type, message\n类：MiniMaxMessages.Message\n导入语句：",
+    "last_modified": 1703571773.076005,
+    "md5": "e297c19e0470a85edcf7e517a40729ac"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/baichuan/__init__.py": {
+    "symbols": "```\n函数：__init__,get_meta,embed_query,async_stream_chat,request_with_retry\n变量：BaiChuanErrorCodes,api_key,model,meta,api_url,embedding_mode\n类：CustomSaasAPI\n导入语句：import requests,import json,import time,import hashlib,import traceback,from retrying import retry,from typing import List, Tuple, Dict,Any\n```",
+    "last_modified": 1705548780.4077637,
+    "md5": "1c251e2ea8e6215bce274e05090a885f"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/qianwen_vl/__init__.py": {
+    "symbols": "```\n函数：__init__, async_stream_chat, process_input\n类：CustomSaasAPI\n变量：api_key, model, meta\n导入语句：import dashscope, from http import HTTPStatus, from typing import List, Dict, Union, Any, import ray, from byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, import threading, import asyncio, import json, import base64, import os, import uuid\n```",
+    "last_modified": 1712138525.9175997,
+    "md5": "5b2e920821c91cc89c081f4adacec0c3"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/official_openai/__init__.py": {
+    "symbols": "```python\n函数：__init__, process_input, async_stream_chat\n变量：api_key, model, max_retries, meta, proxies, local_address\n类：CustomSaasAPI\n导入语句：import time, from typing import List, Tuple, Dict,Any,Union, import httpx, from openai import OpenAI , import base64, import os  , import json, import ray, from byzerllm.utils import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,import threading, import asyncio, import traceback, import uuid\n```",
+    "last_modified": 1712745803.6076787,
+    "md5": "0e952f107e0aa0b9267620a3749479e9"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/zhipu/__init__.py": {
+    "symbols": "```\n函数：__init__, get_meta, embed_query, async_stream_chat\n变量：self, infer_params, api_key, model, client, meta, start_time, response, time_cost, messages, stream, other_params, res_data, server, request_id, r, v, generated_text, generated_tokens_count, time_cost, first_token_time, speed\n类：CustomSaasAPI\n导入语句：import json, from zhipuai import ZhipuAI, import time, import traceback, from typing import List, Tuple, Dict, Any, import ray, from byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, import threading, import asyncio\n```",
+    "last_modified": 1705548780.408286,
+    "md5": "c7d24b42c792eec50bf0755066ade5ba"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/aws_bedrock/__init__.py": {
+    "symbols": "```python\n函数：auto_implement_function_template\n变量：a\n类：CustomSaasAPI, SupportModelProviders, AWSBedrockModel, AnthropicModel, MetaModel\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n函数：get_bedrock_model\n类：AwsBedrockModelFactory",
+    "last_modified": 1711965834.7430868,
+    "md5": "a8379a698253616b93b4026ee112a25c"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/falcon/__init__.py": {
+    "symbols": "```python\n函数：get_meta, stream_chat, init_model, sft_train\n变量：fin_ins, tokens, response, answer, pretrained_model_dir, adaptor_model_dir, is_adaptor_model, model, tokenizer, quatization, quantization_config, model, torch_dtype, model, device_map, trust_remote_code, model, peft_model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, model, max_new_tokens, repetition_penalty, temperature, attention_mask, eos_token_id, pad_token_id, bos_token_id\n模型：AutoTokenizer，AutoModelForCausalLM，BitsAndBytesConfig，ray，torch，os，ray，Any，Any，Dict，List，Tuple，Generator，types，BlockRow，DataServer\n导入语句：from transformers import AutoTokenizer，AutoModelForCausalLM，BitsAndBytesConfig\nimport ray\nimport torch\nimport os\nimport ray\nfrom typing import Any，Any，Dict， List，Tuple，Generator\nimport types\nfrom byzerllm.utils import generate_instruction_from_history，compute_max_new_tokens\n\nfrom pyjava.api.mlsql import DataServer\nfrom .. import BlockRow\n```",
+    "last_modified": 1705548780.406285,
+    "md5": "9e3856b83fe35b19c28af780dca88a72"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/chatglm6b/trainer_seq2seq.py": {
+    "symbols": "```python\n函数：evaluate, predict, prediction_step\n变量：无\n类：Seq2SeqTrainer\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n函数：_pad_tensors_to_max_len, train\n变量：loss\n类：\n导入语句：",
+    "last_modified": 1696905908.7655625,
+    "md5": "08046cca41a165e1803faa7eb105446e"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/chatglm6b/arguments.py": {
+    "symbols": "```\n函数：ModelArguments,DataTrainingArguments\n变量：无\n类：ModelArguments,DataTrainingArguments\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```",
+    "last_modified": 1696905908.765269,
+    "md5": "159c3c438e974ceb427a9280b40446a6"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/chatglm6b/finetune.py": {
+    "symbols": "```python\n函数：auto_implement_function_template, restore_model, load_model, init_model, predict, CustomCallback, finetune_or_infer\n变量：a, model_args, data_args, training_args, prompt_column, response_column, max_target_length, prefix, column_names, tokenizer, model, config, label_pad_token_id, data_collator, trainer, preprocess_function_eval, predict_dataset, max_predict_samples, preprocessing_num_workers, remove_columns, load_from_cache_file, metric_key_prefix, skip_special_tokens, clean_up_tokenization_spaces, predictions, labels, results\n类：BlockRow\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：preprocess_function_train, preprocess_function_eval, compute_metrics\n变量：a, column_names, data_args, eval_dataset, label_pad_token_id, labels, max_eval_samples, max_predict_samples, max_target_length, model, predict_dataset, raw_datasets, tokenizer, training_args, train_dataset\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n函数：无\n变量：无\n类：无\n导入语句：无",
+    "last_modified": 1696905908.765426,
+    "md5": "6506c662e1f2551ccd7c91ec89ebc7b4"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/chatglm6b/tunning/infer.py": {
+    "symbols": "函数：init_model, predict, extract_history\n变量：pretrained_model\n类：\n导入语句：from .utils import load_pretrained,from .utils.config import (ModelArguments,DataTrainingArguments,FinetuningArguments),from transformers import HfArgumentParser,from typing import List,Any,Tuple,import os",
+    "last_modified": 1696905908.7658577,
+    "md5": "c5e1a608c206e48b273373c3b7e7e5a3"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/chatglm6b/tunning/finetune.py": {
+    "symbols": "函数：run\n变量：model_args, data_args, training_args, finetuning_args, dataset, model, tokenizer, data_collator, trainer, gen_kwargs, train_result, metrics, predict_results\n类：Seq2SeqDataCollatorForChatGLM, ComputeMetrics, Seq2SeqTrainerForChatGLM\n导入语句：from typing import Optional, List, from .utils import (load_pretrained, prepare_args, prepare_data, preprocess_data, plot_loss, Seq2SeqDataCollatorForChatGLM, ComputeMetrics, Seq2SeqTrainerForChatGLM)",
+    "last_modified": 1696905908.7657626,
+    "md5": "28f2223bc78450bd24037e33218ac9ec"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/chatglm6b/tunning/utils/config.py": {
+    "symbols": "```\n函数：auto_implement_function_template,DatasetAttr.__post_init__,ModelArguments.__post_init__,DataTrainingArguments.__post_init__,FinetuningArguments.__post_init__\n变量：a,CHATGLM_REPO_NAME,CHATGLM_LASTEST_HASH\n类：DatasetAttr,ModelArguments,DataTrainingArguments,FinetuningArguments\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```",
+    "last_modified": 1696905908.7664058,
+    "md5": "a094b01c241980cc05e58c8c8cca20ab"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/chatglm6b/tunning/utils/__init__.py": {
+    "symbols": "```python\n函数：load_pretrained,prepare_args,prepare_data,preprocess_data,Seq2SeqDataCollatorForChatGLM,ComputeMetrics,Seq2SeqTrainerForChatGLM,plot_loss\n类：ModelArguments\n变量：\n导入语句：from .common import load_pretrained,prepare_args,prepare_data,preprocess_data,from .seq2seq import Seq2SeqDataCollatorForChatGLM,ComputeMetrics,Seq2SeqTrainerForChatGLM,from .config import ModelArguments,from .other import plot_loss\n```",
+    "last_modified": 1696905908.7660642,
+    "md5": "18fbe13f8bc09acf3c06a10c6c611c9e"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/chatglm6b/tunning/utils/other.py": {
+    "symbols": "```\n函数：print_trainable_params,filter_model_params,save_trainable_params,load_trainable_params,prepare_model_for_training,merge_lora_weights,plot_loss\n变量：IGNORE_INDEX,FINETUNING_ARGS_NAME,PREDICTION_FILE_NAME\n类：无\n导入语句：import os,import sys,import json,import torch,import logging,from typing import Dict, List, Optional,PreTrainedModel\n```",
+    "last_modified": 1696905908.766524,
+    "md5": "6f948e5398838ed87098c5b3f640720c"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/chatglm6b/tunning/utils/common.py": {
+    "symbols": "请求错误: 10013, {'header': {'code': 10013, 'message': '非常抱歉，根据相关法律法规，我们无法提供关于以下内容的答案，包括但不限于：\\n\\t(1) 涉及国家安全的信息；\\n\\t(2) 涉及政治与宗教类的信息；\\n\\t(3) 涉及暴力与恐怖主义的信息；\\n\\t(4) 涉及黄赌毒类的信息；\\n\\t(5) 涉及不文明的信息。\\n我们会继续遵循相关法规法律的要求，共创一个健康和谐网络环境，谢谢您的理解。\\n', 'sid': 'cht000b26f8@dx18edc4f0577b8f2550', 'status': 2}}\n```\n函数：prepare_data, preprocess_data\n变量：无\n类：无\n导入语句：transformers.utils.logging.set_verbosity, transformers.utils.logging.enable_default_handler, transformers.utils.logging.enable_explicit_format\n```",
+    "last_modified": 1696905908.7662792,
+    "md5": "0de81a3a9359b3e19d24d1aca4f624d2"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/chatglm6b/tunning/utils/seq2seq.py": {
+    "symbols": "```python\n函数：auto_implement_function_template\n变量：a\n类：Seq2SeqDataCollatorForChatGLM, ComputeMetrics, Seq2SeqTrainerForChatGLM\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n函数：save_model_predictions\n类：Seq2SeqTrainer\n变量：self, tokenizer, predict_results, PREDICTION_FILE_NAME\n导入语句：import os, import json",
+    "last_modified": 1696905908.7666621,
+    "md5": "867c289f2a99809a8b34fafb98fc0671"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/starcode/__init__.py": {
+    "symbols": "函数：get_meta, stream_chat, init_model\n变量：config, device, tokens, response, answer\n类：\n导入语句：from transformers import AutoTokenizer, AutoModelForCausalLM,import transformers,import torch,from typing import Dict,List,Tuple",
+    "last_modified": 1705548780.4088318,
+    "md5": "2dcaebd0e26f67559cfc1476f2ed6b1f"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/qwen_vl_chat/__init__.py": {
+    "symbols": "```python\n函数：get_meta, stream_chat, init_model\n变量：config, image, image_b, temp_image_dir, image_file, input_history, response, history, output, pretrained_model_dir, adaptor_model_dir, is_adaptor_model, tokenizer, model\n类：无\n导入语句：from transformers import AutoModelForCausalLM, AutoTokenizer,GenerationConfig, from peft import PeftModel\n```",
+    "last_modified": 1705548780.4074566,
+    "md5": "7a318e2d08cbf6a4eb7704a526677a7e"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/zephyr/__init__.py": {
+    "symbols": "```python\n函数：stream_chat, init_model, sft_train, sfft_train\n变量：无\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```",
+    "last_modified": 1711891197.8083997,
+    "md5": "093121de21ce48a29398096218aaf6c3"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/dolly/generate.py": {
+    "symbols": "```python\n函数：auto_implement_function_template,generate_response\n变量：a\n类：InstructionTextGenerationPipeline\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```\n```\n函数：\n变量：\n类：\n导入语句：\n```",
+    "last_modified": 1696905908.7671313,
+    "md5": "d0d954bd51693cc42b1fc76838d6b289"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/dolly/consts.py": {
+    "symbols": "函数：PROMPT_NO_INPUT_FORMAT,PROMPT_WITH_INPUT_FORMAT,PROMPT_FOR_GENERATION_FORMAT\n变量：DEFAULT_INPUT_MODEL,SUGGESTED_INPUT_MODELS,INTRO_BLURB,INSTRUCTION_KEY,INPUT_KEY,RESPONSE_KEY,END_KEY,RESPONSE_KEY_NL,DEFAULT_SEED\n类：\n导入语句：无",
+    "last_modified": 1696905908.7668672,
+    "md5": "e4a88f5f6c0c2370301f486619c3f4dc"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/dolly/dolly_inference.py": {
+    "symbols": "函数：restore_model, __call__\n类：Inference\n变量：model_servers, model_binary\n导入语句：from .generate import InstructionTextGenerationPipeline, load_model_tokenizer_for_generate,from typing import Union, List, Tuple, Optional, Dict,from pyjava.api.mlsql import RayContext,PythonContext,from pyjava.storage import streaming_tar",
+    "last_modified": 1696905908.7669652,
+    "md5": "dc0ec83d1af6d3e96ee4dd25dab91168"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/dolly/trainer.py": {
+    "symbols": "```python\n函数：auto_implement_function_template\n变量：a\n类：DataCollatorForCompletionOnlyLM\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n函数：main\n类：\n变量：DEFAULT_INPUT_MODEL, DEFAULT_SEED\n导入语句：@click.option, logging.basicConfig",
+    "last_modified": 1696905908.7674923,
+    "md5": "dc7ecd48520ca1713f5ba39a7bb95c30"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/llama/__init__.py": {
+    "symbols": "```\n函数：init_model, stream_chat, sft_train, sfft_train\n变量：pretrained_model_dir, adaptor_model_dir, tokenizer, model, dim, max_position_embeddings, base, device, a, longContextMode, infer_params, sys_conf, llm_int8_threshold, quantization_config, llm_int8_skip_modules, llm_int8_enable_fp32_cpu_offload, llm_int8_has_fp16_weight, torch_dtype, PeftModel, types, DataServer, train_params, conf, common_sft_train, common_sfft_train\n导入语句：import os, time, from loguru import logger, import byzerllm, BlockRow, DataServer, transformers, torch, typing, Any, Generator\n```",
+    "last_modified": 1711891197.7990725,
+    "md5": "8a90e8a497a80e7d77b3d502d78be838"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/whisper/whisper_inference.py": {
+    "symbols": "函数：__init__, __call__\n类：Inference\n变量：model_dir, device_index, self.model_dir, self.model, rate, t, initial_prompt, byte_file, segments, info\n导入语句：import numpy as np, from typing import Union, List, Tuple, Optional, Dict, from faster_whisper import WhisperModel, import ray, import os, from scipy.io.wavfile import write as write_wav, import io",
+    "last_modified": 1696905908.7860248,
+    "md5": "d940cf78b34690b98867302d34d3aa8b"
   }
 }

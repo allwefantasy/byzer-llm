@@ -1,142 +1,184 @@
-Here is the implementation of the `saas/claude` API following the interface specifications in `saas/qianwen`:
 
-```python
-##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/claude/__init__.py
-import asyncio
-import json
-import threading
-import time
-import traceback
-from http import HTTPStatus
-from typing import List, Dict, Any, Union
+下面是一些文件路径以及每个文件对应的源码：
 
-import anthropic
-import ray
-from anthropic import AsyncAnthropic
+##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/__init__.py
+from typing import Any,List,Dict
+from ray.util.client.common import ClientObjectRef
+from pyjava.api.mlsql import RayContext
+from pyjava.storage import streaming_tar
+import os
+import inspect
+import functools
 
-from byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta
+from typing import Dict,Generator,Optional
+from dataclasses import dataclass
+from byzerllm.utils import (print_flush,format_prompt,format_prompt_jinja2)
+from .store import transfer_from_ob
+
+@dataclass
+class BlockRow:
+    start: int
+    offset: int
+    value: bytes
+
+def restore_model(conf: Dict[str, str],target_dir:str):
+    model_servers = RayContext.parse_servers(conf["modelServers"])
+    model_binary = RayContext.collect_from(model_servers)
+    streaming_tar.save_rows_as_file(model_binary,target_dir)
+
+def load_model(target_dir:str)-> Generator[BlockRow,None,None]:
+    model_binary = streaming_tar.build_rows_from_file(target_dir)
+    return model_binary
+
+def consume_model(conf: Dict[str, str]):
+    # consume the model server to prevent socket server leak.
+    # hoverer,  model server may have be consumed by other worker
+    # so just try to consume it
+    try:
+        model_servers = RayContext.parse_servers(conf["modelServers"])
+        for item in RayContext.collect_from(model_servers):
+            pass
+    except Exception as e:
+        pass   
+
+def common_init_model(model_refs: List[ClientObjectRef], 
+                      conf: Dict[str, str],model_dir:str,is_load_from_local:bool):
+    
+    udf_name  = conf["UDF_CLIENT"] if "UDF_CLIENT" in conf else "UNKNOW MODEL"
+
+    if not is_load_from_local:      
+      if "standalone" in conf and conf["standalone"]=="true":
+          print_flush(f"MODEL[{udf_name}] Standalone mode: restore model to {model_dir} directly from model server")
+          restore_model(conf,model_dir)
+      else:
+          print_flush(f"MODEL[{udf_name}] Normal mode: restore model from ray object store to {model_dir}")
+          if not os.path.exists(model_dir):
+            transfer_from_ob(udf_name,model_refs,model_dir)
+    else:
+      print_flush(f"MODEL[{udf_name}]  Local mode: Load model from local path ({model_dir}), consume the model server to prevent socket server leak.")
+      consume_model(conf)   
+
+def parse_params(params:Dict[str,str],prefix:str):
+    import json
+    new_params = {}
+    for k,v in params.items():
+        if k.startswith(f"{prefix}."):
+            # sft.float.num_train_epochs
+            tpe = k.split(".")[1]
+            new_k = k.split(".")[2]
+            new_v = v
+            if tpe == "float":
+              new_v = float(v)
+            elif tpe == "int":
+                new_v = int(v)
+            elif tpe == "bool":
+                new_v = v == "true"
+            elif tpe == "str":
+                new_v = v
+            elif tpe == "list":
+                new_v = json.loads(v)
+            elif tpe == "dict":
+                new_v = json.loads(v)            
+            new_params[new_k] = new_v
+    return new_params 
+
+import inspect
 
 
-class CustomSaasAPI:
-    def __init__(self, infer_params: Dict[str, str]) -> None:
-        self.api_key: str = infer_params["saas.api_key"]
-        self.model = infer_params.get("saas.model", "claude-v1")
-        self.meta = {
-            "model_deploy_type": "saas",
-            "backend": "saas",
-            "support_stream": True
-        }
+def check_param_exists(func,name):
+    return name in inspect.signature(func).parameters
 
-        self.client = AsyncAnthropic(api_key=self.api_key)
 
-        try:
-            ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
-        except ValueError:
-            ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER", lifetime="detached",
-                                                      max_concurrency=1000).remote()
+# add a log funcition to log the string to a specified file
+def log_to_file(msg:str,file_path:str):
+    with open(file_path,"a") as f:
+        f.write(msg)
+        f.write("\n")
 
-    # saas/proprietary
-    def get_meta(self):
-        return [self.meta]
+def prompt(llm=None,render:str="jinja2",check_result:bool=False):    
+    '''
+    decorator to add prompt function to a method
+    render: simple,jinja/jinja2
+    llm: lambda function to get the ByzerLLM instance from the method instance
+    '''
+    def _impl(func):                               
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):             
+            signature = inspect.signature(func)                       
+            arguments = signature.bind(*args, **kwargs)
+            arguments.apply_defaults()
+            input_dict = {}
+            for param in signature.parameters:
+                input_dict.update({ param: arguments.arguments[param] })
 
-    async def async_stream_chat(
-            self,
-            tokenizer,
-            ins: str,
-            his: List[dict] = [],
-            max_length: int = 1024,
-            top_p: float = 0.9,
-            temperature: float = 0.1,
-            **kwargs
-    ):
-        messages = [{"role": message["role"], "content": message["content"]} for message in his] + [
-            {"role": "user", "content": ins}]
+            is_lambda = inspect.isfunction(llm) and llm.__name__ == '<lambda>'
+            if is_lambda:    
+                if "self" in input_dict:
+                    instance = input_dict.pop("self")                                                                 
+                    return llm(instance).prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
+                
+            if isinstance(llm,ByzerLLM):
+                if "self" in input_dict:
+                    instance = input_dict.pop("self")                                                                 
+                    return llm.prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
+                else:    
+                    return llm.prompt(render=render,check_result=check_result)(func)(**input_dict)
+            
+            if isinstance(llm,str):
+                _llm = ByzerLLM()
+                _llm.setup_default_model_name(llm)
+                _llm.setup_template(llm,"auto")
+                
+                if "self" in input_dict:
+                    instance = input_dict.pop("self")                                                                 
+                    return _llm.prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
+                else:    
+                    return _llm.prompt(render=render,check_result=check_result)(func)(**input_dict)    
 
-        start_time = time.monotonic()
+            
+            new_input_dic = func(**input_dict)                
+            if new_input_dic and not isinstance(new_input_dic,dict):
+                raise TypeError(f"Return value of {func.__name__} should be a dict")                
+            if new_input_dic:
+                input_dict = {**input_dict,**new_input_dic}
+            
+            if render == "jinja2" or render == "jinja":                  
+                return format_prompt_jinja2(func,**input_dict)
+            
+            return format_prompt(func,**input_dict) 
 
-        other_params = {}
+        return wrapper      
+    return _impl
 
-        if "stop" in kwargs:
-            other_params["stop"] = kwargs["stop"]
 
-        if "stream" in kwargs:
-            other_params["stream"] = kwargs["stream"]
+from byzerllm.utils.client import ByzerLLM
+from byzerllm.utils.retrieval import ByzerRetrieval
+from byzerllm.utils.connect_ray import connect_cluster
+from byzerllm.apps.agent.registry import reply as agent_reply
+__all__ = ["ByzerLLM","ByzerRetrieval","connect_cluster","prompt","agent_reply"]
 
-        if "model" in kwargs:
-            self.model = kwargs["model"]
+       
+    
 
-        stream = kwargs.get("stream", False)
 
-        try:
-            res_data = await self.client.messages.create(
-                model=self.model,
-                max_tokens=max_length,
-                temperature=temperature,
-                top_p=top_p,
-                messages=messages,
-                **other_params
-            )
-        except Exception as e:
-            traceback.print_exc()
-            raise e
 
-        if stream:
-            server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
-            request_id = [None]
 
-            async def writer():
-                async for response in res_data:
-                    v = response.completion
-                    request_id[0] = response.request_id
-                    await server.add_item.remote(request_id[0],
-                                                 StreamOutputs(outputs=[SingleOutput(text=v, metadata=SingleOutputMeta(
-                                                     input_tokens_count=response.usage.input_tokens,
-                                                     generated_tokens_count=response.usage.output_tokens,
-                                                 ))])
-                                                 )
+我想实现如下效果，该怎么改造？
 
-                await server.mark_done.remote(request_id[0])
+import byzerllm class Wow:
+    def __init__(self,llm):
+        self.llm = llm
 
-            threading.Thread(target=asyncio.run, args=(writer(),), daemon=True).start()
+    @byzerllm.prompt(lambda:llm)
+    def test(self,s:str)->str: 
+        '''
+        Hello, {{ s }}!
+        '''
+w = Wow(llm)
+    
+print(w.test.prompt("william")) 
+print(w.test.run("william"))
+print(w.test("william"))  
 
-            time_count = 10 * 100
-            while request_id[0] is None and time_count > 0:
-                time.sleep(0.01)
-                time_count -= 1
 
-            if request_id[0] is None:
-                raise Exception("Failed to get request id")
 
-            def write_running():
-                return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
-
-            await asyncio.to_thread(write_running)
-            return [("", {"metadata": {"request_id": request_id[0], "stream_server": "BLOCK_VLLM_STREAM_SERVER"}})]
-
-        time_cost = time.monotonic() - start_time
-
-        generated_text = res_data.completion
-        generated_tokens_count = res_data.usage.output_tokens
-        input_tokens_count = res_data.usage.input_tokens
-
-        return [(generated_text, {"metadata": {
-            "request_id": res_data.request_id,
-            "input_tokens_count": input_tokens_count,
-            "generated_tokens_count": generated_tokens_count,
-            "time_cost": time_cost,
-            "first_token_time": 0,
-            "speed": float(generated_tokens_count) / time_cost,
-        }})]
-```
-
-Key points:
-
-1. Initialize the `AsyncAnthropic` client with the API key.
-2. Implemented the `async_stream_chat` method following the same interface as `saas/qianwen`.
-3. Build the messages list from the history and user input. 
-4. Call `client.messages.create` with the model, messages, and other parameters to get the response.
-5. For streaming, use an async generator to process the response chunks, add them to the `BLOCK_VLLM_STREAM_SERVER`, and return the request ID.
-6. For non-streaming, return the generated text and metadata after the API call completes.
-7. Handle exceptions and print stack traces.
-
-This enables the Claude API to be used with the same interface as the qianwen API. Let me know if you have any other questions!
