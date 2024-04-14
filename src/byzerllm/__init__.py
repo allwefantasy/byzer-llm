@@ -98,7 +98,7 @@ class PromptWraper():
         self.render = render
         self.check_result = check_result
         self.args = args
-        self.kwargs = kwargs        
+        self.kwargs = kwargs     
     
     def prompt(self):  
         func = self.func        
@@ -164,9 +164,9 @@ class PromptWraper():
                 return _llm.prompt(render=render,check_result=check_result)(func)(**input_dict)    
 
         
-        raise ValueError("llm should be a lambda function or ByzerLLM instance")   
+        raise ValueError("llm should be a lambda function or ByzerLLM instance or a string of model name")   
     
-def lazy_prompt(llm=None,render:str="jinja2",check_result:bool=False):    
+def prompt_lazy(llm=None,render:str="jinja2",check_result:bool=False):    
     def _impl(func):                                   
         @functools.wraps(func)
         def wrapper(*args, **kwargs):            
