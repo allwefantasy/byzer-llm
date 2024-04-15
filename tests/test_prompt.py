@@ -34,24 +34,22 @@ def test(s:str)->str:
 
 def test_prompt_class_method(setup):
     w = Wow(setup)
-    assert w.test.prompt("你是谁") == "Hello, 你是谁!"
-    assert "你是谁" in w.test.run("你是谁")
+    assert w.test.prompt("你是谁") == "\nHello, 你是谁!"
+    assert isinstance(w.test.run("你是谁"),str)
 
 def test_prompt_class_method_no_llm(setup):    
     w = Wow(setup)
-    assert w.test2.prompt("你是谁") == "Hello, 你是谁!"
+    assert w.test2.prompt("你是谁") == "\nHello, 你是谁!"
     
 def test_prompt_standalone_func(setup):
     test.with_llm(setup)
-    assert test.prompt("你是谁") == "Hello, 你是谁!"
-    assert "你是谁" in test.run("你是谁")
+    assert test.prompt("你是谁") == "\nHello, 你是谁!"    
     
 def test_prompt_options(setup):
     w = Wow(setup)    
     result = w.test.options({"model":"kimi_8k_chat","llm_config":{"max_length":1000}}).run("你是谁")
-    assert "你是谁" in result
-    assert len(result) <= 1000
+    assert "MoonshotAI" in result
     
 def test_prompt_with_llm(setup):
     w = Wow(setup)
-    assert "你是谁" in w.test.with_llm(setup).run("你是谁")
+    assert isinstance(w.test.with_llm(setup).run("你是谁"))

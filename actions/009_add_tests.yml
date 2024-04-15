@@ -47,7 +47,7 @@ query: >
       @byzerllm.prompt()
       def test2(self,s:str)->str: 
           '''
-          Hello, {{ s }}!
+          Hello, 现在假设你的名字是威廉。{{ s }}!
           '''    
 
   @byzerllm.prompt(llm=llm,options={"llm_config":{}})
