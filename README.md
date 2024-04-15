@@ -2080,6 +2080,32 @@ and modelTable="command";
 ```
 
 ### sparkdesk/星火
+
+#### Command Line
+
+```bash
+byzerllm deploy --pretrained_model_type saas/sparkdesk \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 1 \
+--infer_params saas.appid=xxxx  saas.api_key=xxxxx saas.api_secret=xxxxxx  saas.gpt_url="wss://spark-api.xf-yun.com/v3.5/chat" \
+--model sparkdesk_chat
+```
+
+validate the model:
+
+```bash
+byzerllm query --model sparkdesk_chat --query '你好'
+```
+
+un-deploy the model:
+
+```bash
+byzerllm undeploy --model sparkdesk_chat
+```
+
+#### Python
+
 ```python
 import ray
 
@@ -2118,6 +2144,8 @@ sparkdesk V2 request URL，associated domain parameter is generalv2：
 `wss://spark-api.xf-yun.com/v2.1/chat`  
 sparkdesk V3 request URL，associated domain parameter is generalv3 (Function Call feature is now supported.)：  
 `wss://spark-api.xf-yun.com/v3.1/chat`  
+
+#### Byzer-SQL
 
 ```sql
 !byzerllm setup single;
