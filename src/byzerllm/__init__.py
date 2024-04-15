@@ -91,14 +91,19 @@ def log_to_file(msg:str,file_path:str):
         f.write(msg)
         f.write("\n")
 
-class PromptWraper():        
-    def __init__(self,func,llm,render,check_result,*args,**kwargs) -> None:
+class _PromptWraper():        
+    def __init__(self,func,llm,render,check_result,options,*args,**kwargs) -> None:
         self.func = func
         self.llm = llm
         self.render = render
         self.check_result = check_result
         self.args = args
         self.kwargs = kwargs     
+        self._options = options
+    
+    def options(self,options:Dict[str,Any]):
+        self._options = {**self._options,**options}
+        return self   
     
     def prompt(self):  
         func = self.func        
@@ -143,14 +148,14 @@ class PromptWraper():
         if is_lambda:    
             if "self" in input_dict:
                 instance = input_dict.pop("self")                                                                            
-                return llm(instance).prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
+                return llm(instance).prompt(render=render,check_result=check_result,options=self._options)(func)(instance,**input_dict)
             
         if isinstance(llm,ByzerLLM):
             if "self" in input_dict:
                 instance = input_dict.pop("self")                                                                 
-                return llm.prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
+                return llm.prompt(render=render,check_result=check_result,options=self._options)(func)(instance,**input_dict)
             else:    
-                return llm.prompt(render=render,check_result=check_result)(func)(**input_dict)
+                return llm.prompt(render=render,check_result=check_result,options=self._options)(func)(**input_dict)
         
         if isinstance(llm,str):
             _llm = ByzerLLM()
@@ -159,9 +164,9 @@ class PromptWraper():
             
             if "self" in input_dict:
                 instance = input_dict.pop("self")                                                                 
-                return _llm.prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
+                return _llm.prompt(render=render,check_result=check_result,options=self._options)(func)(instance,**input_dict)
             else:    
-                return _llm.prompt(render=render,check_result=check_result)(func)(**input_dict)    
+                return _llm.prompt(render=render,check_result=check_result,options=self._options)(func)(**input_dict)    
 
         
         raise ValueError("llm should be a lambda function or ByzerLLM instance or a string of model name")   
@@ -170,66 +175,134 @@ def prompt_lazy(llm=None,render:str="jinja2",check_result:bool=False):
     def _impl(func):                                   
         @functools.wraps(func)
         def wrapper(*args, **kwargs):            
-            pw = PromptWraper(func,llm,render,check_result,*args,**kwargs)
+            pw = _PromptWraper(func,llm,render,check_result,*args,**kwargs)
             return pw
 
         return wrapper      
     return _impl
 
-def prompt(llm=None,render:str="jinja2",check_result:bool=False):    
-    '''
-    decorator to add prompt function to a method
-    render: simple,jinja/jinja2
-    llm: lambda function to get the ByzerLLM instance from the method instance
-    '''
-    def _impl(func):                                   
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):             
-            signature = inspect.signature(func)                       
+class _PrompRunner:
+    def __init__(self,func,instance,llm,render:str,check_result:bool,options:Dict[str,Any]) -> None:
+        self.func = func   
+        self.instance = instance
+        self.llm = llm
+        self.render = render
+        self.check_result = check_result
+        self._options = options
+
+    def __call__(self, *args,**kwargs) -> Any:    
+        if self.llm:
+            return self.run(*args, **kwargs)
+        return self.prompt(*args, **kwargs)
+    
+    def options(self,options:Dict[str,Any]):
+        self._options = {**self._options,**options}
+        return self
+    
+    def prompt(self,*args, **kwargs):
+        signature = inspect.signature(self.func)                
+        if self.instance:                                   
+            arguments = signature.bind(self.instance,*args, **kwargs) 
+        else:
             arguments = signature.bind(*args, **kwargs)
-            arguments.apply_defaults()
-            input_dict = {}
-            for param in signature.parameters:
-                input_dict.update({ param: arguments.arguments[param] })
 
-            is_lambda = inspect.isfunction(llm) and llm.__name__ == '<lambda>'
-            if is_lambda:    
-                if "self" in input_dict:
-                    instance = input_dict.pop("self")                                                                 
-                    return llm(instance).prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
+        arguments.apply_defaults()
+        input_dict = {}
+        for param in signature.parameters:
+            input_dict.update({ param: arguments.arguments[param] })          
+                    
+        new_input_dic = self.func(**input_dict)                
+        if new_input_dic and not isinstance(new_input_dic,dict):
+            raise TypeError(f"Return value of {self.func.__name__} should be a dict")                
+        if new_input_dic:
+            input_dict = {**input_dict,**new_input_dic}
+        
+        if self.render == "jinja2" or self.render == "jinja":            
+            return format_prompt_jinja2(self.func,**input_dict)
+        
+        return format_prompt(self.func,**input_dict)
+     
+    def run(self,*args,**kwargs):
+        func = self.func
+        llm = self.llm
+        render = self.render
+        check_result = self.check_result        
+        
+        signature = inspect.signature(func)                       
+        if self.instance:                                   
+            arguments = signature.bind(self.instance,*args, **kwargs) 
+        else:
+            arguments = signature.bind(*args, **kwargs)
+
+        arguments.apply_defaults()
+        input_dict = {}
+        for param in signature.parameters:
+            input_dict.update({ param: arguments.arguments[param] })         
+
+        is_lambda = inspect.isfunction(llm) and llm.__name__ == '<lambda>'
+        if is_lambda:                          
+            return llm(self.instance).prompt(render=render,check_result=check_result,options=self._options)(func)(**input_dict)
+            
+        if isinstance(llm,ByzerLLM):
+            return llm.prompt(render=render,check_result=check_result,options=self._options)(func)(**input_dict)
+        
+        if isinstance(llm,str):
+            _llm = ByzerLLM()
+            _llm.setup_default_model_name(llm)
+            _llm.setup_template(llm,"auto")         
+            return _llm.prompt(render=render,check_result=check_result,options=self._options)(func)(**input_dict)  
                 
-            if isinstance(llm,ByzerLLM):
-                if "self" in input_dict:
-                    instance = input_dict.pop("self")                                                                 
-                    return llm.prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
-                else:    
-                    return llm.prompt(render=render,check_result=check_result)(func)(**input_dict)
-            
-            if isinstance(llm,str):
-                _llm = ByzerLLM()
-                _llm.setup_default_model_name(llm)
-                _llm.setup_template(llm,"auto")
-                
-                if "self" in input_dict:
-                    instance = input_dict.pop("self")                                                                 
-                    return _llm.prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
-                else:    
-                    return _llm.prompt(render=render,check_result=check_result)(func)(**input_dict)    
+        else:
+            raise ValueError("llm should be a lambda function or ByzerLLM instance or a string of model name")  
+    
 
-            
-            new_input_dic = func(**input_dict)                
-            if new_input_dic and not isinstance(new_input_dic,dict):
-                raise TypeError(f"Return value of {func.__name__} should be a dict")                
-            if new_input_dic:
-                input_dict = {**input_dict,**new_input_dic}
-            
-            if render == "jinja2" or render == "jinja":                  
-                return format_prompt_jinja2(func,**input_dict)
-            
-            return format_prompt(func,**input_dict) 
+class _DescriptorPrompt:    
+    def __init__(self, func, wrapper,llm,render:str,check_result:bool,options:Dict[str,Any]):
+        self.func = func
+        self.wrapper = wrapper
+        self.llm = llm
+        self.render = render
+        self.check_result = check_result
+        self.options = options
+        self.prompt_runner = _PrompRunner(self.wrapper,None,self.llm,self.render,self.check_result,options=self.options)
 
-        return wrapper      
-    return _impl
+    def __get__(self, instance, owner):        
+        if instance is None:
+            return self
+        else:            
+            return _PrompRunner(self.wrapper,instance,self.llm,self.render,self.check_result,options=self.options)
+
+    def __call__(self, *args, **kwargs):
+        return self.prompt_runner(*args, **kwargs)
+
+    def prompt(self,*args, **kwargs):
+        return self.prompt_runner.prompt(*args, **kwargs)
+
+    def run(self,*args, **kwargs):
+        return self.prompt_runner.run(*args, **kwargs)  
+
+    def options(self,options:Dict[str,Any]):
+        self.prompt_runner.options(options)
+        return self  
+
+class prompt:
+    def __init__(self, llm=None,render:str="jinja2",check_result:bool=False,options:Dict[str,Any]={}):
+        self.llm = llm
+        self.render = render
+        self.check_result = check_result
+        self.options = options
+
+    def __call__(self, func):        
+        # if 'self' in func.__code__.co_varnames:            
+        #     wrapper = func            
+        #     return self._make_wrapper(func, wrapper)
+        # return _PrompRunner(func,None,self.llm,self.render,self.check_result)
+        wrapper = func            
+        return self._make_wrapper(func, wrapper)
+
+    def _make_wrapper(self, func, wrapper):            
+        return _DescriptorPrompt(func, wrapper,self.llm,self.render,self.check_result,options=self.options)
+
 
 
 from byzerllm.utils.client import ByzerLLM

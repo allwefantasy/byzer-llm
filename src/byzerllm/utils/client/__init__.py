@@ -1397,9 +1397,12 @@ class ByzerLLM:
                     del self.func_impl_cache[k]
             return self        
 
-    def prompt(self,model:Optional[str]=None,render:Optional[str]="jinja2",check_result:bool=False):              
+    def prompt(self,model:Optional[str]=None,render:Optional[str]="jinja2",check_result:bool=False,options:Dict[str,Any]={}):              
             if model is None:
-                model = self.default_model_name            
+                if "model" in options:
+                    model = options.pop("model") 
+                else:
+                    model = self.default_model_name            
             
             def _impl(func):                                
                 @functools.wraps(func)
@@ -1437,7 +1440,7 @@ class ByzerLLM:
                             "content":prompt_str
                         }], 
                             response_class=response_class,                     
-                            impl_func_params=input_dict)                    
+                            impl_func_params=input_dict,**options)                    
                         r:LLMClassResponse = t[0]     
                         if r.value is None and check_result:
                             logger.warning(f'''
@@ -1452,7 +1455,7 @@ class ByzerLLM:
                         t = self.chat_oai(model=model,conversations=[{
                             "role":"user",
                             "content":prompt_str
-                        }])
+                        }],**options)
                         return t[0].output
                     else:
                         raise Exception(f"{func.__name__} should return a pydantic model or string")
