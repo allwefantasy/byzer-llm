@@ -105,6 +105,10 @@ class _PromptWraper():
         self._options = {**self._options,**options}
         return self   
     
+    def with_llm(self,llm):
+        self.llm = llm
+        return self
+    
     def prompt(self):  
         func = self.func        
         render = self.render
@@ -221,6 +225,10 @@ class _PrompRunner:
             return format_prompt_jinja2(self.func,**input_dict)
         
         return format_prompt(self.func,**input_dict)
+    
+    def with_llm(self,llm):
+        self.llm = llm
+        return self
      
     def run(self,*args,**kwargs):
         func = self.func
