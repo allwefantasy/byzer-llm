@@ -1,270 +1,76 @@
+好的,下面是使用 pytest 框架编写的测试代码:
 
-下面是一些文件路径以及每个文件对应的源码：
+```python
+##File: /Users/allwefantasy/projects/byzer-llm/tests/test_prompt.py
+import pytest
+import byzerllm
 
-##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/__init__.py
-from typing import Any,List,Dict
-from ray.util.client.common import ClientObjectRef
-from pyjava.api.mlsql import RayContext
-from pyjava.storage import streaming_tar
-import os
-import inspect
-import functools
+@pytest.fixture(scope="module")
+def setup():
+    byzerllm.connect_cluster()
+    llm = byzerllm.ByzerLLM()
+    model = "qianwen_chat"
+    llm.setup_default_model_name(model)
+    llm.setup_template(model,"auto")
+    return llm
 
-from typing import Dict,Generator,Optional
-from dataclasses import dataclass
-from byzerllm.utils import (print_flush,format_prompt,format_prompt_jinja2)
-from .store import transfer_from_ob
-
-@dataclass
-class BlockRow:
-    start: int
-    offset: int
-    value: bytes
-
-def restore_model(conf: Dict[str, str],target_dir:str):
-    model_servers = RayContext.parse_servers(conf["modelServers"])
-    model_binary = RayContext.collect_from(model_servers)
-    streaming_tar.save_rows_as_file(model_binary,target_dir)
-
-def load_model(target_dir:str)-> Generator[BlockRow,None,None]:
-    model_binary = streaming_tar.build_rows_from_file(target_dir)
-    return model_binary
-
-def consume_model(conf: Dict[str, str]):
-    # consume the model server to prevent socket server leak.
-    # hoverer,  model server may have be consumed by other worker
-    # so just try to consume it
-    try:
-        model_servers = RayContext.parse_servers(conf["modelServers"])
-        for item in RayContext.collect_from(model_servers):
-            pass
-    except Exception as e:
-        pass   
-
-def common_init_model(model_refs: List[ClientObjectRef], 
-                      conf: Dict[str, str],model_dir:str,is_load_from_local:bool):
-    
-    udf_name  = conf["UDF_CLIENT"] if "UDF_CLIENT" in conf else "UNKNOW MODEL"
-
-    if not is_load_from_local:      
-      if "standalone" in conf and conf["standalone"]=="true":
-          print_flush(f"MODEL[{udf_name}] Standalone mode: restore model to {model_dir} directly from model server")
-          restore_model(conf,model_dir)
-      else:
-          print_flush(f"MODEL[{udf_name}] Normal mode: restore model from ray object store to {model_dir}")
-          if not os.path.exists(model_dir):
-            transfer_from_ob(udf_name,model_refs,model_dir)
-    else:
-      print_flush(f"MODEL[{udf_name}]  Local mode: Load model from local path ({model_dir}), consume the model server to prevent socket server leak.")
-      consume_model(conf)   
-
-def parse_params(params:Dict[str,str],prefix:str):
-    import json
-    new_params = {}
-    for k,v in params.items():
-        if k.startswith(f"{prefix}."):
-            # sft.float.num_train_epochs
-            tpe = k.split(".")[1]
-            new_k = k.split(".")[2]
-            new_v = v
-            if tpe == "float":
-              new_v = float(v)
-            elif tpe == "int":
-                new_v = int(v)
-            elif tpe == "bool":
-                new_v = v == "true"
-            elif tpe == "str":
-                new_v = v
-            elif tpe == "list":
-                new_v = json.loads(v)
-            elif tpe == "dict":
-                new_v = json.loads(v)            
-            new_params[new_k] = new_v
-    return new_params 
-
-import inspect
-
-
-def check_param_exists(func,name):
-    return name in inspect.signature(func).parameters
-
-
-# add a log funcition to log the string to a specified file
-def log_to_file(msg:str,file_path:str):
-    with open(file_path,"a") as f:
-        f.write(msg)
-        f.write("\n")
-
-class PromptWraper():        
-    def __init__(self,func,llm,render,check_result,*args,**kwargs) -> None:
-        self.func = func
-        self.llm = llm
-        self.render = render
-        self.check_result = check_result
-        self.args = args
-        self.kwargs = kwargs        
-    
-    def prompt(self):  
-        func = self.func        
-        render = self.render
-        args = self.args
-        kwargs = self.kwargs   
-                                 
-        signature = inspect.signature(func)                       
-        arguments = signature.bind(*args, **kwargs)
-        arguments.apply_defaults()
-        input_dict = {}
-        for param in signature.parameters:
-            input_dict.update({ param: arguments.arguments[param] })          
-                    
-        new_input_dic = func(**input_dict)                
-        if new_input_dic and not isinstance(new_input_dic,dict):
-            raise TypeError(f"Return value of {func.__name__} should be a dict")                
-        if new_input_dic:
-            input_dict = {**input_dict,**new_input_dic}
-        
-        if render == "jinja2" or render == "jinja":            
-            return format_prompt_jinja2(func,**input_dict)
-        
-        return format_prompt(func,**input_dict) 
-        
-    def run(self):        
-        func = self.func
-        llm = self.llm
-        render = self.render
-        check_result = self.check_result
-        args = self.args
-        kwargs = self.kwargs
-        
-        signature = inspect.signature(func)                       
-        arguments = signature.bind(*args, **kwargs)
-        arguments.apply_defaults()
-        input_dict = {}
-        for param in signature.parameters:
-            input_dict.update({ param: arguments.arguments[param] })         
-
-        is_lambda = inspect.isfunction(llm) and llm.__name__ == '<lambda>'
-        if is_lambda:    
-            if "self" in input_dict:
-                instance = input_dict.pop("self")                                                                            
-                return llm(instance).prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
-            
-        if isinstance(llm,ByzerLLM):
-            if "self" in input_dict:
-                instance = input_dict.pop("self")                                                                 
-                return llm.prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
-            else:    
-                return llm.prompt(render=render,check_result=check_result)(func)(**input_dict)
-        
-        if isinstance(llm,str):
-            _llm = ByzerLLM()
-            _llm.setup_default_model_name(llm)
-            _llm.setup_template(llm,"auto")
-            
-            if "self" in input_dict:
-                instance = input_dict.pop("self")                                                                 
-                return _llm.prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
-            else:    
-                return _llm.prompt(render=render,check_result=check_result)(func)(**input_dict)    
-
-        
-        raise ValueError("llm should be a lambda function or ByzerLLM instance")   
-
-def lazy_prompt(llm=None,render:str="jinja2",check_result:bool=False):    
-    def _impl(func):                                   
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs): 
-            stack = inspect.stack()        
-            caller = stack[1]                        
-            print(caller)
-            pw = PromptWraper(func,llm,render,check_result,*args,**kwargs)
-            return pw
-
-        return wrapper      
-    return _impl
-
-def prompt(llm=None,render:str="jinja2",check_result:bool=False):    
-    '''
-    decorator to add prompt function to a method
-    render: simple,jinja/jinja2
-    llm: lambda function to get the ByzerLLM instance from the method instance
-    '''
-    def _impl(func):                                   
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):             
-            signature = inspect.signature(func)                       
-            arguments = signature.bind(*args, **kwargs)
-            arguments.apply_defaults()
-            input_dict = {}
-            for param in signature.parameters:
-                input_dict.update({ param: arguments.arguments[param] })
-
-            is_lambda = inspect.isfunction(llm) and llm.__name__ == '<lambda>'
-            if is_lambda:    
-                if "self" in input_dict:
-                    instance = input_dict.pop("self")                                                                 
-                    return llm(instance).prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
-                
-            if isinstance(llm,ByzerLLM):
-                if "self" in input_dict:
-                    instance = input_dict.pop("self")                                                                 
-                    return llm.prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
-                else:    
-                    return llm.prompt(render=render,check_result=check_result)(func)(**input_dict)
-            
-            if isinstance(llm,str):
-                _llm = ByzerLLM()
-                _llm.setup_default_model_name(llm)
-                _llm.setup_template(llm,"auto")
-                
-                if "self" in input_dict:
-                    instance = input_dict.pop("self")                                                                 
-                    return _llm.prompt(render=render,check_result=check_result)(func)(instance,**input_dict)
-                else:    
-                    return _llm.prompt(render=render,check_result=check_result)(func)(**input_dict)    
-
-            
-            new_input_dic = func(**input_dict)                
-            if new_input_dic and not isinstance(new_input_dic,dict):
-                raise TypeError(f"Return value of {func.__name__} should be a dict")                
-            if new_input_dic:
-                input_dict = {**input_dict,**new_input_dic}
-            
-            if render == "jinja2" or render == "jinja":                  
-                return format_prompt_jinja2(func,**input_dict)
-            
-            return format_prompt(func,**input_dict) 
-
-        return wrapper      
-    return _impl
-
-
-from byzerllm.utils.client import ByzerLLM
-from byzerllm.utils.retrieval import ByzerRetrieval
-from byzerllm.utils.connect_ray import connect_cluster
-from byzerllm.apps.agent.registry import reply as agent_reply
-__all__ = ["ByzerLLM","ByzerRetrieval","connect_cluster","prompt","agent_reply"]
-
-       
-
-
-我向运行如下代码：
-
-import byzerllm class Wow:
+class Wow:
     def __init__(self,llm):
         self.llm = llm
 
-    @byzerllm.prompt(lambda:llm)
+    @byzerllm.prompt(lambda self:self.llm)
     def test(self,s:str)->str: 
         '''
         Hello, {{ s }}!
         '''
-w = Wow(llm)
+
+    @byzerllm.prompt()
+    def test2(self,s:str)->str: 
+        '''
+        Hello, {{ s }}!
+        '''    
+
+@byzerllm.prompt(options={"llm_config":{}})
+def test(s:str)->str: 
+    '''
+    Hello, {{ s }}!
+    '''  
+
+def test_prompt_class_method(setup):
+    w = Wow(setup)
+    assert w.test.prompt("你是谁") == "Hello, 你是谁!"
+    assert "你是谁" in w.test.run("你是谁")
+
+def test_prompt_class_method_no_llm(setup):    
+    w = Wow(setup)
+    assert w.test2.prompt("你是谁") == "Hello, 你是谁!"
     
-print(w.test.prompt("william")) 
-print(w.test.run("william"))
-print(w.test("william"))  
+def test_prompt_standalone_func(setup):
+    test.with_llm(setup)
+    assert test.prompt("你是谁") == "Hello, 你是谁!"
+    assert "你是谁" in test.run("你是谁")
+    
+def test_prompt_options(setup):
+    w = Wow(setup)    
+    result = w.test.options({"model":"kimi_8k_chat","llm_config":{"max_length":1000}}).run("你是谁")
+    assert "你是谁" in result
+    assert len(result) <= 1000
+    
+def test_prompt_with_llm(setup):
+    w = Wow(setup)
+    assert "你是谁" in w.test.with_llm(setup).run("你是谁")
+```
 
-如果我想在 lazy_prompt/_impl/wrapper 中知道，当前调用是不是接着会调用 prompt 或者 run 函数。
+这里使用了 pytest 的几个特性:
 
+1. 使用 @pytest.fixture 定义了一个名为 setup 的 fixture,它在模块级别共享。在这个 fixture 中,我们建立了到 Ray 集群的连接,创建了 ByzerLLM 实例,并设置了默认的模型和模板。
 
+2. 将测试用例拆分为多个独立的函数,每个函数测试一个特定的场景。pytest 会自动发现并执行这些测试函数。
+
+3. 测试函数接受 setup fixture 作为参数,从而可以访问在 fixture 中创建的 ByzerLLM 实例。
+
+4. 使用 assert 语句来验证 prompt 方法生成的 prompt 字符串是否符合预期,以及 run 方法返回的结果中是否包含输入的字符串。
+
+使用 pytest,我们可以更好地组织和管理测试用例。通过将设置逻辑移到 fixture 中,可以避免在每个测试函数中重复编写设置代码。此外,pytest 还提供了丰富的断言函数和插件机制,使测试更加灵活和可扩展。
+
+你可以将这个测试文件保存为 test_prompt.py,并将其放在项目的 tests 目录下。然后,在项目根目录下运行 pytest 命令即可执行所有的测试用例。

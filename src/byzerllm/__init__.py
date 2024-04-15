@@ -287,7 +287,12 @@ class _DescriptorPrompt:
         return self.prompt_runner.prompt(*args, **kwargs)
 
     def run(self,*args, **kwargs):
-        return self.prompt_runner.run(*args, **kwargs)  
+        return self.prompt_runner.run(*args, **kwargs)
+
+    def with_llm(self,llm):
+        self.llm = llm
+        self.prompt_runner.with_llm(llm)
+        return self  
 
     def options(self,options:Dict[str,Any]):
         self._options = {**self._options,**options}        

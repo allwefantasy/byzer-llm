@@ -861,8 +861,8 @@
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/version.py": {
     "symbols": "```\n变量：__version__\n导入语句：\n类：\n函数：\n```",
-    "last_modified": 1712814237.6697047,
-    "md5": "90c35af76e4dff017f5e48ec55ebbd31"
+    "last_modified": 1713141499.4819875,
+    "md5": "dbc67712267fd2822480844833db1fb1"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm.py": {
     "symbols": "```\n函数：auto_implement_function_template,main\n变量：a\n类：StoreNestedDict\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```",
@@ -875,9 +875,9 @@
     "md5": "9ee2045feb6ba9e943f643a95e33bf34"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/__init__.py": {
-    "symbols": "函数：auto_implement_function_template, parse_params, check_param_exists, log_to_file, _func_prompt_wrapper, _func_run_wrapper, prompt\n类：BlockRow\n变量：a\n导入语句：import os, import time, from loguru import logger, import byzerllm",
-    "last_modified": 1713091010.0597808,
-    "md5": "df1d90454d55af9eff7f59ed195072f6"
+    "symbols": "```python\n函数：auto_implement_function_template, restore_model, load_model, consume_model, parse_params, check_param_exists, log_to_file, _PromptWraper, run, prompt, options, with_llm, _PrompRunner\n类：BlockRow\n变量：a\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n函数：__call__, _make_wrapper\n类：_DescriptorPrompt, prompt\n变量：self, func, wrapper, llm, render, check_result, options\n导入语句：from byzerllm.utils.client import ByzerLLM, from byzerllm.utils.retrieval import ByzerRetrieval, from byzerllm.utils.connect_ray import connect_cluster, from byzerllm.apps.agent.registry import reply as agent_reply, __all__",
+    "last_modified": 1713142294.565023,
+    "md5": "a6aed26d529ecf16b8d32704879e421f"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/bark/generation.py": {
     "symbols": "```python\n函数：auto_implement_function_template\n变量：a\n类：GenerateModel,GPTConfig,FineGPTConfig,EncodecModel\n导入语句：import os,time,from logger import loguru,import byzerllm\n```\n函数：_tokenize, _detokenize, _normalize_whitespace, _load_history_prompt, generate_text_semantic, _flatten_codebooks\n变量：a\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```python\n函数：auto_implement_function_template,generate_fine\n变量：a,x_coarse_gen,x_fine_history\n类：无\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```\n函数：codec_decode, auto_implement_function_template\n变量：in_arr, gen_fine_arr, audio_arr\n类：\n导入语句：import os,import time,from loguru import logger,import byzerllm",
@@ -1160,9 +1160,9 @@
     "md5": "6c114758c150105771773e3e9f77ee58"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/client/__init__.py": {
-    "symbols": "```\n函数：auto_implement_function_template\n变量：a\n类：Role,LLMHistoryItem,LLMResponse,LLMFunctionCallResponse,LLMCasssResponse,FintuneRequestExtra,FintuneRequest,InferBackend,ExecuteCodeResponse,EventName,EventCallbackResult,Template,Templates\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```\n```python\n函数：auto_implement_function_template\n变量：a\n类：ByzerLLM\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：auto_implement_function_template,sft,merge_lora,pretrain,raw_sft,raw_pretrain,raw_merge_lora,raw_deepspeed_to_huggingface,undeploy,generate_instruction_from_history,is_model_exist,deploy\n变量：a\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：_generate_ins, _to_openai_format, execute_function_calling\n变量：sys_msg, conversations, final_ins, code, lang, temp, ms, _func_maps\n类：无\n导入语句：import json, traceback\n```\n```python\n函数：abort,execute_generate_func,execute_response_format,chat_oai\n变量：request_id,model,conversations,tools,tool_choice,execute_tool,impl_func,execute_impl_func,impl_func_params,func_params,response_class,response_after_chat,enable_default_sys_message,role_mapping,llm_config\n类：无\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```\n```python\n函数：prompt, _impl, clear_impl_cache, stream_chat_oai, async_stream_chat_oai, response\n变量：self, args, kwargs, input_dict, new_input_dic, prompt_str, t, r, model, instruction, verbose, instance\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：_impl, impl, chat, raw_chat, apply_sql_func, _rest_byzer_script, _rest_byzer_engine, get_max_model_length, get_max_output_length, get_max_input_length, _query\n变量：self, model, instruction, verbose, skip_cache, key, signature, arguments, response_class, func, extract_params, request, default_config, default_role_mapping, final_input, v, clean_func, sql, data, owner, url, res, metadata, input, table, url, data, response, text, json, dataType, data, content, role, impl_func, execute_impl_func, impl_func_params\n变量值：无\n\n导入语句：import os, time, from loguru import logger, import byzerllm\n```\n函数：default_chat_wrapper\n类：\n变量：llm,conversations,llm_config\n导入语句：from typing import List, Dict, Optional",
-    "last_modified": 1713090081.2367647,
-    "md5": "b52c6db1467730fd0ca07caecbc80432"
+    "symbols": "```python\n函数：auto_implement_function_template\n变量：a\n类：Role, LLMHistoryItem, LLForecastRequestExtra, FintuneRequest, InferBackend, ExecuteCodeResponse, EventName, EventCallbackResult, EventCallback, Template, Templates\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：auto_implement_function_template\n变量：a\n类：ByzerLLM\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：auto_implement_function_template,sft,merge_lora,pretrain,raw_sft,raw_pretrain,raw_merge_lora,raw_deepspeed_to_huggingface,undeploy,generate_instruction_from_history,is_model_exist,deploy\n变量：a\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：_generate_ins, _to_openai_format, execute_function_calling\n变量：sys_msg, conversations, final_ins, code, lang, temp, ms, _func_maps\n类：无\n导入语句：import json, traceback\n```\n```python\n函数：abort, chat_oai, execute_generate_func, execute_response_format, \n变量：a, func_params, impl_func, impl_func_params, model, role_mapping, llm_config, response_after_chat, enable_default_sys_message, conversations, tools, tool_choice, execute_tool, response_class, meta, is_saas_model, is_message_format, temp_conversations, last_message, default_config, v, res, clean_func, responses, final_result\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：prompt, wrapper, response\n变量：self, args, kwargs, instance, input_dict, new_input_dic, prompt_str, r, t, model, instruction, verbose\n类：LLMClassResponse\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：_impl, impl, raw_chat, chat, apply_sql_func, _rest_byzer_script, _rest_byzer_engine, get_max_model_length, get_max_output_length, get_max_input_length, _query\n变量：self, instruction, model, verbose, skip_cache, key, input_dict, start_time, t, r, response_class, func, args, kwargs, request, default_config, default_role_mapping, final_input, v, res, clean_func, data, owner, url, sql, table, url, sql, table, owner, url, dataType, data, json, data, content, max_length, top_p, temperature, extract_params, metadata, input\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n函数：default_chat_wrapper\n类：\n变量：llm,conversations,llm_config\n导入语句：无",
+    "last_modified": 1713139998.9725769,
+    "md5": "ad0e963d98ca7764f23af8582b1d2958"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/client/code_utils.py": {
     "symbols": "```python\n函数：auto_implement_function_template, get_value_from_llm_str, content_str, infer_lang, check_target_codes_exists, get_target_codes, extract_code, _cmd, execute_code\n变量：a\n类：无\n导入语句：import os, import time, from loguru import logger, import byzerllm\n```\n```python\n函数：_remove_check, eval_function_completions, PassAssertionFilter\n变量：timeout, entry_point, test, definition, responses, n, use_docker, i, response, code, succeed_assertions, gen_cost, assertions, success_list, code_test, success\n类：无\n导入语句：import os, time, loguru, byzerllm, subprocess, threading, pathlib, re, docker\n```",
@@ -1733,5 +1733,10 @@
     "symbols": "函数：__init__, __call__\n类：Inference\n变量：model_dir, device_index, self.model_dir, self.model, rate, t, initial_prompt, byte_file, segments, info\n导入语句：import numpy as np, from typing import Union, List, Tuple, Optional, Dict, from faster_whisper import WhisperModel, import ray, import os, from scipy.io.wavfile import write as write_wav, import io",
     "last_modified": 1696905908.7860248,
     "md5": "d940cf78b34690b98867302d34d3aa8b"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/openai/__init__.py": {
+    "symbols": "```\n类：CustomSaasAPI\n导入语句：from byzerllm.saas.official_openai import CustomSaasAPI,__all__\n```",
+    "last_modified": 1713105484.497178,
+    "md5": "8ba8ee5d9be86856d3986bb59f2ece69"
   }
 }
