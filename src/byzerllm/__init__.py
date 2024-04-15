@@ -115,7 +115,7 @@ class _PromptWraper():
         args = self.args
         kwargs = self.kwargs           
                                  
-        signature = inspect.signature(func)                       
+        signature = inspect.signature(func)                            
         arguments = signature.bind(*args, **kwargs)
         arguments.apply_defaults()
         input_dict = {}
@@ -175,11 +175,11 @@ class _PromptWraper():
         
         raise ValueError("llm should be a lambda function or ByzerLLM instance or a string of model name")   
     
-def prompt_lazy(llm=None,render:str="jinja2",check_result:bool=False):    
+def prompt_lazy(llm=None,render:str="jinja2",check_result:bool=False,options:Dict[str,Any]={}):    
     def _impl(func):                                   
         @functools.wraps(func)
         def wrapper(*args, **kwargs):            
-            pw = _PromptWraper(func,llm,render,check_result,*args,**kwargs)
+            pw = _PromptWraper(func,llm,render,check_result,options,*args,**kwargs)
             return pw
 
         return wrapper      
@@ -271,14 +271,14 @@ class _DescriptorPrompt:
         self.llm = llm
         self.render = render
         self.check_result = check_result
-        self.options = options
-        self.prompt_runner = _PrompRunner(self.wrapper,None,self.llm,self.render,self.check_result,options=self.options)
+        self._options = options
+        self.prompt_runner = _PrompRunner(self.wrapper,None,self.llm,self.render,self.check_result,options=self._options)
 
     def __get__(self, instance, owner):        
         if instance is None:
             return self
         else:            
-            return _PrompRunner(self.wrapper,instance,self.llm,self.render,self.check_result,options=self.options)
+            return _PrompRunner(self.wrapper,instance,self.llm,self.render,self.check_result,options=self._options)
 
     def __call__(self, *args, **kwargs):
         return self.prompt_runner(*args, **kwargs)
@@ -290,6 +290,7 @@ class _DescriptorPrompt:
         return self.prompt_runner.run(*args, **kwargs)  
 
     def options(self,options:Dict[str,Any]):
+        self._options = {**self._options,**options}        
         self.prompt_runner.options(options)
         return self  
 
