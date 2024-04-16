@@ -1,0 +1,48 @@
+source_dir: /Users/allwefantasy/projects/byzer-llm
+target_file: /Users/allwefantasy/projects/byzer-llm/output.txt
+urls: /Users/allwefantasy/projects/byzer-retrieval/README.md
+
+model: qianwen_chat
+model_max_length: 2000
+model_max_input_length: 6000
+anti_quota_limit: 5
+
+
+index_model: sparkdesk_chat
+index_model_max_length: 2000
+index_model_max_input_length: 10000
+index_model_anti_quota_limit: 1
+
+
+skip_build_index: false
+index_filter_level: 0
+index_filter_workers: 1
+
+
+execute: true
+auto_merge: true
+human_as_model: true
+
+query: >
+  给  src/byzerllm.py 添加一个子命令:
+
+  ```bash
+  byzerllm storage --install  
+  ```
+  
+  具体的逻辑为：
+
+  1. 检查当前用户主目录下有没有 .auto-coder 目录，如果没有新建一个。  
+  2. 检查用户是不是 JDK21, 如果不是则抛出错误。
+  2. 下载 https://download.byzer.org/byzer-retrieval/byzer-retrieval-lib-0.1.11.tar.gz 到 .auto-coceer/storage/libs 目录下,并解压。
+  3. 参考 README.md 文件中的 `3. Install Byzer-Retrieval` 进行部署。
+
+  接着再添加一个指令，复用前面步骤3 生成的代码。
+
+  ```bash
+  byzerllm storage --start
+  ```
+
+  上述具体的实现要放在 src/byzerllm/apps/command 录下。
+
+  注意：过滤的时候，请只保留 byzerllm.py 和 /Users/allwefantasy/projects/byzer-retrieval/README.md 文件。

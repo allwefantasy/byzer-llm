@@ -861,8 +861,8 @@
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/version.py": {
     "symbols": "```\n变量：__version__\n导入语句：\n类：\n函数：\n```",
-    "last_modified": 1713141499.4819875,
-    "md5": "dbc67712267fd2822480844833db1fb1"
+    "last_modified": 1713174542.7587554,
+    "md5": "d63fd618ea9e412fd71ed09501c3e015"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm.py": {
     "symbols": "```\n函数：auto_implement_function_template,main\n变量：a\n类：StoreNestedDict\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```",
@@ -1600,9 +1600,9 @@
     "md5": "c680ac3dcf69860ec1a0038ee65ca90c"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/qianwen/__init__.py": {
-    "symbols": "```python\n函数：CustomSaasAPI, __init__, get_meta, embed_query, async_stream_chat\n变量：self, infer_params, api_key, model, meta, HTTPStatus, List, Dict, dashscope, Message, time, ray, BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, threading, asyncio\n类：无\n导入语句：from http import HTTPStatus, from typing import List, Dict, import dashscope, from dashscope.api_entities.dashscope_response import Message, import time, import ray, from byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, import threading, import asyncio\n```",
-    "last_modified": 1711891197.801148,
-    "md5": "efeb3dc031b8880b9c91b8ecb46411b6"
+    "symbols": "```python\n函数：CustomSaasAPI, __init__, embed_query, get_meta, async_stream_chat\n变量：self, infer_params, api_key, model, meta, HTTPStatus, resp, start_time, messages, other_params, stream, res_data, server, request_id, v, time_count, generated_text, generated_tokens_count, input_tokens_count, time_cost, s\n类：无\n导入语句：from http import HTTPStatus, from typing import List, Dict, import dashscope, from dashscope.api_entities.dashscope_response import Message, import time, import ray, from byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, import threading, import asyncio\n```",
+    "last_modified": 1713249821.8708746,
+    "md5": "24c47274a1cfab71ae93c8483833925d"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/minimax/__init__.py": {
     "symbols": "```python\n函数：auto_implement_function_template,minimax_api_retry_if_need,request_with_retry,stream_chat,append\n变量：a,DEFAULT_BOT_SETTING,bot_settings,content,glyph,headers,http_body,http_status,json_body,logger,messages,payload,res_data,response,role,top_p,temperature\n类：MiniMaxError,MiniMaxBotSettings,MiniMaxMessageRole,MiniMaxMessages,CustomSaasAPI\n导入语句：import os,import time,from loguru import logger,import byzerllm\n```\n函数：to_list\n变量：sender_name, msg, self, sender_type, message\n类：MiniMaxMessages.Message\n导入语句：",

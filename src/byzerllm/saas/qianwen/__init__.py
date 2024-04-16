@@ -24,8 +24,11 @@ class CustomSaasAPI:
 
         try:
             ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
-        except ValueError:            
-            ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()     
+        except ValueError: 
+            try:           
+                ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()     
+            except Exception:
+                pass
 
      # saas/proprietary
     def get_meta(self):
