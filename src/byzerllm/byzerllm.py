@@ -134,16 +134,21 @@ def main():
     query_cmd.add_argument("--file", default=None, required=False, help="")
 
     # Storage 子命令
-    storage_cmd = subparsers.add_parser('storage', help='Manage Byzer Storage')
+    storage_cmd = subparsers.add_parser('storage', help='Manage Byzer Storage')    
     storage_cmd_subparsers = storage_cmd.add_subparsers(dest='storage_command')
     
-    # --install
-    install_cmd = storage_cmd_subparsers.add_parser('--install', help='Install Byzer Storage')
-    install_cmd.set_defaults(func=StorageSubCommand.install)
+    # install 子命令
+    storage_install_cmd = storage_cmd_subparsers.add_parser('install', help='Install Byzer Storage')
+    storage_install_cmd.add_argument("--file", default=None, required=False, help="")
+    storage_install_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
+    storage_install_cmd.add_argument("--version", default="0.1.11", required=False, help="")
     
-    # --start 
-    start_cmd = storage_cmd_subparsers.add_parser('--start', help='Start Byzer Storage')
-    start_cmd.set_defaults(func=StorageSubCommand.start)
+    # start 子命令
+    storage_start_command = storage_cmd_subparsers.add_parser('start', help='Start Byzer Storage')
+    storage_start_command.add_argument("--file", default=None, required=False, help="")
+    storage_start_command.add_argument("--version", default="0.1.11", required=False, help="")
+    storage_start_command.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
+    
 
     args = parser.parse_args()
     
@@ -211,7 +216,12 @@ def main():
         print(locales["undeploy_success"][lang].format(args.model))
         
     elif args.command == 'storage':
-        args.func(args)
+        if args.storage_command == "install":
+            StorageSubCommand.install(args)
+        elif args.storage_command == "start":
+            StorageSubCommand.start(args)        
+
+        
 
 if __name__ == "__main__":
     main()

@@ -40,4 +40,5 @@ def connect_cluster(address:str="auto",java_home:Optional[str]=None,
                                                         runtime_env={"env_vars": env_vars})
         
     ray.init(address=address,namespace="default",ignore_reinit_error=True,
-                    job_config=job_config) 
+                    job_config=job_config)
+    return env_vars 

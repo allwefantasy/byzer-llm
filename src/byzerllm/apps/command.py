@@ -1,29 +1,33 @@
 import os
 from os.path import expanduser
-import subprocess
 import urllib.request
 import tarfile
-import ray
+from loguru import logger
 
 class StorageSubCommand:
         
     @staticmethod
     def install(args):
+        version = args.version
         home = expanduser("~")
         auto_coder_dir = os.path.join(home, ".auto-coder")
         if not os.path.exists(auto_coder_dir):
             os.makedirs(auto_coder_dir)
-        
-        java_version = subprocess.check_output(["java", "-version"], stderr=subprocess.STDOUT)
-        if "21" not in str(java_version):
-            raise Exception("JDK 21 is required")
 
-        download_url = "https://download.byzer.org/byzer-retrieval/byzer-retrieval-lib-0.1.11.tar.gz"
+        logger.info(f"Download Byzer Retrieval version {version}")
+        download_url = f"https://download.byzer.org/byzer-retrieval/byzer-retrieval-lib-{version}.tar.gz"
         libs_dir = os.path.join(auto_coder_dir, "storage", "libs")
         os.makedirs(libs_dir, exist_ok=True)
-        download_path = os.path.join(libs_dir, "byzer-retrieval-lib-0.1.11.tar.gz")
-
-        urllib.request.urlretrieve(download_url, download_path)
+        download_path = os.path.join(libs_dir, f"byzer-retrieval-lib-{version}.tar.gz")
+        
+        def download_with_progressbar(url, filename):
+            def progress(count, block_size, total_size):
+                percent = int(count * block_size * 100 / total_size)
+                print(f"\rDownload progress: {percent}%", end="")
+        
+            urllib.request.urlretrieve(url, filename,reporthook=progress)
+        
+        download_with_progressbar(download_url, download_path)    
 
         with tarfile.open(download_path, "r:gz") as tar:
             tar.extractall(path=libs_dir)
@@ -32,28 +36,32 @@ class StorageSubCommand:
     
     @staticmethod
     def start(args):
+        import byzerllm
+        from byzerllm.utils.retrieval import ByzerRetrieval
+        version = args.version
         home = expanduser("~")
         auto_coder_dir = os.path.join(home, ".auto-coder")
-        libs_dir = os.path.join(auto_coder_dir, "storage", "libs", "byzer-retrieval-lib-0.1.11")
-        
+        libs_dir = os.path.join(auto_coder_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")
+        data_dir = os.path.join(auto_coder_dir, "storage", "data","cluster_0")
+
+        if not os.path.exists(data_dir):
+            os.makedirs(data_dir)
+
+        if not os.path.exists(libs_dir):
+            StorageSubCommand.install(args)
+
         code_search_path = [libs_dir]
-        java_home = subprocess.check_output(["which", "java"], universal_newlines=True).strip()
-        java_home = java_home[:-9]  # remove /bin/java from the path
-        path = java_home + "/bin:" + os.environ["PATH"]
-        env_vars = {"JAVA_HOME": java_home, "PATH": path}
         
-        ray.init(address="auto", namespace="default", 
-                 job_config=ray.job_config.JobConfig(code_search_path=code_search_path,
-                                                     runtime_env={"env_vars": env_vars}))
-
-        from byzerllm.utils.retrieval import ByzerRetrieval
-
+        logger.info(f"Connect and start Byzer Retrieval version {version}")
+        env_vars = byzerllm.connect_cluster(address=args.ray_address,code_search_path=code_search_path)
+        
         retrieval = ByzerRetrieval()
         retrieval.launch_gateway()
 
         builder = retrieval.cluster_builder()
-        builder.set_name("cluster1").set_location("/tmp/cluster1").set_num_nodes(2).set_node_cpu(1).set_node_memory("3g")
+        builder.set_name("cluster_0").set_location(data_dir).set_num_nodes(1).set_node_cpu(1).set_node_memory("2g")
         builder.set_java_home(env_vars["JAVA_HOME"]).set_path(env_vars["PATH"]).set_enable_zgc()
         builder.start_cluster()
-
+        
+        print(retrieval.cluster_info("cluster_0"))
         print("Byzer Retrieval started successfully")
