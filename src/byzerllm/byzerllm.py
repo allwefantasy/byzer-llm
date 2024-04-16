@@ -142,12 +142,25 @@ def main():
     storage_install_cmd.add_argument("--file", default=None, required=False, help="")
     storage_install_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
     storage_install_cmd.add_argument("--version", default="0.1.11", required=False, help="")
+    storage_install_cmd.add_argument('--database', default="byzerai_store", help="")
+    storage_install_cmd.add_argument('--base_dir', default="", help="")
     
     # start 子命令
     storage_start_command = storage_cmd_subparsers.add_parser('start', help='Start Byzer Storage')
     storage_start_command.add_argument("--file", default=None, required=False, help="")
     storage_start_command.add_argument("--version", default="0.1.11", required=False, help="")
     storage_start_command.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
+    storage_start_command.add_argument('--database', default="byzerai_store", help="")
+    storage_start_command.add_argument('--base_dir', default="", help="")
+
+
+    # start 子命令
+    storage_stop_command = storage_cmd_subparsers.add_parser('stop', help='Stop Byzer Storage')
+    storage_stop_command.add_argument("--file", default=None, required=False, help="")
+    storage_stop_command.add_argument("--version", default="0.1.11", required=False, help="")
+    storage_stop_command.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
+    storage_stop_command.add_argument('--database', default="byzerai_store", help="")
+    storage_stop_command.add_argument('--base_dir', default="", help="")
     
 
     args = parser.parse_args()
@@ -219,7 +232,9 @@ def main():
         if args.storage_command == "install":
             StorageSubCommand.install(args)
         elif args.storage_command == "start":
-            StorageSubCommand.start(args)        
+            StorageSubCommand.start(args) 
+        elif args.storage_command == "stop":
+            StorageSubCommand.stop(args)           
 
         
 
