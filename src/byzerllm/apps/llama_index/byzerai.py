@@ -1,9 +1,9 @@
 import os
 from typing import Any, Callable, Dict, Optional, Sequence
 
-from llama_index.bridge.pydantic import Field, PrivateAttr
+from llama_index.legacy.bridge.pydantic import Field, PrivateAttr
 
-from llama_index.core.llms.types import (
+from llama_index.core.llms import (    
     ChatMessage,
     ChatResponse,
     ChatResponseGen,
@@ -11,14 +11,14 @@ from llama_index.core.llms.types import (
     CompletionResponseGen,
     LLMMetadata,
 )
-from llama_index.llms.base import llm_chat_callback, llm_completion_callback
-from llama_index.llms.custom import CustomLLM
-from llama_index.llms.generic_utils import (
+from llama_index.core.llms.callbacks import llm_chat_callback, llm_completion_callback
+from llama_index.core.llms.custom import CustomLLM
+from llama_index.core.llms.custom import (
     completion_response_to_chat_response,
     stream_completion_response_to_chat_response,
 )
-from llama_index.types import BaseOutputParser, PydanticProgramMode
-from llama_index.utils import get_cache_dir
+from llama_index.core.types import BaseOutputParser, PydanticProgramMode
+from llama_index.core.utils import get_cache_dir
 from byzerllm.utils.client import ByzerLLM
 
 class ByzerAI(CustomLLM):

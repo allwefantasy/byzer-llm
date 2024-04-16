@@ -2,10 +2,10 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 import json
 
-from llama_index.schema import BaseNode, TextNode
-from llama_index.storage.docstore.keyval_docstore import KVDocumentStore
-from llama_index.storage.docstore.utils import doc_to_json, json_to_doc
-from llama_index.storage.kvstore.types import DEFAULT_BATCH_SIZE, BaseKVStore
+from llama_index.core.schema import BaseNode, TextNode
+from llama_index.core.storage.docstore.keyval_docstore import KVDocumentStore
+from llama_index.core.storage.docstore.utils import doc_to_json, json_to_doc
+from llama_index.core.storage.kvstore.types import DEFAULT_BATCH_SIZE, BaseKVStore
 
 from byzerllm.utils.client import ByzerLLM
 from byzerllm.utils.retrieval import ByzerRetrieval

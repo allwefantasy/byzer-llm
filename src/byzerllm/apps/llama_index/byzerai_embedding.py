@@ -1,8 +1,8 @@
 """Langchain Embedding Wrapper Module."""
 
 from typing import TYPE_CHECKING, List, Optional
-from llama_index.core.embeddings.base import DEFAULT_EMBED_BATCH_SIZE, BaseEmbedding
-from llama_index.bridge.pydantic import PrivateAttr
+from llama_index.core.base.embeddings.base import DEFAULT_EMBED_BATCH_SIZE, BaseEmbedding
+from llama_index.legacy.bridge.pydantic import PrivateAttr
 
 from byzerllm.utils.client import ByzerLLM
 from byzerllm.utils.langutil import asyncfy_with_semaphore

@@ -2,14 +2,14 @@ import json
 import logging
 from typing import Any, Callable, Dict, List, Mapping, Optional, cast
 
-from llama_index.schema import BaseNode
-from llama_index.vector_stores.types import (    
+from llama_index.core.schema import BaseNode
+from llama_index.core.vector_stores.types import (    
     MetadataFilters,
     VectorStore,
     VectorStoreQuery,    
     VectorStoreQueryResult,
 )
-from llama_index.schema import (
+from llama_index.core.schema import (
     BaseNode,
     ImageNode,
     IndexNode,
@@ -17,7 +17,7 @@ from llama_index.schema import (
     RelatedNodeInfo,
     TextNode,
 )
-from llama_index.vector_stores.utils import node_to_metadata_dict
+from llama_index.core.vector_stores.utils import node_to_metadata_dict
 from byzerllm.utils.client import ByzerLLM
 from byzerllm.utils.retrieval import ByzerRetrieval
 from byzerllm.apps.llama_index.simple_retrieval import SimpleRetrieval
