@@ -5,8 +5,8 @@ from byzerllm.apps.llama_index.byzerai_embedding import ByzerAIEmbedding
 from byzerllm.apps.llama_index.byzerai_docstore import ByzerAIDocumentStore
 from byzerllm.apps.llama_index.byzerai_index_store import ByzerAIIndexStore
 from byzerllm.apps.llama_index.byzerai_vectordb import ByzerAIVectorStore
-from llama_index.service_context import ServiceContext
-from llama_index.storage import StorageContext
+from llama_index.core.service_context import ServiceContext
+from llama_index.core.storage import StorageContext
 from typing import Optional
 
 def get_service_context(llm:ByzerLLM,**kargs):        

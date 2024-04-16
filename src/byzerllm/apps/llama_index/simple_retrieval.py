@@ -9,8 +9,8 @@ from byzerllm.utils.client import LLMHistoryItem,LLMRequest
 from byzerllm.utils.retrieval import TableSettings,SearchQuery
 import uuid
 import json
-from langchain import PromptTemplate
-from langchain.text_splitter import RecursiveCharacterTextSplitter,Document
+from langchain_core.prompts import PromptTemplate
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 try:
     from termcolor import colored
 except ImportError:
