@@ -142,7 +142,7 @@ def main():
     storage_install_cmd.add_argument("--file", default=None, required=False, help="")
     storage_install_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
     storage_install_cmd.add_argument("--version", default="0.1.11", required=False, help="")
-    storage_install_cmd.add_argument('--database', default="byzerai_store", help="")
+    storage_install_cmd.add_argument('--cluster', default="byzerai_store", help="")
     storage_install_cmd.add_argument('--base_dir', default="", help="")
     
     # start 子命令
@@ -150,7 +150,7 @@ def main():
     storage_start_command.add_argument("--file", default=None, required=False, help="")
     storage_start_command.add_argument("--version", default="0.1.11", required=False, help="")
     storage_start_command.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
-    storage_start_command.add_argument('--database', default="byzerai_store", help="")
+    storage_start_command.add_argument('--cluster', default="byzerai_store", help="")
     storage_start_command.add_argument('--base_dir', default="", help="")
 
 
@@ -159,7 +159,7 @@ def main():
     storage_stop_command.add_argument("--file", default=None, required=False, help="")
     storage_stop_command.add_argument("--version", default="0.1.11", required=False, help="")
     storage_stop_command.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
-    storage_stop_command.add_argument('--database', default="byzerai_store", help="")
+    storage_stop_command.add_argument('--cluster', default="byzerai_store", help="")
     storage_stop_command.add_argument('--base_dir', default="", help="")
     
 
