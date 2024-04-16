@@ -5,6 +5,7 @@ import shlex
 import jinja2
 import yaml
 from byzerllm.utils.client import ByzerLLM, InferBackend
+from byzerllm.apps.command import StorageSubCommand
 
 # 命令和参数的中英文映射字典
 locales = {
@@ -132,6 +133,18 @@ def main():
     query_cmd.add_argument('--template', default="auto", help=locales["help_template"][lang])
     query_cmd.add_argument("--file", default=None, required=False, help="")
 
+    # Storage 子命令
+    storage_cmd = subparsers.add_parser('storage', help='Manage Byzer Storage')
+    storage_cmd_subparsers = storage_cmd.add_subparsers(dest='storage_command')
+    
+    # --install
+    install_cmd = storage_cmd_subparsers.add_parser('--install', help='Install Byzer Storage')
+    install_cmd.set_defaults(func=StorageSubCommand.install)
+    
+    # --start 
+    start_cmd = storage_cmd_subparsers.add_parser('--start', help='Start Byzer Storage')
+    start_cmd.set_defaults(func=StorageSubCommand.start)
+
     args = parser.parse_args()
     
     if args.file:
@@ -196,6 +209,9 @@ def main():
         llm.undeploy(args.model)
 
         print(locales["undeploy_success"][lang].format(args.model))
+        
+    elif args.command == 'storage':
+        args.func(args)
 
 if __name__ == "__main__":
     main()
