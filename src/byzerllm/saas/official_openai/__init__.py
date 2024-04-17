@@ -44,8 +44,9 @@ class CustomSaasAPI:
             "support_stream": True,
 
         }
-                    
 
+        self.meta["embedding_mode"] = "embedding"  in  self.model.lower()
+                    
         self.proxies = infer_params.get("saas.proxies", None)
         self.local_address = infer_params.get("saas.local_address", "0.0.0.0")
                 
@@ -59,8 +60,11 @@ class CustomSaasAPI:
     
         try:
             ray.get_actor("BLOCK_VLLM_STREAM_SERVER") 
-        except ValueError:            
-            ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()
+        except ValueError:  
+            try:          
+                ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()
+            except Exception as e:
+                pass    
 
     # saas/proprietary
     def get_meta(self):
@@ -92,6 +96,14 @@ class CustomSaasAPI:
             return ins
         
         return content   
+    
+    def embed_query(self, ins: str, **kwargs):                     
+        resp = self.client.embeddings.create(input = [ins], model=self.model)
+        embedding = resp.data[0].embedding
+        usage = resp.usage
+        return (embedding,{"metadata":{
+                "input_tokens_count":usage.prompt_tokens,
+                "generated_tokens_count":0}})
 
     async def async_stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
                     max_length: int = 4096,
