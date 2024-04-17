@@ -46,7 +46,7 @@ class StorageSubCommand:
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
         libs_dir = os.path.join(base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")
         if os.path.exists(libs_dir):
-            print(f"Byzer Retrieval version {version} already installed.")
+            print(f"Byzer Storage version {version} already installed.")
             return
         
         if not os.path.exists(base_dir):
@@ -66,13 +66,13 @@ class StorageSubCommand:
         
             urllib.request.urlretrieve(url, filename,reporthook=progress)
         
-        logger.info(f"Download Byzer Retrieval version {version}: {download_url}")
+        logger.info(f"Download Byzer Storage version {version}: {download_url}")
         download_with_progressbar(download_url, download_path)    
 
         with tarfile.open(download_path, "r:gz") as tar:
             tar.extractall(path=libs_dir)
         
-        print("Byzer Retrieval installed successfully")
+        print("Byzer Storage installed successfully")
     
     @staticmethod
     def start(args):
@@ -84,9 +84,9 @@ class StorageSubCommand:
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
         
         libs_dir = os.path.join(base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")
-        data_dir = os.path.join(base_dir, "storage", "data",cluster)
+        data_dir = os.path.join(base_dir, "storage", "data")
 
-        if not os.path.exists(data_dir):
+        if not os.path.exists(os.path.join(data_dir,cluster)):
             os.makedirs(data_dir)
                 
         if not os.path.exists(libs_dir):            
@@ -112,7 +112,7 @@ class StorageSubCommand:
         with open(os.path.join(base_dir, "storage", "data",f"{cluster}.json"),"w") as f:
             f.write(json.dumps(retrieval.cluster_info(cluster),ensure_ascii=False))
 
-        print("Byzer Retrieval started successfully")
+        print("Byzer Storage started successfully")
 
     @staticmethod 
     def stop(args):    
@@ -136,6 +136,36 @@ class StorageSubCommand:
         retrieval = ByzerRetrieval()
         retrieval.launch_gateway()
         retrieval.shutdown_cluster(cluster_name=cluster)
+
+    @staticmethod 
+    def export(args):   
+        import byzerllm
+        from byzerllm.utils.retrieval import ByzerRetrieval
+        version = args.version
+        cluster = args.cluster
+        home = expanduser("~")        
+        base_dir = args.base_dir or os.path.join(home, ".auto-coder")
+        libs_dir = os.path.join(base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")
+        cluster_json = os.path.join(base_dir, "storage", "data",f"{cluster}.json")        
+
+        if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
+            print("No instance find.")
+            return
+
+        code_search_path = [libs_dir]
+        
+        logger.info(f"Connect and restore Byzer Retrieval version {version}")
+        byzerllm.connect_cluster(address=args.ray_address,code_search_path=code_search_path)        
+     
+        retrieval = ByzerRetrieval()
+        retrieval.launch_gateway()
+        
+        with open(cluster_json,"w") as f:
+            f.write(json.dumps(retrieval.cluster_info(cluster),ensure_ascii=False))
+
+        print(f"Byzer Storage export successfully. Please check {cluster_json}")    
+
+
     
     def restore(args):
         import byzerllm
@@ -165,7 +195,7 @@ class StorageSubCommand:
             
             retrieval.restore_from_cluster_info(json.loads(cluster_info))
             
-            print("Byzer Retrieval restore successfully")
+            print("Byzer Storage restore successfully")
         else:
             print(f"Cluster {cluster} is already exists")
 

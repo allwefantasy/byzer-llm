@@ -162,6 +162,13 @@ def main():
     storage_stop_command.add_argument('--cluster', default="byzerai_store", help="")
     storage_stop_command.add_argument('--base_dir', default="", help="")
     
+    # export 子命令
+    storage_export_command = storage_cmd_subparsers.add_parser('export', help='Export Byzer Storage Information')    
+    storage_export_command.add_argument("--file", default=None, required=False, help="")
+    storage_export_command.add_argument("--version", default="0.1.11", required=False, help="")
+    storage_export_command.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
+    storage_export_command.add_argument('--cluster', default="byzerai_store", help="")
+    storage_export_command.add_argument('--base_dir', default="", help="")
 
     args = parser.parse_args()
     
@@ -234,7 +241,10 @@ def main():
         elif args.storage_command == "start":
             StorageSubCommand.start(args) 
         elif args.storage_command == "stop":
-            StorageSubCommand.stop(args)           
+            StorageSubCommand.stop(args)
+        elif args.storage_command == "export":
+            StorageSubCommand.export(args)
+            
 
         
 
