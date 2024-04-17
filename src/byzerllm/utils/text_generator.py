@@ -175,8 +175,16 @@ async def simple_predict_func(model,v):
     results=[]
     for item in data:        
         v = await llm.async_predict(item)
-        
-        if item.get("tokenizer",False) or item.get("embedding",False) or item.get("meta",False) or item.get("apply_chat_template",False):
+        if item.get("embedding",False):
+            metadata = {}
+            value = v
+            if isinstance(v,tuple):
+                if isinstance(v[1],dict) and "metadata" in v[1]:
+                    metadata = v[1]["metadata"]
+                value = v[0]                            
+            results.append({"predict":value,"metadata":metadata,"input":item})
+
+        elif item.get("tokenizer",False) or item.get("meta",False) or item.get("apply_chat_template",False):
             results.append({
             "predict":v,
             "metadata":{},

@@ -42,7 +42,9 @@ class CustomSaasAPI:
         model=self.model,
         input=ins)
         if resp.status_code == HTTPStatus.OK:
-            return resp.output["embeddings"][0]["embedding"]
+            return (resp.output["embeddings"][0]["embedding"],{"metadata":{
+                "input_tokens_count":resp.usage["total_tokens"],
+                "generated_tokens_count":0}})
         else:
             raise Exception(resp.message)
 
