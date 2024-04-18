@@ -103,7 +103,13 @@ class StorageSubCommand:
         if retrieval.is_cluster_exists(name=cluster):
             print(f"Cluster {cluster} exists already, stop it first.")
             return 
-
+        
+        cluster_json = os.path.join(base_dir, "storage", "data",f"{cluster}.json")
+        if os.path.exists(cluster_json):
+            StorageSubCommand.restore(args)
+            print("Byzer Storage started successfully")
+            return 
+            
         builder = retrieval.cluster_builder()
         builder.set_name(cluster).set_location(data_dir).set_num_nodes(1).set_node_cpu(1).set_node_memory("2g")
         builder.set_java_home(env_vars["JAVA_HOME"]).set_path(env_vars["PATH"]).set_enable_zgc()

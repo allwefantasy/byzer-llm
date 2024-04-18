@@ -47,11 +47,7 @@ class ByzerAI(CustomLLM):
     @property
     def metadata(self) -> LLMMetadata:
         """LLM metadata."""
-        return LLMMetadata(
-            context_window=8024,
-            num_output=2048,
-            model_name=self._model.default_model_name,
-        )   
+        return LLMMetadata.parse_obj(self._model.metadata.model_dump())
 
     @llm_chat_callback()
     def chat(self, messages: Sequence[ChatMessage], **kwargs: Any) -> ChatResponse:

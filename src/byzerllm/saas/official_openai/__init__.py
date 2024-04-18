@@ -42,6 +42,7 @@ class CustomSaasAPI:
             "model_deploy_type": "saas",
             "backend":"saas",
             "support_stream": True,
+            "model_name": self.model,
 
         }
 
