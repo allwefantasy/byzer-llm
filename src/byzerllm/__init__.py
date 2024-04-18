@@ -221,7 +221,10 @@ class _PrompRunner:
         if new_input_dic:
             input_dict = {**input_dict,**new_input_dic}
 
-        input_dict.pop("self","")
+        
+        if "self" in input_dict:
+            input_dict.pop("self")
+        
         if self.render == "jinja2" or self.render == "jinja":            
             return format_prompt_jinja2(self.func,**input_dict)
         
