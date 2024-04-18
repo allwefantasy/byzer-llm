@@ -50,7 +50,7 @@ class StorageSubCommand:
             return
         
         if not os.path.exists(base_dir):
-            os.makedirs(base_dir)            
+            os.makedirs(base_dir,exist_ok=True)            
 
         
         download_url = f"https://download.byzer.org/byzer-retrieval/byzer-retrieval-lib-{version}.tar.gz"
@@ -87,7 +87,7 @@ class StorageSubCommand:
         data_dir = os.path.join(base_dir, "storage", "data")
 
         if not os.path.exists(os.path.join(data_dir,cluster)):
-            os.makedirs(data_dir)
+            os.makedirs(data_dir,exist_ok=True)
                 
         if not os.path.exists(libs_dir):            
             StorageSubCommand.install(args)
