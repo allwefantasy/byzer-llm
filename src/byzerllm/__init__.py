@@ -220,7 +220,8 @@ class _PrompRunner:
             raise TypeError(f"Return value of {self.func.__name__} should be a dict")                
         if new_input_dic:
             input_dict = {**input_dict,**new_input_dic}
-        
+
+        input_dict.pop("self","")
         if self.render == "jinja2" or self.render == "jinja":            
             return format_prompt_jinja2(self.func,**input_dict)
         
