@@ -45,8 +45,7 @@ def get_str(params:Dict[str,str],key:str,default:str="")->str:
 
 
 def params_to_llama_kwargs(params: Dict[str, str]) -> Dict[str, Any]:
-    llama_kwargs = {
-        "model_path": get_str(params, "model_path"),
+    llama_kwargs = {        
         "n_gpu_layers": get_int(params, "n_gpu_layers", 0),
         "split_mode": get_int(params, "split_mode", llama_cpp.LLAMA_SPLIT_MODE_LAYER),
         "main_gpu": get_int(params, "main_gpu", 0),
@@ -81,7 +80,10 @@ def params_to_llama_kwargs(params: Dict[str, str]) -> Dict[str, Any]:
         "type_k": get_int(params, "type_k") if "type_k" in params else None,
         "type_v": get_int(params, "type_v") if "type_v" in params else None,
     }
-    return llama_kwargs
+    new_llama_kwargs = {}
+    for k in list(params.keys()):
+        new_llama_kwargs[k]=llama_kwargs[k]            
+    return new_llama_kwargs
 
 class LlamaCppBackend:
 
