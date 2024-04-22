@@ -2,159 +2,194 @@ import os
 import time
 import ray
 import asyncio
-from typing import List, Dict, Any
+from typing import List, Dict, Any,Union
+import traceback
+import uuid
+import threading
+import json
+import inspect
 
 from llama_cpp import Llama
-from byzerllm.utils import (
-    VLLMStreamServer,
+from byzerllm.utils import ( 
+    BlockVLLMStreamServer,   
     StreamOutputs,
     SingleOutput,
-    SingleOutputMeta,
-    compute_max_new_tokens,
+    SingleOutputMeta,    
 )
-from byzerllm.utils.types import StopSequencesCriteria
 
+def get_bool(params:Dict[str,str],key:str,default:bool=False)->bool:
+    if key in params:
+        if isinstance(params[key],bool):
+            return params[key]
+        else:            
+            return params[key] == "true" or params[key] == "True"
+    return default
+
+def convert_string_to_type(value: str, target_type):
+    # Handling Boolean separately because bool("False") is True
+    if target_type == bool:
+        return value.lower() in ['true', '1', 't', 'y', 'yes']
+    return target_type(value)
+
+def get_init_params_and_convert(cls, **string_values):
+    signature = inspect.signature(cls.__init__)
+    parameters = signature.parameters
+    converted_values = {}
+    for name, param in parameters.items():
+        if name == 'self':
+            continue
+        param_type = param.annotation
+
+        if name not in string_values:
+            continue        
+        param_value = string_values[name]
+        converted_values[name] = convert_string_to_type(param_value, param_type)
+    return converted_values
 
 class LlamaCppBackend:
-    @staticmethod
-    def init_model(model_dir, infer_params: Dict[str, str] = {}, sys_conf: Dict[str, str] = {}):
-        model = Llama(model_path=os.path.join(model_dir, "model.bin"))
-        return model, None
 
-    @staticmethod
-    def generate(model, tokenizer, ins: str, his: List[Dict[str, str]] = [],
+    def __init__(self,model_path, infer_params: Dict[str, str] = {}, sys_conf: Dict[str, str] = {}):
+        targets = get_init_params_and_convert(Llama, **infer_params)
+        self.model = Llama(model_path=model_path,**targets)        
+        self.meta = {
+            "model_deploy_type": "saas",
+            "backend":"ray/llama_cpp",
+            "support_stream": True,            
+        }
+
+        try:
+            ray.get_actor("BLOCK_VLLM_STREAM_SERVER") 
+        except ValueError:  
+            try:          
+                ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()
+            except Exception as e:
+                pass
+
+
+    def get_meta(self):
+        return [self.meta]
+
+    def process_input(self, ins: Union[str, List[Dict[str, Any]]]):
+        
+        if isinstance(ins, list):
+            return ins
+        
+        content = []
+        try:
+            ins_json = json.loads(ins)
+        except:            
+            return ins
+        
+        content = []
+        for item in ins_json:
+            if "image" in item or "image_url" in item:
+                image_data = item.get("image",item.get("image_url",""))
+                ## "data:image/jpeg;base64," 
+                if not image_data.startswith("data:"):
+                    image_data = "data:image/jpeg;base64," + image_data                                                                                
+                content.append({"image_url": {"url":image_data},"type": "image_url",})
+            elif "text" in item:
+                text_data = item["text"]
+                content.append({"text": text_data,"type":"text"})
+        if not content:
+            return ins
+        
+        return content   
+        
+    async def async_get_meta(self):
+        return self.get_meta()
+
+    async def async_stream_chat(self, tokenizer, ins: str, his: List[Dict[str, str]] = [],
                  max_length: int = 4090, top_p: float = 0.95, temperature: float = 0.1, **kwargs):
+        return await self.generate(tokenizer=tokenizer, ins=ins, his=his, max_length=max_length, top_p=top_p, temperature=temperature, **kwargs)
+    
+    def embed_query(self, ins: str, **kwargs):                     
+        resp = self.model.create_embedding(input = [ins])
+        embedding = resp.data[0].embedding
+        usage = resp.usage
+        return (embedding,{"metadata":{
+                "input_tokens_count":usage.prompt_tokens,
+                "generated_tokens_count":0}})            
+   
+    async def generate(self, tokenizer, ins: str, his: List[Dict[str, str]] = [],
+                 max_length: int = 4090, top_p: float = 0.95, temperature: float = 0.1, **kwargs):
+                           
+        messages = [{"role":message["role"],"content":self.process_input(message["content"])} for message in his] + [{"role": "user", "content": self.process_input(ins)}]
+
+        stream = kwargs.get("stream",False)
         
-        if model.get_meta()[0]["message_format"]:
-            config = copy.deepcopy(model.generation_config)
-            config.max_length = max_length
-            config.temperature = temperature
-            config.top_p = top_p
-
-            if "max_new_tokens" in kwargs:
-                config.max_new_tokens = int(kwargs["max_new_tokens"])
-
-            conversations = his + [{"content": ins, "role": "user"}]
-            start_time = time.monotonic()
-            response = model.chat(conversations, generation_config=config)
-            time_taken = time.monotonic() - start_time
-
-            generated_tokens_count = tokenizer(response, return_token_type_ids=False, return_tensors="pt")["input_ids"].shape[1]
-            print(f"chat took {time_taken} s to complete. tokens/s:{float(generated_tokens_count) / time_taken}", flush=True)
-
-            return [(response, {"metadata": {
-                "request_id": "",
-                "input_tokens_count": -1,
-                "generated_tokens_count": generated_tokens_count,
-                "time_cost": time_taken,
-                "first_token_time": -1.0,
-                "speed": float(generated_tokens_count) / time_taken * 1000,
-                "prob": -1.0
-            }})]
-
-        timeout_s = float(kwargs.get("timeout_s", 60 * 5))
-        skip_check_min_length = int(kwargs.get("stopping_sequences_skip_check_min_length", 0))
+        server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+        request_id = [None]
         
-        input_tokens = tokenizer(ins, return_token_type_ids=False)["input_ids"]
-        max_new_tokens = compute_max_new_tokens(input_tokens, min(max_length, model.n_ctx))
-        
-        other_params = {}
+        def writer():
+            try:
+                r = ""       
+                response = self.model.create_chat_completion_openai_v1(
+                                    messages=messages,                                    
+                                    stream=True, 
+                                    max_tokens=max_length,
+                                    temperature=temperature,
+                                    top_p=top_p                                                                        
+                                )                                    
+                request_id[0] = str(uuid.uuid4())                
 
-        if "early_stopping" in kwargs:
-            other_params["early_stopping"] = bool(kwargs["early_stopping"])
-
-        if "repetition_penalty" in kwargs:
-            other_params["repetition_penalty"] = float(kwargs["repetition_penalty"])
-
-        stream = kwargs.get("stream", False)        
-
-        current_time_milliseconds = int(time.time() * 1000)
-
-        request_id = kwargs["request_id"] if "request_id" in kwargs else os.urandom(16).hex()
+                for chunk in response:                                                              
+                    content = chunk.choices[0].delta.content or ""
+                    r += content        
+                    if hasattr(chunk,"usage"):
+                        input_tokens_count = chunk.usage.prompt_tokens
+                        generated_tokens_count = chunk.usage.completion_tokens
+                    else:
+                        input_tokens_count = 0
+                        generated_tokens_count = 0
+                    ray.get(server.add_item.remote(request_id[0], 
+                                                    StreamOutputs(outputs=[SingleOutput(text=r,metadata=SingleOutputMeta(
+                                                        input_tokens_count=input_tokens_count,
+                                                        generated_tokens_count=generated_tokens_count,
+                                                    ))])
+                                                    ))                                                   
+            except:
+                traceback.print_exc()            
+            ray.get(server.mark_done.remote(request_id[0]))
 
         if stream:
-            server = ray.get_actor("VLLM_STREAM_SERVER")
+            threading.Thread(target=writer,daemon=True).start()            
+                            
+            time_count= 10*100
+            while request_id[0] is None and time_count > 0:
+                time.sleep(0.01)
+                time_count -= 1
+            
+            if request_id[0] is None:
+                raise Exception("Failed to get request id")
+            
+            def write_running():
+                return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
+                        
+            await asyncio.to_thread(write_running)
+            return [("",{"metadata":{"request_id":request_id[0],"stream_server":"BLOCK_VLLM_STREAM_SERVER"}})]
+        else:
+            try:
+                start_time = time.monotonic()
+                response = self.model.create_chat_completion_openai_v1(
+                                    messages=messages,                                    
+                                    max_tokens=max_length,
+                                    temperature=temperature,
+                                    top_p=top_p                            
+                                )
 
-            async def writer():
-                results_generator = model(
-                    ins,
-                    max_new_tokens=max_new_tokens,
-                    top_p=top_p,
-                    temperature=temperature,
-                    stop=kwargs["stop"] if "stop" in kwargs else [],
-                    stream=True,
-                    **other_params
-                )
-
-                first_token_time = current_time_milliseconds
-                input_tokens_count = len(input_tokens)
-                generated_tokens_count = 0
-
-                async for text in results_generator:
-                    generated_tokens_count += 1
-                    if first_token_time == current_time_milliseconds:
-                        first_token_time = int(time.time() * 1000)
-
-                    v = StreamOutputs(outputs=[
-                        SingleOutput(
-                            text=text,
-                            metadata=SingleOutputMeta(
-                                input_tokens_count=input_tokens_count,
-                                generated_tokens_count=generated_tokens_count,
-                            )
-                        )
-                    ])
-                    await server.add_item.remote(request_id, v)
-
-                time_cost = int(time.time() * 1000) - current_time_milliseconds
-                await server.add_item.remote(request_id, StreamOutputs(outputs=[
-                    SingleOutput(
-                        text="",
-                        metadata=SingleOutputMeta(
-                            input_tokens_count=input_tokens_count,
-                            generated_tokens_count=generated_tokens_count,
-                            time_cost=time_cost,
-                            first_token_time=first_token_time - current_time_milliseconds,
-                            speed=float(generated_tokens_count) / time_cost * 1000,
-                            prob=-1.0,
-                        )
-                    )
-                ]))
-                await server.mark_done.remote(request_id)
-
-            asyncio.create_task(writer())
-            await server.add_item.remote(request_id, "RUNNING")
-            return [("", {"metadata": {"request_id": request_id, "stream_server": "VLLM_STREAM_SERVER"}})]
-
-        start_time = time.monotonic()
-        result = model(
-            ins,
-            max_new_tokens=max_new_tokens,
-            top_p=top_p,
-            temperature=temperature,
-            stop=kwargs["stop"] if "stop" in kwargs else [],
-            **other_params
-        )
-        time_taken = time.monotonic() - start_time
-        generated_text = result['choices'][0]['text']
-        generated_tokens_count = len(tokenizer(generated_text)["input_ids"])
-
-        return [(generated_text, {"metadata": {
-            "request_id": request_id,
-            "input_tokens_count": len(input_tokens),
-            "generated_tokens_count": generated_tokens_count,
-            "time_cost": time_taken,
-            "first_token_time": -1.0,
-            "speed": float(generated_tokens_count) / time_taken * 1000,
-            "prob": -1.0
-        }})]
-    
-    @staticmethod
-    def get_meta(self):
-        return [{
-            "model_deploy_type": "proprietary",
-            "backend": "llama.cpp",
-            "max_model_len": self.n_ctx,
-            "architectures": ["LlamaCpp"],
-            "message_format": True
-        }]
+                generated_text = response.choices[0].message.content
+                generated_tokens_count = response.usage.completion_tokens
+                input_tokens_count = response.usage.prompt_tokens
+                time_cost = time.monotonic() - start_time
+                return [(generated_text,{"metadata":{
+                            "request_id":response.id,
+                            "input_tokens_count":input_tokens_count,
+                            "generated_tokens_count":generated_tokens_count,
+                            "time_cost":time_cost,
+                            "first_token_time":0,
+                            "speed":float(generated_tokens_count)/time_cost,        
+                        }})]
+            except Exception as e:
+                print(f"Error: {e}")
+                raise e

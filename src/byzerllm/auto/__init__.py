@@ -19,6 +19,12 @@ from byzerllm.utils.tokenizer import get_real_tokenizer,get_local_tokenizer,vali
 from byzerllm.utils.ray_utils import get_actor_info
 
 try:
+    from byzerllm.auto.backend_llama_cpp import LlamaCppBackend
+except ImportError:
+    print("python_llama_cpp is not installed, if you want to use llama_cpp backend,please install it by `pip install python_llama_cpp`",flush=True)
+    pass
+
+try:
     from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs,_AsyncLLMEngine    
     from vllm import  SamplingParams
     from vllm.utils import random_uuid    
@@ -299,7 +305,8 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     quatization = infer_params.get("quatization","false") == "true"  
 
     if infer_mode == "ray/llama_cpp":       
-        pass
+        model = LlamaCppBackend(model_path=model_dir)
+        return (model,None)
 
     if infer_mode == "ray/vllm":        
         num_gpus = int(sys_conf.get("num_gpus",1))

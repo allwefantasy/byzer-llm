@@ -201,11 +201,13 @@ def main():
         llm.setup_gpus_per_worker(args.gpus_per_worker).setup_cpus_per_worker(args.cpus_per_worker).setup_num_workers(args.num_workers)
         if not args.pretrained_model_type.startswith("saas"):
             if args.infer_backend == "vllm":
-                llm.setup_infer_backend(InferBackend.vllm)
+                llm.setup_infer_backend(InferBackend.VLLM)
+            elif args.infer_backend == "llama_cpp": 
+                llm.setup_infer_backend(InferBackend.LLAMA_CPP)
             elif args.infer_backend == "transformers":
-                llm.setup_infer_backend(InferBackend.transformers)
+                llm.setup_infer_backend(InferBackend.Transformers)
             elif args.infer_backend == "deepspeed":    
-                llm.setup_infer_backend(InferBackend.deepspeed)
+                llm.setup_infer_backend(InferBackend.DeepSpeed)
             else:
                 raise ValueError("Invalid infer_backend")
         
