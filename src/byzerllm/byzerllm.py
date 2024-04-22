@@ -214,7 +214,7 @@ def main():
         llm.deploy(model_path=args.model_path,
                 pretrained_model_type=args.pretrained_model_type,
                 udf_name=args.model,
-                infer_params=args.infer_params)
+                infer_params=args.infer_params or {})
 
         print(locales["deploy_success"][lang].format(args.model))
 

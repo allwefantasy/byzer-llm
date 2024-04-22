@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2024/04] Release Byzer-LLM 0.1.68
+- [2024/04] Release Byzer-LLM 0.1.69
 - [2024/03] Release Byzer-LLM 0.1.55
 - [2024/02] Release Byzer-LLM 0.1.40
 - [2024/01] Release Byzer-LLM 0.1.39
@@ -50,6 +50,7 @@ The unique features of Byzer-LLM are:
         * [vLLM Support](#vLLM-Support)
             * [vLLM troubleshooting](#vLLM-troubleshooting)
         * [DeepSpeed Support](#DeepSpeed-Support)
+        * [llama_cpp Support](#llama_cpp-Support)
     * [Byzer-LLM OpenAI-Compatible RESTful API server](#byzer-llm-openai-compatible-restful-api-server)
 * LLM && Python    
     * [Function Calling](#Function-Calling)
@@ -90,6 +91,7 @@ The unique features of Byzer-LLM are:
 ---
 
 ## Versions
+- 0.1.69:  
 - 0.1.53:  Optimize saas/official_openai model
 - 0.1.52:  Add Yi-VL-Plus Saas model support
 - 0.1.50:  Add byzerllm command line tool
@@ -649,6 +651,20 @@ llm.chat("llama_chat",LLMRequest(instruction="hello world"))[0].output
 ```
 
 The code above is totally the same as the code for vLLM, except that the `InferBackend` is `InferBackend.DeepSpeed`.
+
+## llama_cpp Support
+
+```bash
+byzerllm deploy --pretrained_model_type custom/auto \
+--infer_backend llama_cpp \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 1 \
+--infer_params verbose=true \
+--model_path /Users/allwefantasy/Downloads/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf \
+--model llama_3_chat
+```
+
 
 ## Byzer-LLM OpenAI-Compatible RESTful API server
 
