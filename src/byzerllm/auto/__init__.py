@@ -304,7 +304,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     infer_mode = sys_conf.get("infer_backend","transformers")
     quatization = infer_params.get("quatization","false") == "true"  
 
-    if infer_mode == "ray/llama_cpp":       
+    if infer_mode == "llama_cpp":       
         model = LlamaCppBackend(model_path=model_dir)
         return (model,None)
 

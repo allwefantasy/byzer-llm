@@ -65,7 +65,7 @@ class  FintuneRequest:
 class InferBackend:
     Transformers = "transformers"
     VLLM = "ray/vllm"
-    LLAMA_CPP = "ray/llama_cpp"
+    LLAMA_CPP = "llama_cpp"
     DeepSpeed = "ray/deepspeed"
 
 @dataclasses.dataclass
