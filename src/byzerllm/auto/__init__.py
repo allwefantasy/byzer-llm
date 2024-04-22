@@ -305,7 +305,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
     quatization = infer_params.get("quatization","false") == "true"  
 
     if infer_mode == "llama_cpp":       
-        model = LlamaCppBackend(model_path=model_dir)
+        model = LlamaCppBackend(model_path=model_dir,infer_params=infer_params,sys_conf=sys_conf)
         return (model,None)
 
     if infer_mode == "ray/vllm":        
