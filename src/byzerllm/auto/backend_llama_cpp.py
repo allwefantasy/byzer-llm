@@ -10,6 +10,7 @@ import json
 import inspect
 
 from llama_cpp import Llama
+import llama_cpp
 from byzerllm.utils import ( 
     BlockVLLMStreamServer,   
     StreamOutputs,
@@ -25,31 +26,54 @@ def get_bool(params:Dict[str,str],key:str,default:bool=False)->bool:
             return params[key] == "true" or params[key] == "True"
     return default
 
-def convert_string_to_type(value: str, target_type):
-    # Handling Boolean separately because bool("False") is True
-    if target_type == bool:
-        return value.lower() in ['true', '1', 't', 'y', 'yes']
-    return target_type(value)
 
-def get_init_params_and_convert(cls, **string_values):
-    signature = inspect.signature(cls.__init__)
-    parameters = signature.parameters
-    converted_values = {}
-    for name, param in parameters.items():
-        if name == 'self':
-            continue
-        param_type = param.annotation
-
-        if name not in string_values:
-            continue        
-        param_value = string_values[name]
-        converted_values[name] = convert_string_to_type(param_value, param_type)
-    return converted_values
+def convert_params(params: Dict[str, str]) -> Dict[str, Any]:
+    converted_params = {
+        "model_path": params.get("model_path", ""),
+        "n_gpu_layers": int(params.get("n_gpu_layers", 0)),
+        "split_mode": int(params.get("split_mode", llama_cpp.LLAMA_SPLIT_MODE_LAYER)),
+        "main_gpu": int(params.get("main_gpu", 0)),
+        "tensor_split": eval(params.get("tensor_split", "None")),
+        "vocab_only": eval(params.get("vocab_only", "False")),
+        "use_mmap": eval(params.get("use_mmap", "True")),
+        "use_mlock": eval(params.get("use_mlock", "False")),
+        "kv_overrides": eval(params.get("kv_overrides", "None")),
+        "seed": int(params.get("seed", llama_cpp.LLAMA_DEFAULT_SEED)),
+        "n_ctx": int(params.get("n_ctx", 512)),
+        "n_batch": int(params.get("n_batch", 512)),
+        "n_threads": eval(params.get("n_threads", "None")),
+        "n_threads_batch": eval(params.get("n_threads_batch", "None")),
+        "rope_scaling_type": eval(params.get("rope_scaling_type", "llama_cpp.LLAMA_ROPE_SCALING_TYPE_UNSPECIFIED")),
+        "pooling_type": int(params.get("pooling_type", llama_cpp.LLAMA_POOLING_TYPE_UNSPECIFIED)),
+        "rope_freq_base": float(params.get("rope_freq_base", 0.0)),
+        "rope_freq_scale": float(params.get("rope_freq_scale", 0.0)),
+        "yarn_ext_factor": float(params.get("yarn_ext_factor", -1.0)),
+        "yarn_attn_factor": float(params.get("yarn_attn_factor", 1.0)),
+        "yarn_beta_fast": float(params.get("yarn_beta_fast", 32.0)),
+        "yarn_beta_slow": float(params.get("yarn_beta_slow", 1.0)),
+        "yarn_orig_ctx": int(params.get("yarn_orig_ctx", 0)),
+        "logits_all": eval(params.get("logits_all", "False")),
+        "embedding": eval(params.get("embedding", "False")),
+        "offload_kqv": eval(params.get("offload_kqv", "True")),
+        "last_n_tokens_size": int(params.get("last_n_tokens_size", 64)),
+        "lora_base": params.get("lora_base", None),
+        "lora_scale": float(params.get("lora_scale", 1.0)),
+        "lora_path": params.get("lora_path", None),
+        "numa": eval(params.get("numa", "False")),
+        "chat_format": params.get("chat_format", None),
+        "chat_handler": eval(params.get("chat_handler", "None")),
+        "draft_model": eval(params.get("draft_model", "None")),
+        "tokenizer": eval(params.get("tokenizer", "None")),
+        "type_k": eval(params.get("type_k", "None")),
+        "type_v": eval(params.get("type_v", "None")),
+        "verbose": eval(params.get("verbose", "True"))
+    }
+    return converted_params
 
 class LlamaCppBackend:
 
     def __init__(self,model_path, infer_params: Dict[str, str] = {}, sys_conf: Dict[str, str] = {}):
-        targets = get_init_params_and_convert(Llama, **infer_params)
+        targets = convert_params(infer_params)
         self.model = Llama(model_path=model_path,**targets)        
         self.meta = {
             "model_deploy_type": "saas",
