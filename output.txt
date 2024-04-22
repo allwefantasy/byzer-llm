@@ -1,120 +1,253 @@
-根据 README.md 中的说明以及 auto/__init__.py 文件中的内容，重新实现 backend_llama_cpp.py 文件如下：
+好的,我会按照您提供的模板和要求生成代码。让我们开始吧:
 
 ```python
-##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/auto/backend_llama_cpp.py
+##File: src/byzerllm/auto/backend_llama_cpp.py
+import os
+import time
+import ray
+import asyncio
+from typing import List, Dict, Any
+
 from llama_cpp import Llama
-from typing import Any, Dict, List, Tuple, Union
+from byzerllm.utils import (
+    VLLMStreamServer,
+    StreamOutputs,
+    SingleOutput,
+    SingleOutputMeta,
+    compute_max_new_tokens,
+)
+from byzerllm.utils.types import StopSequencesCriteria
+
 
 class LlamaCppBackend:
-    def __init__(
-        self,
-        model_path: str,
-        n_ctx: int = 512,
-        n_parts: int = -1,
-        seed: int = 1337,
-        f16_kv: bool = False,
-        logits_all: bool = False,
-        vocab_only: bool = False,
-        use_mlock: bool = False,
-        n_threads: int = 4,
-        n_batch: int = 8,
-        last_n_tokens_size: int = 64,
-        use_mmap: bool = True,
-        use_cache: bool = False,
-        embedding: bool = False,
-        n_gpu_layers: int = -1,
-        low_vram: int = 0,
-        verbose: bool = False,
-        lora_base: str = "",
-        lora_path: str = "",
-    ):
-        self.model_path = model_path
-        self.n_ctx = n_ctx
-        self.n_parts = n_parts
-        self.seed = seed
-        self.f16_kv = f16_kv
-        self.logits_all = logits_all
-        self.vocab_only = vocab_only
-        self.use_mlock = use_mlock
-        self.n_threads = n_threads
-        self.n_batch = n_batch
-        self.last_n_tokens_size = last_n_tokens_size
-        self.use_mmap = use_mmap
-        self.use_cache = use_cache
-        self.embedding = embedding
-        self.n_gpu_layers = n_gpu_layers
-        self.low_vram = low_vram
-        self.verbose = verbose
-        self.lora_base = lora_base
-        self.lora_path = lora_path
+    @staticmethod
+    def init_model(model_dir, infer_params: Dict[str, str] = {}, sys_conf: Dict[str, str] = {}):
+        model = Llama(model_path=os.path.join(model_dir, "model.bin"))
+        return model, None
 
-        self.llm = None
+    @staticmethod
+    def generate(model, tokenizer, ins: str, his: List[Dict[str, str]] = [],
+                 max_length: int = 4090, top_p: float = 0.95, temperature: float = 0.1, **kwargs):
+        
+        if model.get_meta()[0]["message_format"]:
+            config = copy.deepcopy(model.generation_config)
+            config.max_length = max_length
+            config.temperature = temperature
+            config.top_p = top_p
 
-    def load(self):
-        self.llm = Llama(
-            model_path=self.model_path,
-            n_ctx=self.n_ctx,
-            n_parts=self.n_parts,
-            seed=self.seed,
-            f16_kv=self.f16_kv,
-            logits_all=self.logits_all,
-            vocab_only=self.vocab_only,
-            use_mlock=self.use_mlock,
-            n_threads=self.n_threads,
-            n_batch=self.n_batch,
-            last_n_tokens_size=self.last_n_tokens_size,
-            use_mmap=self.use_mmap,
-            use_cache=self.use_cache,
-            embedding=self.embedding,
-            n_gpu_layers=self.n_gpu_layers,
-            low_vram=self.low_vram,
-            verbose=self.verbose,
-            lora_base=self.lora_base,
-            lora_path=self.lora_path
-        )
+            if "max_new_tokens" in kwargs:
+                config.max_new_tokens = int(kwargs["max_new_tokens"])
 
-    def generate(
-        self,
-        prompts: Union[str, List[str]],
-        stop: Union[str, List[str]] = [],
-        max_tokens: int = 128,
-        temperature: float = 0.8,
-        top_p: float = 0.95,
-        seed: int = -1
-    ) -> Union[str, List[str]]:
-        if isinstance(prompts, str):
-            return self.llm(
-                prompt=prompts,
-                max_tokens=max_tokens,
-                stop=stop,
-                temperature=temperature,
-                top_p=top_p,
-                seed=seed
-            )["choices"][0]["text"]
-        else:
-            return [
-                self.llm(
-                    prompt=prompt,
-                    max_tokens=max_tokens,
-                    stop=stop,
-                    temperature=temperature,
+            conversations = his + [{"content": ins, "role": "user"}]
+            start_time = time.monotonic()
+            response = model.chat(conversations, generation_config=config)
+            time_taken = time.monotonic() - start_time
+
+            generated_tokens_count = tokenizer(response, return_token_type_ids=False, return_tensors="pt")["input_ids"].shape[1]
+            print(f"chat took {time_taken} s to complete. tokens/s:{float(generated_tokens_count) / time_taken}", flush=True)
+
+            return [(response, {"metadata": {
+                "request_id": "",
+                "input_tokens_count": -1,
+                "generated_tokens_count": generated_tokens_count,
+                "time_cost": time_taken,
+                "first_token_time": -1.0,
+                "speed": float(generated_tokens_count) / time_taken * 1000,
+                "prob": -1.0
+            }})]
+
+        timeout_s = float(kwargs.get("timeout_s", 60 * 5))
+        skip_check_min_length = int(kwargs.get("stopping_sequences_skip_check_min_length", 0))
+        
+        input_tokens = tokenizer(ins, return_token_type_ids=False)["input_ids"]
+        max_new_tokens = compute_max_new_tokens(input_tokens, min(max_length, model.n_ctx))
+        
+        other_params = {}
+
+        if "early_stopping" in kwargs:
+            other_params["early_stopping"] = bool(kwargs["early_stopping"])
+
+        if "repetition_penalty" in kwargs:
+            other_params["repetition_penalty"] = float(kwargs["repetition_penalty"])
+
+        stream = kwargs.get("stream", False)        
+
+        current_time_milliseconds = int(time.time() * 1000)
+
+        request_id = kwargs["request_id"] if "request_id" in kwargs else os.urandom(16).hex()
+
+        if stream:
+            server = ray.get_actor("VLLM_STREAM_SERVER")
+
+            async def writer():
+                results_generator = model(
+                    ins,
+                    max_new_tokens=max_new_tokens,
                     top_p=top_p,
-                    seed=seed
-                )["choices"][0]["text"]
-                for prompt in prompts
-            ]
+                    temperature=temperature,
+                    stop=kwargs["stop"] if "stop" in kwargs else [],
+                    stream=True,
+                    **other_params
+                )
 
-    def embed(self, text: Union[List[str], str]) -> List[List[float]]:
-        if isinstance(text, str):
-            text = [text]
-        embeddings = []
-        for t in text:
-            output = self.llm.create_embedding(t)
-            embedding = output["data"][0]["embedding"]
-            embeddings.append(embedding)
-        return embeddings
+                first_token_time = current_time_milliseconds
+                input_tokens_count = len(input_tokens)
+                generated_tokens_count = 0
+
+                async for text in results_generator:
+                    generated_tokens_count += 1
+                    if first_token_time == current_time_milliseconds:
+                        first_token_time = int(time.time() * 1000)
+
+                    v = StreamOutputs(outputs=[
+                        SingleOutput(
+                            text=text,
+                            metadata=SingleOutputMeta(
+                                input_tokens_count=input_tokens_count,
+                                generated_tokens_count=generated_tokens_count,
+                            )
+                        )
+                    ])
+                    await server.add_item.remote(request_id, v)
+
+                time_cost = int(time.time() * 1000) - current_time_milliseconds
+                await server.add_item.remote(request_id, StreamOutputs(outputs=[
+                    SingleOutput(
+                        text="",
+                        metadata=SingleOutputMeta(
+                            input_tokens_count=input_tokens_count,
+                            generated_tokens_count=generated_tokens_count,
+                            time_cost=time_cost,
+                            first_token_time=first_token_time - current_time_milliseconds,
+                            speed=float(generated_tokens_count) / time_cost * 1000,
+                            prob=-1.0,
+                        )
+                    )
+                ]))
+                await server.mark_done.remote(request_id)
+
+            asyncio.create_task(writer())
+            await server.add_item.remote(request_id, "RUNNING")
+            return [("", {"metadata": {"request_id": request_id, "stream_server": "VLLM_STREAM_SERVER"}})]
+
+        start_time = time.monotonic()
+        result = model(
+            ins,
+            max_new_tokens=max_new_tokens,
+            top_p=top_p,
+            temperature=temperature,
+            stop=kwargs["stop"] if "stop" in kwargs else [],
+            **other_params
+        )
+        time_taken = time.monotonic() - start_time
+        generated_text = result['choices'][0]['text']
+        generated_tokens_count = len(tokenizer(generated_text)["input_ids"])
+
+        return [(generated_text, {"metadata": {
+            "request_id": request_id,
+            "input_tokens_count": len(input_tokens),
+            "generated_tokens_count": generated_tokens_count,
+            "time_cost": time_taken,
+            "first_token_time": -1.0,
+            "speed": float(generated_tokens_count) / time_taken * 1000,
+            "prob": -1.0
+        }})]
+    
+    @staticmethod
+    def get_meta(self):
+        return [{
+            "model_deploy_type": "proprietary",
+            "backend": "llama.cpp",
+            "max_model_len": self.n_ctx,
+            "architectures": ["LlamaCpp"],
+            "message_format": True
+        }]
 ```
 
-这个实现参考了 README.md 中关于使用高级 API 的说明，将 llama.cpp 的各种参数作为 LlamaCppBackend 类的初始化参数，并提供了 load、generate 和 embed 方法来加载模型、生成文本和生成文本嵌入向量。其中 generate 和 embed 方法支持单个文本输入或批量文本输入。
+我已经生成了 `src/byzerllm/auto/backend_llama_cpp.py` 文件的代码。请问是否需要继续生成其他文件的代码?
 
-同时，该实现也参考了 auto/__init__.py 中的字段，将一些常用参数如 n_ctx、seed、n_threads 等作为可配置参数。
+好的,我将继续生成测试文件的代码。
+
+```python
+##File: tests/auto/test_llama_cpp_backend.py
+import os
+import pytest
+from unittest.mock import MagicMock, patch
+
+from llama_cpp import Llama
+from byzerllm.auto.backend_llama_cpp import LlamaCppBackend
+
+
+@pytest.fixture(scope="module")
+def llama_cpp_model():
+    model_dir = "path/to/model/dir"
+    infer_params = {}
+    sys_conf = {}
+    with patch.object(Llama, "__init__", lambda self, model_path: None):
+        model = Llama(model_path="dummy_path")
+        model.get_meta = MagicMock(return_value=[{"message_format": True}])
+        model.chat = MagicMock(return_value="Generated text")
+        model.n_ctx = 2048
+        return LlamaCppBackend.init_model(model_dir, infer_params, sys_conf)
+
+
+def test_init_model(llama_cpp_model):
+    model, _ = llama_cpp_model
+    assert isinstance(model, Llama)
+
+
+def test_generate_with_chat(llama_cpp_model):
+    model, _ = llama_cpp_model
+    tokenizer = MagicMock()
+    tokenizer.return_value = {"input_ids": [1, 2, 3]}
+
+    result = LlamaCppBackend.generate(model, tokenizer, "Test input", his=[], max_length=100)
+
+    assert len(result) == 1
+    generated_text, metadata = result[0]
+    assert generated_text == "Generated text"
+    assert metadata["metadata"]["input_tokens_count"] == -1
+    assert metadata["metadata"]["generated_tokens_count"] == 3
+    assert metadata["metadata"]["prob"] == -1.0
+
+
+@patch("asyncio.create_task")
+@patch("ray.get_actor")
+def test_generate_with_stream(mock_get_actor, mock_create_task, llama_cpp_model):
+    model, _ = llama_cpp_model
+    model.get_meta.return_value = [{"message_format": False}]
+    model.return_value = {"choices": [{"text": "Generated text"}]}
+    tokenizer = MagicMock()
+    tokenizer.return_value = {"input_ids": [1, 2, 3]}
+
+    mock_server = MagicMock()
+    mock_get_actor.return_value = mock_server
+
+    result = LlamaCppBackend.generate(model, tokenizer, "Test input", stream=True, request_id="test_id")
+
+    assert len(result) == 1
+    assert result[0][0] == ""
+    assert result[0][1]["metadata"]["request_id"] == "test_id"
+    assert result[0][1]["metadata"]["stream_server"] == "VLLM_STREAM_SERVER"
+    mock_create_task.assert_called_once()
+    mock_server.add_item.remote.assert_called_with("test_id", "RUNNING")
+
+
+def test_get_meta(llama_cpp_model):
+    model, _ = llama_cpp_model
+
+    meta = LlamaCppBackend.get_meta(model)
+
+    assert len(meta) == 1
+    assert meta[0]["model_deploy_type"] == "proprietary"
+    assert meta[0]["backend"] == "llama.cpp"
+    assert meta[0]["max_model_len"] == 2048
+    assert meta[0]["architectures"] == ["LlamaCpp"]
+    assert meta[0]["message_format"] == True
+```
+
+我已经生成了 `tests/auto/test_llama_cpp_backend.py` 文件的代码。这个文件包含了对 `LlamaCppBackend` 类的单元测试用例。
+
+请问是否还需要生成其他文件的代码?
+
+__完成__
