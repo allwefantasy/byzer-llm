@@ -77,7 +77,7 @@ class LlamaCppBackend:
         self.model = Llama(model_path=model_path,**targets)        
         self.meta = {
             "model_deploy_type": "saas",
-            "backend":"ray/llama_cpp",
+            "backend":"llama_cpp",
             "support_stream": True,            
         }
 
