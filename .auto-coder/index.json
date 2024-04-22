@@ -861,8 +861,8 @@
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/version.py": {
     "symbols": "变量：__version__",
-    "last_modified": 1713427986.6795342,
-    "md5": "27e1313ba621796ffa6c4a52ab30967c"
+    "last_modified": 1713445968.853678,
+    "md5": "e9347e22dc88de01767912e151a59191"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm.py": {
     "symbols": "导入语句：import argparse,import os,import ray,import shlex,import jinja2,import yaml,from byzerllm.utils.client import ByzerLLM, InferBackend,from byzerllm.apps.command import StorageSubCommand\n类：StoreNestedDict,main\n函数：main\n变量：locales,lang\n函数：main, auto_implement_function_template  \n变量：args, key, value, config, template, f, os, jinja2, yaml, arg, parser, value, llm, locales, lang, ray, ByzerLLM, InferBackend, model_path, pretrained_model_type, udf_name, infer_params, llm_client, template, resp, StorageSubCommand  \n类：  \n导入语句：import os, import jinja2, import yaml, import ray, from byzerllm import ByzerLLM, from byzerllm.byzerllm import StorageSubCommand",
@@ -955,9 +955,9 @@
     "md5": "734a379b71d16e9ef9eef761eba39d44"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/auto/__init__.py": {
-    "symbols": "```python\n函数：async_vllm_chat,get_bool,get_int,get_float,get_str,async_get_meta\n变量：a,temperature,top_p,max_length,kwargs,tokenizer,ins,his,presence_penalty,frequency_penalty,top_k,use_beam_search,stop,ignore_eos,max_tokens,logprobs,other_params,model,n,best_of,sampling_params\n类：无\n导入语句：import os,time,from loguru import logger,import byzerllm\n```\n```python\n函数：init_model, auto_implement_function_template, stream_chat, async_vllm_chat, async_get_meta, sft_train\n变量：a\n类：AsyncLLMEngine, DeepSpeedInference, ParallelConfig\n导入语句：import os, time, loguru, from transformers import AutoTokenizer, AutoModelForCausalLM, GenerationConfig, BitsAndBytesConfig, torch, ray\n```\n函数：common_sft_train\n变量：data_refs, train_params, conf\n类：\n导入语句：from ..utils.sft import sft_train as common_sft_train",
-    "last_modified": 1711891197.79783,
-    "md5": "35c3d799e6281cc555d03e491fce6e0c"
+    "symbols": "函数：get_bool, get_int, get_float, get_str, stream_chat\n变量：INFERENCE_NAME, INFER_TOKEN_METRICS\n类：\n导入语句：import ray,import os,import time,import types,import copy,import asyncio,from typing import Any,Any,Dict, List,Tuple,Generator,Optional,Union,from pyjava.api.mlsql import DataServer,from byzerllm.utils.metrics import Metric,from byzerllm import BlockRow,from byzerllm.utils import (VLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,compute_max_new_tokens,tokenize_stopping_sequences,),from byzerllm.utils.tokenizer import get_real_tokenizer,get_local_tokenizer,validate_args_engine_use_ray,from byzerllm.utils.ray_utils import get_actor_info,from vllm.engine.async_llm_engine import AsyncLLMEngine,AsyncEngineArgs,_AsyncLLMEngine,from vllm import  SamplingParams,from vllm.utils import random_uuid,import torch,from transformers import AutoTokenizer, AutoModelForCausalLM,BitsAndBytesConfig,StoppingCriteriaList,GenerationConfig,from byzerllm.utils.types import StopSequencesCriteria,from ray.util.client.common import ClientActorHandle\n函数：async_get_meta, async_vllm_chat\n变量：\n类：\n导入语句：import time,from typing import List, Tuple, Optional, Union,import ray,from byzerllm.utils import get_bool, get_int, random_uuid, get_real_tokenizer,from byzerllm.engine.async_llm import AsyncLLMEngine, SamplingParams, StreamOutputs, SingleOutput, SingleOutputMeta,from byzerllm.engine._async_llm import _AsyncLLMEngine,from byzerllm.utils.actor_utils import get_actor_info\n函数：init_model,async_vllm_chat,async_get_meta\n变量：generated_tokens_count,time_cost,first_token_time,prob,infer_mode,quatization,num_gpus,INFERENCE_NAME,worker_use_ray,engine_use_ray,tensor_parallel_size,gpu_memory_utilization,disable_log_stats,ohter_params,llm,tokenizer,model\n类：\n导入语句：import os,import time,from loguru import logger,import byzerllm,from .backend_ds import DeepSpeedInference,ParallelConfig,from transformers import AutoTokenizer,AutoModelForCausalLM,BitsAndBytesConfig,import ray,from byzerllm.backend.vllm import AsyncEngineArgs,AsyncLLMEngine,VLLMStreamServer,get_local_tokenizer,async_vllm_chat,async_get_meta,get_bool,validate_args_engine_use_ray\n函数：from_pretrained,get_meta,stream_chat,sft_train\n变量：model,tokenizer,use_cache,message_format,extra_meta\n类：AutoModelForCausalLM,PeftModel,GenerationConfig\n导入语句：import torch,from peft import PeftModel,from ..utils.sft import sft_train as common_sft_train",
+    "last_modified": 1713766854.5836902,
+    "md5": "0ccc1f874e867507645e04c75bebbc34"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/auto/backend_ds.py": {
     "symbols": "```python\n函数：_init_distributed_environment,execute_model,init_model,stream_chat,_run_workers\n变量：a,parallel_config,rank,distributed_init_method,gpu_ids\n类：ParallelConfig,Worker,DeepSpeedInference\n导入语句：import os,time,from loguru import logger,import byzerllm,ActorHandle,get_address_and_port,BitsAndBytesConfig,torch,deepspeed,ray,os,from typing import List, Optional, Tuple,Any\n```",
@@ -1753,5 +1753,10 @@
     "symbols": "导入语句：import os,from os.path import expanduser,import urllib.request,import tarfile,from loguru import logger,import os,import re,from packaging import version,import json\n函数：get_latest_byzer_retrieval_lib,install,start,stop,export\n变量：pattern,entries,versions,entry,match,ver,download_url,libs_dir,base_dir,download_path,url,filename,percent,data_dir,code_search_path,env_vars,retrieval,cluster_json,builder,f\n函数：restore  \n变量：libs_dir, cluster_json, code_search_path, retrieval, version, cluster, home, base_dir, data_dir, cluster_info  \n类：ByzerRetrieval  \n导入语句：import byzerllm, from byzerllm.utils.retrieval import ByzerRetrieval, import os, import json, from os.path import expanduser, from loguru import logger",
     "last_modified": 1713427748.957224,
     "md5": "aacdec65fda0f3b4f4d107d868852ddf"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/auto/backend_llama_cpp.py": {
+    "symbols": "函数：\n类：LlamaCppBackend\n变量：\n导入语句：from llama_cpp import Llama",
+    "last_modified": 1713766850.4521015,
+    "md5": "b5e8dc27404835a9fce2da2302479daa"
   }
 }

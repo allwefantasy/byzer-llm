@@ -1,8 +1,9 @@
 source_dir: /Users/allwefantasy/projects/byzer-llm
 target_file: /Users/allwefantasy/projects/byzer-llm/output.txt
+urls: https://raw.githubusercontent.com/abetlen/llama-cpp-python/main/README.md
 
 model: gpt3_5_chat
-index_model: gpt3_5_chat
+index_model: haiku_chat
 
 skip_build_index: false
 index_filter_level: 0
@@ -12,5 +13,5 @@ auto_merge: true
 human_as_model: true
 
 query: >
-  实现一个 LLWrapper, 该类是对 byzerllm_client.py 中的 ByzerLLM 的封装，重写 chat_oai, stream_chat_oai 两个方法，
-  其他方法自动调用 ByzerLLM 的对应方法。
+  参考 README.md 以及 auto/__init__.py 文件， 重新实现 backend_llama_cpp.py 。  
+
