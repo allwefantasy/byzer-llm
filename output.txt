@@ -1,253 +1,292 @@
-好的,我会按照您提供的模板和要求生成代码。让我们开始吧:
+
+好的,我明白你的需求了。我会按照指定格式,一次生成一个完整的代码文件,直到所有相关文件都修改完毕。下面我开始生成第一个文件的代码:
 
 ```python
-##File: src/byzerllm/auto/backend_llama_cpp.py
+##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm.py
+import argparse
 import os
-import time
 import ray
-import asyncio
-from typing import List, Dict, Any
+import shlex
+import jinja2
+import yaml
+from byzerllm.utils.client import ByzerLLM, InferBackend
+from byzerllm.apps.command import StorageSubCommand
+from byzerllm.utils.client.entrypoints.openai.serve import serve, ServerArgs
 
-from llama_cpp import Llama
-from byzerllm.utils import (
-    VLLMStreamServer,
-    StreamOutputs,
-    SingleOutput,
-    SingleOutputMeta,
-    compute_max_new_tokens,
-)
-from byzerllm.utils.types import StopSequencesCriteria
+# 命令和参数的中英文映射字典
+locales = {
+    "desc": {
+        "en": "Byzer-LLM command line tool",
+        "zh": "Byzer-LLM 命令行工具"
+    },
+    "help_deploy": {
+        "en": "Deploy a model",
+        "zh": "部署一个模型"
+    },
+    "help_ray_address": {
+        "en": "Ray cluster address",
+        "zh": "Ray 集群地址"
+    },
+    "help_num_workers": {
+        "en": "Number of model workers",
+        "zh": "模型工作节点数"
+    },
+    "help_gpus_per_worker": {
+        "en": "Number of GPUs per worker",
+        "zh": "每个工作节点的 GPU 数"
+    },
+     "help_cpus_per_worker": {
+        "en": "Number of CPUs per worker",
+        "zh": "每个工作节点的 CPU 数"
+    },
+    "help_model_path": {
+        "en": "Local model directory path",
+        "zh": "本地模型目录路径"
+    },
+    "help_pretrained_model_type": {
+        "en": "Pretrained model type",
+        "zh": "预训练模型类型"
+    },
+    "help_udf_name": {
+        "en": "Deployed model name",
+        "zh": "部署后的模型名称"
+    },
+    "help_infer_params": {
+        "en": "Model inference parameters",
+        "zh": "模型推理参数"
+    },
+    "help_infer_backend": {
+        "en": "Model inferrence Backend",
+        "zh": "模型推理后端"
+    },
+    "help_query": {
+        "en": "Query a deployed model",
+        "zh": "查询一个已部署的模型"
+    },
+    "help_query_model": {
+        "en": "Deployed model UDF name",
+        "zh": "已部署的模型 UDF 名称"
+    },
+    "help_query_text": {
+        "en": "User query/prompt",
+        "zh": "用户查询/提示"
+    },
+    "help_template": {
+        "en": "Chat template",
+        "zh": "对话模板"
+    },
+    "deploy_success": {
+        "en": "Model {0} deployed successfully",
+        "zh": "模型 {0} 部署成功"
+    },
+    "undeploy_success": {
+        "en": "Model {0} undeployed successfully",
+        "zh": "模型 {0} 卸载成功"
+    },
+    "already_deployed": {
+        "en": "Model {0} already deployed",
+        "zh": "模型 {0} 已经部署过了"
+    }
+}
 
+# 获取系统语言环境
+lang = os.getenv("LANG", "en").split(".")[0]
+if lang.startswith("zh"):
+    lang = "zh"
+else:
+    lang = "en"
 
-class LlamaCppBackend:
-    @staticmethod
-    def init_model(model_dir, infer_params: Dict[str, str] = {}, sys_conf: Dict[str, str] = {}):
-        model = Llama(model_path=os.path.join(model_dir, "model.bin"))
-        return model, None
+class StoreNestedDict(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        d = {}
+        for kv in values:
+            try:
+                for clean_kv in shlex.split(kv):
+                    key, value =clean_kv.split("=", 1)
+                    d[key]=value
+            except ValueError:
+                raise argparse.ArgumentError(self, f"Invalid argument format: {kv}")
+        setattr(namespace, self.dest, d)  
 
-    @staticmethod
-    def generate(model, tokenizer, ins: str, his: List[Dict[str, str]] = [],
-                 max_length: int = 4090, top_p: float = 0.95, temperature: float = 0.1, **kwargs):
-        
-        if model.get_meta()[0]["message_format"]:
-            config = copy.deepcopy(model.generation_config)
-            config.max_length = max_length
-            config.temperature = temperature
-            config.top_p = top_p
+def main():
+    parser = argparse.ArgumentParser(description=locales["desc"][lang])
+    subparsers = parser.add_subparsers(dest='command')
 
-            if "max_new_tokens" in kwargs:
-                config.max_new_tokens = int(kwargs["max_new_tokens"])
-
-            conversations = his + [{"content": ins, "role": "user"}]
-            start_time = time.monotonic()
-            response = model.chat(conversations, generation_config=config)
-            time_taken = time.monotonic() - start_time
-
-            generated_tokens_count = tokenizer(response, return_token_type_ids=False, return_tensors="pt")["input_ids"].shape[1]
-            print(f"chat took {time_taken} s to complete. tokens/s:{float(generated_tokens_count) / time_taken}", flush=True)
-
-            return [(response, {"metadata": {
-                "request_id": "",
-                "input_tokens_count": -1,
-                "generated_tokens_count": generated_tokens_count,
-                "time_cost": time_taken,
-                "first_token_time": -1.0,
-                "speed": float(generated_tokens_count) / time_taken * 1000,
-                "prob": -1.0
-            }})]
-
-        timeout_s = float(kwargs.get("timeout_s", 60 * 5))
-        skip_check_min_length = int(kwargs.get("stopping_sequences_skip_check_min_length", 0))
-        
-        input_tokens = tokenizer(ins, return_token_type_ids=False)["input_ids"]
-        max_new_tokens = compute_max_new_tokens(input_tokens, min(max_length, model.n_ctx))
-        
-        other_params = {}
-
-        if "early_stopping" in kwargs:
-            other_params["early_stopping"] = bool(kwargs["early_stopping"])
-
-        if "repetition_penalty" in kwargs:
-            other_params["repetition_penalty"] = float(kwargs["repetition_penalty"])
-
-        stream = kwargs.get("stream", False)        
-
-        current_time_milliseconds = int(time.time() * 1000)
-
-        request_id = kwargs["request_id"] if "request_id" in kwargs else os.urandom(16).hex()
-
-        if stream:
-            server = ray.get_actor("VLLM_STREAM_SERVER")
-
-            async def writer():
-                results_generator = model(
-                    ins,
-                    max_new_tokens=max_new_tokens,
-                    top_p=top_p,
-                    temperature=temperature,
-                    stop=kwargs["stop"] if "stop" in kwargs else [],
-                    stream=True,
-                    **other_params
-                )
-
-                first_token_time = current_time_milliseconds
-                input_tokens_count = len(input_tokens)
-                generated_tokens_count = 0
-
-                async for text in results_generator:
-                    generated_tokens_count += 1
-                    if first_token_time == current_time_milliseconds:
-                        first_token_time = int(time.time() * 1000)
-
-                    v = StreamOutputs(outputs=[
-                        SingleOutput(
-                            text=text,
-                            metadata=SingleOutputMeta(
-                                input_tokens_count=input_tokens_count,
-                                generated_tokens_count=generated_tokens_count,
-                            )
-                        )
-                    ])
-                    await server.add_item.remote(request_id, v)
-
-                time_cost = int(time.time() * 1000) - current_time_milliseconds
-                await server.add_item.remote(request_id, StreamOutputs(outputs=[
-                    SingleOutput(
-                        text="",
-                        metadata=SingleOutputMeta(
-                            input_tokens_count=input_tokens_count,
-                            generated_tokens_count=generated_tokens_count,
-                            time_cost=time_cost,
-                            first_token_time=first_token_time - current_time_milliseconds,
-                            speed=float(generated_tokens_count) / time_cost * 1000,
-                            prob=-1.0,
-                        )
-                    )
-                ]))
-                await server.mark_done.remote(request_id)
-
-            asyncio.create_task(writer())
-            await server.add_item.remote(request_id, "RUNNING")
-            return [("", {"metadata": {"request_id": request_id, "stream_server": "VLLM_STREAM_SERVER"}})]
-
-        start_time = time.monotonic()
-        result = model(
-            ins,
-            max_new_tokens=max_new_tokens,
-            top_p=top_p,
-            temperature=temperature,
-            stop=kwargs["stop"] if "stop" in kwargs else [],
-            **other_params
-        )
-        time_taken = time.monotonic() - start_time
-        generated_text = result['choices'][0]['text']
-        generated_tokens_count = len(tokenizer(generated_text)["input_ids"])
-
-        return [(generated_text, {"metadata": {
-            "request_id": request_id,
-            "input_tokens_count": len(input_tokens),
-            "generated_tokens_count": generated_tokens_count,
-            "time_cost": time_taken,
-            "first_token_time": -1.0,
-            "speed": float(generated_tokens_count) / time_taken * 1000,
-            "prob": -1.0
-        }})]
+    # Deploy 子命令
+    deploy_cmd = subparsers.add_parser('deploy', help=locales["help_deploy"][lang])
+    deploy_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
+    deploy_cmd.add_argument('--num_workers', type=int, default=1, help=locales["help_num_workers"][lang])
+    deploy_cmd.add_argument('--gpus_per_worker', type=float, default=0, help=locales["help_gpus_per_worker"][lang])
+    deploy_cmd.add_argument('--cpus_per_worker', type=float, default=0.01, help=locales["help_cpus_per_worker"][lang])
+    deploy_cmd.add_argument('--model_path', default="",required=False, help=locales["help_model_path"][lang])
+    deploy_cmd.add_argument('--pretrained_model_type', default="custom/llama2", help=locales["help_pretrained_model_type"][lang])
+    deploy_cmd.add_argument('--model', required=True, help=locales["help_udf_name"][lang])    
+    deploy_cmd.add_argument('--infer_backend', default="vllm", help=locales["help_infer_backend"][lang])
+    deploy_cmd.add_argument('--infer_params', nargs='+', action=StoreNestedDict, help=locales["help_infer_params"][lang])
+    deploy_cmd.add_argument("--file", default=None, required=False, help="")
     
-    @staticmethod
-    def get_meta(self):
-        return [{
-            "model_deploy_type": "proprietary",
-            "backend": "llama.cpp",
-            "max_model_len": self.n_ctx,
-            "architectures": ["LlamaCpp"],
-            "message_format": True
-        }]
+    # Undeploy 子命令
+    deploy_cmd = subparsers.add_parser('undeploy', help=locales["help_deploy"][lang])
+    deploy_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
+    deploy_cmd.add_argument('--model', required=True, help=locales["help_udf_name"][lang])    
+    deploy_cmd.add_argument("--file", default=None, required=False, help="")
+
+    # Query 子命令
+    query_cmd = subparsers.add_parser('query', help=locales["help_query"][lang])
+    query_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
+    query_cmd.add_argument('--model', required=True, help=locales["help_query_model"][lang])
+    query_cmd.add_argument('--query', required=True, help=locales["help_query_text"][lang])
+    query_cmd.add_argument('--template', default="auto", help=locales["help_template"][lang])
+    query_cmd.add_argument("--file", default=None, required=False, help="")
+
+    # Storage 子命令
+    storage_cmd = subparsers.add_parser('storage', help='Manage Byzer Storage')    
+    storage_cmd_subparsers = storage_cmd.add_subparsers(dest='storage_command')
+    
+    # install 子命令
+    storage_install_cmd = storage_cmd_subparsers.add_parser('install', help='Install Byzer Storage')
+    storage_install_cmd.add_argument("--file", default=None, required=False, help="")
+    storage_install_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
+    storage_install_cmd.add_argument("--version", default="0.1.11", required=False, help="")
+    storage_install_cmd.add_argument('--cluster', default="byzerai_store", help="")
+    storage_install_cmd.add_argument('--base_dir', default="", help="")
+    
+    # start 子命令
+    storage_start_command = storage_cmd_subparsers.add_parser('start', help='Start Byzer Storage')
+    storage_start_command.add_argument("--file", default=None, required=False, help="")
+    storage_start_command.add_argument("--version", default="0.1.11", required=False, help="")
+    storage_start_command.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
+    storage_start_command.add_argument('--cluster', default="byzerai_store", help="")
+    storage_start_command.add_argument('--base_dir', default="", help="")
+
+
+    # stop 子命令
+    storage_stop_command = storage_cmd_subparsers.add_parser('stop', help='Stop Byzer Storage')
+    storage_stop_command.add_argument("--file", default=None, required=False, help="")
+    storage_stop_command.add_argument("--version", default="0.1.11", required=False, help="")
+    storage_stop_command.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
+    storage_stop_command.add_argument('--cluster', default="byzerai_store", help="")
+    storage_stop_command.add_argument('--base_dir', default="", help="")
+    
+    # export 子命令
+    storage_export_command = storage_cmd_subparsers.add_parser('export', help='Export Byzer Storage Information')    
+    storage_export_command.add_argument("--file", default=None, required=False, help="")
+    storage_export_command.add_argument("--version", default="0.1.11", required=False, help="")
+    storage_export_command.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
+    storage_export_command.add_argument('--cluster', default="byzerai_store", help="")
+    storage_export_command.add_argument('--base_dir', default="", help="")
+    
+    # Serve 子命令
+    serve_cmd = subparsers.add_parser('serve', help='Serve deployed models with OpenAI compatible APIs')
+    serve_cmd.add_argument('--host', type=str, default=None, help="Host name")
+    serve_cmd.add_argument('--port', type=int, default=8000, help="Port number")
+    serve_cmd.add_argument('--uvicorn-log-level', type=str, default="info", choices=['debug', 'info', 'warning', 'error', 'critical', 'trace'], help="Log level for uvicorn")
+    serve_cmd.add_argument('--allow-credentials', action="store_true", help="Allow credentials")
+    serve_cmd.add_argument('--allowed-origins', type=str, default='["*"]', help="Allowed origins")
+    serve_cmd.add_argument('--allowed-methods', type=str, default='["*"]', help="Allowed methods")
+    serve_cmd.add_argument('--allowed-headers', type=str, default='["*"]', help="Allowed headers")
+    serve_cmd.add_argument('--api-key', type=str, default=None, help="API key for authentication")   
+    serve_cmd.add_argument('--served-model-name', type=str, default=None, help="Served model name") 
+    serve_cmd.add_argument('--prompt-template', type=str, default=None, help="Prompt template for the model") 
+    serve_cmd.add_argument('--response-role', type=str, default="assistant", help="Response role for the model")   
+    serve_cmd.add_argument('--ssl-keyfile', type=str, default=None, help="SSL key file")
+    serve_cmd.add_argument('--ssl-certfile', type=str, default=None, help="SSL certificate file") 
+    serve_cmd.add_argument("--file", default=None, required=False, help="")
+
+    args = parser.parse_args()
+    
+    if args.file:
+        with open(args.file, "r") as f:
+            config = yaml.safe_load(f)
+            for key, value in config.items():
+                if key != "file":  # 排除 --file 参数本身   
+                    ## key: ENV {{VARIABLE_NAME}}
+                    if isinstance(value, str) and value.startswith("ENV"):  
+                        template = jinja2.Template(value.removeprefix("ENV").strip())                  
+                        value = template.render(os.environ)                        
+                    setattr(args, key, value)
+    
+    print("Command Line Arguments:")
+    print("-" * 50)
+    for arg, value in vars(args).items():
+        print(f"{arg:20}: {value}")
+    print("-" * 50)    
+
+    if args.command == 'deploy':
+        ray.init(address=args.ray_address, namespace="default", ignore_reinit_error=True)
+
+        llm = ByzerLLM()
+        if llm.is_model_exist(args.model):
+            print(locales["already_deployed"][lang].format(args.model))
+            return
+        
+        llm.setup_gpus_per_worker(args.gpus_per_worker).setup_cpus_per_worker(args.cpus_per_worker).setup_num_workers(args.num_workers)
+        if not args.pretrained_model_type.startswith("saas"):
+            if args.infer_backend == "vllm":
+                llm.setup_infer_backend(InferBackend.VLLM)
+            elif args.infer_backend == "llama_cpp": 
+                llm.setup_infer_backend(InferBackend.LLAMA_CPP)
+            elif args.infer_backend == "transformers":
+                llm.setup_infer_backend(InferBackend.Transformers)
+            elif args.infer_backend == "deepspeed":    
+                llm.setup_infer_backend(InferBackend.DeepSpeed)
+            else:
+                raise ValueError("Invalid infer_backend")
+        
+        llm.deploy(model_path=args.model_path,
+                pretrained_model_type=args.pretrained_model_type,
+                udf_name=args.model,
+                infer_params=args.infer_params or {})
+
+        print(locales["deploy_success"][lang].format(args.model))
+
+    elif args.command == 'query':
+        ray.init(address=args.ray_address, namespace="default", ignore_reinit_error=True)
+
+        llm_client = ByzerLLM()
+        llm_client.setup_template(args.model, args.template)
+
+        resp = llm_client.chat_oai(model=args.model, conversations=[{
+            "role": "user",
+            "content": args.query,
+        }])
+        print(resp[0].output,flush=True)
+
+    elif args.command == 'undeploy':
+        ray.init(address=args.ray_address, namespace="default", ignore_reinit_error=True)
+
+        llm = ByzerLLM()
+        llm.undeploy(args.model)
+
+        print(locales["undeploy_success"][lang].format(args.model))
+        
+    elif args.command == 'storage':
+        if args.storage_command == "install":
+            StorageSubCommand.install(args)
+        elif args.storage_command == "start":
+            StorageSubCommand.start(args) 
+        elif args.storage_command == "stop":
+            StorageSubCommand.stop(args)
+        elif args.storage_command == "export":
+            SubCommand.export(args)
+        elif args.command == 'serve':
+            ray.init(address="auto", namespace="default", ignore_reinit_error=True)
+            llm_client = ByzerLLM()
+            server_args = ServerArgs(
+                host=args.host,
+                port=args.port,
+                uvicorn_log_level=args.uvicorn_log_level,
+                allow_credentials=args.allow_credentials,
+                allowed_origins=json.loads(args.allowed_origins),  
+                allowed_methods=json.loads(args.allowed_methods),
+                allowed_headers=json.loads(args.allowed_headers),
+                api_key=args.api_key,
+                served_model_name=args.served_model_name,
+                prompt_template=args.prompt_template,
+                response_role=args.response_role,
+                ssl_keyfile=args.ssl_keyfile,
+                ssl_certfile=args.ssl_certfile
+            )
+            serve(llm_client, server_args)
 ```
-
-我已经生成了 `src/byzerllm/auto/backend_llama_cpp.py` 文件的代码。请问是否需要继续生成其他文件的代码?
-
-好的,我将继续生成测试文件的代码。
-
-```python
-##File: tests/auto/test_llama_cpp_backend.py
-import os
-import pytest
-from unittest.mock import MagicMock, patch
-
-from llama_cpp import Llama
-from byzerllm.auto.backend_llama_cpp import LlamaCppBackend
-
-
-@pytest.fixture(scope="module")
-def llama_cpp_model():
-    model_dir = "path/to/model/dir"
-    infer_params = {}
-    sys_conf = {}
-    with patch.object(Llama, "__init__", lambda self, model_path: None):
-        model = Llama(model_path="dummy_path")
-        model.get_meta = MagicMock(return_value=[{"message_format": True}])
-        model.chat = MagicMock(return_value="Generated text")
-        model.n_ctx = 2048
-        return LlamaCppBackend.init_model(model_dir, infer_params, sys_conf)
-
-
-def test_init_model(llama_cpp_model):
-    model, _ = llama_cpp_model
-    assert isinstance(model, Llama)
-
-
-def test_generate_with_chat(llama_cpp_model):
-    model, _ = llama_cpp_model
-    tokenizer = MagicMock()
-    tokenizer.return_value = {"input_ids": [1, 2, 3]}
-
-    result = LlamaCppBackend.generate(model, tokenizer, "Test input", his=[], max_length=100)
-
-    assert len(result) == 1
-    generated_text, metadata = result[0]
-    assert generated_text == "Generated text"
-    assert metadata["metadata"]["input_tokens_count"] == -1
-    assert metadata["metadata"]["generated_tokens_count"] == 3
-    assert metadata["metadata"]["prob"] == -1.0
-
-
-@patch("asyncio.create_task")
-@patch("ray.get_actor")
-def test_generate_with_stream(mock_get_actor, mock_create_task, llama_cpp_model):
-    model, _ = llama_cpp_model
-    model.get_meta.return_value = [{"message_format": False}]
-    model.return_value = {"choices": [{"text": "Generated text"}]}
-    tokenizer = MagicMock()
-    tokenizer.return_value = {"input_ids": [1, 2, 3]}
-
-    mock_server = MagicMock()
-    mock_get_actor.return_value = mock_server
-
-    result = LlamaCppBackend.generate(model, tokenizer, "Test input", stream=True, request_id="test_id")
-
-    assert len(result) == 1
-    assert result[0][0] == ""
-    assert result[0][1]["metadata"]["request_id"] == "test_id"
-    assert result[0][1]["metadata"]["stream_server"] == "VLLM_STREAM_SERVER"
-    mock_create_task.assert_called_once()
-    mock_server.add_item.remote.assert_called_with("test_id", "RUNNING")
-
-
-def test_get_meta(llama_cpp_model):
-    model, _ = llama_cpp_model
-
-    meta = LlamaCppBackend.get_meta(model)
-
-    assert len(meta) == 1
-    assert meta[0]["model_deploy_type"] == "proprietary"
-    assert meta[0]["backend"] == "llama.cpp"
-    assert meta[0]["max_model_len"] == 2048
-    assert meta[0]["architectures"] == ["LlamaCpp"]
-    assert meta[0]["message_format"] == True
-```
-
-我已经生成了 `tests/auto/test_llama_cpp_backend.py` 文件的代码。这个文件包含了对 `LlamaCppBackend` 类的单元测试用例。
-
-请问是否还需要生成其他文件的代码?
-
 __完成__
