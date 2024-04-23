@@ -6,6 +6,7 @@ import jinja2
 import yaml
 from byzerllm.utils.client import ByzerLLM, InferBackend
 from byzerllm.apps.command import StorageSubCommand
+from byzerllm.utils.client.entrypoints.openai.serve import serve, ServerArgs
 
 # 命令和参数的中英文映射字典
 locales = {
@@ -170,6 +171,22 @@ def main():
     storage_export_command.add_argument('--cluster', default="byzerai_store", help="")
     storage_export_command.add_argument('--base_dir', default="", help="")
     
+    # Serve 子命令
+    serve_cmd = subparsers.add_parser('serve', help='Serve deployed models with OpenAI compatible APIs')
+    serve_cmd.add_argument('--host', type=str, default=None, help="Host name")
+    serve_cmd.add_argument('--port', type=int, default=8000, help="Port number")
+    serve_cmd.add_argument('--uvicorn-log-level', type=str, default="info", choices=['debug', 'info', 'warning', 'error', 'critical', 'trace'], help="Log level for uvicorn")
+    serve_cmd.add_argument('--allow-credentials', action="store_true", help="Allow credentials")
+    serve_cmd.add_argument('--allowed-origins', type=str, default='["*"]', help="Allowed origins")
+    serve_cmd.add_argument('--allowed-methods', type=str, default='["*"]', help="Allowed methods")
+    serve_cmd.add_argument('--allowed-headers', type=str, default='["*"]', help="Allowed headers")
+    serve_cmd.add_argument('--api-key', type=str, default=None, help="API key for authentication")   
+    serve_cmd.add_argument('--served-model-name', type=str, default=None, help="Served model name") 
+    serve_cmd.add_argument('--prompt-template', type=str, default=None, help="Prompt template for the model") 
+    serve_cmd.add_argument('--response-role', type=str, default="assistant", help="Response role for the model")   
+    serve_cmd.add_argument('--ssl-keyfile', type=str, default=None, help="SSL key file")
+    serve_cmd.add_argument('--ssl-certfile', type=str, default=None, help="SSL certificate file") 
+    serve_cmd.add_argument("--file", default=None, required=False, help="")
 
     args = parser.parse_args()
     
@@ -246,10 +263,23 @@ def main():
         elif args.storage_command == "stop":
             StorageSubCommand.stop(args)
         elif args.storage_command == "export":
-            StorageSubCommand.export(args)
-            
-
-        
-
-if __name__ == "__main__":
-    main()
+            SubCommand.export(args)
+        elif args.command == 'serve':
+            ray.init(address="auto", namespace="default", ignore_reinit_error=True)
+            llm_client = ByzerLLM()
+            server_args = ServerArgs(
+                host=args.host,
+                port=args.port,
+                uvicorn_log_level=args.uvicorn_log_level,
+                allow_credentials=args.allow_credentials,
+                allowed_origins=json.loads(args.allowed_origins),  
+                allowed_methods=json.loads(args.allowed_methods),
+                allowed_headers=json.loads(args.allowed_headers),
+                api_key=args.api_key,
+                served_model_name=args.served_model_name,
+                prompt_template=args.prompt_template,
+                response_role=args.response_role,
+                ssl_keyfile=args.ssl_keyfile,
+                ssl_certfile=args.ssl_certfile
+            )
+            serve(llm_client, server_args)
