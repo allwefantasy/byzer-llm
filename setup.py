@@ -30,7 +30,7 @@ setup(
     long_description_content_type="text/markdown",
     entry_points={
         'console_scripts': [
-            'byzerllm = byzerllm.byzerllm:main',
+            'byzerllm = byzerllm.byzerllm_command:main',
         ],
     },
     package_dir={"": "src"},
