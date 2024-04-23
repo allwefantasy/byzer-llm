@@ -1,0 +1,21 @@
+source_dir: /Users/allwefantasy/projects/byzer-llm
+target_file: /Users/allwefantasy/projects/byzer-llm/output.txt
+urls: https://raw.githubusercontent.com/abetlen/llama-cpp-python/main/README.md
+
+model: gpt3_5_chat
+enable_multi_round_generate: true
+index_model: haiku_chat
+
+skip_build_index: false
+index_filter_level: 0
+
+execute: true
+auto_merge: true
+human_as_model: true
+
+query: >
+  在 byzerllm.py 中添加 serve 命令
+
+
+
+
