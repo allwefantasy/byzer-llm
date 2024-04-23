@@ -1019,7 +1019,11 @@ class ByzerLLM:
         
         return responses    
         
-    def stream_chat_oai(self,conversations, model:Optional[str]=None, role_mapping=None,llm_config:Dict[str,Any]={}): 
+    def stream_chat_oai(self,conversations, 
+                        model:Optional[str]=None, 
+                        role_mapping=None,
+                        delta_mode:bool = False,
+                        llm_config:Dict[str,Any]={}): 
         
         if not model:
             model = self.default_model_name
@@ -1048,10 +1052,19 @@ class ByzerLLM:
             generated_text = text_outputs[0].text
             if pre_generated_text is not None and generated_text == pre_generated_text:
                 continue
+            
+            if delta_mode and pre_generated_text is not None:
+                s = generated_text[len(pre_generated_text):]
+            else:
+                s = generated_text    
             pre_generated_text=generated_text
-            yield (clean_func(generated_text),text_outputs[0].metadata)
+            yield (clean_func(s),text_outputs[0].metadata)
 
-    async def async_stream_chat_oai(self,conversations,role_mapping=None,model:Optional[str]=None,llm_config:Dict[str,Any]={}): 
+    async def async_stream_chat_oai(self,conversations,
+                                    role_mapping=None,
+                                    model:Optional[str]=None,
+                                    delta_mode:bool = False,
+                                    llm_config:Dict[str,Any]={}): 
         
         if not model:
             model = self.default_model_name
@@ -1080,8 +1093,13 @@ class ByzerLLM:
             generated_text = text_outputs[0].text
             if pre_generated_text is not None and generated_text == pre_generated_text:
                 continue
-            pre_generated_text=generated_text
-            yield (clean_func(generated_text),text_outputs[0].metadata)   
+
+            if delta_mode and pre_generated_text is not None:                
+                s = generated_text[len(pre_generated_text):]
+            else:
+                s = generated_text
+            pre_generated_text=generated_text            
+            yield (clean_func(s),text_outputs[0].metadata)   
 
     def clear_impl_cache(self,model:Optional[str]=None,
                          full_func_name:Optional[str]=None,

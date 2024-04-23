@@ -174,6 +174,7 @@ class OpenAIServingCompletion(OpenAIServing):
                 "role": "user",
                 "content": body.prompt
             }],
+            delta_mode=True,
             llm_config={
                 "gen.request_id": request_id,
                 **body.to_llm_config()

@@ -90,6 +90,7 @@ class OpenAIServingChat(OpenAIServing):
         result_generator = self.llm_client.async_stream_chat_oai(
             model=model_name,
             conversations=body.messages,
+            delta_mode=True,
             llm_config={
                 "gen.request_id": request_id,
                 **body.to_llm_config()
