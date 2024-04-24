@@ -89,7 +89,7 @@ field(created_time,long,sort)
             json_data_obj = json.loads(item["json_data"])
             collection = item["collection"]
             _id = f"{collection}/{doc_id}"
-            
+                    
             file_path = json_data_obj.get("metadata",{}).get("file_path","")                
             result.append({"_id":_id,
             "doc_id":doc_id,     
@@ -216,7 +216,7 @@ field(created_time,long,sort)
         self.retrieval.delete_by_ids(self.retrieval_cluster,self.retrieval_db,"text_content_chunk",chunk_ids)
         self.retrieval.commit(self.retrieval_cluster,self.retrieval_db)    
     
-    def save_chunks(self,chunks:List[Dict[str,Any]]):
+    def save_chunks(self,chunks:List[Dict[str,Any]]):        
         text_content_chunks = []
         for chunk in chunks:
             chunk_id = chunk["chunk_id"]
@@ -257,6 +257,7 @@ field(created_time,long,sort)
                                         limit=1)])
         return docs[0] if docs else None
     
+    @DeprecationWarning
     def delete_doc(self,doc_ids:List[str],collection:str):
         ids = []
         for doc_id in doc_ids:
@@ -268,6 +269,25 @@ field(created_time,long,sort)
         self.retrieval.truncate(self.retrieval_cluster,self.retrieval_db,"text_content_chunk")
         self.commit_doc()
         self.commit_chunk()
+
+    def delete_doc_and_chunks_by_filename(self,collection:str,file_name:str):
+        doc = self.get_doc(f"{collection}/ref_doc_info",file_name)
+                
+        if doc:
+            node_ids = json.loads(doc["metadata"])["node_ids"]
+            for node_id in node_ids:
+                id = f"{collection}/data/{node_id}"
+                self.retrieval.delete_by_ids(self.retrieval_cluster,self.retrieval_db,"text_content",[id])
+
+                id = f"{collection}/metadata/{node_id}"
+                self.retrieval.delete_by_ids(self.retrieval_cluster,self.retrieval_db,"text_content",[id])
+
+                ## default/index/ can not be deleted
+            
+            ##  cleanup the chunk collection  
+            self.retrieval.delete_by_filter(self.retrieval_cluster,self.retrieval_db,"text_content_chunk",
+                                            {"file_path":file_name})                      
+
 
     def delete_from_doc_collection(self,collection:str):
         for suffix in ["index","data","ref_doc_info","metadata"]:
