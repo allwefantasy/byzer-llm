@@ -44,6 +44,7 @@ emb model does not exist. Try to use `llm.setup_default_emb_model_name` to set t
                 table="text_content",schema='''st(
 field(_id,string),
 field(doc_id,string),
+field(file_path,string),
 field(owner,string),
 field(content,string,analyze),
 field(raw_content,string,no_index),
@@ -60,6 +61,7 @@ field(created_time,long,sort)
                 table="text_content_chunk",schema='''st(
 field(_id,string),
 field(doc_id,string),
+field(file_path,string),
 field(owner,string),
 field(chunk,string,analyze),
 field(raw_chunk,string,no_index),
@@ -82,11 +84,16 @@ field(created_time,long,sort)
     
         result = []
         for item in data:
+            
             doc_id = item["doc_id"]
+            json_data_obj = json.loads(item["json_data"])
             collection = item["collection"]
             _id = f"{collection}/{doc_id}"
+            
+            file_path = json_data_obj.get("metadata",{}).get("file_path","")                
             result.append({"_id":_id,
-            "doc_id":doc_id,               
+            "doc_id":doc_id,     
+            "file_path":file_path,          
             "json_data":item["json_data"],
             "metadata":self.search_tokenize(item["json_data"]), 
             "collection":collection,            
@@ -219,10 +226,12 @@ field(created_time,long,sort)
             chunk_embedding = chunk["chunk_embedding"]
             metadata = chunk.get("metadata",{})
             _id = f"{self.chunk_collection}/{chunk_id}"
+            file_path = metadata.get("file_path","")            
             
             text_content_chunks.append({"_id":_id,
                 "doc_id":ref_doc_id or "",
-                "owner":owner or "default",
+                "file_path": file_path,
+                "owner":owner or "default",                
                 "chunk":self.search_tokenize(chunk_content),
                 "raw_chunk":chunk_content,
                 "chunk_vector":chunk_embedding,  
