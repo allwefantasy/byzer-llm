@@ -861,8 +861,8 @@
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/version.py": {
     "symbols": "变量：__version__",
-    "last_modified": 1713856658.988924,
-    "md5": "3bd00d7d5f8345a43bb4a4f0aedbbf43"
+    "last_modified": 1713936787.1991029,
+    "md5": "f8b54ed64541df3df9f9beb30b3b7dad"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm.py": {
     "symbols": "函数：main, StoreNestedDict\n变量：locales, lang\n类：\n导入语句：import argparse,import os,import ray,import shlex,import jinja2,import yaml,from byzerllm.utils.client import ByzerLLM, InferBackend,from byzerllm.apps.command import StorageSubCommand\n函数：main, ray.init, setup_gpus_per_worker, setup_cpus_per_worker, setup_num_workers, setup_infer_backend, deploy, chat_oai, undeploy, StorageSubCommand.install, StorageSubCommand.start, StorageSubCommand.stop, StorageSubCommand.export\n变量：storage_start_command, storage_stop_command, storage_export_command, args, llm, llm_client\n类：ByzerLLM, InferBackend\n导入语句：import os,import time,from loguru import logger,import byzerllm,import yaml,import jinja2,import ray",
@@ -1400,9 +1400,9 @@
     "md5": "b6102b0efd1e75fd23ab3357c9b2635c"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/llama_index/simple_retrieval.py": {
-    "symbols": "导入语句：from byzerllm.utils.retrieval import ByzerRetrieval,from byzerllm.utils.client import ByzerLLM,from byzerllm.utils import generate_str_md5,from langchain_core.prompts import PromptTemplate,from langchain.text_splitter import RecursiveCharacterTextSplitter,from termcolor import colored,import time,import uuid,import json,import jieba  \n变量：SimpleRetrieval\n类：SimpleRetrieval\n函数：__init__,save_doc,_owner_filter,search_content_chunks,search_content_by_filename\n函数：search_content, get_chunk_by_id, get_chunks_by_docid, delete_chunk_by_ids, save_chunks, get_doc, delete_doc, truncate_table, delete_from_doc_collection, delete_from_chunk_collection, commit_doc, commit_chunk, emb, split_text_into_chunks\n变量：filters, keyword, vector, vectorField, fields, docs, context, chunk_id, ref_doc_id, owner, chunk_content, chunk_embedding, metadata, _id, text_content_chunks, collection, ids, doc_id, suffix\n类：\n导入语句：\n函数：search_tokenize, split_documents  \n变量：text_splitter, split_docs, seg_list  \n类：RecursiveCharacterTextSplitter  \n导入语句：无",
-    "last_modified": 1713274179.2176392,
-    "md5": "4b885440e861c9b028c306e142597f38"
+    "symbols": "函数：save_doc, search_content_chunks, search_content_by_filename, _owner_filter, search_tokenize\n类：SimpleRetrieval\n变量：\n导入语句：from byzerllm.utils.retrieval import ByzerRetrieval,from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union,from byzerllm.utils.client import ByzerLLM,from byzerllm.utils import generate_str_md5,from byzerllm.utils.retrieval import ByzerRetrieval,import time,from byzerllm.utils.client import LLMHistoryItem,LLMRequest,from byzerllm.utils.retrieval import TableSettings,SearchQuery,import uuid,import json,from langchain_core.prompts import PromptTemplate,from langchain.text_splitter import RecursiveCharacterTextSplitter,try:,except ImportError:,import jieba\n函数：search_content, get_chunk_by_id, get_chunks_by_docid, delete_chunk_by_ids, save_chunks, get_doc, delete_doc, truncate_table, delete_doc_and_chunks_by_filename\n变量:\n类:\n导入语句：import json,from typing import List, Dict, Any\n函数：delete_from_doc_collection, delete_from_chunk_collection, commit_doc, commit_chunk, emb, split_text_into_chunks, search_tokenize\n变量：\n类：\n导入语句：",
+    "last_modified": 1713936709.5514567,
+    "md5": "52171defcfeccafa4e069af4d7c9d892"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/llama_index/byzerai_kvstore.py": {
     "symbols": "导入语句：import json,from typing import Any, Dict, List, Optional, Tuple, cast,from llama_index.core.storage.kvstore.types import DEFAULT_BATCH_SIZE, DEFAULT_COLLECTION, BaseKVStore,from byzerllm.utils.client import ByzerLLM,from byzerllm.utils.retrieval import ByzerRetrieval,from byzerllm.apps.llama_index.simple_retrieval import SimpleRetrieval,from byzerllm.utils.langutil import asyncfy_with_semaphore  \n类：ByzerAIKVStore  \n函数：__init__, put, aput, put_all, get, aget, get_all, aget_all, delete, adelete  \n变量：DEFAULT_BATCH_SIZE, DEFAULT_COLLECTION, BaseKVStore, llm, retrieval, key, val, collection, kv_pairs, batch_size, cur_batch, v, doc, val_str",
@@ -1763,5 +1763,10 @@
     "symbols": "函数：auto_implement_function_template, health, show_available_models, show_version, models, create_completion, create_chat_completion, embed\n类：ServerArgs\n变量：a, llm_client, openai_serving_chat, openai_serving_completion, TIMEOUT_KEEP_ALIVE, TIMEOUT, router_app, logger\n导入语句：import os,import time,import uvicorn,from fastapi import Request,from fastapi import FastAPI,from fastapi.middleware.cors import CORSMiddleware,from fastapi.responses import JSONResponse, StreamingResponse, Response,from byzerllm.log import init_logger,from byzerllm.utils import random_uuid,from byzerllm.version import __version__ as version,from byzerllm.utils.client import ByzerLLM, LLMRequest,from byzerllm.utils.client.entrypoints.openai.serving_chat import OpenAIServingChat,from byzerllm.utils.client.entrypoints.openai.serving_completion import OpenAIServingCompletion,from byzerllm.utils.client.entrypoints.openai.protocol import (ModelList, ModelCard, ModelPermission, ChatCompletionRequest, ErrorResponse, CompletionRequest, Embeddings, EmbeddingsOutput, EmbeddingsData, EmbeddingsUsage),from pydantic import BaseModel,from typing import List\n函数：openai_serving_chat, openai_serving_completion, run\n变量：openai_serving_chat, openai_serving_completion\n类：OpenAIServingChat, OpenAIServingCompletion\n导入语句：global, uvicorn",
     "last_modified": 1713864275.322305,
     "md5": "7e4e0f3646c4ed588a314a288a7d7006"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm_command.py": {
+    "symbols": "函数：main, serve, StoreNestedDict\n类：StorageSubCommand\n变量：locales, lang\n导入语句：import argparse,import os,import ray,import shlex,import jinja2,import yaml,from byzerllm.utils.client import ByzerLLM, InferBackend,from byzerllm.apps.command import StorageSubCommand,from byzerllm.utils.client.entrypoints.openai.serve import serve, ServerArgs,import byzerllm\n函数：auto_implement_function_template, connect_cluster, setup_template, chat_oai, undeploy, install, start, stop, export\n变量：a, storage_start_command, storage_stop_command, storage_export_command, serve_cmd, args, config, llm, llm_client\n类：ByzerLLM, StorageSubCommand\n导入语句：import os,import time,from loguru import logger,import byzerllm,import yaml,import jinja2\n函数：serve\n变量：args,llm_client,server_args\n类：ServerArgs\n导入语句：",
+    "last_modified": 1714037900.8881714,
+    "md5": "fe07116f0aab464da40995537927ad51"
   }
 }

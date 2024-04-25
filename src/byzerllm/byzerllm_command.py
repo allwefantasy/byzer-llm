@@ -206,8 +206,11 @@ def main():
     
     print("Command Line Arguments:")
     print("-" * 50)
-    for arg, value in vars(args).items():
-        print(f"{arg:20}: {value}")
+    for arg, value in vars(args).items():        
+        if arg == "infer_params" and isinstance(value, dict) and "saas.api_key" in value:            
+            print(f"{arg:20}: *****")
+        else:     
+            print(f"{arg:20}: {value}")
     print("-" * 50)    
 
     if args.command == 'deploy':
