@@ -207,8 +207,11 @@ def main():
     print("Command Line Arguments:")
     print("-" * 50)
     for arg, value in vars(args).items():        
-        if arg == "infer_params" and isinstance(value, dict) and "saas.api_key" in value:            
-            print(f"{arg:20}: *****")
+        if arg == "infer_params" and isinstance(value, dict) and "saas.api_key" in value:  
+            import copy
+            new_value = copy.deepcopy(value)
+            new_value["saas.api_key"] = "******"
+            print(f"{arg:20}: {new_value}")
         else:     
             print(f"{arg:20}: {value}")
     print("-" * 50)    
