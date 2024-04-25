@@ -1765,8 +1765,8 @@
     "md5": "7e4e0f3646c4ed588a314a288a7d7006"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm_command.py": {
-    "symbols": "函数：main, serve, StoreNestedDict\n类：StorageSubCommand\n变量：locales, lang\n导入语句：import argparse,import os,import ray,import shlex,import jinja2,import yaml,from byzerllm.utils.client import ByzerLLM, InferBackend,from byzerllm.apps.command import StorageSubCommand,from byzerllm.utils.client.entrypoints.openai.serve import serve, ServerArgs,import byzerllm\n函数：auto_implement_function_template, connect_cluster, setup_template, chat_oai, undeploy, install, start, stop, export\n变量：a, storage_start_command, storage_stop_command, storage_export_command, serve_cmd, args, config, llm, llm_client\n类：ByzerLLM, StorageSubCommand\n导入语句：import os,import time,from loguru import logger,import byzerllm,import yaml,import jinja2\n函数：serve\n变量：args,llm_client,server_args\n类：ServerArgs\n导入语句：",
-    "last_modified": 1714037900.8881714,
-    "md5": "fe07116f0aab464da40995537927ad51"
+    "symbols": "函数：main, serve, StorageSubCommand\n变量：lang, locales, StoreNestedDict\n类：\n导入语句：import argparse,import os,import ray,import shlex,import jinja2,import yaml,from byzerllm.utils.client import ByzerLLM, InferBackend,from byzerllm.apps.command import StorageSubCommand,from byzerllm.utils.client.entrypoints.openai.serve import serve, ServerArgs,import byzerllm\n函数：add_argument, safe_load, render, connect_cluster, is_model_exist, setup_gpus_per_worker, setup_cpus_per_worker, setup_num_workers, setup_infer_backend, deploy, chat_oai, undeploy, install, start, stop\n变量：\n类：ByzerLLM, StorageSubCommand, InferBackend\n导入语句：import os,import time,from loguru import logger,import byzerllm,import yaml,import jinja2\n函数：StorageSubCommand.stop,StorageSubCommand.export,byzerllm.connect_cluster,serve\n变量：args,llm_client,server_args\n类：\n导入语句：",
+    "last_modified": 1714039135.2599688,
+    "md5": "1e5944ae52b4655ed05edc4b007e4549"
   }
 }
