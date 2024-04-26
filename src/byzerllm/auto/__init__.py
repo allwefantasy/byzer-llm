@@ -174,9 +174,7 @@ async def async_get_meta(model):
               "support_stream": True,
               "support_chat_template": support_chat_template,
               "max_model_len":config.max_model_len,
-              "architectures":getattr(config.hf_config, "architectures", []),
-              "processing_requests":len(model._request_tracker._request_streams.keys()),
-              "new_requests":model._request_tracker._new_requests.qsize(),
+              "architectures":getattr(config.hf_config, "architectures", [])              
               }     
      
      if not isinstance(model.engine,_AsyncLLMEngine): 
