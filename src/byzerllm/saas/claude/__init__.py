@@ -19,14 +19,21 @@ class CustomSaasAPI:
             "backend": "saas",
             "support_stream": True
         }
+        other_params = {}        
+        
+        if "saas.base_url" in infer_params:
+            other_params["base_url"] = infer_params["saas.base_url"] 
 
-        self.client = Anthropic(api_key=self.api_key)
+        self.client = Anthropic(api_key=self.api_key,**other_params)
 
         try:
             ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
         except ValueError:
-            ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER", lifetime="detached",
-                                                      max_concurrency=1000).remote()
+            try:
+                ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER", lifetime="detached",
+                                                        max_concurrency=1000).remote()
+            except:
+                pass    
 
     # saas/proprietary
     def get_meta(self):

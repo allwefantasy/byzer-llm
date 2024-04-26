@@ -5,6 +5,7 @@ import shlex
 import jinja2
 import yaml
 from byzerllm.utils.client import ByzerLLM, InferBackend
+from byzerllm.utils.client.types import Templates
 from byzerllm.apps.command import StorageSubCommand
 from byzerllm.utils.client.entrypoints.openai.serve import serve, ServerArgs
 import byzerllm
@@ -67,8 +68,19 @@ def main():
     elif args.command == 'query':
         byzerllm.connect_cluster(address=args.ray_address)
 
-        llm_client = ByzerLLM()
-        llm_client.setup_template(args.model, args.template)
+        llm_client = ByzerLLM()        
+        if args.template == "default":
+            llm_client.setup_template(args.model, template=Templates.default())
+        elif args.template == "llama":
+            llm_client.setup_template(args.model, template=Templates.llama())    
+        elif args.template == "qwen":
+            llm_client.setup_template(args.model, template=Templates.qwen())        
+        elif args.template == "yi":
+            llm_client.setup_template(args.model, template=Templates.yi())  
+        elif args.template == "empty":
+            llm_client.setup_template(args.model, template=Templates.empty())          
+        else:
+            llm_client.setup_template(args.model, args.template)
 
         resp = llm_client.chat_oai(model=args.model, conversations=[{
             "role": "user",
