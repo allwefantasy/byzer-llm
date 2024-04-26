@@ -328,7 +328,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         tensor_parallel_size: int = num_gpus        
         gpu_memory_utilization: float = float(infer_params.get("backend.gpu_memory_utilization",0.90))                
         disable_log_stats: bool = get_bool(infer_params,"backend.disable_log_stats",False)
-        
+
         ohter_params = {}
         
         for k,v in infer_params.items():
@@ -337,7 +337,11 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
                                                       "backend.gpu_memory_utilization",
                                                       "backend.disable_log_stats",
                                                       ]:
-                ohter_params[k[len("backend."):]] = v
+                new_k = k[len("backend."):]
+                if k == "backend.max_model_len":
+                    ohter_params[new_k] = int(v)
+                else:
+                    ohter_params[new_k] = v
                        
         
         engine_args = AsyncEngineArgs(
