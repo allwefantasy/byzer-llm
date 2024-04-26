@@ -338,6 +338,8 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
                 new_k = k[len("backend."):]
                 if k == "backend.max_model_len":
                     ohter_params[new_k] = int(v)
+                elif k == "backend.enforce_eager":
+                    ohter_params[new_k] = v in ["true","True"]
                 else:
                     ohter_params[new_k] = v
                        
