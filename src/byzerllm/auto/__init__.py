@@ -310,7 +310,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         num_gpus = int(sys_conf.get("num_gpus",1))
         print(f"infer_mode:{infer_mode} tensor_parallel_size: {num_gpus}")
         global INFERENCE_NAME
-        INFERENCE_NAME = infer_params.get("udfName","auto")
+        INFERENCE_NAME = infer_params.get("udfName","auto")        
 
         try:
             ray.get_actor("VLLM_STREAM_SERVER")
@@ -339,6 +339,8 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
                 if k == "backend.max_model_len":
                     ohter_params[new_k] = int(v)
                 elif k == "backend.enforce_eager":
+                    ohter_params[new_k] = v in ["true","True"]
+                elif k == "backend.trust_remote_code":
                     ohter_params[new_k] = v in ["true","True"]
                 else:
                     ohter_params[new_k] = v
