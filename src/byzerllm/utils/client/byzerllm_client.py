@@ -939,7 +939,7 @@ class ByzerLLM:
         last_message = temp_conversations[-1]
         
         # function calling
-        if tools or tool_choice:
+        if tools or tool_choice:            
             f = self.mapping_function_calling_format_func.get(model,function_calling_format) if not enable_default_sys_message else self.mapping_sys_function_calling_format_func.get(model,sys_function_calling_format)
             last_message["content"] = f(last_message["content"],tools,tool_choice)
 
