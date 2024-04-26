@@ -158,6 +158,7 @@ class StreamOutputs:
     def __init__(self, outputs:List[SingleOutput]):
         self.outputs = outputs        
 
+
 class BlockVLLMStreamServer:
     def __init__(self):
         self.cache = {}

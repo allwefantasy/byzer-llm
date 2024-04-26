@@ -1,7 +1,7 @@
 import time
 from typing import List, Tuple, Dict,Any,Union
 import httpx
-from openai import OpenAI 
+from openai import OpenAI
 import base64
 import os  
 import json
@@ -105,6 +105,65 @@ class CustomSaasAPI:
         return (embedding,{"metadata":{
                 "input_tokens_count":usage.prompt_tokens,
                 "generated_tokens_count":0}})
+    
+    async def text_to_speech(self, ins: str, voice:str,chunk_size:int=None,**kwargs):
+
+        server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+        request_id = [None]
+        
+        def writer():
+            try:                     
+                response = self.client.with_streaming_response.audio.speech.create(
+                            model=self.model,
+                            voice=voice,
+                            input=ins)  
+                # input_tokens_count = 0     
+                # generated_tokens_count = 0
+                
+                request_id[0] = str(uuid.uuid4())                
+
+                for chunk in response.iter_bytes(chunk_size):                                                                                                                          
+                    input_tokens_count = 0
+                    generated_tokens_count = 0
+                    ray.get(server.add_item.remote(request_id[0], 
+                                                    StreamOutputs(outputs=[SingleOutput(text=chunk,metadata=SingleOutputMeta(
+                                                        input_tokens_count=input_tokens_count,
+                                                        generated_tokens_count=generated_tokens_count,
+                                                    ))])
+                                                    ))                                                   
+            except:
+                traceback.print_exc()            
+            ray.get(server.mark_done.remote(request_id[0]))
+
+        
+        threading.Thread(target=writer,daemon=True).start()            
+                        
+        time_count= 10*100
+        while request_id[0] is None and time_count > 0:
+            time.sleep(0.01)
+            time_count -= 1
+        
+        if request_id[0] is None:
+            raise Exception("Failed to get request id")
+        
+        def write_running():
+            return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
+                    
+        await asyncio.to_thread(write_running)
+        return [("",{"metadata":{"request_id":request_id[0],"stream_server":"BLOCK_VLLM_STREAM_SERVER"}})]    
+            
+
+    def speech_to_text(self, ins: str, **kwargs):
+        pass
+
+    def image_to_text(self, ins: str, **kwargs):
+        pass
+
+    def text_to_image(self, ins: str, **kwargs):
+        pass
+
+    def text_to_text(self, ins: str, **kwargs):
+        pass
 
     async def async_stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
                     max_length: int = 4096,
