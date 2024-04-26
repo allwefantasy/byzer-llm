@@ -78,7 +78,7 @@ class CustomSaasAPI:
     def get_meta(self):
         return [self.meta]
 
-    def process_input(self, ins: Union[str, List[Dict[str, Any]],Dict[str, Any]):
+    def process_input(self, ins: Union[str, List[Dict[str, Any]],Dict[str, Any]]):
         
         if isinstance(ins, list) or isinstance(ins, dict):
             return ins
@@ -207,12 +207,11 @@ class CustomSaasAPI:
         
         ## content = [
         ##    "voice": "alloy","input": "Hello, World!",response_format: "mp3"]
-        last_message_content = messages[-1]["content"]
-        if isinstance(last_message,dict) and "input" in last_message_content:
-        ins = last_message_content["input"]
-            voice = last_message_content.get("voice","alloy")
-            response_format = last_message_content.get("response_format","mp3")
-            chunk_size = last_message_content.get("chunk_size",None)            
+        last_message = messages[-1]["content"]
+        if isinstance(last_message,dict) and "input" in last_message:
+            voice = last_message.get("voice","alloy")
+            response_format = last_message.get("response_format","mp3")
+            chunk_size = last_message.get("chunk_size",None)
             return await self.text_to_speech(stream=stream,
                                              ins=ins,
                                              voice=voice,

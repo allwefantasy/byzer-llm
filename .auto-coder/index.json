@@ -1620,9 +1620,9 @@
     "md5": "13e90924ba6a32ac00f29fdca42b08c3"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/official_openai/__init__.py": {
-    "symbols": "函数：async_stream_chat, embed_query, get_meta, process_input, text_to_speech\n类：CustomSaasAPI\n变量：\n导入语句：import time,from typing import List, Tuple, Dict,Any,Union,import httpx,from openai import OpenAI,import base64,import os,import json,import ray,from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer,import threading,import asyncio,import traceback,import uuid",
-    "last_modified": 1714125785.2088404,
-    "md5": "cad96b2f99cacefcf27ea9d8c75d870d"
+    "symbols": "函数：__init__,get_meta,process_input,embed_query,text_to_speech,speech_to_text,image_to_text,text_to_image,text_to_text,async_stream_chat\n类：CustomSaasAPI\n变量：\n导入语句：import time,from typing import List, Tuple, Dict,Any,Union,import httpx,from openai import OpenAI,import base64,import io,import json,import ray,from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer,import threading,import asyncio,import traceback,import uuid",
+    "last_modified": 1714140334.6242445,
+    "md5": "3f29954eaabde7d14b821e4b16d7aa35"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/zhipu/__init__.py": {
     "symbols": "函数：auto_implement_function_template, get_meta, embed_query, async_stream_chat\n变量：a, api_key, model, client, meta, start_time, response, time_cost, generated_text, generated_tokens_count, time_cost, first_token_time, speed\n类：CustomSaasAPI\n导入语句：import os, import time, from loguru import logger, import byzerllm, import json, from zhipuai import ZhipuAI, import time, import traceback, from typing import List, Tuple, Dict, Any, import ray, from byzerllm.utils.types import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, import threading, import asyncio",
@@ -1778,5 +1778,10 @@
     "symbols": "函数：get_command_args, StoreNestedDict\n类：StoreNestedDict\n变量：\n导入语句：import argparse,import shlex,from byzerllm.lang import lang,locales",
     "last_modified": 1714121444.8050325,
     "md5": "9962798d2ce39ae28b82ada61474b22d"
+  },
+  "/Users/allwefantasy/Downloads/tts_http_demo.py": {
+    "symbols": "函数：auto_implement_function_template, if_main\n变量：appid, access_token, cluster, voice_type, host, api_url, header, request_json\n类：\n导入语句：import base64,import json,import uuid,import requests",
+    "last_modified": 1713056472.1889791,
+    "md5": "f6008aaa1bb307f59efb6987a9c3734b"
   }
 }
