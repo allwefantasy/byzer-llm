@@ -4,16 +4,15 @@ from functools import wraps
 import time
 import json
 import hashlib
-import threading
 from typing import TYPE_CHECKING,TypeVar,Dict, List, Optional, Union,Any,Tuple,get_type_hints,Annotated,get_args,Callable
 import typing
-from ray.util.client.common import ClientActorHandle, ClientObjectRef
 import inspect
 import pydantic
 import sys
 import traceback
 import io
 from enum import Enum
+from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer
 
 T = TypeVar("T")
 
@@ -144,80 +143,6 @@ def generate_str_md5(s: str) -> str:
     md5_hash.update(s.encode("utf-8"))
     return md5_hash.hexdigest() 
 
-class SingleOutputMeta:
-    def __init__(self, input_tokens_count:int=0, generated_tokens_count:int=0):        
-        self.input_tokens_count = input_tokens_count
-        self.generated_tokens_count = generated_tokens_count    
-
-class SingleOutput:
-    def __init__(self, text:str,metadata:SingleOutputMeta=SingleOutputMeta()):
-        self.text = text
-        self.metadata = metadata
-        
-class StreamOutputs: 
-    def __init__(self, outputs:List[SingleOutput]):
-        self.outputs = outputs        
-
-
-class BlockVLLMStreamServer:
-    def __init__(self):
-        self.cache = {}
-        self.cache_status = {} 
-        self.lock = threading.Lock()
-
-    def add_item(self, request_id, item):
-        with self.lock:            
-            self.cache[request_id]=item
-            self.cache_status[request_id]=int(time.time()*1000)
-    
-    def mark_done(self, request_id):
-        if len(self.cache_status) > 30:
-            now = int(time.time()*1000)
-            with self.lock:
-                for k in list(self.cache_status.keys()):
-                    if now - self.cache_status[k] > 10*60*60*1000:
-                        del self.cache_status[k]
-                        del self.cache[k] 
-        with self.lock:            
-            self.cache_status[request_id] = 0
-
-    def get_item(self, request_id):                
-        with self.lock:
-            v = self.cache.get(request_id, None)     
-            if request_id in self.cache_status and self.cache_status[request_id] == 0:
-                del self.cache[request_id]
-                del self.cache_status[request_id]
-            return v     
-
-class VLLMStreamServer:
-    def __init__(self):
-        self.cache = {}
-        self.cache_status = {} 
-        self.lock = threading.Lock()
-
-    async def add_item(self, request_id, item):
-        with self.lock:            
-            self.cache[request_id]=item
-            self.cache_status[request_id]=int(time.time()*1000)
-    
-    async def mark_done(self, request_id):
-        if len(self.cache_status) > 30:
-            now = int(time.time()*1000)
-            with self.lock:
-                for k in list(self.cache_status.keys()):
-                    if now - self.cache_status[k] > 10*60*60*1000:
-                        del self.cache_status[k]
-                        del self.cache[k] 
-        with self.lock:            
-            self.cache_status[request_id] = 0
-
-    async def get_item(self, request_id):                
-        with self.lock:
-            v = self.cache.get(request_id, None)     
-            if request_id in self.cache_status and self.cache_status[request_id] == 0:
-                del self.cache[request_id]
-                del self.cache_status[request_id]
-            return v
         
 def get_type_name(t):
     name = str(t)
@@ -946,4 +871,7 @@ def format_prompt_jinja2(func,**kargs):
 
 def random_uuid() -> str:
     return str(uuid.uuid4().hex)
+
+
+__all__ = ["BlockVLLMStreamServer","StreamOutputs","SingleOutput","SingleOutputMeta","BlockBinaryStreamServer"]
 

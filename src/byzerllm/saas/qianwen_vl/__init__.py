@@ -4,7 +4,7 @@ import dashscope
 from dashscope.api_entities.dashscope_response import MultiModalConversationResponse
 import time
 import ray
-from byzerllm.utils import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
+from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
 import threading
 import asyncio
 import json

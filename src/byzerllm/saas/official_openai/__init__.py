@@ -3,10 +3,10 @@ from typing import List, Tuple, Dict,Any,Union
 import httpx
 from openai import OpenAI
 import base64
-import os  
+import io    
 import json
 import ray
-from byzerllm.utils import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
+from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer
 import threading
 import asyncio
 import traceback
@@ -66,14 +66,21 @@ class CustomSaasAPI:
                 ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()
             except Exception as e:
                 pass    
-
+        try:
+            ray.get_actor("BlockBinaryStreamServer")    
+        except ValueError:  
+            try:          
+                ray.remote(BlockBinaryStreamServer).options(name="BlockBinaryStreamServer",lifetime="detached",max_concurrency=1000).remote()
+            except Exception as e:
+                pass        
+    
     # saas/proprietary
     def get_meta(self):
         return [self.meta]
 
-    def process_input(self, ins: Union[str, List[Dict[str, Any]]]):
+    def process_input(self, ins: Union[str, List[Dict[str, Any]],Dict[str, Any]):
         
-        if isinstance(ins, list):
+        if isinstance(ins, list) or isinstance(ins, dict):
             return ins
         
         content = []
@@ -81,6 +88,10 @@ class CustomSaasAPI:
             ins_json = json.loads(ins)
         except:            
             return ins
+        
+        ## speech
+        if isinstance(ins_json, dict):
+            return ins_json
         
         content = []
         for item in ins_json:
@@ -106,52 +117,67 @@ class CustomSaasAPI:
                 "input_tokens_count":usage.prompt_tokens,
                 "generated_tokens_count":0}})
     
-    async def text_to_speech(self, ins: str, voice:str,chunk_size:int=None,**kwargs):
-
-        server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
-        request_id = [None]
-        
-        def writer():
-            try:                     
-                response = self.client.with_streaming_response.audio.speech.create(
-                            model=self.model,
-                            voice=voice,
-                            input=ins)  
-                # input_tokens_count = 0     
-                # generated_tokens_count = 0
-                
-                request_id[0] = str(uuid.uuid4())                
-
-                for chunk in response.iter_bytes(chunk_size):                                                                                                                          
-                    input_tokens_count = 0
-                    generated_tokens_count = 0
-                    ray.get(server.add_item.remote(request_id[0], 
-                                                    StreamOutputs(outputs=[SingleOutput(text=chunk,metadata=SingleOutputMeta(
-                                                        input_tokens_count=input_tokens_count,
-                                                        generated_tokens_count=generated_tokens_count,
-                                                    ))])
-                                                    ))                                                   
-            except:
-                traceback.print_exc()            
-            ray.get(server.mark_done.remote(request_id[0]))
-
-        
-        threading.Thread(target=writer,daemon=True).start()            
-                        
-        time_count= 10*100
-        while request_id[0] is None and time_count > 0:
-            time.sleep(0.01)
-            time_count -= 1
-        
-        if request_id[0] is None:
-            raise Exception("Failed to get request id")
-        
-        def write_running():
-            return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
-                    
-        await asyncio.to_thread(write_running)
-        return [("",{"metadata":{"request_id":request_id[0],"stream_server":"BLOCK_VLLM_STREAM_SERVER"}})]    
+    async def text_to_speech(self,stream:bool, ins: str, voice:str,chunk_size:int=None,**kwargs):
+        if stream:
+            server = ray.get_actor("BlockBinaryStreamServer")
+            request_id = [None]
             
+            def writer():
+                try:                                                     
+                    request_id[0] = str(uuid.uuid4())                
+                    with self.client.with_streaming_response.audio.speech.create(
+                                model=self.model,
+                                voice=voice,
+                                input=ins,**kwargs) as response:               
+                        for chunk in response.iter_bytes(chunk_size):                                                                                                                          
+                            input_tokens_count = 0
+                            generated_tokens_count = 0                                               
+                            ray.get(server.add_item.remote(request_id[0], 
+                                                            StreamOutputs(outputs=[SingleOutput(text=chunk,metadata=SingleOutputMeta(
+                                                                input_tokens_count=input_tokens_count,
+                                                                generated_tokens_count=generated_tokens_count,
+                                                            ))])
+                                                            ))                                                   
+                except:
+                    traceback.print_exc()            
+                ray.get(server.mark_done.remote(request_id[0]))
+
+            
+            threading.Thread(target=writer,daemon=True).start()            
+                            
+            time_count= 10*100
+            while request_id[0] is None and time_count > 0:
+                time.sleep(0.01)
+                time_count -= 1
+            
+            if request_id[0] is None:
+                raise Exception("Failed to get request id")
+            
+            def write_running():
+                return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
+                        
+            await asyncio.to_thread(write_running)
+            return [("",{"metadata":{"request_id":request_id[0],"stream_server":"BlockBinaryStreamServer"}})]                   
+    
+        start_time = time.monotonic()
+        with io.BytesIO() as output:
+            with self.client.with_streaming_response.audio.speech.create(
+                    model=self.model,
+                    voice=voice,
+                    input=ins, **kwargs) as response:                
+                for chunk in response.iter_bytes():
+                    output.write(chunk)
+
+            base64_audio = base64.b64encode(output.getvalue()).decode()
+            time_cost = time.monotonic() - start_time        
+            return [(base64_audio,{"metadata":{
+                            "request_id":"",
+                            "input_tokens_count":0,
+                            "generated_tokens_count":0,
+                            "time_cost":time_cost,
+                            "first_token_time":0,
+                            "speed":0,        
+                        }})]                               
 
     def speech_to_text(self, ins: str, **kwargs):
         pass
@@ -178,6 +204,21 @@ class CustomSaasAPI:
         messages = [{"role":message["role"],"content":self.process_input(message["content"])} for message in his] + [{"role": "user", "content": self.process_input(ins)}]
 
         stream = kwargs.get("stream",False)
+        
+        ## content = [
+        ##    "voice": "alloy","input": "Hello, World!",response_format: "mp3"]
+        last_message_content = messages[-1]["content"]
+        if isinstance(last_message,dict) and "input" in last_message_content:
+        ins = last_message_content["input"]
+            voice = last_message_content.get("voice","alloy")
+            response_format = last_message_content.get("response_format","mp3")
+            chunk_size = last_message_content.get("chunk_size",None)            
+            return await self.text_to_speech(stream=stream,
+                                             ins=ins,
+                                             voice=voice,
+                                             chunk_size=chunk_size,
+                                             response_format=response_format)
+
         
         server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
         request_id = [None]

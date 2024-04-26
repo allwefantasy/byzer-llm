@@ -7,7 +7,7 @@ from typing import List, Dict, Any, Union
 import ray
 from anthropic import Anthropic
 
-from byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta
+from byzerllm.utils.types import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta
 
 
 class CustomSaasAPI:

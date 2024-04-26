@@ -7,7 +7,8 @@ from typing import AsyncGenerator, Optional
 
 from fastapi import Request
 
-from byzerllm.utils import SingleOutputMeta, random_uuid
+from byzerllm.utils.types import SingleOutputMeta
+from byzerllm.utils import random_uuid
 from byzerllm.utils.client import ByzerLLM, LLMResponse
 from byzerllm.utils.client.entrypoints.openai.protocol import (
     CompletionRequest,

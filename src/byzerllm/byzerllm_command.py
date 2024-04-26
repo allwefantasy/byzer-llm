@@ -92,7 +92,7 @@ def main():
         byzerllm.connect_cluster(address=args.ray_address)
 
         llm = ByzerLLM()
-        llm.undeploy(args.model)
+        llm.undeploy(args.model,force=args.force)
 
         print(locales["undeploy_success"][lang].format(args.model))
         

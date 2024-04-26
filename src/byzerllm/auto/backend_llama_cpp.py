@@ -11,7 +11,7 @@ import inspect
 
 from llama_cpp import Llama
 import llama_cpp
-from byzerllm.utils import ( 
+from byzerllm.utils.types import ( 
     BlockVLLMStreamServer,   
     StreamOutputs,
     SingleOutput,

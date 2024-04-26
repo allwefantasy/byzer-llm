@@ -36,6 +36,7 @@ def get_command_args():
     deploy_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
     deploy_cmd.add_argument('--model', required=True, help=locales["help_udf_name"][lang])    
     deploy_cmd.add_argument("--file", default=None, required=False, help="")
+    deploy_cmd.add_argument("--force",action='store_true', help="")
 
     # Query 子命令
     query_cmd = subparsers.add_parser('query', help=locales["help_query"][lang])

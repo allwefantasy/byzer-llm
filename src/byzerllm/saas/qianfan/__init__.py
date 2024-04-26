@@ -7,7 +7,7 @@ import ray
 
 from byzerllm.utils import random_uuid
 from byzerllm.log import init_logger
-from byzerllm.utils import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta
+from byzerllm.utils.types import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta
 
 logger = init_logger(__name__)
 

@@ -422,17 +422,18 @@ class ByzerLLM:
         from byzerllm.utils.fulltune.pretrain.convert_to_transformers import convert
         convert(train_params,self.conf()) 
 
-    def undeploy(self,udf_name:str):  
+    def undeploy(self,udf_name:str,force:bool=False):  
         import time                        
         try:
-            model = ray.get_actor(udf_name)
-            try:
-                meta = self.get_meta(model=udf_name)
-                if meta.get("backend","") == "ray/vllm":
-                    if "engine_placement_group_id" in meta:
-                        cancel_placement_group(meta["engine_placement_group_id"])
-            except Exception as inst:
-                pass
+            model = ray.get_actor(udf_name)            
+            if not force:
+                try:
+                    meta = self.get_meta(model=udf_name)
+                    if meta.get("backend","") == "ray/vllm":
+                        if "engine_placement_group_id" in meta:
+                            cancel_placement_group(meta["engine_placement_group_id"])
+                except Exception as inst:
+                    pass
             ray.kill(model)  
             if udf_name in self.meta_cache:
                 del self.meta_cache[udf_name]                          
@@ -1034,8 +1035,8 @@ class ByzerLLM:
 
         v = self.chat_oai(conversations,model=model,role_mapping = role_mapping,llm_config={**llm_config,**{"generation.stream":True}})       
         request_id = v[0].metadata["request_id"]
-        stream_server = v[0].metadata.get("stream_server","VLLM_STREAM_SERVER")
-        server = ray.get_actor(stream_server)                        
+        stream_server_type = v[0].metadata.get("stream_server", "VLLM_STREAM_SERVER")
+        server = ray.get_actor(stream_server_type)                        
 
         pre_generated_text = None
         while True:                 
@@ -1046,19 +1047,23 @@ class ByzerLLM:
             
             if final_output is None:
                 break
-            
-            text_outputs = final_output.outputs
-            clean_func = self.mapping_clean_func.get(model,lambda s: s)
-            generated_text = text_outputs[0].text
-            if pre_generated_text is not None and generated_text == pre_generated_text:
-                continue
-            
-            if delta_mode and pre_generated_text is not None:
-                s = generated_text[len(pre_generated_text):]
-            else:
-                s = generated_text    
-            pre_generated_text=generated_text
-            yield (clean_func(s),text_outputs[0].metadata)
+
+            if stream_server_type == "BlockBinaryStreamServer":                
+                binary_data = final_output.outputs[0].text 
+                yield (binary_data, final_output.outputs[0].metadata)
+            else:            
+                text_outputs = final_output.outputs
+                clean_func = self.mapping_clean_func.get(model,lambda s: s)
+                generated_text = text_outputs[0].text
+                if pre_generated_text is not None and generated_text == pre_generated_text:
+                    continue
+                
+                if delta_mode and pre_generated_text is not None:
+                    s = generated_text[len(pre_generated_text):]
+                else:
+                    s = generated_text    
+                pre_generated_text=generated_text
+                yield (clean_func(s),text_outputs[0].metadata)
 
     async def async_stream_chat_oai(self,conversations,
                                     role_mapping=None,
@@ -1075,8 +1080,8 @@ class ByzerLLM:
 
         v = self.chat_oai(conversations,model=model,role_mapping=role_mapping,llm_config={**llm_config,**{"generation.stream":True}})       
         request_id = v[0].metadata["request_id"]
-        stream_server = v[0].metadata.get("stream_server","VLLM_STREAM_SERVER")
-        server = ray.get_actor(stream_server)
+        stream_server_type = v[0].metadata.get("stream_server", "VLLM_STREAM_SERVER")
+        server = ray.get_actor(stream_server_type)
 
         pre_generated_text = None
         while True:                 
@@ -1088,18 +1093,23 @@ class ByzerLLM:
             if final_output is None:
                 break
             
-            text_outputs = [output for output in final_output.outputs]
-            clean_func = self.mapping_clean_func.get(model,lambda s: s)
-            generated_text = text_outputs[0].text
-            if pre_generated_text is not None and generated_text == pre_generated_text:
-                continue
-
-            if delta_mode and pre_generated_text is not None:                
-                s = generated_text[len(pre_generated_text):]
-            else:
-                s = generated_text
-            pre_generated_text=generated_text            
-            yield (clean_func(s),text_outputs[0].metadata)   
+            if stream_server_type == "BlockBinaryStreamServer":                
+                binary_data = final_output.outputs[0].text 
+                yield (binary_data, final_output.outputs[0].metadata)
+            else:            
+                text_outputs = final_output.outputs
+                clean_func = self.mapping_clean_func.get(model,lambda s: s)
+                generated_text = text_outputs[0].text
+                if pre_generated_text is not None and generated_text == pre_generated_text:
+                    continue
+                
+                if delta_mode and pre_generated_text is not None:
+                    s = generated_text[len(pre_generated_text):]
+                else:
+                    s = generated_text    
+                pre_generated_text=generated_text
+                yield (clean_func(s),text_outputs[0].metadata)
+                            
 
     def clear_impl_cache(self,model:Optional[str]=None,
                          full_func_name:Optional[str]=None,

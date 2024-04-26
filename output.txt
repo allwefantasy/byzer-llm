@@ -1,301 +1,295 @@
-```python
-##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm_command.py
-import argparse
-import os
+
+下面是一些文件路径以及每个文件对应的源码：
+
+##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/official_openai/__init__.py
+import time
+from typing import List, Tuple, Dict,Any,Union
+import httpx
+from openai import OpenAI
+import base64
+import os  
+import json
 import ray
-import shlex
-import jinja2
-import yaml
-from byzerllm.utils.client import ByzerLLM, InferBackend
-from byzerllm.apps.command import StorageSubCommand
-from byzerllm.utils.client.entrypoints.openai.serve import serve, ServerArgs
-import byzerllm
-from byzerllm.lang import locales, lang 
-from byzerllm.command_args import StoreNestedDict, get_command_args
+from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer
+import threading
+import asyncio
+import traceback
+import uuid
 
-def main():
-    args = get_command_args()
+class CustomSaasAPI:    
 
-    if args.file:
-        with open(args.file, "r") as f:
-            config = yaml.safe_load(f)
-            for key, value in config.items():
-                if key != "file":  # 排除 --file 参数本身   
-                    ## key: ENV {{VARIABLE_NAME}}
-                    if isinstance(value, str) and value.startswith("ENV"):  
-                        template = jinja2.Template(value.removeprefix("ENV").strip())                  
-                        value = template.render(os.environ)                        
-                    setattr(args, key, value)
+    def __init__(self, infer_params: Dict[str, str]) -> None:
+             
+        self.api_key = infer_params["saas.api_key"]        
+        self.model = infer_params.get("saas.model","gpt-3.5-turbo-1106")
+        
+        other_params = {}
+
+        if "saas.api_base" in infer_params:
+            other_params["api_base"] = infer_params["saas.api_base"]
+        
+        if "saas.api_version" in infer_params:
+            other_params["api_version"] = infer_params["saas.api_version"]
+        
+        if "saas.api_type" in infer_params:
+            other_params["api_type"] = infer_params["saas.api_type"]
+
+        if "saas.base_url" in infer_params:
+            other_params["base_url"] = infer_params["saas.base_url"]    
+
+        if "saas.timeout" in infer_params:
+            other_params["timeout"] = float(infer_params["saas.timeout"]    )
+        
+        self.max_retries = int(infer_params.get("saas.max_retries",10))
+
+        self.meta = {
+            "model_deploy_type": "saas",
+            "backend":"saas",
+            "support_stream": True,
+            "model_name": self.model,
+
+        }
+
+        self.meta["embedding_mode"] = "embedding"  in  self.model.lower()
+                    
+        self.proxies = infer_params.get("saas.proxies", None)
+        self.local_address = infer_params.get("saas.local_address", "0.0.0.0")
+                
+        
+        if not self.proxies:
+            self.client = OpenAI(**other_params,api_key=self.api_key)  
+        else:
+            self.client = OpenAI(**other_params,api_key=self.api_key,http_client=httpx.Client(
+                proxies=self.proxies,
+                transport=httpx.HTTPTransport(local_address=self.local_address)))         
     
-    print("Command Line Arguments:")
-    print("-" * 50)
-    for arg, value in vars(args).items():        
-        if arg == "infer_params" and isinstance(value, dict) and "saas.api_key" in value:  
-            import copy
-            new_value = copy.deepcopy(value)
-            new_value["saas.api_key"] = "******"
-            print(f"{arg:20}: {new_value}")
-        else:     
-            print(f"{arg:20}: {value}")
-    print("-" * 50)    
-
-    if args.command == 'deploy':
-        byzerllm.connect_cluster(address=args.ray_address)
-        llm = ByzerLLM()
-        if llm.is_model_exist(args.model):
-            print(locales["already_deployed"][lang].format(args.model))
-            return
-        
-        llm.setup_gpus_per_worker(args.gpus_per_worker).setup_cpus_per_worker(args.cpus_per_worker).setup_num_workers(args.num_workers)
-        if not args.pretrained_model_type.startswith("saas"):
-            if args.infer_backend == "vllm":
-                llm.setup_infer_backend(InferBackend.VLLM)
-            elif args.infer_backend == "llama_cpp": 
-                llm.setup_infer_backend(InferBackend.LLAMA_CPP)
-            elif args.infer_backend == "transformers":
-                llm.setup_infer_backend(InferBackend.Transformers)
-            elif args.infer_backend == "deepspeed":    
-                llm.setup_infer_backend(InferBackend.DeepSpeed)
-            else:
-                raise ValueError("Invalid infer_backend")
-        
-        llm.deploy(model_path=args.model_path,
-                pretrained_model_type=args.pretrained_model_type,
-                udf_name=args.model,
-                infer_params=args.infer_params or {})
-
-        print(locales["deploy_success"][lang].format(args.model))
-
-    elif args.command == 'query':
-        byzerllm.connect_cluster(address=args.ray_address)
-
-        llm_client = ByzerLLM()
-        llm_client.setup_template(args.model, args.template)
-
-        resp = llm_client.chat_oai(model=args.model, conversations=[{
-            "role": "user",
-            "content": args.query,
-        }])
-        print(resp[0].output,flush=True)
-
-    elif args.command == 'undeploy':
-        byzerllm.connect_cluster(address=args.ray_address)
-
-        llm = ByzerLLM()
-        llm.undeploy(args.model)
-
-        print(locales["undeploy_success"][lang].format(args.model))
-        
-    elif args.command == 'storage':
-        if args.storage_command == "install":
-            StorageSubCommand.install(args)
-        elif args.storage_command == "start":
-            StorageSubCommand.start(args) 
-        elif args.storage_command == "stop":
-            StorageSubCommand.stop(args)
-        elif args.storage_command == "export":
-            StorageSubCommand.export(args)
+        try:
+            ray.get_actor("BLOCK_VLLM_STREAM_SERVER") 
+        except ValueError:  
+            try:          
+                ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()
+            except Exception as e:
+                pass    
+        try:
+            ray.get_actor("BlockBinaryStreamServer")    
+        except ValueError:  
+            try:          
+                ray.remote(BlockBinaryStreamServer).options(name="BlockBinaryStreamServer",lifetime="detached",max_concurrency=1000).remote()
+            except Exception as e:
+                pass        
     
-    elif args.command == 'serve':
-        byzerllm.connect_cluster(address=args.ray_address) 
-        llm_client = ByzerLLM()
-        if args.served_model_name:
-            llm_client.setup_template(args.served_model_name, args.template)                 
-        server_args = ServerArgs(**{arg: getattr(args, arg) for arg in vars(ServerArgs())})                      
-        serve(llm=llm_client, args=server_args)            
-```
+    # saas/proprietary
+    def get_meta(self):
+        return [self.meta]
 
-```python
-##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/lang.py
-import os
+    def process_input(self, ins: Union[str, List[Dict[str, Any]]]):
+        
+        if isinstance(ins, list):
+            return ins
+        
+        content = []
+        try:
+            ins_json = json.loads(ins)
+        except:            
+            return ins
+        
+        content = []
+        for item in ins_json:
+            if "image" in item or "image_url" in item:
+                image_data = item.get("image",item.get("image_url",""))
+                ## "data:image/jpeg;base64," 
+                if not image_data.startswith("data:"):
+                    image_data = "data:image/jpeg;base64," + image_data                                                                                
+                content.append({"image_url": {"url":image_data},"type": "image_url",})
+            elif "text" in item:
+                text_data = item["text"]
+                content.append({"text": text_data,"type":"text"})
+        if not content:
+            return ins
+        
+        return content   
+    
+    def embed_query(self, ins: str, **kwargs):                     
+        resp = self.client.embeddings.create(input = [ins], model=self.model)
+        embedding = resp.data[0].embedding
+        usage = resp.usage
+        return (embedding,{"metadata":{
+                "input_tokens_count":usage.prompt_tokens,
+                "generated_tokens_count":0}})
+    
+    async def text_to_speech(self,stream:bool, ins: str, voice:str,chunk_size:int=None,**kwargs):
+        if stream:
+            server = ray.get_actor("BlockBinaryStreamServer")
+            request_id = [None]
+            
+            def writer():
+                try:                                                     
+                    request_id[0] = str(uuid.uuid4())                
+                    with self.client.with_streaming_response.audio.speech.create(
+                                model=self.model,
+                                voice=voice,
+                                input=ins,**kwargs) as response:               
+                        for chunk in response.iter_bytes(chunk_size):                                                                                                                          
+                            input_tokens_count = 0
+                            generated_tokens_count = 0                                               
+                            ray.get(server.add_item.remote(request_id[0], 
+                                                            StreamOutputs(outputs=[SingleOutput(text=chunk,metadata=SingleOutputMeta(
+                                                                input_tokens_count=input_tokens_count,
+                                                                generated_tokens_count=generated_tokens_count,
+                                                            ))])
+                                                            ))                                                   
+                except:
+                    traceback.print_exc()            
+                ray.get(server.mark_done.remote(request_id[0]))
 
-# 命令和参数的中英文映射字典
-locales = {
-    "desc": {
-        "en": "Byzer-LLM command line tool",
-        "zh": "Byzer-LLM 命令行工具"
-    },
-    "help_deploy": {
-        "en": "Deploy a model",
-        "zh": "部署一个模型"
-    },
-    "help_ray_address": {
-        "en": "Ray cluster address",
-        "zh": "Ray 集群地址"
-    },
-    "help_num_workers": {
-        "en": "Number of model workers",
-        "zh": "模型工作节点数"
-    },
-    "help_gpus_per_worker": {
-        "en": "Number of GPUs per worker",
-        "zh": "每个工作节点的 GPU 数"
-    },
-     "help_cpus_per_worker": {
-        "en": "Number of CPUs per worker",
-        "zh": "每个工作节点的 CPU 数"
-    },
-    "help_model_path": {
-        "en": "Local model directory path",
-        "zh": "本地模型目录路径"
-    },
-    "help_pretrained_model_type": {
-        "en": "Pretrained model type",
-        "zh": "预训练模型类型"
-    },
-    "help_udf_name": {
-        "en": "Deployed model name",
-        "zh": "部署后的模型名称"
-    },
-    "help_infer_params": {
-        "en": "Model inference parameters",
-        "zh": "模型推理参数"
-    },
-    "help_infer_backend": {
-        "en": "Model inferrence Backend",
-        "zh": "模型推理后端"
-    },
-    "help_query": {
-        "en": "Query a deployed model",
-        "zh": "查询一个已部署的模型"
-    },
-    "help_query_model": {
-        "en": "Deployed model UDF name",
-        "zh": "已部署的模型 UDF 名称"
-    },
-    "help_query_text": {
-        "en": "User query/prompt",
-        "zh": "用户查询/提示"
-    },
-    "help_template": {
-        "en": "Chat template",
-        "zh": "对话模板"
-    },
-    "deploy_success": {
-        "en": "Model {0} deployed successfully",
-        "zh": "模型 {0} 部署成功"
-    },
-    "undeploy_success": {
-        "en": "Model {0} undeployed successfully",
-        "zh": "模型 {0} 卸载成功"
-    },
-    "already_deployed": {
-        "en": "Model {0} already deployed",
-        "zh": "模型 {0} 已经部署过了"
-    }
-}
+            
+            threading.Thread(target=writer,daemon=True).start()            
+                            
+            time_count= 10*100
+            while request_id[0] is None and time_count > 0:
+                time.sleep(0.01)
+                time_count -= 1
+            
+            if request_id[0] is None:
+                raise Exception("Failed to get request id")
+            
+            def write_running():
+                return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
+                        
+            await asyncio.to_thread(write_running)
+            return [("",{"metadata":{"request_id":request_id[0],"stream_server":"BlockBinaryStreamServer"}})]                   
 
-# 获取系统语言环境
-lang = os.getenv("LANG", "en").split(".")[0]
-if lang.startswith("zh"):
-    lang = "zh"
-else:
-    lang = "en"
-```
 
-```python
-##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/command_args.py
-import argparse
+            
 
-class StoreNestedDict(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        d = {}
-        for kv in values:
+    def speech_to_text(self, ins: str, **kwargs):
+        pass
+
+    def image_to_text(self, ins: str, **kwargs):
+        pass
+
+    def text_to_image(self, ins: str, **kwargs):
+        pass
+
+    def text_to_text(self, ins: str, **kwargs):
+        pass
+
+    async def async_stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
+                    max_length: int = 4096,
+                    top_p: float = 0.7,
+                    temperature: float = 0.9, **kwargs):
+
+        model = self.model        
+
+        if "model" in kwargs:
+            model = kwargs["model"]                  
+
+        messages = [{"role":message["role"],"content":self.process_input(message["content"])} for message in his] + [{"role": "user", "content": self.process_input(ins)}]
+
+        stream = kwargs.get("stream",False)
+        
+        server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+        request_id = [None]
+        
+        def writer():
             try:
-                for clean_kv in shlex.split(kv):
-                    key, value =clean_kv.split("=", 1)
-                    d[key]=value
-            except ValueError:
-                raise argparse.ArgumentError(self, f"Invalid argument format: {kv}")
-        setattr(namespace, self.dest, d)  
+                r = ""       
+                response = self.client.chat.completions.create(
+                                    messages=messages,
+                                    model=model,
+                                    stream=True, 
+                                    max_tokens=max_length,
+                                    temperature=temperature,
+                                    top_p=top_p                                                                        
+                                )    
+                # input_tokens_count = 0     
+                # generated_tokens_count = 0
+                
+                request_id[0] = str(uuid.uuid4())                
 
-def get_command_args():
-    parser = argparse.ArgumentParser(description=locales["desc"][lang])
-    subparsers = parser.add_subparsers(dest='command')
+                for chunk in response:                                                              
+                    content = chunk.choices[0].delta.content or ""
+                    r += content        
+                    if hasattr(chunk,"usage"):
+                        input_tokens_count = chunk.usage.prompt_tokens
+                        generated_tokens_count = chunk.usage.completion_tokens
+                    else:
+                        input_tokens_count = 0
+                        generated_tokens_count = 0
+                    ray.get(server.add_item.remote(request_id[0], 
+                                                    StreamOutputs(outputs=[SingleOutput(text=r,metadata=SingleOutputMeta(
+                                                        input_tokens_count=input_tokens_count,
+                                                        generated_tokens_count=generated_tokens_count,
+                                                    ))])
+                                                    ))                                                   
+            except:
+                traceback.print_exc()            
+            ray.get(server.mark_done.remote(request_id[0]))
 
-    # Deploy 子命令
-    deploy_cmd = subparsers.add_parser('deploy', help=locales["help_deploy"][lang])
-    deploy_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
-    deploy_cmd.add_argument('--num_workers', type=int, default=1, help=locales["help_num_workers"][lang])
-    deploy_cmd.add_argument('--gpus_per_worker', type=float, default=0, help=locales["help_gpus_per_worker"][lang])
-    deploy_cmd.add_argument('--cpus_per_worker', type=float, default=0.01, help=locales["help_cpus_per_worker"][lang])
-    deploy_cmd.add_argument('--model_path', default="",required=False, help=locales["help_model_path"][lang])
-    deploy_cmd.add_argument('--pretrained_model_type', default="custom/llama2", help=locales["help_pretrained_model_type"][lang])
-    deploy_cmd.add_argument('--model', required=True, help=locales["help_udf_name"][lang])    
-    deploy_cmd.add_argument('--infer_backend', default="vllm", help=locales["help_infer_backend"][lang])
-    deploy_cmd.add_argument('--infer_params', nargs='+', action=StoreNestedDict, help=locales["help_infer_params"][lang])
-    deploy_cmd.add_argument("--file", default=None, required=False, help="")
-    
-    # Undeploy 子命令
-    deploy_cmd = subparsers.add_parser('undeploy', help=locales["help_deploy"][lang])
-    deploy_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
-    deploy_cmd.add_argument('--model', required=True, help=locales["help_udf_name"][lang])    
-    deploy_cmd.add_argument("--file", default=None, required=False, help="")
+        if stream:
+            threading.Thread(target=writer,daemon=True).start()            
+                            
+            time_count= 10*100
+            while request_id[0] is None and time_count > 0:
+                time.sleep(0.01)
+                time_count -= 1
+            
+            if request_id[0] is None:
+                raise Exception("Failed to get request id")
+            
+            def write_running():
+                return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
+                        
+            await asyncio.to_thread(write_running)
+            return [("",{"metadata":{"request_id":request_id[0],"stream_server":"BLOCK_VLLM_STREAM_SERVER"}})]
+        else:
+            try:
+                start_time = time.monotonic()
+                response = self.client.chat.completions.create(
+                                    messages=messages,
+                                    model=model,
+                                    max_tokens=max_length,
+                                    temperature=temperature,
+                                    top_p=top_p                            
+                                )
 
-    # Query 子命令
-    query_cmd = subparsers.add_parser('query', help=locales["help_query"][lang])
-    query_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
-    query_cmd.add_argument('--model', required=True, help=locales["help_query_model"][lang])
-    query_cmd.add_argument('--query', required=True, help=locales["help_query_text"][lang])
-    query_cmd.add_argument('--template', default="auto", help=locales["help_template"][lang])
-    query_cmd.add_argument("--file", default=None, required=False, help="")
-
-    # Storage 子命令
-    storage_cmd = subparsers.add_parser('storage', help='Manage Byzer Storage')    
-    storage_cmd_subparsers = storage_cmd.add_subparsers(dest='storage_command')
-    
-    # install 子命令
-    storage_install_cmd = storage_cmd_subparsers.add_parser('install', help='Install Byzer Storage')
-    storage_install_cmd.add_argument("--file", default=None, required=False, help="")
-    storage_install_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
-    storage_install_cmd.add_argument("--version", default="0.1.11", required=False, help="")
-    storage_install_cmd.add_argument('--cluster', default="byzerai_store", help="")
-    storage_install_cmd.add_argument('--base_dir', default="", help="")
-    
-    # start 子命令
-    storage_start_command = storage_cmd_subparsers.add_parser('start', help='Start Byzer Storage')
-    storage_start_command.add_argument("--file", default=None, required=False, help="")
-    storage_start_command.add_argument("--version", default="0.1.11", required=False, help="")
-    storage_start_command.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
-    storage_start_command.add_argument('--cluster', default="byzerai_store", help="")
-    storage_start_command.add_argument('--base_dir', default="", help="")
+                generated_text = response.choices[0].message.content
+                generated_tokens_count = response.usage.completion_tokens
+                input_tokens_count = response.usage.prompt_tokens
+                time_cost = time.monotonic() - start_time
+                return [(generated_text,{"metadata":{
+                            "request_id":response.id,
+                            "input_tokens_count":input_tokens_count,
+                            "generated_tokens_count":generated_tokens_count,
+                            "time_cost":time_cost,
+                            "first_token_time":0,
+                            "speed":float(generated_tokens_count)/time_cost,        
+                        }})]
+            except Exception as e:
+                print(f"Error: {e}")
+                raise e
 
 
-    # stop 子命令
-    storage_stop_command = storage_cmd_subparsers.add_parser('stop', help='Stop Byzer Storage')
-    storage_stop_command.add_argument("--file", default=None, required=False, help="")
-    storage_stop_command.add_argument("--version", default="0.1.11", required=False, help="")
-    storage_stop_command.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
-    storage_stop_command.add_argument('--cluster', default="byzerai_store", help="")
-    storage_stop_command.add_argument('--base_dir', default="", help="")
-    
-    # export 子命令
-    storage_export_command = storage_cmd_subparsers.add_parser('export', help='Export Byzer Storage Information')    
-    storage_export_command.add_argument("--file", default=None, required=False, help="")
-    storage_export_command.add_argument("--version", default="0.1.11", required=False, help="")
-    storage_export_command.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
-    storage_export_command.add_argument('--cluster', default="byzerai_store", help="")
-    storage_export_command.add_argument('--base_dir', default="", help="")
-    
-    # Serve 子命令
-    serve_cmd = subparsers.add_parser('serve', help='Serve deployed models with OpenAI compatible APIs')    
-    serve_cmd.add_argument("--file", default="", help="")        
-    serve_cmd.add_argument("--ray_address", default="auto", help="")    
-    serve_cmd.add_argument("--host", default="", help="")
-    serve_cmd.add_argument("--port", type=int, default=8000, help="")
-    serve_cmd.add_argument("--uvicorn_log_level", default="info", help="")
-    serve_cmd.add_argument("--allow_credentials", action='store_true', help="")
-    serve_cmd.add_argument("--allowed_origins", default=["*"], help="")
-    serve_cmd.add_argument("--allowed_methods", default=["*"], help="")
-    serve_cmd.add_argument("--allowed_headers", default=["*"], help="")
-    serve_cmd.add_argument("--api_key", default="", help="")
-    serve_cmd.add_argument("--served_model_name", default="", help="")
-    serve_cmd.add_argument("--prompt_template", default="", help="")
-    serve_cmd.add_argument("--ssl_keyfile", default="", help="")
-    serve_cmd.add_argument("--ssl_certfile", default="", help="")
-    serve_cmd.add_argument("--response_role", default="assistant", help="")
-    serve_cmd.add_argument('--template', default="auto", help=locales["help_template"][lang])
 
-    return parser.parse_args()
+
+下面是用户的需求：
+
+src/byzerllm/saas/official_openai/__init__.py 中 text_to_speech 方法增加 stream=False 支持。将其写入到一个 StringIO
+中，然后转化为 base64 返回
+
+
+你生成的代码要符合这个格式：
+
+```{lang}
+##File: {FILE_PATH}
+{CODE}
+```    
+
+```{lang}
+##File: {FILE_PATH}
+{CODE}
 ```
-__完成__
+
+其中，{lang}是代码的语言，{CODE}是代码的内容, {FILE_PATH} 是文件的路径，他们都在代码块中，请严格按上面的格式进行内容生成。                
+每次生成一个文件的代码，然后询问我是否继续，当我回复继续，继续生成下一个文件的代码。当没有后续任务时，请回复 "__完成__"。
+请确保每份代码的完整性，而不要只生成修改部分。

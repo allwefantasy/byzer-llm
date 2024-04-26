@@ -4,7 +4,7 @@ import time
 import traceback
 from typing import List, Tuple, Dict,Any
 import ray
-from byzerllm.utils import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
+from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
 import threading
 import asyncio
 

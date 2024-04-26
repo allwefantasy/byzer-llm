@@ -6,7 +6,7 @@ from fastapi import Request
 from typing import AsyncGenerator, Union, Optional
 
 from byzerllm.log import init_logger
-from byzerllm.utils import SingleOutputMeta
+from byzerllm.utils.types import SingleOutputMeta
 from byzerllm.utils.client.entrypoints.openai.protocol import (
     ChatCompletionRequest,
     ChatCompletionResponse,

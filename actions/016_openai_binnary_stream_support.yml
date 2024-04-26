@@ -2,23 +2,22 @@ source_dir: /Users/allwefantasy/projects/byzer-llm
 target_file: /Users/allwefantasy/projects/byzer-llm/output.txt
 
 model: gpt3_5_chat
+model_max_input_length: 30000
 enable_multi_round_generate: true
-index_model: haiku_chat
 
 skip_build_index: false
+index_model: haiku_chat
+index_model_max_input_length: 30000
+anti_quota_limit: 0
 index_filter_level: 0
 
 execute: true
 auto_merge: true
 human_as_model: true
 
-query: >
-   在 src/byzerllm/utils/__init__.py 新增加一个 BlockBinaryStreamServer , 该类self.cache[request_id] 为一个queue 结构。
-   你需要实现类似 BlockVLLMStreamServer 的所有函数。
-
-   在 src/byzerllm/saas/official_openai/__init__.py 中，
-   初始化的时候新增 BlockBinaryStreamServer 的初始化。
-   在 text_to_speech 中，调用 BlockBinaryStreamServer。
+query: |
+   src/byzerllm/saas/official_openai/__init__.py 中 text_to_speech 方法增加 stream=False 支持。将其写入到一个 StringIO
+   中，然后转化为 base64 返回
 
 
 
