@@ -292,7 +292,7 @@ class Templates:
                         "system_msg":"You are a helpful assistant. Think it over and answer the user question correctly.",
                         "system_msg_func":sys_format
                         },
-                        generation_configexecute_response_format={},                  
+                        generation_config={},                  
                         clean_func=clean_func)   
 
     @staticmethod

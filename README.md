@@ -359,6 +359,30 @@ v = llm.chat_oai(model="llama2_chat",conversations=[{
 print(v[0].output)
 ```
 
+Or 
+
+
+```python
+from dataclasses import asdict
+import json
+import base64
+
+import byzerllm
+from byzerllm.utils.client.types import Templates
+
+byzerllm.connect_cluster(address="ray://CLUSTER_IP:10001")
+
+model_name = "zephyr_7b_chat"
+llm = byzerllm.ByzerLLM()
+llm.setup_template(model=model_name,template=Templates.default())
+llm.setup_default_model_name(model_name)
+
+t = llm.chat_oai(conversations=[{
+    "role":"user",
+    "content":"你好"}])
+print(t[0].output)
+```
+
 
 ## Embedding Model
 
