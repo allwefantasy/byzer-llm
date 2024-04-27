@@ -1788,5 +1788,10 @@
     "symbols": "函数：__init__,process_input,embed_query,text_to_speech,speech_to_text,image_to_text,text_to_image,text_to_text,async_stream_chat\n类：CustomSaasAPI\n变量：\n导入语句：import time,from typing import List, Tuple, Dict,Any,Union,import requests,import base64,import io,import json,import ray,from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer,import threading,import asyncio,import traceback,import uuid",
     "last_modified": 1714184105.7227736,
     "md5": "700375a9abe1e52af754a251c999a6c6"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/azure/__init__.py": {
+    "symbols": "函数：__init__, get_meta, process_input, text_to_speech, speech_to_text, image_to_text, text_to_image, text_to_text, async_stream_chat\n类：CustomSaasAPI\n变量：\n导入语句：import time,from typing import List, Tuple, Dict, Any, Union,import requests,import base64,import io,import json,import ray,from byzerllm.utils.types import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, BlockBinaryStreamServer,import threading,import asyncio,import traceback,import uuid,import os",
+    "last_modified": 1714185343.0339122,
+    "md5": "6ae9df3b54d18629e94bd0a485fc7e8c"
   }
 }

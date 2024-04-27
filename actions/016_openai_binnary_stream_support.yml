@@ -1,6 +1,6 @@
 source_dir: /Users/allwefantasy/projects/byzer-llm
 target_file: /Users/allwefantasy/projects/byzer-llm/output.txt
-urls: /tmp/tt1.txt
+urls: https://raw.githubusercontent.com/Azure-Samples/cognitive-services-speech-sdk/master/samples/python/console/speech_synthesis_sample.py
 
 model: gpt3_5_chat
 model_max_input_length: 30000
@@ -20,10 +20,9 @@ query: |
    参考 src/byzerllm/saas/volcengine/__init__.py 
    新增一个文件 src/byzerllm/saas/azure/__init__.py ,
    
-   你需要参考 HTTP接口文档 实现 CustomSaasAPI 类的所有的方法：
-   1. 你无法使用 OpenAI 的 SDK，你需要使用 requests 库
-   2. 你只需要实现 text_to_speech 方法，并且在 async_stream_chat 中调用
-   3. 实现 text_to_speech 入参需要和 volcengine/__init__.py 中保持一致，内部实现参考文档内示例代码。
+   你需要参考 HTTP接口文档 实现 CustomSaasAPI 类的所有的方法：   
+   1. 你只需要实现 text_to_speech 方法，并且在 async_stream_chat 中调用
+   2. 实现 text_to_speech 入参需要和 volcengine/__init__.py 中保持一致，内部实现speech_synthesis_sample内示例代码。
    
   
 
