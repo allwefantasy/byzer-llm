@@ -1,6 +1,6 @@
 source_dir: /Users/allwefantasy/projects/byzer-llm
 target_file: /Users/allwefantasy/projects/byzer-llm/output.txt
-urls: /Users/allwefantasy/Downloads/tts_http_demo.py,/tmp/tt1.txt
+urls: /tmp/tt1.txt
 
 model: gpt3_5_chat
 model_max_input_length: 30000
@@ -17,13 +17,13 @@ auto_merge: true
 human_as_model: true
 
 query: |
-   参考 src/byzerllm/saas/official_openai/__init__.py 
-   新增一个文件 src/byzerllm/saas/volcengine/__init__.py ,
+   参考 src/byzerllm/saas/volcengine/__init__.py 
+   新增一个文件 src/byzerllm/saas/azure/__init__.py ,
    
-   你需要参考 HTTP接口文档 实现 CustomSaasAPI 类除embed_query之外所有的方法：
+   你需要参考 HTTP接口文档 实现 CustomSaasAPI 类的所有的方法：
    1. 你无法使用 OpenAI 的 SDK，你需要使用 requests 库
    2. 你只需要实现 text_to_speech 方法，并且在 async_stream_chat 中调用
-   3. 实现 text_to_speech 入参需要和 official_openai/__init__.py 中保持一致，内部实现参考文档以及示例代码。
+   3. 实现 text_to_speech 入参需要和 volcengine/__init__.py 中保持一致，内部实现参考文档内示例代码。
    
   
 

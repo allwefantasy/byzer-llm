@@ -1783,5 +1783,10 @@
     "symbols": "函数：auto_implement_function_template, if_main\n变量：appid, access_token, cluster, voice_type, host, api_url, header, request_json\n类：\n导入语句：import base64,import json,import uuid,import requests",
     "last_modified": 1713056472.1889791,
     "md5": "f6008aaa1bb307f59efb6987a9c3734b"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/volcengine/__init__.py": {
+    "symbols": "函数：__init__,process_input,embed_query,text_to_speech,speech_to_text,image_to_text,text_to_image,text_to_text,async_stream_chat\n类：CustomSaasAPI\n变量：\n导入语句：import time,from typing import List, Tuple, Dict,Any,Union,import requests,import base64,import io,import json,import ray,from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer,import threading,import asyncio,import traceback,import uuid",
+    "last_modified": 1714184105.7227736,
+    "md5": "700375a9abe1e52af754a251c999a6c6"
   }
 }
