@@ -21,7 +21,9 @@ class CustomSaasAPI:
         
         self.app_id = infer_params.get("saas.app_id","")            
         
-        self.api_base = infer_params.get("saas.api_base", "https://openspeech.bytedance.com")
+        self.base_url = infer_params.get("saas.base_url", "https://openspeech.bytedance.com")
+        if self.base_url.endswith("/"):
+            self.base_url = self.base_url[:-1]
 
         self.max_retries = int(infer_params.get("saas.max_retries",10))
 
@@ -121,7 +123,7 @@ class CustomSaasAPI:
                 request_json["user"]["uid"] = request_id[0]
                 request_json["request"]["reqid"] = request_id[0]
                 try:                                                                         
-                    response = requests.post(f"{self.api_base}/api/v1/tts", json=request_json, headers=header)
+                    response = requests.post(f"{self.base_url}/api/v1/tts", json=request_json, headers=header)
                     if "data" in response.json():
                         data = response.json()["data"]
                         chunk = base64.b64decode(data)
@@ -156,7 +158,7 @@ class CustomSaasAPI:
         request_id[0] = str(uuid.uuid4())
         request_json["user"]["uid"] = request_id[0]
         request_json["request"]["reqid"] = request_id[0]                          
-        response = requests.post(f"{self.api_base}/api/v1/tts", json=request_json, headers=header)
+        response = requests.post(f"{self.base_url}/api/v1/tts", json=request_json, headers=header)
         if "data" in response.json():
             data = response.json()["data"] 
         else: 
