@@ -2355,6 +2355,8 @@ with open("voice.mp3","ab") as f:
         f.write(s[0])
 ```
 
+Voice List: https://www.volcengine.com/docs/6561/97465
+
 
 
 ### azure_tts
@@ -2369,6 +2371,7 @@ byzerllm deploy --pretrained_model_type saas/azure \
 --infer_params saas.api_key=${MODEL_AZURE_TTS_TOKEN} saas.service_region=eastus \
 --model azure_tts
 ```
+
 
 Python:
 
@@ -2421,6 +2424,11 @@ with open("voice.mp3","ab") as f:
     for s in t:        
         f.write(s[0])
 ```
+
+Language list: https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=stt
+Voice List: https://speech.microsoft.com/portal/voicegallery
+
+
 
 ### openai_tts
 
@@ -2486,6 +2494,8 @@ with open("voice.mp3","ab") as f:
     for s in t:        
         f.write(s[0])
 ```
+
+Voice List: https://platform.openai.com/docs/guides/text-to-speech
 
 
 ---

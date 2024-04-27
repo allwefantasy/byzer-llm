@@ -185,8 +185,30 @@ class CustomSaasAPI:
     def image_to_text(self, ins: str, **kwargs):
         pass
 
-    def text_to_image(self, ins: str, **kwargs):
-        pass
+    def text_to_image(self, stream:bool, input: str,size:str,quality:str,n:int, **kwargs): 
+        if stream:
+            raise Exception("Stream not supported for text to image")
+        start_time = time.monotonic()       
+        response = self.client.images.generate(
+                                    model=self.model,
+                                    prompt=input,
+                                    size=size,
+                                    quality=quality,
+                                    n=1,
+                                    response_format="b64_json",
+                                    **kwargs
+                                    )
+        time_cost = time.monotonic() - start_time
+        base64_image = response.data[0].b64_json
+        return [(base64_image,{"metadata":{
+                            "request_id":"",
+                            "input_tokens_count":0,
+                            "generated_tokens_count":0,
+                            "time_cost":time_cost,
+                            "first_token_time":0,
+                            "speed":0,        
+                        }})]
+
 
     def text_to_text(self, ins: str, **kwargs):
         pass
@@ -208,8 +230,9 @@ class CustomSaasAPI:
         ## content = [
         ##    "voice": "alloy","input": "Hello, World!",response_format: "mp3"]
         last_message = messages[-1]["content"]
-        if isinstance(last_message,dict) and "input" in last_message:
-            voice = last_message.get("voice","alloy")
+        
+        if isinstance(last_message,dict) and "voice" in last_message:
+            voice = last_message["voice"]
             response_format = last_message.get("response_format","mp3")
             chunk_size = last_message.get("chunk_size",None)
             input = last_message["input"]            
@@ -218,6 +241,13 @@ class CustomSaasAPI:
                                              voice=voice,
                                              chunk_size=chunk_size,
                                              response_format=response_format)
+        
+        if isinstance(last_message,dict) and "input" in last_message:
+            input = last_message["input"]
+            size = last_message.get("size","1024x1024")
+            quality = last_message.get("quality","standard")
+            n = last_message.get("n",1)            
+            return await self.text_to_image(stream=stream,input=input,size=size,quality=quality,n=n)        
 
         
         server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
