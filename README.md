@@ -17,7 +17,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 
 *Latest News* 🔥
 
-- [2024/04] Release Byzer-LLM 0.1.73
+- [2024/04] Release Byzer-LLM 0.1.75
 - [2024/03] Release Byzer-LLM 0.1.55
 - [2024/02] Release Byzer-LLM 0.1.40
 - [2024/01] Release Byzer-LLM 0.1.39
@@ -77,6 +77,9 @@ The unique features of Byzer-LLM are:
     * [Claude](#claude)
     * [Gemini](#gemini)
     * [Kimi](#moonshot/kimi)
+    * [Volcano TTS](#volcano_tts)
+    * [OpenAI TTS](#openai_tts)
+    * [Azure TTS](#azure_tts)
 * [Multi Modal](#Multi-Modal)
 * [StableDiffusion](#StableDiffusion)
 * [SQL Support](#SQL-Support)
@@ -2285,6 +2288,25 @@ byzerllm deploy --pretrained_model_type saas/official_openai \
 --num_workers 2 \
 --infer_params saas.api_key=xxxxx saas.base_url="https://api.moonshot.cn/v1" saas.model=moonshot-v1-8k \
 --model kimi_8k_chat
+```
+
+### volcano_tts
+
+Deploy:
+
+```bash
+byzerllm deploy --pretrained_model_type saas/volcengine \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 1 \
+--infer_params saas.api_key=xxxxx saas.app_id=xxxx saas.model=volcano_tts \
+--model volcano_tts
+```
+
+Usage:
+
+```python
+
 ```
 
 ---

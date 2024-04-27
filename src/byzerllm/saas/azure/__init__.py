@@ -200,7 +200,7 @@ class CustomSaasAPI:
         last_message = messages[-1]["content"]
 
         if isinstance(last_message, dict) and "input" in last_message:
-            voice = last_message.get("voice", self.voice_name)
+            voice = last_message.get("voice", "zh-CN-XiaoxiaoNeural")
             chunk_size = last_message.get("chunk_size", None)
             return await self.text_to_speech(stream=stream,
                                              ins=ins,
