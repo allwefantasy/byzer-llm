@@ -1,6 +1,5 @@
 import time
 from typing import List, Tuple, Dict, Any, Union
-import azure.cognitiveservices.speech as speechsdk
 import ray
 from byzerllm.utils.types import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, BlockBinaryStreamServer
 import threading
@@ -8,17 +7,30 @@ import asyncio
 import traceback
 import uuid
 import os
+import json
+import base64
+
+try:
+    import azure.cognitiveservices.speech as speechsdk
+except ImportError:
+    raise ImportError("""
+    Importing the Speech SDK for Python failed.
+    Refer to
+    https://docs.microsoft.com/azure/cognitive-services/speech-service/quickstart-text-to-speech-python for
+    installation instructions.
+    """)        
 
 class CustomSaasAPI:
 
     def __init__(self, infer_params: Dict[str, str]) -> None:
-        self.subscription_key = infer_params["saas.subscription_key"]
-        self.service_region = infer_params["saas.service_region"]
-        self.voice_name = infer_params.get("saas.voice_name", "en-US-AriaNeural")
-
-        self.speech_config = speechsdk.SpeechConfig(subscription=self.subscription_key, region=self.service_region)
-        self.speech_config.speech_synthesis_voice_name = self.voice_name
-
+        self.api_key = infer_params["saas.api_key"]
+        self.service_region = infer_params.get("saas.service_region","eastus")
+        self.base_url = infer_params.get("saas.base_url", None)
+        
+        self.speech_config = speechsdk.SpeechConfig(subscription=self.api_key, region=self.service_region)
+        if  self.base_url is not None:
+            self.speech_config.endpoint_id = self.base_url
+        
         self.max_retries = int(infer_params.get("saas.max_retries", 10))
 
         self.meta = {
@@ -75,19 +87,39 @@ class CustomSaasAPI:
         return content 
 
     async def text_to_speech(self, stream: bool, ins: str, voice: str, chunk_size: int = None,  **kwargs):
+        response_format = kwargs.get("response_format", "mp3")
+        language = kwargs.get("language", "zh-CN")
+        
         request_id = [None]
         
         speech_config = self.speech_config
-        speech_config.speech_synthesis_voice_name = voice
+        speech_config.speech_synthesis_voice_name = voice or "zh-CN-XiaoxiaoNeural"
+        speech_config.speech_synthesis_language = language
         
-        if not stream:            
+        format = speechsdk.SpeechSynthesisOutputFormat.Audio48Khz192KBitRateMonoMp3
+        if response_format == "wav":
+            format = speechsdk.SpeechSynthesisOutputFormat.Riff24Khz16BitMonoPcm            
+
+        speech_config.set_speech_synthesis_output_format(format)
+        
+        if not stream:                       
             speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
             start_time = time.monotonic()
             request_id[0] = str(uuid.uuid4())
-            result = speech_synthesizer.speak_text_async(ins).get()
-            audio_data = result.audio_data
-            time_cost = time.monotonic() - start_time           
-            return [(audio_data, {"metadata": {
+            result = speech_synthesizer.speak_text_async(ins).get()                         
+
+            if result.reason != speechsdk.ResultReason.SynthesizingAudioCompleted:                                        
+                if result.cancellation_details.reason == speechsdk.CancellationReason.Error:
+                    if result.cancellation_details.error_details:
+                        raise Exception("Error details: {}".format(result.cancellation_details.error_details))
+                       
+            audio_data = result.audio_data            
+            print(len(audio_data),flush=True)
+            base64_audio = base64.b64encode(audio_data).decode()
+            time_cost = time.monotonic() - start_time  
+            del result
+            del speech_synthesizer         
+            return [(base64_audio, {"metadata": {
                 "request_id": "",
                 "input_tokens_count": 0,
                 "generated_tokens_count": 0,
@@ -99,29 +131,33 @@ class CustomSaasAPI:
             server = ray.get_actor("BlockBinaryStreamServer")
             
             def writer():
-                file_config = speechsdk.audio.AudioOutputConfig(filename=chunk_size)
-                speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=file_config)
-                                
                 request_id[0] = str(uuid.uuid4())
-                try:
-                    result = speech_synthesizer.speak_text_async(ins).get()
+                pull_stream = speechsdk.audio.PullAudioOutputStream()            
+                stream_config = speechsdk.audio.AudioOutputConfig(stream=pull_stream) 
+                speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=stream_config)                                
+                
+                try:                                        
+                    result = speech_synthesizer.speak_text_async(ins).get()                    
                     if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-                        with open(chunk_size, "rb") as audio_file:
-                            while True:
-                                chunk = audio_file.read(chunk_size)
-                                if not chunk:
-                                    break
-                                ray.get(server.add_item.remote(request_id[0], StreamOutputs(outputs=[SingleOutput(text=chunk, metadata=SingleOutputMeta(
+                        del result
+                        del speech_synthesizer                         
+                        audio_buffer = bytes(32000)                          
+                        filled_size = pull_stream.read(audio_buffer)
+                        while filled_size > 0:                                                                                                                                    
+                            ray.get(server.add_item.remote(request_id[0], 
+                                                           StreamOutputs(outputs=[SingleOutput(text=audio_buffer[0:filled_size], 
+                                                                                                              metadata=SingleOutputMeta(
                                         input_tokens_count=0,
                                         generated_tokens_count=0,
                                     ))])
                                 ))
+                            filled_size = pull_stream.read(audio_buffer)                                                                                                    
+                    else:
+                        raise Exception(f"Failed to synthesize audio: {result.reason}")                                       
                 except:
-                    traceback.print_exc()
-                
-                ray.get(server.mark_done.remote(request_id[0]))
-                if os.path.exists(chunk_size):
-                    os.remove(chunk_size)
+                    traceback.print_exc()                    
+                                
+                ray.get(server.mark_done.remote(request_id[0]))                               
                                         
             threading.Thread(target=writer, daemon=True).start()
                    
