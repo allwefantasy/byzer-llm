@@ -15,17 +15,11 @@ class CustomSaasAPI:
 
     def __init__(self, infer_params: Dict[str, str]) -> None:
              
-        self.access_token = infer_params["saas.access_token"]        
-        self.model = infer_params.get("saas.model","gpt-3.5-turbo-1106")
-        self.voice_type = infer_params.get("saas.voice_type")
+        self.api_key = infer_params["saas.api_key"]        
+        self.model = infer_params.get("saas.model","volcano_tts")
+                
         
-        other_params = {}
-
-        if "saas.appid" in infer_params:
-            other_params["appid"] = infer_params["saas.appid"]
-        
-        if "saas.cluster" in infer_params:
-            other_params["cluster"] = infer_params["saas.cluster"]
+        self.app_id = infer_params.get("saas.app_id","")            
         
         self.api_base = infer_params.get("saas.api_base", "https://openspeech.bytedance.com")
 
@@ -36,7 +30,6 @@ class CustomSaasAPI:
             "backend":"saas",
             "support_stream": True,
             "model_name": self.model,
-
         }
 
         try:
@@ -92,46 +85,52 @@ class CustomSaasAPI:
     def embed_query(self, ins: str, **kwargs):                     
         return None
     
-    async def text_to_speech(self,stream:bool, ins: str, voice:str,chunk_size:int=None,**kwargs):
-        if stream:
-            server = ray.get_actor("BlockBinaryStreamServer")
-            request_id = [None]
-            
-            def writer():
-                try:                                                     
-                    request_id[0] = str(uuid.uuid4())
-                    
-                    request_json = {
+    async def text_to_speech(self,stream:bool, ins: str, voice:str,chunk_size:int=None,response_format:str="mp3",**kwargs):
+        request_id = [None]        
+        request_json = {
                         "app": {
-                            "appid": self.appid,
-                            "token": self.access_token,
-                            "cluster": self.cluster 
+                            "appid": self.app_id,
+                            "token": self.api_key,    
+                            "cluster": self.model                        
                         },
                         "user": {
-                            "uid": request_id[0]
+                            "uid": ""
                         },
                         "audio": {
-                            "voice_type": self.voice_type,
-                            "encoding": "mp3"
+                            "voice_type": voice,
+                            "encoding": response_format
                         },
                         "request": {
-                            "reqid": request_id[0],
+                            "reqid": "",
                             "text": ins,
                             "text_type": "plain",
                             "operation": "query",                            
                         }
+                    }        
+                    
+        header = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer;{self.api_key}",                    
                     }
-                    
-                    header = {"Authorization": f"Bearer;{self.access_token}"}
-                    
-                    with requests.post(f"{self.api_base}/api/v1/tts", json=request_json, headers=header, stream=True) as response:
-                        for chunk in response.iter_content(chunk_size=chunk_size):                            
-                            ray.get(server.add_item.remote(request_id[0], 
-                                                            StreamOutputs(outputs=[SingleOutput(text=chunk,metadata=SingleOutputMeta(
-                                                                input_tokens_count=0,
-                                                                generated_tokens_count=0,
-                                                            ))])
-                                                            ))                                                   
+        request_id = [None]
+        if stream:
+            server = ray.get_actor("BlockBinaryStreamServer")            
+                        
+            def writer():
+                request_id[0] = str(uuid.uuid4())
+                request_json["user"]["uid"] = request_id[0]
+                request_json["request"]["reqid"] = request_id[0]
+                try:                                                                         
+                    response = requests.post(f"{self.api_base}/api/v1/tts", json=request_json, headers=header)
+                    if "data" in response.json():
+                        data = response.json()["data"]
+                        chunk = base64.b64decode(data)
+                        ray.get(server.add_item.remote(request_id[0], 
+                                                        StreamOutputs(outputs=[SingleOutput(text=chunk,metadata=SingleOutputMeta(
+                                                            input_tokens_count=0,
+                                                            generated_tokens_count=0,
+                                                        ))])
+                                                        ))                                                                                                                                  
                 except:
                     traceback.print_exc()            
                 ray.get(server.mark_done.remote(request_id[0]))
@@ -153,44 +152,24 @@ class CustomSaasAPI:
             await asyncio.to_thread(write_running)
             return [("",{"metadata":{"request_id":request_id[0],"stream_server":"BlockBinaryStreamServer"}})]                   
     
-        start_time = time.monotonic()
-        with io.BytesIO() as output:
-            request_json = {
-                "app": {
-                    "appid": self.appid,
-                    "token": self.access_token,
-                    "cluster": self.cluster
-                },
-                "user": {
-                    "uid": str(uuid.uuid4())  
-                },
-                "audio": {
-                    "voice_type": self.voice_type,
-                    "encoding": "mp3"
-                },
-                "request": {
-                    "reqid": str(uuid.uuid4()),
-                    "text": ins,
-                    "text_type": "plain",
-                    "operation": "query",                            
-                }
-            }
-            
-            header = {"Authorization": f"Bearer;{self.access_token}"}
-            
-            response = requests.post(f"{self.api_base}/api/v1/tts", json=request_json, headers=header)
-            output.write(response.content)
-            
-            base64_audio = base64.b64encode(output.getvalue()).decode()
-            time_cost = time.monotonic() - start_time        
-            return [(base64_audio,{"metadata":{
-                            "request_id":"",
-                            "input_tokens_count":0,
-                            "generated_tokens_count":0,
-                            "time_cost":time_cost,
-                            "first_token_time":0,
-                            "speed":0,        
-                        }})]                               
+        start_time = time.monotonic()     
+        request_id[0] = str(uuid.uuid4())
+        request_json["user"]["uid"] = request_id[0]
+        request_json["request"]["reqid"] = request_id[0]                          
+        response = requests.post(f"{self.api_base}/api/v1/tts", json=request_json, headers=header)
+        if "data" in response.json():
+            data = response.json()["data"] 
+        else: 
+            raise Exception(f"Failed to get response: {response.text}")                                           
+        time_cost = time.monotonic() - start_time        
+        return [(data,{"metadata":{
+                        "request_id":"",
+                        "input_tokens_count":0,
+                        "generated_tokens_count":0,
+                        "time_cost":time_cost,
+                        "first_token_time":0,
+                        "speed":0,        
+                    }})]                               
 
     def speech_to_text(self, ins: str, **kwargs):
         return None
@@ -220,4 +199,4 @@ class CustomSaasAPI:
                                              voice=voice,
                                              chunk_size=chunk_size)
         
-        return None
+        raise Exception("Invalid input")
