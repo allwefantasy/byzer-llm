@@ -1,9 +1,6 @@
 import time
 from typing import List, Tuple, Dict, Any, Union
-import requests
-import base64
-import io
-import json
+import azure.cognitiveservices.speech as speechsdk
 import ray
 from byzerllm.utils.types import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, BlockBinaryStreamServer
 import threading
@@ -16,10 +13,11 @@ class CustomSaasAPI:
 
     def __init__(self, infer_params: Dict[str, str]) -> None:
         self.subscription_key = infer_params["saas.subscription_key"]
-        self.region = infer_params["saas.region"]
-        self.voice_name = infer_params.get("saas.voice_name", "en-US-AvaMultilingualNeural")
+        self.service_region = infer_params["saas.service_region"]
+        self.voice_name = infer_params.get("saas.voice_name", "en-US-AriaNeural")
 
-        self.base_url = f"https://{self.region}.tts.speech.microsoft.com"
+        self.speech_config = speechsdk.SpeechConfig(subscription=self.subscription_key, region=self.service_region)
+        self.speech_config.speech_synthesis_voice_name = self.voice_name
 
         self.max_retries = int(infer_params.get("saas.max_retries", 10))
 
@@ -60,7 +58,7 @@ class CustomSaasAPI:
 
         if isinstance(ins_json, dict):
             return ins_json
-
+       
         content = []
         for item in ins_json:
             if "image" in item or "image_url" in item:
@@ -76,41 +74,57 @@ class CustomSaasAPI:
 
         return content 
 
-    async def text_to_speech(self, stream: bool, ins: str, voice: str, chunk_size: int = None, response_format: str = "mp3", **kwargs):
+    async def text_to_speech(self, stream: bool, ins: str, voice: str, chunk_size: int = None,  **kwargs):
         request_id = [None]
-        request_json = {
-            "voice_name": voice,
-            "text": ins,
-            "response_format": response_format  
-        }
-
-        header = {
-            "Ocp-Apim-Subscription-Key": self.subscription_key,
-            "Content-Type": "application/json",
-            "X-Microsoft-OutputFormat": response_format
-        }
-
-        if stream:
+        
+        speech_config = self.speech_config
+        speech_config.speech_synthesis_voice_name = voice
+        
+        if not stream:            
+            speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
+            start_time = time.monotonic()
+            request_id[0] = str(uuid.uuid4())
+            result = speech_synthesizer.speak_text_async(ins).get()
+            audio_data = result.audio_data
+            time_cost = time.monotonic() - start_time           
+            return [(audio_data, {"metadata": {
+                "request_id": "",
+                "input_tokens_count": 0,
+                "generated_tokens_count": 0,
+                "time_cost": time_cost,
+                "first_token_time": 0,
+                "speed": 0,
+            }})]
+        else:
             server = ray.get_actor("BlockBinaryStreamServer")
-
+            
             def writer():
+                file_config = speechsdk.audio.AudioOutputConfig(filename=chunk_size)
+                speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=file_config)
+                                
                 request_id[0] = str(uuid.uuid4())
                 try:
-                    response = requests.post(f"{self.base_url}/cognitiveservices/v1", json=request_json, headers=header, stream=True)
-                    for chunk in response.iter_content(chunk_size=chunk_size):
-                        if chunk:
-                            ray.get(server.add_item.remote(request_id[0],
-                                                           StreamOutputs(outputs=[SingleOutput(text=chunk, metadata=SingleOutputMeta(
-                                                               input_tokens_count=0,
-                                                               generated_tokens_count=0,
-                                                           ))])
-                                                           ))
+                    result = speech_synthesizer.speak_text_async(ins).get()
+                    if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+                        with open(chunk_size, "rb") as audio_file:
+                            while True:
+                                chunk = audio_file.read(chunk_size)
+                                if not chunk:
+                                    break
+                                ray.get(server.add_item.remote(request_id[0], StreamOutputs(outputs=[SingleOutput(text=chunk, metadata=SingleOutputMeta(
+                                        input_tokens_count=0,
+                                        generated_tokens_count=0,
+                                    ))])
+                                ))
                 except:
                     traceback.print_exc()
+                
                 ray.get(server.mark_done.remote(request_id[0]))
-
+                if os.path.exists(chunk_size):
+                    os.remove(chunk_size)
+                                        
             threading.Thread(target=writer, daemon=True).start()
-
+                   
             time_count = 10 * 100
             while request_id[0] is None and time_count > 0:
                 time.sleep(0.01)
@@ -124,23 +138,7 @@ class CustomSaasAPI:
 
             await asyncio.to_thread(write_running)
             return [("", {"metadata": {"request_id": request_id[0], "stream_server": "BlockBinaryStreamServer"}})]
-
-        start_time = time.monotonic()
-        request_id[0] = str(uuid.uuid4())
-        response = requests.post(f"{self.base_url}/cognitiveservices/v1", json=request_json, headers=header)
-        if response.status_code == 200:
-            data = response.content
-        else:
-            raise Exception(f"Failed to get response: {response.text}")
-        time_cost = time.monotonic() - start_time
-        return [(data, {"metadata": {
-            "request_id": "",
-            "input_tokens_count": 0,
-            "generated_tokens_count": 0,
-            "time_cost": time_cost,
-            "first_token_time": 0,
-            "speed": 0,
-        }})]
+            
 
     def speech_to_text(self, ins: str, **kwargs):
         return None
