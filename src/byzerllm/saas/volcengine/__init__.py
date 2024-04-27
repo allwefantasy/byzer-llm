@@ -192,7 +192,11 @@ class CustomSaasAPI:
 
         stream = kwargs.get("stream",False)
         
-        last_message = his[-1]["content"] if his else ins
+        messages = [{"role":message["role"],"content":self.process_input(message["content"])} for message in his] + [{"role": "user", "content": self.process_input(ins)}]                
+        ## content = [
+        ##    "voice": "alloy","input": "Hello, World!",response_format: "mp3"]
+        last_message = messages[-1]["content"]
+        
         if isinstance(last_message,dict) and "input" in last_message:
             voice = last_message.get("voice",self.voice_type)            
             chunk_size = last_message.get("chunk_size",None)
