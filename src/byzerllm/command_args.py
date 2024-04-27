@@ -45,6 +45,7 @@ def get_command_args():
     query_cmd.add_argument('--query', required=True, help=locales["help_query_text"][lang])
     query_cmd.add_argument('--template', default="auto", help=locales["help_template"][lang])
     query_cmd.add_argument("--file", default=None, required=False, help="")
+    query_cmd.add_argument("--output_file", default="./demo.txt", help="")
 
     # Storage 子命令
     storage_cmd = subparsers.add_parser('storage', help='Manage Byzer Storage')    

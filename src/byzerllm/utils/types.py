@@ -69,16 +69,14 @@ class BlockBinaryStreamServer:
     def get_item(self, request_id):                
         with self.lock:
             if request_id not in self.cache:
-                return None                    
-            
-            if request_id in self.cache_status and self.cache_status[request_id] == 0:
-                del self.cache[request_id]
-                del self.cache_status[request_id]
-                return None
-            
+                return None                                                        
             try:
-                return self.cache[request_id].get(timeout=0.1)
+                return self.cache[request_id].get(timeout=0.1)                
             except:
+                if request_id in self.cache_status and self.cache_status[request_id] == 0:
+                    del self.cache[request_id]
+                    del self.cache_status[request_id]
+                    return None
                 return "RUNNING"
 
 

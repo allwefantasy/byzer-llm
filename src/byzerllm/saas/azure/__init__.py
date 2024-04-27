@@ -202,9 +202,14 @@ class CustomSaasAPI:
         if isinstance(last_message, dict) and "input" in last_message:
             voice = last_message.get("voice", "zh-CN-XiaoxiaoNeural")
             chunk_size = last_message.get("chunk_size", None)
+            input = last_message["input"]
+            response_format = last_message.get("response_format", "mp3")
+            language = last_message.get("language","zh-CN")
             return await self.text_to_speech(stream=stream,
-                                             ins=ins,
+                                             ins=input,
                                              voice=voice,
-                                             chunk_size=chunk_size)
+                                             chunk_size=chunk_size,
+                                             response_format=response_format,language=language
+                                             )
 
         raise Exception("Invalid input")

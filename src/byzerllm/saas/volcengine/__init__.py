@@ -123,7 +123,7 @@ class CustomSaasAPI:
                 request_json["user"]["uid"] = request_id[0]
                 request_json["request"]["reqid"] = request_id[0]
                 try:                                                                         
-                    response = requests.post(f"{self.base_url}/api/v1/tts", json=request_json, headers=header)
+                    response = requests.post(f"{self.base_url}/api/v1/tts", json=request_json, headers=header)                    
                     if "data" in response.json():
                         data = response.json()["data"]
                         chunk = base64.b64decode(data)
@@ -132,7 +132,7 @@ class CustomSaasAPI:
                                                             input_tokens_count=0,
                                                             generated_tokens_count=0,
                                                         ))])
-                                                        ))                                                                                                                                  
+                                                        ))                                                                                                                                                          
                 except:
                     traceback.print_exc()            
                 ray.get(server.mark_done.remote(request_id[0]))
@@ -196,13 +196,15 @@ class CustomSaasAPI:
         ## content = [
         ##    "voice": "alloy","input": "Hello, World!",response_format: "mp3"]
         last_message = messages[-1]["content"]
-        
+            
         if isinstance(last_message,dict) and "input" in last_message:
             voice = last_message.get("voice","BV705_streaming")            
             chunk_size = last_message.get("chunk_size",None)
+            response_format = last_message.get("response_format","mp3")
+            input = last_message["input"]
             return await self.text_to_speech(stream=stream,
-                                             ins=ins,
+                                             ins=input,
                                              voice=voice,
-                                             chunk_size=chunk_size)
+                                             chunk_size=chunk_size,response_format=response_format)
         
         raise Exception("Invalid input")

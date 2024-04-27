@@ -86,7 +86,18 @@ def main():
             "role": "user",
             "content": args.query,
         }])
-        print(resp[0].output,flush=True)
+        
+        if args.output_file:
+            ext = os.path.splitext(args.output_file)[1]
+            if ext == ".mp3" or ext == ".wav":
+                import base64
+                with open(args.output_file, "wb") as f:
+                    f.write(base64.b64decode(resp[0].output))
+            else:        
+                with open(args.output_file, "w") as f:
+                    f.write(resp[0].output)
+        else:        
+            print(resp[0].output,flush=True)
 
     elif args.command == 'undeploy':
         byzerllm.connect_cluster(address=args.ray_address)

@@ -2306,8 +2306,187 @@ byzerllm deploy --pretrained_model_type saas/volcengine \
 Usage:
 
 ```python
+import byzerllm
+import base64
+import json
 
+byzerllm.connect_cluster()
+
+llm = byzerllm.ByzerLLM()
+llm.setup_default_model_name("volcano_tts")
+
+
+t = llm.chat_oai(conversations=[{
+    "role":"user",
+    "content": json.dumps({
+        "input":"你好，大帅哥",
+        "voice": "BV705_streaming",
+        "response_format": "mp3"
+    },ensure_ascii=False)
+}])
+
+with open("voice.mp3","wb") as f:
+    f.write(base64.b64decode(t[0].output))
 ```
+
+Or stream mode:
+
+```python
+import byzerllm
+import base64
+import json
+
+byzerllm.connect_cluster()
+
+llm = byzerllm.ByzerLLM()
+llm.setup_default_model_name("volcano_tts")
+
+t = llm.stream_chat_oai(conversations=[{
+    "role":"user",
+    "content": json.dumps({
+        "input":"你好，大帅哥",
+        "voice": "BV705_streaming",
+        "response_format": "mp3"
+    },ensure_ascii=False)
+}])
+
+with open("voice.mp3","ab") as f:
+    for s in t:        
+        f.write(s[0])
+```
+
+
+
+### azure_tts
+
+Deploy:
+
+```bash
+byzerllm deploy --pretrained_model_type saas/azure \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 1 \
+--infer_params saas.api_key=${MODEL_AZURE_TTS_TOKEN} saas.service_region=eastus \
+--model azure_tts
+```
+
+Python:
+
+```python
+import byzerllm
+import base64
+import json
+
+byzerllm.connect_cluster()
+
+llm = byzerllm.ByzerLLM()
+llm.setup_default_model_name("azure_tts")
+
+
+t = llm.chat_oai(conversations=[{
+    "role":"user",
+    "content": json.dumps({
+        "input":"你好，azure_tts",
+        "voice": "zh-CN-XiaoxiaoNeural",
+        "response_format": "mp3"
+    },ensure_ascii=False)
+}])
+
+with open("voice.mp3","wb") as f:
+    f.write(base64.b64decode(t[0].output))
+```
+
+Or stream mode:
+
+```python
+import byzerllm
+import base64
+import json
+
+byzerllm.connect_cluster()
+
+llm = byzerllm.ByzerLLM()
+llm.setup_default_model_name("azure_tts")
+
+t = llm.stream_chat_oai(conversations=[{
+    "role":"user",
+    "content": json.dumps({
+        "input":"你好，流式 azure_tts",
+        "voice": "zh-CN-XiaoxiaoNeural",
+        "response_format": "mp3"
+    },ensure_ascii=False)
+}])
+
+with open("voice.mp3","ab") as f:
+    for s in t:        
+        f.write(s[0])
+```
+
+### openai_tts
+
+Deploy:
+
+```bash
+byzerllm deploy --pretrained_model_type saas/openai \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 1 \
+--infer_params saas.api_key=${MODEL_OPENAI_TOKEN} saas.model=tts-1 \
+--model openai_tts
+```
+
+Python:
+
+```python
+import byzerllm
+import base64
+import json
+
+byzerllm.connect_cluster()
+
+llm = byzerllm.ByzerLLM()
+llm.setup_default_model_name("open_tts")
+
+
+t = llm.chat_oai(conversations=[{
+    "role":"user",
+    "content": json.dumps({
+        "input":"hello, open_tts",
+        "voice": "alloy",
+        "response_format": "mp3"
+    },ensure_ascii=False)
+}])
+
+with open("voice.mp3","wb") as f:
+    f.write(base64.b64decode(t[0].output))
+```
+
+Or stream mode:
+
+```python
+import byzerllm
+import base64
+import json
+
+byzerllm.connect_cluster()
+
+llm = byzerllm.ByzerLLM()
+llm.setup_default_model_name("openai_tts")
+
+t = llm.stream_chat_oai(conversations=[{
+    "role":"user",
+    "content": json.dumps({
+        "input":"hello openai_tts",
+        "voice": "alloy",
+        "response_format": "mp3"
+    },ensure_ascii=False)
+}])
+
+with open("voice.mp3","ab") as f:
+    for s in t:        
+        f.write(s[0])
+```
+
 
 ---
 

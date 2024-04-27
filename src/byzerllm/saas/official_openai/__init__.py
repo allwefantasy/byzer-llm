@@ -212,8 +212,9 @@ class CustomSaasAPI:
             voice = last_message.get("voice","alloy")
             response_format = last_message.get("response_format","mp3")
             chunk_size = last_message.get("chunk_size",None)
+            input = last_message["input"]            
             return await self.text_to_speech(stream=stream,
-                                             ins=ins,
+                                             ins=input,
                                              voice=voice,
                                              chunk_size=chunk_size,
                                              response_format=response_format)
