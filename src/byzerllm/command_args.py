@@ -47,6 +47,11 @@ def get_command_args():
     query_cmd.add_argument("--file", default=None, required=False, help="")
     query_cmd.add_argument("--output_file", default="./demo.txt", help="")
 
+    status_cmd = subparsers.add_parser('status', help=locales["help_query"][lang])
+    status_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
+    status_cmd.add_argument('--model', required=True, help=locales["help_query_model"][lang])        
+    status_cmd.add_argument("--file", default=None, required=False, help="")    
+
     # Storage 子命令
     storage_cmd = subparsers.add_parser('storage', help='Manage Byzer Storage')    
     storage_cmd_subparsers = storage_cmd.add_subparsers(dest='storage_command')

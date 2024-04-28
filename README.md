@@ -80,6 +80,7 @@ The unique features of Byzer-LLM are:
     * [Volcano TTS](#volcano_tts)
     * [OpenAI TTS](#openai_tts)
     * [Azure TTS](#azure_tts)
+    * [OpenAI Image Generation](#openai_image_generation)
 * [Multi Modal](#Multi-Modal)
 * [StableDiffusion](#StableDiffusion)
 * [SQL Support](#SQL-Support)
@@ -2427,6 +2428,45 @@ with open("voice.mp3","ab") as f:
 
 Language list: https://learn.microsoft.com/en-us/azure/ai-services/speech-service/language-support?tabs=stt
 Voice List: https://speech.microsoft.com/portal/voicegallery
+
+### openai_image_generation
+
+Deploy:
+
+```bash
+byzerllm deploy --pretrained_model_type saas/openai \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 1 \
+--infer_params saas.api_key=${MODEL_OPENAI_TOKEN} saas.model=dall-e-3 \
+--model openai_image_gen
+```
+
+Python Usage:
+
+```python
+import byzerllm
+import base64
+import json
+
+byzerllm.connect_cluster()
+
+llm = byzerllm.ByzerLLM()
+llm.setup_default_model_name("openai_image_gen")
+
+
+t = llm.chat_oai(conversations=[{
+    "role":"user",
+    "content": json.dumps({
+        "input":"a white siamese cat",
+        "size": "1024x1024",
+        "quality": "standard"
+    },ensure_ascii=False)
+}])
+
+with open("output1.jpg","wb") as f:
+    f.write(base64.b64decode(t[0].output))
+```
 
 
 

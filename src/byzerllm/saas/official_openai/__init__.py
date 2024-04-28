@@ -185,7 +185,7 @@ class CustomSaasAPI:
     def image_to_text(self, ins: str, **kwargs):
         pass
 
-    def text_to_image(self, stream:bool, input: str,size:str,quality:str,n:int, **kwargs): 
+    async def text_to_image(self, stream:bool, input: str,size:str,quality:str,n:int, **kwargs): 
         if stream:
             raise Exception("Stream not supported for text to image")
         start_time = time.monotonic()       

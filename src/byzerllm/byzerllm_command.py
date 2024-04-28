@@ -106,6 +106,13 @@ def main():
         llm.undeploy(args.model,force=args.force)
 
         print(locales["undeploy_success"][lang].format(args.model))
+
+    elif args.command == 'status':
+        import json
+        byzerllm.connect_cluster(address=args.ray_address)
+        v = ray.get(ray.get_actor(args.model).status.remote())
+        o = json.dumps(v, indent=4,ensure_ascii=False)
+        print(o)    
         
     elif args.command == 'storage':
         if args.storage_command == "install":
