@@ -27,7 +27,10 @@ def connect_cluster(address:str="auto",java_home:Optional[str]=None,
                 code_search_path:Optional[List[str]]=None):
     import ray
     job_config = None
-    java_home=java_home if java_home else os.environ.get("JAVA_HOME")    
+    env_vars = {}
+    
+    java_home=java_home if java_home else os.environ.get("JAVA_HOME")      
+    
     if java_home:            
         path = os.environ.get("PATH")    
         env_vars = {"JAVA_HOME": java_home,
@@ -39,7 +42,7 @@ def connect_cluster(address:str="auto",java_home:Optional[str]=None,
                                                             runtime_env={"env_vars": env_vars})
     if not java_home and code_search_path:
        logger.warning("code_search_path is ignored because JAVA_HOME is not set")         
-               
+
     ray.init(address=address,namespace="default",ignore_reinit_error=True,
                     job_config=job_config)
     return env_vars 
