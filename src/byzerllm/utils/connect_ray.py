@@ -2,6 +2,7 @@ from typing import List,Optional
 import os
 import subprocess
 import re
+from loguru import logger
 
 def _check_java_version(java_home:str):
     try:
@@ -25,20 +26,20 @@ def _check_java_version(java_home:str):
 def connect_cluster(address:str="auto",java_home:Optional[str]=None,
                 code_search_path:Optional[List[str]]=None):
     import ray
-    java_home=java_home if java_home else os.environ.get("JAVA_HOME")
-    path = os.environ.get("PATH")    
-    env_vars = {"JAVA_HOME": java_home,
-                "PATH":f'''{os.path.join(java_home,"bin")}:{path}'''}
-    
-    
-
     job_config = None
-    if code_search_path:
-        if java_home:
-            _check_java_version(java_home)
-        job_config = ray.job_config.JobConfig(code_search_path=code_search_path,
-                                                        runtime_env={"env_vars": env_vars})
-        
+    java_home=java_home if java_home else os.environ.get("JAVA_HOME")    
+    if java_home:            
+        path = os.environ.get("PATH")    
+        env_vars = {"JAVA_HOME": java_home,
+                    "PATH":f'''{os.path.join(java_home,"bin")}:{path}'''}        
+        if code_search_path:
+            if java_home:
+                _check_java_version(java_home)
+            job_config = ray.job_config.JobConfig(code_search_path=code_search_path,
+                                                            runtime_env={"env_vars": env_vars})
+    if not java_home and code_search_path:
+       logger.warning("code_search_path is ignored because JAVA_HOME is not set")         
+               
     ray.init(address=address,namespace="default",ignore_reinit_error=True,
                     job_config=job_config)
     return env_vars 
