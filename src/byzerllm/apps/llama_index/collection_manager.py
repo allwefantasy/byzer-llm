@@ -37,7 +37,7 @@ class CollectionManager:
    def save_collections(self):
        collections_data = {name: item.model_dump() for name, item in self.collections.items()}
        with open(self.collections_json_file, "w") as f:
-           json.dump(collections_data, f, indent=2)
+           json.dump(collections_data, f, indent=2,ensure_ascii=False)
 
    def add_collection(self, collection_item: CollectionItem):
        self.collections[collection_item.name] = collection_item
@@ -62,6 +62,9 @@ class CollectionManager:
            return self.collections[name]
        else:
            raise ValueError(f"Collection '{name}' not found.")
+
+   def check_collection_exists(self, name: str) -> bool:
+       return name in self.collections   
 
    def get_all_collections(self) -> List[CollectionItem]:
        return list(self.collections.values())
