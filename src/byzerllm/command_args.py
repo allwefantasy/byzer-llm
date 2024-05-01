@@ -64,6 +64,15 @@ def get_command_args():
     storage_install_cmd.add_argument("--version", default="0.1.11", required=False, help="")
     storage_install_cmd.add_argument('--cluster', default="byzerai_store", help="")
     storage_install_cmd.add_argument('--base_dir', default="", help="")
+
+    storage_collection_cmd = storage_cmd_subparsers.add_parser('collection', help='')
+    storage_collection_cmd.add_argument("--file", default=None, required=False, help="")
+    storage_collection_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
+    storage_collection_cmd.add_argument("--version", default="0.1.11", required=False, help="")
+    storage_collection_cmd.add_argument('--cluster', default="byzerai_store", help="")
+    storage_collection_cmd.add_argument('--base_dir', default="", help="")
+    storage_collection_cmd.add_argument('--name', default="", help="")
+    storage_collection_cmd.add_argument('--description', default="", help="")
     
     # start 子命令
     storage_start_command = storage_cmd_subparsers.add_parser('start', help='Start Byzer Storage')

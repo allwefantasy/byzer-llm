@@ -73,6 +73,18 @@ class StorageSubCommand:
             tar.extractall(path=libs_dir)
         
         print("Byzer Storage installed successfully")
+
+    def collection(args):        
+        from byzerllm.apps.llama_index.collection_manager import CollectionManager, CollectionItem
+        home = expanduser("~")        
+        base_dir = args.base_dir or os.path.join(home, ".auto-coder")
+        collection_manager = CollectionManager(base_dir)
+        if args.name:            
+            collection = CollectionItem(name=args.name, description=args.description)
+            collection_manager.add_collection(collection)
+            print(f"Collection {args.name} added successfully.")
+        else:
+            print("Please provide collection name.")    
     
     @staticmethod
     def start(args):

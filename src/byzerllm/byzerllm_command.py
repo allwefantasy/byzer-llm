@@ -124,6 +124,8 @@ def main():
             StorageSubCommand.stop(args)
         elif args.storage_command == "export":
             StorageSubCommand.export(args)
+        elif args.storage_command == "collection":
+            StorageSubCommand.collection(args)    
     
     elif args.command == 'serve':
         byzerllm.connect_cluster(address=args.ray_address) 
