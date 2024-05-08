@@ -860,9 +860,9 @@
     "md5": "79d4a7cf70ae68cdca1417dd8e731f3d"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/version.py": {
-    "symbols": "变量：__version__\n导入语句：\n类：\n函数：",
-    "last_modified": 1714096140.9543548,
-    "md5": "88949ab7cee0c8fef406d324416f6402"
+    "symbols": "变量：__version__",
+    "last_modified": 1714566258.192695,
+    "md5": "0d01960ffdb92eb499dd34ead77864c6"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm.py": {
     "symbols": "函数：main, StoreNestedDict\n变量：locales, lang\n类：\n导入语句：import argparse,import os,import ray,import shlex,import jinja2,import yaml,from byzerllm.utils.client import ByzerLLM, InferBackend,from byzerllm.apps.command import StorageSubCommand\n函数：main, ray.init, setup_gpus_per_worker, setup_cpus_per_worker, setup_num_workers, setup_infer_backend, deploy, chat_oai, undeploy, StorageSubCommand.install, StorageSubCommand.start, StorageSubCommand.stop, StorageSubCommand.export\n变量：storage_start_command, storage_stop_command, storage_export_command, args, llm, llm_client\n类：ByzerLLM, InferBackend\n导入语句：import os,import time,from loguru import logger,import byzerllm,import yaml,import jinja2,import ray",
@@ -995,9 +995,9 @@
     "md5": "05ddcfb3bc7a56209ac886399c8bda1f"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/types.py": {
-    "symbols": "函数：__init__, to_str, __call__, add_item, mark_done, get_item\n类：StopSequencesCriteria, SingleOutputMeta, SingleOutput, StreamOutputs, BlockBinaryStreamServer, BlockVLLMStreamServer, VLLMStreamServer\n变量：\n导入语句：import time,import threading,from typing import TYPE_CHECKING,TypeVar,Dict, List, Optional, Union,Any,Tuple,get_type_hints,Annotated,get_args,Callable,from queue import Queue,from transformers import StoppingCriteria",
-    "last_modified": 1714125564.6183598,
-    "md5": "b91f9f149fd19e0295b1ec4c10983cd6"
+    "symbols": "函数：__init__,to_str,__call__\n类：StopSequencesCriteria,SingleOutputMeta,SingleOutput,StreamOutputs,BlockBinaryStreamServer,BlockVLLMStreamServer,VLLMStreamServer\n变量：\n导入语句：import time,import threading,from typing import TYPE_CHECKING,TypeVar,Dict, List, Optional, Union,Any,Tuple,get_type_hints,Annotated,get_args,Callable,from queue import Queue,from transformers import StoppingCriteria",
+    "last_modified": 1714197008.8174734,
+    "md5": "2c7649cce80ece96d0f1b5bb52d80741"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/tokenizer.py": {
     "symbols": "函数：validate_args_engine_use_ray,get_local_tokenizer,get_real_tokenizer\n变量：无\n类：无\n导入语句：from vllm.transformers_utils.tokenizer import TokenizerGroup,from vllm.engine.arg_utils import AsyncEngineArgs",
@@ -1025,9 +1025,9 @@
     "md5": "2e67d135935f463658236c7cd0a1db05"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/connect_ray.py": {
-    "symbols": "函数：_check_java_version, connect_cluster\n变量：java_home, output, version_line, version_match, version, version_parts, major_version, e, address, code_search_path, path, env_vars, job_config\n类：\n导入语句：from typing import List,Optional,import os,import subprocess,import re,import ray",
-    "last_modified": 1713253479.3531773,
-    "md5": "cde9d42d9aa7daddacbf720fc0abc347"
+    "symbols": "函数：_check_java_version, connect_cluster\n变量：\n类：\n导入语句：from typing import List,Optional,import os,import subprocess,import re,from loguru import logger",
+    "last_modified": 1714490017.4464192,
+    "md5": "6c0f4074256fc4c1f92c188af5e40292"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/langutil.py": {
     "symbols": "函数：asyncfy, asyncfy_with_semaphore, is_valid_url, _is_valid_url, _is_local_url, find_available_port, to_bool\n变量：无\n类：无\n导入语句：import anyio, import contextlib, from contextlib import closing, from contextlib2 import nullcontext, from functools import wraps, partial, import inspect, import os, import socket, from typing import Any, Optional, import re, from urllib.parse import urlparse, import warnings, import json, from typing import Any, Dict, List, Union",
@@ -1620,9 +1620,9 @@
     "md5": "13e90924ba6a32ac00f29fdca42b08c3"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/official_openai/__init__.py": {
-    "symbols": "函数：__init__,get_meta,process_input,embed_query,text_to_speech,speech_to_text,image_to_text,text_to_image,text_to_text,async_stream_chat\n类：CustomSaasAPI\n变量：\n导入语句：import time,from typing import List, Tuple, Dict,Any,Union,import httpx,from openai import OpenAI,import base64,import io,import json,import ray,from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer,import threading,import asyncio,import traceback,import uuid",
-    "last_modified": 1714140334.6242445,
-    "md5": "3f29954eaabde7d14b821e4b16d7aa35"
+    "symbols": "函数：__init__, process_input, embed_query, text_to_speech, speech_to_text, image_to_text, text_to_image, text_to_text, async_stream_chat\n类：CustomSaasAPI\n变量：\n导入语句：import time,from typing import List, Tuple, Dict,Any,Union,import httpx,from openai import OpenAI,import base64,import io,import json,import ray,from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer,import threading,import asyncio,import traceback,import uuid",
+    "last_modified": 1714281207.5644336,
+    "md5": "b43c30d22cc81e03e83b4a6a7bb4b8ac"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/zhipu/__init__.py": {
     "symbols": "函数：auto_implement_function_template, get_meta, embed_query, async_stream_chat\n变量：a, api_key, model, client, meta, start_time, response, time_cost, generated_text, generated_tokens_count, time_cost, first_token_time, speed\n类：CustomSaasAPI\n导入语句：import os, import time, from loguru import logger, import byzerllm, import json, from zhipuai import ZhipuAI, import time, import traceback, from typing import List, Tuple, Dict, Any, import ray, from byzerllm.utils.types import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, import threading, import asyncio",
@@ -1750,9 +1750,9 @@
     "md5": "a7c4b5e609013e1f85b2f220dcaa5031"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/command.py": {
-    "symbols": "导入语句：import os,from os.path import expanduser,import urllib.request,import tarfile,from loguru import logger,import os,import re,from packaging import version,import json\n函数：get_latest_byzer_retrieval_lib,install,start,stop,export\n变量：pattern,entries,versions,entry,match,ver,download_url,libs_dir,base_dir,download_path,url,filename,percent,data_dir,code_search_path,env_vars,retrieval,cluster_json,builder,f\n函数：restore  \n变量：libs_dir, cluster_json, code_search_path, retrieval, version, cluster, home, base_dir, data_dir, cluster_info  \n类：ByzerRetrieval  \n导入语句：import byzerllm, from byzerllm.utils.retrieval import ByzerRetrieval, import os, import json, from os.path import expanduser, from loguru import logger",
-    "last_modified": 1713427748.957224,
-    "md5": "aacdec65fda0f3b4f4d107d868852ddf"
+    "symbols": "函数：get_latest_byzer_retrieval_lib, install, collection, start, stop, export, restore\n类：StorageSubCommand\n变量：\n导入语句：import os,from os.path import expanduser,import urllib.request,import tarfile,from loguru import logger,import re,from packaging import version,import json,import byzerllm,from byzerllm.utils.retrieval import ByzerRetrieval,from byzerllm.apps.llama_index.collection_manager import CollectionManager, CollectionItem",
+    "last_modified": 1714564729.0553508,
+    "md5": "f4169e67f5d28134c55b86d2c42ca971"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/auto/backend_llama_cpp.py": {
     "symbols": "函数：auto_implement_function_template, get_bool, get_int, get_float, get_str, params_to_llama_kwargs, LlamaCppBackend, LlamaCppBackend.__init__, LlamaCppBackend.get_meta, LlamaCppBackend.process_input, LlamaCppBackend.async_get_meta, LlamaCppBackend.async_stream_chat, LlamaCppBackend.embed_query, LlamaCppBackend.generate\n变量：a\n类：LlamaCppBackend\n导入语句：import os, import time, from loguru import logger, import byzerllm, import ray, import asyncio, from typing import List, Dict, Any, Union, import traceback, import uuid, import threading, import json, import inspect, from llama_cpp import Llama, import llama_cpp, from byzerllm.utils.types import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta",
@@ -1765,9 +1765,9 @@
     "md5": "7e4e0f3646c4ed588a314a288a7d7006"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm_command.py": {
-    "symbols": "函数：main, get_command_args\n变量：args\n类：\n导入语句：import argparse,import os,import ray,import shlex,import jinja2,import yaml,from byzerllm.utils.client import ByzerLLM, InferBackend,from byzerllm.utils.client.types import Templates,from byzerllm.apps.command import StorageSubCommand,from byzerllm.utils.client.entrypoints.openai.serve import serve, ServerArgs,import byzerllm,from byzerllm.lang import locales, lang,from byzerllm.command_args import StoreNestedDict, get_command_args",
-    "last_modified": 1714121465.7136874,
-    "md5": "010e582ca5107699f5886e2df756a7f1"
+    "symbols": "函数：main, get_command_args\n类：ByzerLLM, ServerArgs, StorageSubCommand\n变量：args, config, llm, llm_client, resp, server_args, v\n导入语句：import argparse,import os,import ray,import shlex,import jinja2,import yaml,from byzerllm.utils.client import ByzerLLM, InferBackend,from byzerllm.utils.client.types import Templates,from byzerllm.apps.command import StorageSubCommand,from byzerllm.utils.client.entrypoints.openai.serve import serve, ServerArgs,import byzerllm,from byzerllm.lang import locales, lang,from byzerllm.command_args import StoreNestedDict, get_command_args",
+    "last_modified": 1715069084.877212,
+    "md5": "7b9322fd28c9ed355a83005b758367ec"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/lang.py": {
     "symbols": "函数：\n变量：locales, lang\n类：\n导入语句：import os",
@@ -1776,8 +1776,8 @@
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/command_args.py": {
     "symbols": "函数：get_command_args, StoreNestedDict\n类：StoreNestedDict\n变量：\n导入语句：import argparse,import shlex,from byzerllm.lang import lang,locales",
-    "last_modified": 1714121444.8050325,
-    "md5": "9962798d2ce39ae28b82ada61474b22d"
+    "last_modified": 1714564739.5570693,
+    "md5": "9efda735d994e63c43da21b7b87d129b"
   },
   "/Users/allwefantasy/Downloads/tts_http_demo.py": {
     "symbols": "函数：auto_implement_function_template, if_main\n变量：appid, access_token, cluster, voice_type, host, api_url, header, request_json\n类：\n导入语句：import base64,import json,import uuid,import requests",
@@ -1785,13 +1785,18 @@
     "md5": "f6008aaa1bb307f59efb6987a9c3734b"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/volcengine/__init__.py": {
-    "symbols": "函数：__init__,process_input,embed_query,text_to_speech,speech_to_text,image_to_text,text_to_image,text_to_text,async_stream_chat\n类：CustomSaasAPI\n变量：\n导入语句：import time,from typing import List, Tuple, Dict,Any,Union,import requests,import base64,import io,import json,import ray,from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer,import threading,import asyncio,import traceback,import uuid",
-    "last_modified": 1714184105.7227736,
-    "md5": "700375a9abe1e52af754a251c999a6c6"
+    "symbols": "函数：__init__,process_input,embed_query,text_to_speech,speech_to_text,image_to_text,text_to_image,text_to_text,async_stream_chat,get_meta\n类：CustomSaasAPI\n变量：api_key,model,app_id,base_url,max_retries,meta\n导入语句：import time,from typing import List, Tuple, Dict,Any,Union,import requests,import base64,import io,import json,import ray,from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer,import threading,import asyncio,import traceback,import uuid",
+    "last_modified": 1714196669.7595527,
+    "md5": "b99daa25476e7ce0da54447852a88895"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/azure/__init__.py": {
-    "symbols": "函数：__init__, get_meta, process_input, text_to_speech, speech_to_text, image_to_text, text_to_image, text_to_text, async_stream_chat\n类：CustomSaasAPI\n变量：\n导入语句：import time,from typing import List, Tuple, Dict, Any, Union,import requests,import base64,import io,import json,import ray,from byzerllm.utils.types import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, BlockBinaryStreamServer,import threading,import asyncio,import traceback,import uuid,import os",
-    "last_modified": 1714185343.0339122,
-    "md5": "6ae9df3b54d18629e94bd0a485fc7e8c"
+    "symbols": "函数：__init__, get_meta, process_input, text_to_speech, speech_to_text, image_to_text, text_to_image, text_to_text, async_stream_chat\n变量：\n类：CustomSaasAPI\n导入语句：import time,from typing import List, Tuple, Dict, Any, Union,import ray,from byzerllm.utils.types import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, BlockBinaryStreamServer,import threading,import asyncio,import traceback,import uuid,import os,import json,import base64,import azure.cognitiveservices.speech as speechsdk",
+    "last_modified": 1714195950.6145759,
+    "md5": "eb57a49d62dc0bc5674148a2196ae657"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/llama_index/collection_manager.py": {
+    "symbols": "函数：__init__,load_collections,save_collections,add_collection,update_collection,delete_collection,get_collection,check_collection_exists,get_all_collections\n类：CollectionItem,CollectionManager\n变量：json,os,expanduser,List,Dict,Optional,BaseModel\n导入语句：import json,import os,from typing import List, Dict,from os.path import expanduser,from typing import List, Optional,from pydantic import BaseModel",
+    "last_modified": 1714564848.203908,
+    "md5": "c554a726ad03be5070fcb16e0e8be84a"
   }
 }
