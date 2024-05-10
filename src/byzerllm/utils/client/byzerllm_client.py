@@ -886,7 +886,8 @@ class ByzerLLM:
                  response_after_chat:Optional[Union[pydantic.BaseModel,str]] = False,
                  enable_default_sys_message:bool=True,                 
                  model:Optional[str] = None,
-                 role_mapping=None,llm_config:Dict[str,Any]={}
+                 role_mapping=None,llm_config:Dict[str,Any]={},
+                 only_return_prompt:bool= False,
                  )->Union[List[LLMResponse],List[LLMFunctionCallResponse],List[LLMClassResponse]]:        
         
         if not self.default_model_name and not model:
@@ -971,8 +972,20 @@ class ByzerLLM:
 
         default_config = self.mapping_extra_generation_params.get(model,{})
         v = [{"instruction":final_ins,"history":history,**default_config,**llm_config }]         
+
+        if only_return_prompt:
+            responses = [LLMResponse(output="",metadata=item,input=item["instruction"]) for item in v]
+            if response_class or response_after_chat:
+                new_responses = []
+                for response in responses:
+                    temp = LLMClassResponse(response=response,value=response,metadata={"reason":"Only return prompt"})
+                    new_responses.append(temp)
+                return new_responses
+            return responses                    
+
         res = self._query(model,v) 
-        clean_func = self.mapping_clean_func.get(model,lambda s: s)        
+        clean_func = self.mapping_clean_func.get(model,lambda s: s) 
+        
         responses = [LLMResponse(output=clean_func(item["predict"]),metadata=item.get("metadata",{}),input=item["input"]) for item in res]        
         
         ## handle impl_func response

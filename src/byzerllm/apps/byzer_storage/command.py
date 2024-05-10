@@ -8,34 +8,8 @@ import os
 import re
 from packaging import version
 import json
-
-def get_latest_byzer_retrieval_lib(directory):
-    # Define the regex pattern for matching the directories
-    pattern = r'^byzer-retrieval-lib-(\d+\.\d+\.\d+)$'
-    
-    # List all entries in the directory
-    entries = os.listdir(directory)
-    
-    # Initialize an empty list to hold (version, directory name) tuples
-    versions = []
-    
-    # Iterate through the entries and filter directories that match the pattern
-    for entry in entries:
-        match = re.match(pattern, entry)
-        if match:
-            # Extract the version part from the directory name
-            ver = match.group(1)
-            # Append the version and directory name as a tuple
-            versions.append((version.parse(ver), entry))
-    
-    # Sort the list of tuples by the version (first element of the tuple)
-    versions.sort()
-    
-    # Get the last element from the sorted list (the one with the highest version)
-    if versions:
-        return versions[-1][1]  # Return the directory name of the latest version
-    else:
-        return None  # Return None if no matching directory is found
+from byzerllm.apps.byzer_storage.env import get_latest_byzer_retrieval_lib
+from byzerllm.apps.byzer_storage import env
 
 class StorageSubCommand:
         
@@ -52,25 +26,38 @@ class StorageSubCommand:
         if not os.path.exists(base_dir):
             os.makedirs(base_dir,exist_ok=True)            
 
+        env_info = env.detect_env()
+
+        logger.info("Current environment:")
+        logger.info(env_info)
         
+        if env_info.java_version == "" or int(env_info.java_version) < 21:
+            logger.info("JDK 21 not found, downloading and installing JDK 21...")
+            try:
+                env.download_and_install_jdk21(env_info, base_dir)
+            except Exception as e:
+                logger.error(f"Error downloading and installing JDK 21: {str(e)}. You may need to install JDK 21 manually.")
+                        
         download_url = f"https://download.byzer.org/byzer-retrieval/byzer-retrieval-lib-{version}.tar.gz"
         libs_dir = os.path.join(base_dir, "storage", "libs")
         
         os.makedirs(libs_dir, exist_ok=True)
         download_path = os.path.join(libs_dir, f"byzer-retrieval-lib-{version}.tar.gz")
-        
-        def download_with_progressbar(url, filename):
-            def progress(count, block_size, total_size):
-                percent = int(count * block_size * 100 / total_size)
-                print(f"\rDownload progress: {percent}%", end="")
-        
-            urllib.request.urlretrieve(url, filename,reporthook=progress)
-        
-        logger.info(f"Download Byzer Storage version {version}: {download_url}")
-        download_with_progressbar(download_url, download_path)    
+        if os.path.exists(download_path):
+            logger.info(f"Byzer Storage version {version} already downloaded.")
+        else:             
+            def download_with_progressbar(url, filename):
+                def progress(count, block_size, total_size):
+                    percent = int(count * block_size * 100 / total_size)
+                    print(f"\rDownload progress: {percent}%", end="")
+            
+                urllib.request.urlretrieve(url, filename,reporthook=progress)                
+  
+            logger.info(f"Download Byzer Storage version {version}: {download_url}")
+            download_with_progressbar(download_url, download_path)    
 
-        with tarfile.open(download_path, "r:gz") as tar:
-            tar.extractall(path=libs_dir)
+            with tarfile.open(download_path, "r:gz") as tar:
+                tar.extractall(path=libs_dir)
         
         print("Byzer Storage installed successfully")
 

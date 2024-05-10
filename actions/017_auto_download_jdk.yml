@@ -1,0 +1,63 @@
+source_dir: /Users/allwefantasy/projects/byzer-llm
+target_file: /Users/allwefantasy/projects/byzer-llm/output.txt
+
+model: gpt3_5_chat
+model_max_input_length: 30000
+enable_multi_round_generate: false
+
+skip_build_index: false
+index_model: haiku_chat
+index_model_max_input_length: 30000
+anti_quota_limit: 0
+index_filter_level: 1
+
+execute: true
+auto_merge: true
+human_as_model: true
+
+query: |
+      
+   你可以参考 byzerllm.utils.connect_ray import connect_cluster 中的相关代码，修改下面的代码，添加JDK环境的，来实现环境检测：
+   def detect_env() -> EnvInfo:
+        os_name = sys.platform
+        os_version = ""
+        if os_name == "win32":
+            os_version = sys.getwindowsversion().major
+        elif os_name == "darwin":
+            os_version = subprocess.check_output(["sw_vers", "-productVersion"]).decode('utf-8').strip()
+        elif os_name == "linux":
+            os_version = subprocess.check_output(["uname", "-r"]).decode('utf-8').strip()
+         
+        python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+        
+        conda_env = os.environ.get("CONDA_DEFAULT_ENV")
+        
+        virtualenv = os.environ.get("VIRTUAL_ENV")
+        
+        has_bash = True
+        try:
+            subprocess.check_output(["bash", "--version"])
+        except:
+            has_bash = False
+            
+        return EnvInfo(
+            os_name=os_name,
+            os_version=os_version,
+            python_version=python_version,
+            conda_env=conda_env,
+            virtualenv=virtualenv,
+            has_bash=has_bash
+        )
+
+   然后在 byzerllm/apps/command.py 中的install方法中，通过环境检测，发现如果用户没有 JDK21,我们需要根据系统环境自动下载如下JDK。
+   下面是不同的平台JDK21的下载地址：
+
+   1. https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz
+   2. https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_macos-x64_bin.tar.gz
+   3. https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_windows-x64_bin.zip
+   
+   下载要求能展示进度以及下载完成后自动解压。
+   
+  
+
+

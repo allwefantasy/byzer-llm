@@ -6,7 +6,7 @@ import jinja2
 import yaml
 from byzerllm.utils.client import ByzerLLM, InferBackend
 from byzerllm.utils.client.types import Templates
-from byzerllm.apps.command import StorageSubCommand
+from byzerllm.apps.byzer_storage.command import StorageSubCommand
 from byzerllm.utils.client.entrypoints.openai.serve import serve, ServerArgs
 import byzerllm
 from byzerllm.lang import locales, lang 

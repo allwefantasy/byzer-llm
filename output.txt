@@ -1,1042 +1,327 @@
 
 下面是一些文件路径以及每个文件对应的源码：
 
-##File: https://raw.githubusercontent.com/Azure-Samples/cognitive-services-speech-sdk/master/samples/python/console/speech_synthesis_sample.py
-#!/usr/bin/env python
-# coding: utf-8
-
-# Copyright (c) Microsoft. All rights reserved.
-# Licensed under the MIT license. See LICENSE.md file in the project root for full license information.
-"""
-Speech synthesis samples for the Microsoft Cognitive Services Speech SDK
-"""
-
-try:
-    import azure.cognitiveservices.speech as speechsdk
-except ImportError:
-    print("""
-    Importing the Speech SDK for Python failed.
-    Refer to
-    https://docs.microsoft.com/azure/cognitive-services/speech-service/quickstart-text-to-speech-python for
-    installation instructions.
-    """)
-    import sys
-    sys.exit(1)
-
-
-# Set up the subscription info for the Speech Service:
-# Replace with your own subscription key and service region (e.g., "westus").
-speech_key, service_region = "YourSubscriptionKey", "YourServiceRegion"
-
-
-def speech_synthesis_to_speaker() -> None:
-    """performs speech synthesis to the default speaker"""
-    # Creates an instance of a speech config with specified subscription key and service region.
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-    # Creates a speech synthesizer using the default speaker as audio output.
-    # The default spoken language is "en-us".
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config)
-
-    # Receives a text from console input and synthesizes it to speaker.
-    while True:
-        print("Enter some text that you want to speak, Ctrl-Z to exit")
-        try:
-            text = input()
-        except EOFError:
-            break
-        result = speech_synthesizer.speak_text_async(text).get()
-        # Check result
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            print("Speech synthesized to speaker for text [{}]".format(text))
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                print("Error details: {}".format(cancellation_details.error_details))
-
-
-def speech_synthesis_with_language():
-    """performs speech synthesis to the default speaker with specified spoken language"""
-    # Creates an instance of a speech config with specified subscription key and service region.
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-    # Sets the synthesis language.
-    # The full list of supported languages can be found here:
-    # https://docs.microsoft.com/azure/cognitive-services/speech-service/language-support#text-to-speech
-    language = "de-DE"
-    speech_config.speech_synthesis_language = language
-    # Creates a speech synthesizer for the specified language,
-    # using the default speaker as audio output.
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config)
-
-    # Receives a text from console input and synthesizes it to speaker.
-    while True:
-        print("Enter some text that you want to speak, Ctrl-Z to exit")
-        try:
-            text = input()
-        except EOFError:
-            break
-        result = speech_synthesizer.speak_text_async(text).get()
-        # Check result
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            print("Speech synthesized to speaker for text [{}] with language [{}]".format(text, language))
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                print("Error details: {}".format(cancellation_details.error_details))
-
-
-def speech_synthesis_with_voice():
-    """performs speech synthesis to the default speaker with specified voice"""
-    # Creates an instance of a speech config with specified subscription key and service region.
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-    # Sets the synthesis voice name.
-    # e.g. "en-US-AndrewMultilingualNeural".
-    # The full list of supported voices can be found here:
-    # https://aka.ms/csspeech/voicenames
-    # And, you can try get_voices_async method to get all available voices.
-    # See speech_synthesis_get_available_voices() sample below.
-    voice = "en-US-AndrewMultilingualNeural"
-    speech_config.speech_synthesis_voice_name = voice
-    # Creates a speech synthesizer for the specified voice,
-    # using the default speaker as audio output.
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config)
-
-    # Receives a text from console input and synthesizes it to speaker.
-    while True:
-        print("Enter some text that you want to speak, Ctrl-Z to exit")
-        try:
-            text = input()
-        except EOFError:
-            break
-        result = speech_synthesizer.speak_text_async(text).get()
-        # Check result
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            print("Speech synthesized to speaker for text [{}] with voice [{}]".format(text, voice))
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                print("Error details: {}".format(cancellation_details.error_details))
-
-
-def speech_synthesis_using_custom_voice():
-    """performs speech synthesis to the default speaker using custom voice.
-       see https://aka.ms/customvoice"""
-    # Creates an instance of a speech config with specified subscription key and service region.
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-    # Replace with the endpoint id of your Custom Voice model.
-    speech_config.endpoint_id = "YourEndpointId"
-    # Replace with the voice name of your Custom Voice model.
-    speech_config.speech_synthesis_voice_name = "YourVoiceName"
-    # Creates a speech synthesizer for Custom Voice,
-    # using the default speaker as audio output.
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config)
-
-    # Receives a text from console input and synthesizes it to speaker.
-    while True:
-        print("Enter some text that you want to speak, Ctrl-Z to exit")
-        try:
-            text = input()
-        except EOFError:
-            break
-        result = speech_synthesizer.speak_text_async(text).get()
-        # Check result
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            print("Speech synthesized to speaker for text [{}]".format(text))
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                print("Error details: {}".format(cancellation_details.error_details))
-
-
-def speech_synthesis_to_wave_file():
-    """performs speech synthesis to a wave file"""
-    # Creates an instance of a speech config with specified subscription key and service region.
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-    # Creates a speech synthesizer using file as audio output.
-    # Replace with your own audio file name.
-    file_name = "outputaudio.wav"
-    file_config = speechsdk.audio.AudioOutputConfig(filename=file_name)
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=file_config)
-
-    # Receives a text from console input and synthesizes it to wave file.
-    while True:
-        print("Enter some text that you want to synthesize, Ctrl-Z to exit")
-        try:
-            text = input()
-        except EOFError:
-            break
-        result = speech_synthesizer.speak_text_async(text).get()
-        # Check result
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            print("Speech synthesized for text [{}], and the audio was saved to [{}]".format(text, file_name))
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                print("Error details: {}".format(cancellation_details.error_details))
-
-
-def speech_synthesis_to_mp3_file():
-    """performs speech synthesis to a mp3 file"""
-    # Creates an instance of a speech config with specified subscription key and service region.
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-    # Sets the synthesis output format.
-    # The full list of supported format can be found here:
-    # https://docs.microsoft.com/azure/cognitive-services/speech-service/rest-text-to-speech#audio-outputs
-    speech_config.set_speech_synthesis_output_format(speechsdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3)
-    # Creates a speech synthesizer using file as audio output.
-    # Replace with your own audio file name.
-    file_name = "outputaudio.mp3"
-    file_config = speechsdk.audio.AudioOutputConfig(filename=file_name)
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=file_config)
-
-    # Receives a text from console input and synthesizes it to mp3 file.
-    while True:
-        print("Enter some text that you want to synthesize, Ctrl-Z to exit")
-        try:
-            text = input()
-        except EOFError:
-            break
-        result = speech_synthesizer.speak_text_async(text).get()
-        # Check result
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            print("Speech synthesized for text [{}], and the audio was saved to [{}]".format(text, file_name))
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                print("Error details: {}".format(cancellation_details.error_details))
-
-
-def speech_synthesis_to_pull_audio_output_stream():
-    """performs speech synthesis and pull audio output from a stream"""
-    # Creates an instance of a speech config with specified subscription key and service region.
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-    # Creates an audio output stream
-    pull_stream = speechsdk.audio.PullAudioOutputStream()
-    # Creates a speech synthesizer using pull stream as audio output.
-    stream_config = speechsdk.audio.AudioOutputConfig(stream=pull_stream)
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=stream_config)
-
-    # Receives a text from console input and synthesizes it to stream output.
-    while True:
-        print("Enter some text that you want to synthesize, Ctrl-Z to exit")
-        try:
-            text = input()
-        except EOFError:
-            break
-        result = speech_synthesizer.speak_text_async(text).get()
-        # Check result
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            print("Speech synthesized for text [{}], and the audio was written to output stream.".format(text))
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                print("Error details: {}".format(cancellation_details.error_details))
-        # Destroys result which is necessary for destroying speech synthesizer
-        del result
-
-    # Destroys the synthesizer in order to close the output stream.
-    del speech_synthesizer
-
-    # Reads(pulls) data from the stream
-    audio_buffer = bytes(32000)
-    total_size = 0
-    filled_size = pull_stream.read(audio_buffer)
-    while filled_size > 0:
-        print("{} bytes received.".format(filled_size))
-        total_size += filled_size
-        filled_size = pull_stream.read(audio_buffer)
-    print("Totally {} bytes received.".format(total_size))
-
-
-def speech_synthesis_to_push_audio_output_stream():
-    """performs speech synthesis and push audio output to a stream"""
-    class PushAudioOutputStreamSampleCallback(speechsdk.audio.PushAudioOutputStreamCallback):
-        """
-        Example class that implements the PushAudioOutputStreamCallback, which is used to show
-        how to push output audio to a stream
-        """
-        def __init__(self) -> None:
-            super().__init__()
-            self._audio_data = bytes(0)
-            self._closed = False
-
-        def write(self, audio_buffer: memoryview) -> int:
-            """
-            The callback function which is invoked when the synthesizer has an output audio chunk
-            to write out
-            """
-            self._audio_data += audio_buffer
-            print("{} bytes received.".format(audio_buffer.nbytes))
-            return audio_buffer.nbytes
-
-        def close(self) -> None:
-            """
-            The callback function which is invoked when the synthesizer is about to close the
-            stream.
-            """
-            self._closed = True
-            print("Push audio output stream closed.")
-
-        def get_audio_data(self) -> bytes:
-            return self._audio_data
-
-        def get_audio_size(self) -> int:
-            return len(self._audio_data)
-
-    # Creates an instance of a speech config with specified subscription key and service region.
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-    # Creates customized instance of PushAudioOutputStreamCallback
-    stream_callback = PushAudioOutputStreamSampleCallback()
-    # Creates audio output stream from the callback
-    push_stream = speechsdk.audio.PushAudioOutputStream(stream_callback)
-    # Creates a speech synthesizer using push stream as audio output.
-    stream_config = speechsdk.audio.AudioOutputConfig(stream=push_stream)
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=stream_config)
-
-    # Receives a text from console input and synthesizes it to stream output.
-    while True:
-        print("Enter some text that you want to synthesize, Ctrl-Z to exit")
-        try:
-            text = input()
-        except EOFError:
-            break
-        result = speech_synthesizer.speak_text_async(text).get()
-        # Check result
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            print("Speech synthesized for text [{}], and the audio was written to output stream.".format(text))
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                print("Error details: {}".format(cancellation_details.error_details))
-        # Destroys result which is necessary for destroying speech synthesizer
-        del result
-
-    # Destroys the synthesizer in order to close the output stream.
-    del speech_synthesizer
-
-    print("Totally {} bytes received.".format(stream_callback.get_audio_size()))
-
-
-def speech_synthesis_to_result():
-    """performs speech synthesis and gets synthesized audio data from result."""
-    # Creates an instance of a speech config with specified subscription key and service region.
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-    # Creates a speech synthesizer with a null output stream.
-    # This means the audio output data will not be written to any output channel.
-    # You can just get the audio from the result.
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
-
-    # Receives a text from console input and synthesizes it to result.
-    while True:
-        print("Enter some text that you want to synthesize, Ctrl-Z to exit")
-        try:
-            text = input()
-        except EOFError:
-            break
-        result = speech_synthesizer.speak_text_async(text).get()
-        # Check result
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            print("Speech synthesized for text [{}]".format(text))
-            audio_data = result.audio_data
-            print("{} bytes of audio data received.".format(len(audio_data)))
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                print("Error details: {}".format(cancellation_details.error_details))
-
-
-def speech_synthesis_to_audio_data_stream():
-    """performs speech synthesis and gets the audio data from single request based stream."""
-    # Creates an instance of a speech config with specified subscription key and service region.
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-    # Creates a speech synthesizer with a null output stream.
-    # This means the audio output data will not be written to any output channel.
-    # You can just get the audio from the result.
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
-
-    # Receives a text from console input and synthesizes it to result.
-    while True:
-        print("Enter some text that you want to synthesize, Ctrl-Z to exit")
-        try:
-            text = input()
-        except EOFError:
-            break
-        result = speech_synthesizer.speak_text_async(text).get()
-        # Check result
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            print("Speech synthesized for text [{}]".format(text))
-            audio_data_stream = speechsdk.AudioDataStream(result)
-
-            # You can save all the data in the audio data stream to a file
-            file_name = "outputaudio.wav"
-            audio_data_stream.save_to_wav_file(file_name)
-            print("Audio data for text [{}] was saved to [{}]".format(text, file_name))
-
-            # You can also read data from audio data stream and process it in memory
-            # Reset the stream position to the beginning since saving to file puts the position to end.
-            audio_data_stream.position = 0
-
-            # Reads data from the stream
-            audio_buffer = bytes(16000)
-            total_size = 0
-            filled_size = audio_data_stream.read_data(audio_buffer)
-            while filled_size > 0:
-                print("{} bytes received.".format(filled_size))
-                total_size += filled_size
-                filled_size = audio_data_stream.read_data(audio_buffer)
-            print("Totally {} bytes received for text [{}].".format(total_size, text))
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                print("Error details: {}".format(cancellation_details.error_details))
-
-
-def speech_synthesis_events():
-    """performs speech synthesis and shows the speech synthesis events."""
-    # Creates an instance of a speech config with specified subscription key and service region.
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-    # Creates a speech synthesizer with a null output stream.
-    # This means the audio output data will not be written to any output channel.
-    # You can just get the audio from the result.
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
-
-    # Subscribes to events
-    speech_synthesizer.synthesis_started.connect(lambda evt: print("Synthesis started: {}".format(evt)))
-    speech_synthesizer.synthesizing.connect(
-        lambda evt: print("Synthesis ongoing, audio chunk received: {}".format(evt)))
-    speech_synthesizer.synthesis_completed.connect(lambda evt: print("Synthesis completed: {}".format(evt)))
-
-    # Receives a text from console input and synthesizes it to result.
-    while True:
-        print("Enter some text that you want to synthesize, Ctrl-Z to exit")
-        try:
-            text = input()
-        except EOFError:
-            break
-        result = speech_synthesizer.speak_text_async(text).get()
-        # Check result
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            print("Speech synthesized for text [{}]".format(text))
-            audio_data = result.audio_data
-            print("{} bytes of audio data received.".format(len(audio_data)))
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                print("Error details: {}".format(cancellation_details.error_details))
-
-
-def speech_synthesis_word_boundary_event():
-    """performs speech synthesis and shows the word boundary event."""
-    # Creates an instance of a speech config with specified subscription key and service region.
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-
-    # Creates a speech synthesizer with a null output stream.
-    # This means the audio output data will not be written to any output channel.
-    # You can just get the audio from the result.
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
-
-    # Subscribes to word boundary event
-    # The unit of evt.audio_offset is tick (1 tick = 100 nanoseconds), divide it by 10,000 to convert to milliseconds.
-    speech_synthesizer.synthesis_word_boundary.connect(lambda evt: print(
-        "Word boundary event received: {}, audio offset in ms: {}ms".format(evt, evt.audio_offset / 10000)))
-
-    # Receives a text from console input and synthesizes it to result.
-    while True:
-        print("Enter some text that you want to synthesize, Ctrl-Z to exit")
-        try:
-            text = input()
-        except EOFError:
-            break
-        result = speech_synthesizer.speak_text_async(text).get()
-        # Check result
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            print("Speech synthesized for text [{}]".format(text))
-            audio_data = result.audio_data
-            print("{} bytes of audio data received.".format(len(audio_data)))
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                print("Error details: {}".format(cancellation_details.error_details))
-
-
-def speech_synthesis_viseme_event():
-    """performs speech synthesis and shows the viseme event."""
-    # Creates an instance of a speech config with specified subscription key and service region.
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-
-    # Creates a speech synthesizer with a null output stream.
-    # This means the audio output data will not be written to any output channel.
-    # You can just get the audio from the result.
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
-
-    # Subscribes to viseme received event
-    # The unit of evt.audio_offset is tick (1 tick = 100 nanoseconds), divide it by 10,000 to convert to milliseconds.
-    speech_synthesizer.viseme_received.connect(lambda evt: print(
-        "Viseme event received: audio offset: {}ms, viseme id: {}.".format(evt.audio_offset / 10000, evt.viseme_id)))
-
-    # Receives a text from console input and synthesizes it to result.
-    while True:
-        print("Enter some text that you want to synthesize, Ctrl-Z to exit")
-        try:
-            text = input()
-        except EOFError:
-            break
-        result = speech_synthesizer.speak_text_async(text).get()
-        # Check result
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            print("Speech synthesized for text [{}]".format(text))
-            audio_data = result.audio_data
-            print("{} bytes of audio data received.".format(len(audio_data)))
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                print("Error details: {}".format(cancellation_details.error_details))
-
-
-def speech_synthesis_bookmark_event():
-    """performs speech synthesis and shows the bookmark event."""
-    # Creates an instance of a speech config with specified subscription key and service region.
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-
-    # Creates a speech synthesizer with a null output stream.
-    # This means the audio output data will not be written to any output channel.
-    # You can just get the audio from the result.
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
-
-    # Subscribes to viseme received event
-    # The unit of evt.audio_offset is tick (1 tick = 100 nanoseconds), divide it by 10,000 to convert to milliseconds.
-    speech_synthesizer.bookmark_reached.connect(lambda evt: print(
-        "Bookmark reached: {}, audio offset: {}ms, bookmark text: {}.".format(evt, evt.audio_offset / 10000, evt.text)))
-
-    print("Press Enter to start synthesizing.")
-    input()
-
-    # Bookmark tag is needed in the SSML, e.g.
-    ssml = " " \
-           " " \
-           " one. " \
-           " two. three. four. "
-
-    result = speech_synthesizer.speak_ssml_async(ssml).get()
-    # Check result
-    if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-        print("Speech synthesized.")
-    elif result.reason == speechsdk.ResultReason.Canceled:
-        cancellation_details = result.cancellation_details
-        print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-        if cancellation_details.reason == speechsdk.CancellationReason.Error:
-            print("Error details: {}".format(cancellation_details.error_details))
-
-
-def speech_synthesis_with_auto_language_detection_to_speaker():
-    """performs speech synthesis to the default speaker with auto language detection
-       Note: this is a preview feature, which might be updated in future versions."""
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-
-    # create the auto-detection language configuration without specific languages
-    auto_detect_source_language_config = \
-        speechsdk.languageconfig.AutoDetectSourceLanguageConfig()
-
-    # Creates a speech synthesizer using the default speaker as audio output.
-    speech_synthesizer = speechsdk.SpeechSynthesizer(
-        speech_config=speech_config, auto_detect_source_language_config=auto_detect_source_language_config)
-
-    while True:
-        # Receives a text from console input and synthesizes it to speaker.
-        # For example, you can input "Bonjour le monde. Hello world.", then you will hear "Bonjour le monde."
-        # spoken in a French voice and "Hello world." in an English voice.
-        print("Enter some multi lingual text that you want to speak, Ctrl-Z to exit")
-        try:
-            text = input()
-        except EOFError:
-            break
-        result = speech_synthesizer.speak_text_async(text).get()
-        # Check result
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            print("Speech synthesized to speaker for text [{}]".format(text))
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            print("Speech synthesis canceled: {}".format(cancellation_details.reason))
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                print("Error details: {}".format(cancellation_details.error_details))
-
-
-def speech_synthesis_get_available_voices():
-    """gets the available voices list."""
-
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=service_region)
-
-    # Creates a speech synthesizer.
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
-
-    print("Enter a locale in BCP-47 format (e.g. en-US) that you want to get the voices of, "
-          "or enter empty to get voices in all locales.")
-    try:
-        text = input()
-    except EOFError:
-        pass
-
-    result = speech_synthesizer.get_voices_async(text).get()
-    # Check result
-    if result.reason == speechsdk.ResultReason.VoicesListRetrieved:
-        print('Voices successfully retrieved, they are:')
-        for voice in result.voices:
-            print(voice.name)
-    elif result.reason == speechsdk.ResultReason.Canceled:
-        print("Speech synthesis canceled; error details: {}".format(result.error_details))
-
-##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/azure/__init__.py
-import time
-from typing import List, Tuple, Dict, Any, Union
-import ray
-from byzerllm.utils.types import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta, BlockBinaryStreamServer
-import threading
-import asyncio
-import traceback
-import uuid
+##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/connect_ray.py
+from typing import List,Optional
 import os
-import json
-import base64
+import subprocess
+import re
+from loguru import logger
 
-try:
-    import azure.cognitiveservices.speech as speechsdk
-except ImportError:
-    raise ImportError("""
-    Importing the Speech SDK for Python failed.
-    Refer to
-    https://docs.microsoft.com/azure/cognitive-services/speech-service/quickstart-text-to-speech-python for
-    installation instructions.
-    """)        
-
-class CustomSaasAPI:
-
-    def __init__(self, infer_params: Dict[str, str]) -> None:
-        self.api_key = infer_params["saas.api_key"]
-        self.service_region = infer_params.get("saas.service_region","eastus")
-        self.base_url = infer_params.get("saas.base_url", None)
-        
-        self.speech_config = speechsdk.SpeechConfig(subscription=self.api_key, region=self.service_region)
-        if  self.base_url is not None:
-            self.speech_config.endpoint_id = self.base_url
-        
-        self.max_retries = int(infer_params.get("saas.max_retries", 10))
-
-        self.meta = {
-            "model_deploy_type": "saas",
-            "backend": "saas",
-            "support_stream": True,
-            "model_name": "azure_tts",
-        }
-
-        try:
-            ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
-        except ValueError:
-            try:
-                ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER", lifetime="detached", max_concurrency=1000).remote()
-            except Exception as e:
-                pass
-        try:
-            ray.get_actor("BlockBinaryStreamServer")
-        except ValueError:
-            try:
-                ray.remote(BlockBinaryStreamServer).options(name="BlockBinaryStreamServer", lifetime="detached", max_concurrency=1000).remote()
-            except Exception as e:
-                pass
-
-    def get_meta(self):
-        return [self.meta]
-
-    def process_input(self, ins: Union[str, List[Dict[str, Any]], Dict[str, Any]]):
-        if isinstance(ins, list) or isinstance(ins, dict):
-            return ins
-
-        content = []
-        try:
-            ins_json = json.loads(ins)
-        except:
-            return ins
-
-        if isinstance(ins_json, dict):
-            return ins_json
-       
-        content = []
-        for item in ins_json:
-            if "image" in item or "image_url" in item:
-                image_data = item.get("image", item.get("image_url", ""))
-                if not image_data.startswith("data:"):
-                    image_data = "data:image/jpeg;base64," + image_data
-                content.append({"image_url": {"url": image_data}, "type": "image_url",})
-            elif "text" in item:
-                text_data = item["text"]
-                content.append({"text": text_data, "type": "text"})
-        if not content:
-            return ins
-
-        return content 
-
-    async def text_to_speech(self, stream: bool, ins: str, voice: str, chunk_size: int = None,  **kwargs):
-        response_format = kwargs.get("response_format", "mp3")
-        language = kwargs.get("language", "zh-CN")
-        
-        request_id = [None]
-        
-        speech_config = self.speech_config
-        speech_config.speech_synthesis_voice_name = voice or "zh-CN-XiaoxiaoNeural"
-        speech_config.speech_synthesis_language = language
-        
-        format = speechsdk.SpeechSynthesisOutputFormat.Audio48Khz192KBitRateMonoMp3
-        if response_format == "wav":
-            format = speechsdk.SpeechSynthesisOutputFormat.Riff24Khz16BitMonoPcm            
-
-        speech_config.set_speech_synthesis_output_format(format)
-        
-        if not stream:                       
-            speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
-            start_time = time.monotonic()
-            request_id[0] = str(uuid.uuid4())
-            result = speech_synthesizer.speak_text_async(ins).get()                         
-
-            if result.reason != speechsdk.ResultReason.SynthesizingAudioCompleted:                                        
-                if result.cancellation_details.reason == speechsdk.CancellationReason.Error:
-                    if result.cancellation_details.error_details:
-                        raise Exception("Error details: {}".format(result.cancellation_details.error_details))
-                       
-            audio_data = result.audio_data            
-            print(len(audio_data),flush=True)
-            base64_audio = base64.b64encode(audio_data).decode()
-            time_cost = time.monotonic() - start_time  
-            del result
-            del speech_synthesizer         
-            return [(base64_audio, {"metadata": {
-                "request_id": "",
-                "input_tokens_count": 0,
-                "generated_tokens_count": 0,
-                "time_cost": time_cost,
-                "first_token_time": 0,
-                "speed": 0,
-            }})]
+def _check_java_version(java_home:str):
+    try:
+        output = subprocess.check_output([f"{java_home}/bin/java", "-version"], stderr=subprocess.STDOUT, universal_newlines=True)
+        version_line = output.splitlines()[0]
+        version_match = re.search(r'version "(\d+)', version_line)
+        if version_match:
+            version = version_match.group(1)
+            version_parts = version.split(".")
+            major_version = int(version_parts[0])
+            print(major_version)
+            if major_version < 21:
+                raise ValueError(f"Java version {version} is not supported. JDK 21 or higher is required.")
         else:
-            server = ray.get_actor("BlockBinaryStreamServer")
-            
-            def writer():
-                request_id[0] = str(uuid.uuid4())
-                pull_stream = speechsdk.audio.PullAudioOutputStream()            
-                stream_config = speechsdk.audio.AudioOutputConfig(stream=pull_stream) 
-                speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=stream_config)                                
-                
-                try:                                        
-                    result = speech_synthesizer.speak_text_async(ins).get()                    
-                    if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-                        del result
-                        del speech_synthesizer                         
-                        audio_buffer = bytes(32000)                          
-                        filled_size = pull_stream.read(audio_buffer)
-                        while filled_size > 0:                                                                                                                                    
-                            ray.get(server.add_item.remote(request_id[0], 
-                                                           StreamOutputs(outputs=[SingleOutput(text=audio_buffer[0:filled_size], 
-                                                                                                              metadata=SingleOutputMeta(
-                                        input_tokens_count=0,
-                                        generated_tokens_count=0,
-                                    ))])
-                                ))
-                            filled_size = pull_stream.read(audio_buffer)                                                                                                    
-                    else:
-                        raise Exception(f"Failed to synthesize audio: {result.reason}")                                       
-                except:
-                    traceback.print_exc()                    
-                                
-                ray.get(server.mark_done.remote(request_id[0]))                               
-                                        
-            threading.Thread(target=writer, daemon=True).start()
-                   
-            time_count = 10 * 100
-            while request_id[0] is None and time_count > 0:
-                time.sleep(0.01)
-                time_count -= 1
+            raise ValueError("Could not determine Java version.")
+    except (subprocess.CalledProcessError, ValueError) as e:
+        raise ValueError(f"Error checking Java version: {str(e)}")
 
-            if request_id[0] is None:
-                raise Exception("Failed to get request id")
 
-            def write_running():
-                return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
 
-            await asyncio.to_thread(write_running)
-            return [("", {"metadata": {"request_id": request_id[0], "stream_server": "BlockBinaryStreamServer"}})]
-            
+def connect_cluster(address:str="auto",java_home:Optional[str]=None,
+                code_search_path:Optional[List[str]]=None):
+    import ray
+    job_config = None
+    env_vars = {}
+    
+    java_home=java_home if java_home else os.environ.get("JAVA_HOME")      
+    
+    if java_home:            
+        path = os.environ.get("PATH")    
+        env_vars = {"JAVA_HOME": java_home,
+                    "PATH":f'''{os.path.join(java_home,"bin")}:{path}'''}        
+        if code_search_path:
+            if java_home:
+                _check_java_version(java_home)
+            job_config = ray.job_config.JobConfig(code_search_path=code_search_path,
+                                                            runtime_env={"env_vars": env_vars})
+    if not java_home and code_search_path:
+       logger.warning("code_search_path is ignored because JAVA_HOME is not set")         
 
-    def speech_to_text(self, ins: str, **kwargs):
-        return None
+    ray.init(address=address,namespace="default",ignore_reinit_error=True,
+                    job_config=job_config)
+    return env_vars 
 
-    def image_to_text(self, ins: str, **kwargs):
-        return None
 
-    def text_to_image(self, ins: str, **kwargs):
-        return None
 
-    def text_to_text(self, ins: str, **kwargs):
-        return None
+##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/command.py
+import os
+from os.path import expanduser
+import urllib.request
+import tarfile
+from loguru import logger
 
-    async def async_stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
-                                max_length: int = 4096,
-                                top_p: float = 0.7,
-                                temperature: float = 0.9, **kwargs):
-
-        stream = kwargs.get("stream", False)
-
-        messages = [{"role": message["role"], "content": self.process_input(message["content"])} for message in
-                    his] + [{"role": "user", "content": self.process_input(ins)}]
-        last_message = messages[-1]["content"]
-
-        if isinstance(last_message, dict) and "input" in last_message:
-            voice = last_message.get("voice", "zh-CN-XiaoxiaoNeural")
-            chunk_size = last_message.get("chunk_size", None)
-            input = last_message["input"]
-            response_format = last_message.get("response_format", "mp3")
-            language = last_message.get("language","zh-CN")
-            return await self.text_to_speech(stream=stream,
-                                             ins=input,
-                                             voice=voice,
-                                             chunk_size=chunk_size,
-                                             response_format=response_format,language=language
-                                             )
-
-        raise Exception("Invalid input")
-
-##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/saas/volcengine/__init__.py
-import time
-from typing import List, Tuple, Dict,Any,Union
-import requests
-import base64
-import io    
+import os
+import re
+from packaging import version
 import json
-import ray
-from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer
-import threading
-import asyncio
-import traceback
-import uuid
 
-class CustomSaasAPI:    
+def get_latest_byzer_retrieval_lib(directory):
+    # Define the regex pattern for matching the directories
+    pattern = r'^byzer-retrieval-lib-(\d+\.\d+\.\d+)$'
+    
+    # List all entries in the directory
+    entries = os.listdir(directory)
+    
+    # Initialize an empty list to hold (version, directory name) tuples
+    versions = []
+    
+    # Iterate through the entries and filter directories that match the pattern
+    for entry in entries:
+        match = re.match(pattern, entry)
+        if match:
+            # Extract the version part from the directory name
+            ver = match.group(1)
+            # Append the version and directory name as a tuple
+            versions.append((version.parse(ver), entry))
+    
+    # Sort the list of tuples by the version (first element of the tuple)
+    versions.sort()
+    
+    # Get the last element from the sorted list (the one with the highest version)
+    if versions:
+        return versions[-1][1]  # Return the directory name of the latest version
+    else:
+        return None  # Return None if no matching directory is found
 
-    def __init__(self, infer_params: Dict[str, str]) -> None:
-             
-        self.api_key = infer_params["saas.api_key"]        
-        self.model = infer_params.get("saas.model","volcano_tts")
+class StorageSubCommand:
+        
+    @staticmethod
+    def install(args):
+        version = args.version
+        home = expanduser("~")        
+        base_dir = args.base_dir or os.path.join(home, ".auto-coder")
+        libs_dir = os.path.join(base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")
+        if os.path.exists(libs_dir):
+            print(f"Byzer Storage version {version} already installed.")
+            return
+        
+        if not os.path.exists(base_dir):
+            os.makedirs(base_dir,exist_ok=True)            
+
+        
+        download_url = f"https://download.byzer.org/byzer-retrieval/byzer-retrieval-lib-{version}.tar.gz"
+        libs_dir = os.path.join(base_dir, "storage", "libs")
+        
+        os.makedirs(libs_dir, exist_ok=True)
+        download_path = os.path.join(libs_dir, f"byzer-retrieval-lib-{version}.tar.gz")
+        
+        def download_with_progressbar(url, filename):
+            def progress(count, block_size, total_size):
+                percent = int(count * block_size * 100 / total_size)
+                print(f"\rDownload progress: {percent}%", end="")
+        
+            urllib.request.urlretrieve(url, filename,reporthook=progress)
+        
+        logger.info(f"Download Byzer Storage version {version}: {download_url}")
+        download_with_progressbar(download_url, download_path)    
+
+        with tarfile.open(download_path, "r:gz") as tar:
+            tar.extractall(path=libs_dir)
+        
+        print("Byzer Storage installed successfully")
+
+    def collection(args):        
+        from byzerllm.apps.llama_index.collection_manager import CollectionManager, CollectionItem
+        home = expanduser("~")        
+        base_dir = args.base_dir or os.path.join(home, ".auto-coder")
+        collection_manager = CollectionManager(base_dir)
+        if args.name:            
+            collection = CollectionItem(name=args.name, description=args.description)
+            collection_manager.add_collection(collection)
+            print(f"Collection {args.name} added successfully.")
+        else:
+            print("Please provide collection name.")    
+    
+    @staticmethod
+    def start(args):
+        import byzerllm
+        from byzerllm.utils.retrieval import ByzerRetrieval
+        version = args.version
+        cluster = args.cluster
+        home = expanduser("~")        
+        base_dir = args.base_dir or os.path.join(home, ".auto-coder")
+        
+        libs_dir = os.path.join(base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")
+        data_dir = os.path.join(base_dir, "storage", "data")
+
+        if not os.path.exists(os.path.join(data_dir,cluster)):
+            os.makedirs(data_dir,exist_ok=True)
                 
-        
-        self.app_id = infer_params.get("saas.app_id","")            
-        
-        self.base_url = infer_params.get("saas.base_url", "https://openspeech.bytedance.com")
-        if self.base_url.endswith("/"):
-            self.base_url = self.base_url[:-1]
+        if not os.path.exists(libs_dir):            
+            StorageSubCommand.install(args)
 
-        self.max_retries = int(infer_params.get("saas.max_retries",10))
+        code_search_path = [libs_dir]
+        
+        logger.info(f"Connect and start Byzer Retrieval version {version}")
+        env_vars = byzerllm.connect_cluster(address=args.ray_address,code_search_path=code_search_path)
+        
+        retrieval = ByzerRetrieval()
+        retrieval.launch_gateway()
 
-        self.meta = {
-            "model_deploy_type": "saas",
-            "backend":"saas",
-            "support_stream": True,
-            "model_name": self.model,
-        }
-
-        try:
-            ray.get_actor("BLOCK_VLLM_STREAM_SERVER") 
-        except ValueError:  
-            try:          
-                ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()
-            except Exception as e:
-                pass    
-        try:
-            ray.get_actor("BlockBinaryStreamServer")    
-        except ValueError:  
-            try:          
-                ray.remote(BlockBinaryStreamServer).options(name="BlockBinaryStreamServer",lifetime="detached",max_concurrency=1000).remote()
-            except Exception as e:
-                pass        
-    
-    # saas/proprietary
-    def get_meta(self):
-        return [self.meta]
-
-    def process_input(self, ins: Union[str, List[Dict[str, Any]],Dict[str, Any]]):
+        if retrieval.is_cluster_exists(name=cluster):
+            print(f"Cluster {cluster} exists already, stop it first.")
+            return 
         
-        if isinstance(ins, list) or isinstance(ins, dict):
-            return ins
-        
-        content = []
-        try:
-            ins_json = json.loads(ins)
-        except:            
-            return ins
-        
-        ## speech
-        if isinstance(ins_json, dict):
-            return ins_json
-        
-        content = []
-        for item in ins_json:
-            if "image" in item or "image_url" in item:
-                image_data = item.get("image",item.get("image_url",""))
-                ## "data:image/jpeg;base64," 
-                if not image_data.startswith("data:"):
-                    image_data = "data:image/jpeg;base64," + image_data                                                                                
-                content.append({"image_url": {"url":image_data},"type": "image_url",})
-            elif "text" in item:
-                text_data = item["text"]
-                content.append({"text": text_data,"type":"text"})
-        if not content:
-            return ins
-        
-        return content   
-    
-    def embed_query(self, ins: str, **kwargs):                     
-        return None
-    
-    async def text_to_speech(self,stream:bool, ins: str, voice:str,chunk_size:int=None,response_format:str="mp3",**kwargs):
-        request_id = [None]        
-        request_json = {
-                        "app": {
-                            "appid": self.app_id,
-                            "token": self.api_key,    
-                            "cluster": self.model                        
-                        },
-                        "user": {
-                            "uid": ""
-                        },
-                        "audio": {
-                            "voice_type": voice,
-                            "encoding": response_format
-                        },
-                        "request": {
-                            "reqid": "",
-                            "text": ins,
-                            "text_type": "plain",
-                            "operation": "query",                            
-                        }
-                    }        
-                    
-        header = {
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer;{self.api_key}",                    
-                    }
-        request_id = [None]
-        if stream:
-            server = ray.get_actor("BlockBinaryStreamServer")            
-                        
-            def writer():
-                request_id[0] = str(uuid.uuid4())
-                request_json["user"]["uid"] = request_id[0]
-                request_json["request"]["reqid"] = request_id[0]
-                try:                                                                         
-                    response = requests.post(f"{self.base_url}/api/v1/tts", json=request_json, headers=header)                    
-                    if "data" in response.json():
-                        data = response.json()["data"]
-                        chunk = base64.b64decode(data)
-                        ray.get(server.add_item.remote(request_id[0], 
-                                                        StreamOutputs(outputs=[SingleOutput(text=chunk,metadata=SingleOutputMeta(
-                                                            input_tokens_count=0,
-                                                            generated_tokens_count=0,
-                                                        ))])
-                                                        ))                                                                                                                                                          
-                except:
-                    traceback.print_exc()            
-                ray.get(server.mark_done.remote(request_id[0]))
-
+        cluster_json = os.path.join(base_dir, "storage", "data",f"{cluster}.json")
+        if os.path.exists(cluster_json):
+            StorageSubCommand.restore(args)
+            print("Byzer Storage started successfully")
+            return 
             
-            threading.Thread(target=writer,daemon=True).start()            
-                            
-            time_count= 10*100
-            while request_id[0] is None and time_count > 0:
-                time.sleep(0.01)
-                time_count -= 1
-            
-            if request_id[0] is None:
-                raise Exception("Failed to get request id")
-            
-            def write_running():
-                return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
-                        
-            await asyncio.to_thread(write_running)
-            return [("",{"metadata":{"request_id":request_id[0],"stream_server":"BlockBinaryStreamServer"}})]                   
+        builder = retrieval.cluster_builder()
+        builder.set_name(cluster).set_location(data_dir).set_num_nodes(1).set_node_cpu(1).set_node_memory("2g")
+        builder.set_java_home(env_vars["JAVA_HOME"]).set_path(env_vars["PATH"]).set_enable_zgc()
+        builder.start_cluster()
+        
+        with open(os.path.join(base_dir, "storage", "data",f"{cluster}.json"),"w") as f:
+            f.write(json.dumps(retrieval.cluster_info(cluster),ensure_ascii=False))
+
+        print("Byzer Storage started successfully")
+
+    @staticmethod 
+    def stop(args):    
+        import byzerllm
+        from byzerllm.utils.retrieval import ByzerRetrieval
+        version = args.version
+        cluster = args.cluster
+        home = expanduser("~")        
+        base_dir = args.base_dir or os.path.join(home, ".auto-coder")
+        libs_dir = os.path.join(base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")
+        data_dir = os.path.join(base_dir, "storage", "data",cluster)        
+
+        if not os.path.exists(data_dir) or not os.path.exists(libs_dir):
+            print("No instance find.")
+            return
+
+        code_search_path = [libs_dir]
+        
+        logger.info(f"Connect and start Byzer Retrieval version {version}")
+        byzerllm.connect_cluster(address=args.ray_address,code_search_path=code_search_path)             
+        retrieval = ByzerRetrieval()
+        retrieval.launch_gateway()
+        retrieval.shutdown_cluster(cluster_name=cluster)
+
+    @staticmethod 
+    def export(args):   
+        import byzerllm
+        from byzerllm.utils.retrieval import ByzerRetrieval
+        version = args.version
+        cluster = args.cluster
+        home = expanduser("~")        
+        base_dir = args.base_dir or os.path.join(home, ".auto-coder")
+        libs_dir = os.path.join(base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")
+        cluster_json = os.path.join(base_dir, "storage", "data",f"{cluster}.json")        
+
+        if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
+            print("No instance find.")
+            return
+
+        code_search_path = [libs_dir]
+        
+        logger.info(f"Connect and restore Byzer Retrieval version {version}")
+        byzerllm.connect_cluster(address=args.ray_address,code_search_path=code_search_path)        
+     
+        retrieval = ByzerRetrieval()
+        retrieval.launch_gateway()
+        
+        with open(cluster_json,"w") as f:
+            f.write(json.dumps(retrieval.cluster_info(cluster),ensure_ascii=False))
+
+        print(f"Byzer Storage export successfully. Please check {cluster_json}")    
+
+
     
-        start_time = time.monotonic()     
-        request_id[0] = str(uuid.uuid4())
-        request_json["user"]["uid"] = request_id[0]
-        request_json["request"]["reqid"] = request_id[0]                          
-        response = requests.post(f"{self.base_url}/api/v1/tts", json=request_json, headers=header)
-        if "data" in response.json():
-            data = response.json()["data"] 
-        else: 
-            raise Exception(f"Failed to get response: {response.text}")                                           
-        time_cost = time.monotonic() - start_time        
-        return [(data,{"metadata":{
-                        "request_id":"",
-                        "input_tokens_count":0,
-                        "generated_tokens_count":0,
-                        "time_cost":time_cost,
-                        "first_token_time":0,
-                        "speed":0,        
-                    }})]                               
+    def restore(args):
+        import byzerllm
+        from byzerllm.utils.retrieval import ByzerRetrieval
+        version = args.version
+        cluster = args.cluster
+        home = expanduser("~")        
+        base_dir = args.base_dir or os.path.join(home, ".auto-coder")
+        libs_dir = os.path.join(base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")
+        data_dir = os.path.join(base_dir, "storage", "data",cluster)        
 
-    def speech_to_text(self, ins: str, **kwargs):
-        return None
+        if not os.path.exists(data_dir) or not os.path.exists(libs_dir):
+            print("No instance find.")
+            return
 
-    def image_to_text(self, ins: str, **kwargs):
-        return None
-
-    def text_to_image(self, ins: str, **kwargs):
-        return None
-
-    def text_to_text(self, ins: str, **kwargs):
-        return None
-
-    async def async_stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
-                    max_length: int = 4096,
-                    top_p: float = 0.7,
-                    temperature: float = 0.9, **kwargs):
-
-        stream = kwargs.get("stream",False)
+        code_search_path = [libs_dir]
         
-        messages = [{"role":message["role"],"content":self.process_input(message["content"])} for message in his] + [{"role": "user", "content": self.process_input(ins)}]                
-        ## content = [
-        ##    "voice": "alloy","input": "Hello, World!",response_format: "mp3"]
-        last_message = messages[-1]["content"]
+        logger.info(f"Connect and restore Byzer Retrieval version {version}")
+        byzerllm.connect_cluster(address=args.ray_address,code_search_path=code_search_path)        
+     
+        retrieval = ByzerRetrieval()
+        retrieval.launch_gateway()
+
+        if not retrieval.is_cluster_exists(cluster):
+            with open(os.path.join(base_dir, "storage", "data",f"{cluster}.json"),"r") as f:
+                cluster_info = f.read()
             
-        if isinstance(last_message,dict) and "input" in last_message:
-            voice = last_message.get("voice","BV705_streaming")            
-            chunk_size = last_message.get("chunk_size",None)
-            response_format = last_message.get("response_format","mp3")
-            input = last_message["input"]
-            return await self.text_to_speech(stream=stream,
-                                             ins=input,
-                                             voice=voice,
-                                             chunk_size=chunk_size,response_format=response_format)
-        
-        raise Exception("Invalid input")
+            retrieval.restore_from_cluster_info(json.loads(cluster_info))
+            
+            print("Byzer Storage restore successfully")
+        else:
+            print(f"Cluster {cluster} is already exists")
+
+
 
 
 
 
 下面是用户的需求：
 
-参考 src/byzerllm/saas/volcengine/__init__.py 
-新增一个文件 src/byzerllm/saas/azure/__init__.py ,
 
-你需要参考 HTTP接口文档 实现 CustomSaasAPI 类的所有的方法：   
-1. 你只需要实现 text_to_speech 方法，并且在 async_stream_chat 中调用
-2. 实现 text_to_speech 入参需要和 volcengine/__init__.py 中保持一致，内部实现speech_synthesis_sample内示例代码。
+
+你可以参考 byzerllm.utils.connect_ray import connect_cluster 中的相关代码，修改下面的代码，添加JDK环境的，来实现环境检测：
+def detect_env() -> EnvInfo:
+     os_name = sys.platform
+     os_version = ""
+     if os_name == "win32":
+         os_version = sys.getwindowsversion().major
+     elif os_name == "darwin":
+         os_version = subprocess.check_output(["sw_vers", "-productVersion"]).decode('utf-8').strip()
+     elif os_name == "linux":
+         os_version = subprocess.check_output(["uname", "-r"]).decode('utf-8').strip()
+      
+     python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+     
+     conda_env = os.environ.get("CONDA_DEFAULT_ENV")
+     
+     virtualenv = os.environ.get("VIRTUAL_ENV")
+     
+     has_bash = True
+     try:
+         subprocess.check_output(["bash", "--version"])
+     except:
+         has_bash = False
+         
+     return EnvInfo(
+         os_name=os_name,
+         os_version=os_version,
+         python_version=python_version,
+         conda_env=conda_env,
+         virtualenv=virtualenv,
+         has_bash=has_bash
+     )
+
+然后在 byzerllm/apps/command.py 中的install方法中，通过环境检测，发现如果用户没有 JDK21,我们需要根据系统环境自动下载如下JDK。
+下面是不同的平台JDK21的下载地址：
+
+1. https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz
+2. https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_macos-x64_bin.tar.gz
+3. https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_windows-x64_bin.zip
+
+下载要求能展示进度以及下载完成后自动解压。
 
 
 你生成的代码要符合这个格式：

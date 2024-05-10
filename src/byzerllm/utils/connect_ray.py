@@ -3,6 +3,7 @@ import os
 import subprocess
 import re
 from loguru import logger
+from byzerllm.apps.byzer_storage import env
 
 def _check_java_version(java_home:str):
     try:
@@ -29,7 +30,12 @@ def connect_cluster(address:str="auto",java_home:Optional[str]=None,
     job_config = None
     env_vars = {}
     
-    java_home=java_home if java_home else os.environ.get("JAVA_HOME")      
+    java_home=java_home if java_home else os.environ.get("JAVA_HOME")
+    
+    v = env.detect_env() 
+    if v.java_home and v.java_version == "21": 
+        logger.info(f"JDK 21 found ({v.java_home})...")    
+        java_home = v.java_home        
     
     if java_home:            
         path = os.environ.get("PATH")    
