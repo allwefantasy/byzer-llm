@@ -9,14 +9,15 @@ skip_build_index: false
 index_model: deepseek_chat
 index_model_max_input_length: 30000
 anti_quota_limit: 0
-index_filter_level: 4
+index_filter_level: 1
+index_filter_workers: 4
+index_build_workers: 4
 
 execute: true
 auto_merge: true
 human_as_model: true
 
-query: |
-      
+query: |      
    你可以参考 byzerllm.utils.connect_ray import connect_cluster 中的相关代码，修改下面的代码，添加JDK环境的，来实现环境检测：
    def detect_env() -> EnvInfo:
         os_name = sys.platform

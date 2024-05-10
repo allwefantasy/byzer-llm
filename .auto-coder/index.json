@@ -1026,9 +1026,10 @@
     "md5": "2e67d135935f463658236c7cd0a1db05"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/connect_ray.py": {
-    "symbols": "函数：_check_java_version, connect_cluster\n变量：\n类：\n导入语句：from typing import List,Optional,import os,import subprocess,import re,from loguru import logger",
-    "last_modified": 1714490017.4464192,
-    "md5": "6c0f4074256fc4c1f92c188af5e40292"
+    "module_name": "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/connect_ray.py",
+    "symbols": " ```\n函数：_check_java_version, connect_cluster\n变量：java_home, code_search_path, job_config, env_vars, v, path\n类：\n导入语句：from typing import List,Optional,import os,import subprocess,import re,from loguru import logger,from byzerllm.apps.byzer_storage import env,import ray\n```",
+    "last_modified": 1715332975.002178,
+    "md5": "e5d444856766a79a20772a01cab7cf74"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/langutil.py": {
     "symbols": "函数：asyncfy, asyncfy_with_semaphore, is_valid_url, _is_valid_url, _is_local_url, find_available_port, to_bool\n变量：无\n类：无\n导入语句：import anyio, import contextlib, from contextlib import closing, from contextlib2 import nullcontext, from functools import wraps, partial, import inspect, import os, import socket, from typing import Any, Optional, import re, from urllib.parse import urlparse, import warnings, import json, from typing import Any, Dict, List, Union",
@@ -1767,9 +1768,10 @@
     "md5": "7e4e0f3646c4ed588a314a288a7d7006"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm_command.py": {
-    "symbols": "函数：main, get_command_args\n类：ByzerLLM, ServerArgs, StorageSubCommand\n变量：args, config, llm, llm_client, resp, server_args, v\n导入语句：import argparse,import os,import ray,import shlex,import jinja2,import yaml,from byzerllm.utils.client import ByzerLLM, InferBackend,from byzerllm.utils.client.types import Templates,from byzerllm.apps.command import StorageSubCommand,from byzerllm.utils.client.entrypoints.openai.serve import serve, ServerArgs,import byzerllm,from byzerllm.lang import locales, lang,from byzerllm.command_args import StoreNestedDict, get_command_args",
-    "last_modified": 1715069084.877212,
-    "md5": "7b9322fd28c9ed355a83005b758367ec"
+    "module_name": "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm_command.py",
+    "symbols": " 函数：main, get_command_args, serve\n变量：args, config, value, template, new_value, key, value, llm, locales, lang, new_value, v, o\n类：ByzerLLM, InferBackend, Templates, StorageSubCommand, ServerArgs\n导入语句：import argparse,import os,import ray,import shlex,import jinja2,import yaml,from byzerllm.utils.client import ByzerLLM, InferBackend, from byzerllm.utils.client.types import Templates, from byzerllm.apps.byzer_storage.command import StorageSubCommand, from byzerllm.utils.client.entrypoints.openai.serve import serve, ServerArgs, import byzerllm, from byzerllm.lang import locales, lang",
+    "last_modified": 1715332436.196903,
+    "md5": "76d71771dd68d046c6264e9a4c241164"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/lang.py": {
     "symbols": "函数：\n变量：locales, lang\n类：\n导入语句：import os",
@@ -1800,5 +1802,17 @@
     "symbols": "函数：__init__,load_collections,save_collections,add_collection,update_collection,delete_collection,get_collection,check_collection_exists,get_all_collections\n类：CollectionItem,CollectionManager\n变量：json,os,expanduser,List,Dict,Optional,BaseModel\n导入语句：import json,import os,from typing import List, Dict,from os.path import expanduser,from typing import List, Optional,from pydantic import BaseModel",
     "last_modified": 1714564848.203908,
     "md5": "c554a726ad03be5070fcb16e0e8be84a"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/command.py": {
+    "module_name": "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/command.py",
+    "symbols": " 函数：auto_implement_function_template, install, collection, start, stop, export, restore\n变量：a\n类：StorageSubCommand\n导入语句：import os,from os.path import expanduser,import urllib.request,import tarfile,from loguru import logger,import os,import re,from packaging import version,import json,from byzerllm.apps.byzer_storage.env import get_latest_byzer_retrieval_lib,from byzerllm.apps.byzer_storage import env",
+    "last_modified": 1715332018.9633293,
+    "md5": "502c47f8d322e351952c07ee08d7a674"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/env.py": {
+    "module_name": "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/env.py",
+    "symbols": " ```\n函数：find_jdk21_from_dir, get_latest_byzer_retrieval_lib, detect_env, download_with_progressbar, download_and_install_jdk21\n变量：a, entries, match, ver, versions, os_version, python_version, conda_env, virtualenv, has_bash, default_path, jdk21_dir, java_version, java_home, count, block_size, total_size, jdk_download_url, download_path\n类：EnvInfo\n导入语句：import sys,import subprocess,import os,from dataclasses import dataclass,import urllib.request,import tarfile,import zipfile,from loguru import logger,import re,from os.path import expanduser\n```",
+    "last_modified": 1715332805.4228427,
+    "md5": "05784173d07f7be9b4a666868ca6bfa5"
   }
 }

@@ -34,7 +34,7 @@ def connect_cluster(address:str="auto",java_home:Optional[str]=None,
     
     v = env.detect_env() 
     if v.java_home and v.java_version == "21": 
-        logger.info(f"JDK 21 found ({v.java_home})...")    
+        logger.info(f"JDK 21 will be used ({v.java_home})...")    
         java_home = v.java_home        
     
     if java_home:            
