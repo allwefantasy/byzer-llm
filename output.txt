@@ -420,7 +420,7 @@ def transfer_from_ob(udf_name,model_refs,model_dir):
 
 
 ##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/version.py
-__version__ = "0.1.81"
+__version__ = "0.1.82"
 
 
 ##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/log.py
@@ -9252,7 +9252,7 @@ def connect_cluster(address:str="auto",java_home:Optional[str]=None,
     
     v = env.detect_env() 
     if v.java_home and v.java_version == "21": 
-        logger.info(f"JDK 21 found ({v.java_home})...")    
+        logger.info(f"JDK 21 will be used ({v.java_home})...")    
         java_home = v.java_home        
     
     if java_home:            
@@ -22291,9 +22291,10 @@ def find_jdk21_from_dir(directory):
     
     # Iterate through the entries and filter directories that match the pattern
     for entry in entries:
+        print(entry)
         match = "jdk-21" in entry.lower()
-        if match:
-            return entry  # Return the directory name if found
+        if match and os.path.isdir(os.path.join(directory, entry)):
+            return os.path.join(directory, entry)  # Return the directory name if found
     
     return None  # Return None if no matching directory is found     
 
@@ -22359,7 +22360,7 @@ def detect_env() -> EnvInfo:
     if default_path:
         jdk21_dir = find_jdk21_from_dir(default_path)        
         if jdk21_dir:
-            java_home = os.path.join(default_path, jdk21_dir)  
+            java_home = jdk21_dir
             if os_name == "darwin":
                 java_home = os.path.join(java_home, "Contents", "Home")                
             java_version = "21"

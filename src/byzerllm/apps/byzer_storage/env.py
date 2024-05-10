@@ -27,9 +27,10 @@ def find_jdk21_from_dir(directory):
     
     # Iterate through the entries and filter directories that match the pattern
     for entry in entries:
+        print(entry)
         match = "jdk-21" in entry.lower()
-        if match:
-            return entry  # Return the directory name if found
+        if match and os.path.isdir(os.path.join(directory, entry)):
+            return os.path.join(directory, entry)  # Return the directory name if found
     
     return None  # Return None if no matching directory is found     
 
@@ -95,7 +96,7 @@ def detect_env() -> EnvInfo:
     if default_path:
         jdk21_dir = find_jdk21_from_dir(default_path)        
         if jdk21_dir:
-            java_home = os.path.join(default_path, jdk21_dir)  
+            java_home = jdk21_dir
             if os_name == "darwin":
                 java_home = os.path.join(java_home, "Contents", "Home")                
             java_version = "21"

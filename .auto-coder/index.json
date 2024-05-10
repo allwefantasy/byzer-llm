@@ -861,9 +861,9 @@
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/version.py": {
     "module_name": "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/version.py",
-    "symbols": "变量：__version__",
-    "last_modified": 1715224290.1000009,
-    "md5": "45fd4afcd521d3a143f08a3abef5065e"
+    "symbols": " 变量：__version__\n函数：\n类：\n导入语句：",
+    "last_modified": 1715333372.3132975,
+    "md5": "5dd2dc517be435669054035ddcdea677"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm.py": {
     "symbols": "函数：main, StoreNestedDict\n变量：locales, lang\n类：\n导入语句：import argparse,import os,import ray,import shlex,import jinja2,import yaml,from byzerllm.utils.client import ByzerLLM, InferBackend,from byzerllm.apps.command import StorageSubCommand\n函数：main, ray.init, setup_gpus_per_worker, setup_cpus_per_worker, setup_num_workers, setup_infer_backend, deploy, chat_oai, undeploy, StorageSubCommand.install, StorageSubCommand.start, StorageSubCommand.stop, StorageSubCommand.export\n变量：storage_start_command, storage_stop_command, storage_export_command, args, llm, llm_client\n类：ByzerLLM, InferBackend\n导入语句：import os,import time,from loguru import logger,import byzerllm,import yaml,import jinja2,import ray",
@@ -1027,9 +1027,9 @@
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/connect_ray.py": {
     "module_name": "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/connect_ray.py",
-    "symbols": " ```\n函数：_check_java_version, connect_cluster\n变量：java_home, code_search_path, job_config, env_vars, v, path\n类：\n导入语句：from typing import List,Optional,import os,import subprocess,import re,from loguru import logger,from byzerllm.apps.byzer_storage import env,import ray\n```",
+    "symbols": " 函数：_check_java_version, connect_cluster\n变量：\n类：\n导入语句：from typing import List,Optional,import os,import subprocess,import re,from loguru import logger,from byzerllm.apps.byzer_storage import env,import ray",
     "last_modified": 1715332975.002178,
-    "md5": "e5d444856766a79a20772a01cab7cf74"
+    "md5": "a33ea72468e97a50a40a7e1394232b33"
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/langutil.py": {
     "symbols": "函数：asyncfy, asyncfy_with_semaphore, is_valid_url, _is_valid_url, _is_local_url, find_available_port, to_bool\n变量：无\n类：无\n导入语句：import anyio, import contextlib, from contextlib import closing, from contextlib2 import nullcontext, from functools import wraps, partial, import inspect, import os, import socket, from typing import Any, Optional, import re, from urllib.parse import urlparse, import warnings, import json, from typing import Any, Dict, List, Union",
@@ -1811,8 +1811,8 @@
   },
   "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/env.py": {
     "module_name": "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/env.py",
-    "symbols": " ```\n函数：find_jdk21_from_dir, get_latest_byzer_retrieval_lib, detect_env, download_with_progressbar, download_and_install_jdk21\n变量：a, entries, match, ver, versions, os_version, python_version, conda_env, virtualenv, has_bash, default_path, jdk21_dir, java_version, java_home, count, block_size, total_size, jdk_download_url, download_path\n类：EnvInfo\n导入语句：import sys,import subprocess,import os,from dataclasses import dataclass,import urllib.request,import tarfile,import zipfile,from loguru import logger,import re,from os.path import expanduser\n```",
-    "last_modified": 1715332805.4228427,
-    "md5": "05784173d07f7be9b4a666868ca6bfa5"
+    "symbols": " 函数：auto_implement_function_template, find_jdk21_from_dir, get_latest_byzer_retrieval_lib, detect_env, download_with_progressbar, download_and_install_jdk21\n变量：\n类：EnvInfo\n导入语句：import sys, import subprocess, import os, from dataclasses import dataclass, import urllib.request, import tarfile, import zipfile, from loguru import logger, from packaging import version, import re, from os.path import expanduser",
+    "last_modified": 1715345685.705643,
+    "md5": "4cc94dba82dd51f7869b83ab1657cc62"
   }
 }
