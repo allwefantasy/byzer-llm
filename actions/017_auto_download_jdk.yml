@@ -1,15 +1,15 @@
 source_dir: /Users/allwefantasy/projects/byzer-llm
 target_file: /Users/allwefantasy/projects/byzer-llm/output.txt
 
-model: gpt3_5_chat
+model: deepseek_chat
 model_max_input_length: 30000
 enable_multi_round_generate: false
 
 skip_build_index: false
-index_model: haiku_chat
+index_model: deepseek_chat
 index_model_max_input_length: 30000
 anti_quota_limit: 0
-index_filter_level: 1
+index_filter_level: 4
 
 execute: true
 auto_merge: true
