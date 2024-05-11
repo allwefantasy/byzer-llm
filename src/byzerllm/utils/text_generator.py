@@ -2,6 +2,7 @@ from typing import List,Tuple,Any,Dict
 import json
 from byzerllm.utils.tokenizer import get_real_tokenizer
 from .emb import ByzerLLMEmbeddings,ByzerSentenceTransformerEmbeddings
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 
 class ByzerLLMGenerator:
     def __init__(self,model,tokenizer,use_feature_extraction=False) -> None:
@@ -95,13 +96,13 @@ class ByzerLLMGenerator:
             if query.get("tokenizer",False):
                 if not self.tokenizer:
                     raise Exception("This model do not support text tokenizer service")
-                return self.tokenizer(ins,return_token_type_ids=False,return_tensors="pt")["input_ids"].tolist()
+                return await asyncfy_with_semaphore(lambda:self.tokenizer(ins,return_token_type_ids=False,return_tensors="pt")["input_ids"].tolist())()
 
             if query.get("apply_chat_template",False):
                 if not self.tokenizer:
                     raise Exception("This model do not support tokenizer service")
                 messages = json.loads(ins)
-                return self.tokenizer.apply_chat_template(messages,tokenize=False, add_generation_prompt=True)
+                return await asyncfy_with_semaphore(lambda:self.tokenizer.apply_chat_template(messages,tokenize=False, add_generation_prompt=True))()
 
             if query.get("embedding",False):
                 if not self.embedding:
@@ -115,17 +116,22 @@ class ByzerLLMGenerator:
 
                 if query.get("embed_rerank", False):
                     return self.embedding.embed_rerank(ins,extract_params=new_params)
-
-                if hasattr(self.embedding.model,"embed_query"):
-                    return self.embedding.model.embed_query(ins,extract_params=new_params)
                 
-                return self.embedding.embed_query(ins,extract_params=new_params)                        
+                if hasattr(self.embedding.model,"async_embed_query"):
+                    return await self.embedding.model.async_embed_query(ins,extract_params=new_params)
+                elif hasattr(self.embedding.model,"embed_query"):
+                    return await asyncfy_with_semaphore(lambda:self.embedding.model.embed_query(ins,extract_params=new_params))()
+                
+                if hasattr(self.embedding,"async_embed_query"):
+                    return await self.embedding.async_embed_query(ins,extract_params=new_params)
+                else:
+                    return await asyncfy_with_semaphore(lambda:self.embedding.embed_query(ins,extract_params=new_params))()
 
             if query.get("meta",False):
                 if hasattr(self.model,"async_get_meta"):
                     return await self.model.async_get_meta()
                 elif hasattr(self.model,"get_meta"):
-                    return self.model.get_meta()
+                    return await asyncfy_with_semaphore(lambda:self.model.get_meta())()
                 return [{"model_deploy_type":"proprietary"}]
 
             if not self.model:
@@ -158,11 +164,11 @@ class ByzerLLMGenerator:
                 top_p=float(query.get("top_p",0.7)),
                 temperature=float(query.get("temperature",0.9)),**new_params)
             else:
-                response = self.model.stream_chat(self.tokenizer, 
+                response = await asyncfy_with_semaphore(lambda:self.model.stream_chat(self.tokenizer, 
                 ins, his, 
                 max_length=int(query.get("max_length",1024)), 
                 top_p=float(query.get("top_p",0.7)),
-                temperature=float(query.get("temperature",0.9)),**new_params)                
+                temperature=float(query.get("temperature",0.9)),**new_params))()
             
             return response[-1]
 
