@@ -111,7 +111,7 @@ class CustomSaasAPI:
         return content   
     
     async def embed_query(self, ins: str, **kwargs):                     
-        resp = await asyncfy_with_semaphore(lambda:self.client.embeddings.create(input = [ins], model=self.model))
+        resp = await asyncfy_with_semaphore(lambda:self.client.embeddings.create(input = [ins], model=self.model))()
         embedding = resp.data[0].embedding
         usage = resp.usage
         return (embedding,{"metadata":{
@@ -165,7 +165,7 @@ class CustomSaasAPI:
             async with asyncfy_with_semaphore(lambda:self.client.with_streaming_response.audio.speech.create(
                     model=self.model,
                     voice=voice,
-                    input=ins, **kwargs)) as response:                
+                    input=ins, **kwargs))() as response:                
                 for chunk in response.iter_bytes():
                     output.write(chunk)
 
@@ -198,7 +198,7 @@ class CustomSaasAPI:
                                     n=1,
                                     response_format="b64_json",
                                     **kwargs
-                                    ))
+                                    ))()
         time_cost = time.monotonic() - start_time
         base64_image = response.data[0].b64_json
         return [(base64_image,{"metadata":{
@@ -314,7 +314,7 @@ class CustomSaasAPI:
                                     max_tokens=max_length,
                                     temperature=temperature,
                                     top_p=top_p                            
-                                ))
+                                ))()
 
                 generated_text = response.choices[0].message.content
                 generated_tokens_count = response.usage.completion_tokens

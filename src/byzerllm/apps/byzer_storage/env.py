@@ -26,8 +26,7 @@ def find_jdk21_from_dir(directory):
     entries = os.listdir(directory)
     
     # Iterate through the entries and filter directories that match the pattern
-    for entry in entries:
-        print(entry)
+    for entry in entries:        
         match = "jdk-21" in entry.lower()
         if match and os.path.isdir(os.path.join(directory, entry)):
             return os.path.join(directory, entry)  # Return the directory name if found

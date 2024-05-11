@@ -22,7 +22,7 @@ def get_command_args():
     deploy_cmd = subparsers.add_parser('deploy', help=locales["help_deploy"][lang])
     deploy_cmd.add_argument('--ray_address', default="auto", help=locales["help_ray_address"][lang])
     deploy_cmd.add_argument('--num_workers', type=int, default=1, help=locales["help_num_workers"][lang])
-    deploy_cmd.add_argument('--woker_concurrency', type=int, default=1, help=locales["help_worker_concurrency"][lang])
+    deploy_cmd.add_argument('--worker_concurrency', type=int, default=1, help=locales["help_worker_concurrency"][lang])
     deploy_cmd.add_argument('--gpus_per_worker', type=float, default=0, help=locales["help_gpus_per_worker"][lang])
     deploy_cmd.add_argument('--cpus_per_worker', type=float, default=0.01, help=locales["help_cpus_per_worker"][lang])
     deploy_cmd.add_argument('--model_path', default="",required=False, help=locales["help_model_path"][lang])
