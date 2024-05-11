@@ -9,6 +9,7 @@ import uuid
 import os
 import json
 import base64
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 
 try:
     import azure.cognitiveservices.speech as speechsdk
@@ -57,6 +58,9 @@ class CustomSaasAPI:
 
     def get_meta(self):
         return [self.meta]
+    
+    async def async_get_meta(self):
+        return await asyncfy_with_semaphore(self.get_meta)()
 
     def process_input(self, ins: Union[str, List[Dict[str, Any]], Dict[str, Any]]):
         if isinstance(ins, list) or isinstance(ins, dict):

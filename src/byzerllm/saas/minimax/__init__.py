@@ -4,6 +4,7 @@ import json
 import traceback
 from enum import Enum
 from dataclasses import dataclass
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 
 from typing import Optional, List, Dict, Union, Any,str,Any
 
@@ -55,7 +56,10 @@ class MiniMaxError(Exception):
         return [{
             "model_deploy_type": "saas",
             "backend":"saas"
-        }]    
+        }] 
+
+    async def async_get_meta(self):
+        return await asyncfy_with_semaphore(self.get_meta)()   
 
     def __str__(self):
         msg = self._status_msg or "<empty message>"
@@ -161,6 +165,18 @@ class CustomSaasAPI:
             if content == "" or content is None:
                 content = f"request minimax api failed: {e}"
         return [(content, "")]
+    
+    async def async_stream_chat(
+            self,
+            tokenizer,
+            ins: str,
+            his: List[Dict[str,Any]],
+            max_length: int = 4096,
+            top_p: float = 0.7,
+            temperature: float = 0.9,
+            **kwargs
+    ):
+        return await asyncfy_with_semaphore(self.stream_chat)(tokenizer, ins, his, max_length, top_p, temperature, **kwargs)
 
     @tenacity.retry(
         reraise=True,

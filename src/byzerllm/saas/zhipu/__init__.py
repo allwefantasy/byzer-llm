@@ -1,10 +1,9 @@
-import json
 from zhipuai import ZhipuAI
 import time
-import traceback
 from typing import List, Tuple, Dict,Any
 import ray
 from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 import threading
 import asyncio
 
@@ -33,7 +32,10 @@ class CustomSaasAPI:
 
     # saas/proprietary
     def get_meta(self):
-        return [self.meta] 
+        return [self.meta]
+
+    async def async_get_meta(self):
+        return await asyncfy_with_semaphore(self.get_meta)() 
 
     def embed_query(self, ins: str, **kwargs):                     
         start_time = time.monotonic()
@@ -43,6 +45,9 @@ class CustomSaasAPI:
             )
         time_cost = time.monotonic() - start_time
         return response.data[0].embedding
+    
+    async def async_embed_query(self, ins: str, **kwargs):
+        return await asyncfy_with_semaphore(self.embed_query)(ins, **kwargs)
 
     async def async_stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
                     max_length: int = 4096,
@@ -63,11 +68,11 @@ class CustomSaasAPI:
                 other_params[k] = v
         
         start_time = time.monotonic()
-        res_data = self.client.chat.completions.create(
+        res_data = await asyncfy_with_semaphore(lambda:self.client.chat.completions.create(
                             model=self.model,
                             temperature = temperature,
                             top_p = top_p,
-                            messages=messages,**other_params)
+                            messages=messages,**other_params))()
         
         if stream:            
             server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")

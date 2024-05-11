@@ -5,6 +5,7 @@ from dashscope.api_entities.dashscope_response import MultiModalConversationResp
 import time
 import ray
 from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 import threading
 import asyncio
 import json
@@ -30,6 +31,9 @@ class CustomSaasAPI:
      # saas/proprietary
     def get_meta(self):
         return [self.meta]
+    
+    async def async_get_meta(self):
+        return await asyncfy_with_semaphore(self.get_meta)()
 
     async def async_stream_chat(
             self,
@@ -61,11 +65,11 @@ class CustomSaasAPI:
 
         stream = kwargs.get("stream",False)    
         
-        res_data = dashscope.MultiModalConversation.call(model = self.model,
+        res_data = await asyncfy_with_semaphore(lambda:dashscope.MultiModalConversation.call(model = self.model,
                                             messages=messages,
                                             api_key=self.api_key,
                                             top_p=top_p,
-                                            **other_params)
+                                            **other_params))()
         
         if stream:            
             server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")

@@ -5,6 +5,7 @@ from openai import AzureOpenAI
 
 from byzerllm.log import init_logger
 from byzerllm.utils import random_uuid
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 
 logger = init_logger(__name__)
 
@@ -29,8 +30,11 @@ class CustomSaasAPI:
             "model_deploy_type": "saas",
             "backend": "saas"
         }]
+    
+    async def async_get_meta(self):
+        return await asyncfy_with_semaphore(self.get_meta)()
 
-    def stream_chat(
+    async def stream_chat(
             self,
             tokenizer,
             ins: str,
@@ -51,13 +55,13 @@ class CustomSaasAPI:
         try:
             logger.info(f"Receiving request {request_id}: model: {self.model} messages: {messages}")
 
-            completion = self.client.chat.completions.create(
+            completion = await asyncfy_with_semaphore(lambda:self.client.chat.completions.create(
                 model=self.model,
                 top_p=top_p,
                 temperature=temperature,
                 max_tokens=max_length,
                 messages=messages,
-            )
+            ))()
             time_taken = time.monotonic() - start_time
             answer = completion.choices[0].message.content.strip()
             input_tokens = completion.usage.prompt_tokens

@@ -7,8 +7,7 @@ import ray
 from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
 import threading
 import asyncio
-
-
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 
 class CustomSaasAPI:
     def __init__(self, infer_params: Dict[str, str]) -> None:
@@ -33,7 +32,9 @@ class CustomSaasAPI:
      # saas/proprietary
     def get_meta(self):
         return [self.meta] 
-
+    
+    async def async_get_meta(self):
+        return await asyncfy_with_semaphore(self.get_meta)()
     
     def embed_query(self, ins: str, **kwargs): 
         # text-embedding-v1或者text-embedding-v2              
@@ -47,6 +48,9 @@ class CustomSaasAPI:
                 "generated_tokens_count":0}})
         else:
             raise Exception(resp.message)
+
+    async def async_embed_query(self, ins: str, **kwargs):
+        return await asyncfy_with_semaphore(self.embed_query)(ins, **kwargs)
 
 
     async def async_stream_chat(
@@ -86,13 +90,13 @@ class CustomSaasAPI:
 
         stream = kwargs.get("stream",False)    
         
-        res_data = dashscope.Generation.call(model = self.model,
+        res_data = await asyncfy_with_semaphore(lambda:dashscope.Generation.call(model = self.model,
                                             messages=[Message(**message) for message in messages],
                                             api_key=self.api_key,
                                             max_tokens=max_length,
                                             temperature=temperature,
                                             top_p=top_p,
-                                            result_format='message',**other_params)
+                                            result_format='message',**other_params))()
         
         if stream:
             

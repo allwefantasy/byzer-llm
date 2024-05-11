@@ -8,6 +8,7 @@ import ray
 from byzerllm.utils import random_uuid
 from byzerllm.log import init_logger
 from byzerllm.utils.types import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 
 logger = init_logger(__name__)
 
@@ -38,7 +39,10 @@ class CustomSaasAPI:
             "model_deploy_type": "saas",
             "backend":"saas",
             "support_stream": True
-        }]    
+        }] 
+
+    async def async_get_meta(self):
+        return await asyncfy_with_semaphore(self.get_meta)()   
 
     async def async_stream_chat(
             self,
@@ -85,14 +89,14 @@ class CustomSaasAPI:
 
         logger.info(f"Receiving request {request_id} model: {self.model}")
 
-        res_data = self.client.do(
+        res_data = await asyncfy_with_semaphore(lambda:self.client.do(
             model=self.model,            
             messages=messages,
             top_p=top_p,
             temperature=temperature,
             stream=stream,
             **other_params
-        )
+        ))()
         
         if stream:
             server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")

@@ -5,6 +5,7 @@ import hashlib
 import traceback
 from retrying import retry
 from typing import List, Tuple, Dict,Any
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 
 BaiChuanErrorCodes = {
     "0": "success",
@@ -71,6 +72,9 @@ class CustomSaasAPI:
         time_cost = time.monotonic() - start_time
         return res_data["data"][0]["embedding"]
     
+    async def async_embed_query(self, ins: str, **kwargs):
+        return await asyncfy_with_semaphore(self.embed_query)(ins, **kwargs)
+    
     
     async def async_stream_chat(self, tokenizer, ins: str, his: List[Dict[str, Any]] = [],
                     max_length: int = 4096,
@@ -96,7 +100,7 @@ class CustomSaasAPI:
         }        
         
         start_time = time.monotonic()
-        res_data = self.request_with_retry(data)   
+        res_data = await asyncfy_with_semaphore(lambda:self.request_with_retry(data))()   
         time_cost = time.monotonic() - start_time
         generated_text = res_data["choices"][0]["message"]["content"] 
 

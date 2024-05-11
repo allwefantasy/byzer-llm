@@ -11,7 +11,7 @@ from time import mktime
 from urllib.parse import urlencode
 from wsgiref.handlers import format_date_time
 from typing import List, Tuple,Dict,Any
-import time
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 import queue
 
 import websocket
@@ -145,6 +145,9 @@ class CustomSaasAPI:
             "model_deploy_type": "saas",
             "backend":"saas"
         }]
+    
+    async def async_get_meta(self):
+        return await asyncfy_with_semaphore(self.get_meta)()
 
     def get_value(self,infer_params: Dict[str, str],keys_to_get):
         values = []
@@ -152,6 +155,12 @@ class CustomSaasAPI:
             if key in infer_params.keys():
                 values.append(infer_params[key])
         return values
+    
+    async def async_stream_chat(self,tokenizer,ins:str, his:List[Dict[str,Any]]=[],
+                    max_length:int=4096,
+                    top_p:float=0.7,
+                    temperature:float=0.9):
+        return await asyncfy_with_semaphore(self.stream_chat)(tokenizer,ins,his,max_length,top_p,temperature)
 
     def stream_chat(self,tokenizer,ins:str, his:List[Dict[str,Any]]=[],
                     max_length:int=4096,

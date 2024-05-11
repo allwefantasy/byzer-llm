@@ -8,6 +8,7 @@ import ray
 from anthropic import Anthropic
 
 from byzerllm.utils.types import BlockVLLMStreamServer, StreamOutputs, SingleOutput, SingleOutputMeta
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 
 
 class CustomSaasAPI:
@@ -38,6 +39,9 @@ class CustomSaasAPI:
     # saas/proprietary
     def get_meta(self):
         return [self.meta]
+    
+    async def async_get_meta(self):
+        return await asyncfy_with_semaphore(self.get_meta)()
 
     async def async_stream_chat(
             self,
@@ -72,14 +76,14 @@ class CustomSaasAPI:
         stream = kwargs.get("stream", False)
 
         try:
-            res_data = self.client.messages.create(                
+            res_data = await asyncfy_with_semaphore(lambda:self.client.messages.create(                
                 model=self.model,
                 max_tokens=max_length,
                 temperature=temperature,
                 top_p=top_p,
                 messages=messages,                
                 **other_params
-            )
+            ))()
         except Exception as e:
             traceback.print_exc()
             raise e

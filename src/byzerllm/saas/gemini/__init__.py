@@ -8,6 +8,7 @@ import ray
 from byzerllm.utils import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta
 import threading
 import asyncio
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 
 
 class CustomSaasAPI:
@@ -31,7 +32,8 @@ class CustomSaasAPI:
     def get_meta(self):
         return [self.meta] 
     
-
+    async def async_get_meta(self):
+        return await asyncfy_with_semaphore(self.get_meta)()
 
     async def async_stream_chat(
             self,
@@ -62,7 +64,7 @@ class CustomSaasAPI:
         
         new_messages.append({"role":"user","content":content_types.to_content(ins)})   
         
-        res_data = self.client.generate_content(contents=new_messages,stream=stream)
+        res_data = await asyncfy_with_semaphore(lambda:self.client.generate_content(contents=new_messages,stream=stream))()
         
         if stream:            
             server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")

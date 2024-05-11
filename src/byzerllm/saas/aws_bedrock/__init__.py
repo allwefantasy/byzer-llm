@@ -7,6 +7,7 @@ import boto3
 
 from byzerllm.log import init_logger
 from byzerllm.utils import random_uuid
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 
 logger = init_logger(__name__)
 
@@ -43,6 +44,21 @@ class CustomSaasAPI:
             "model_deploy_type": "saas",
             "backend": "saas",
         }]
+    
+    async def async_get_meta(self):
+        return await asyncfy_with_semaphore(self.get_meta)()
+    
+    async def async_stream_chat(
+            self,
+            tokenizer,
+            ins: str,
+            his: List[Tuple[str, str]] = [],
+            max_length: int = 4096,
+            top_p: float = 0.7,
+            temperature: float = 0.9,
+            **kwargs
+    ):
+        return await asyncfy_with_semaphore(self.stream_chat)(tokenizer, ins, his, max_length, top_p, temperature, **kwargs)
 
     def stream_chat(
             self,

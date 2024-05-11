@@ -6,6 +6,7 @@ import io
 import json
 import ray
 from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 import threading
 import asyncio
 import traceback
@@ -52,6 +53,9 @@ class CustomSaasAPI:
     # saas/proprietary
     def get_meta(self):
         return [self.meta]
+    
+    async def async_get_meta(self):
+        return await asyncfy_with_semaphore(self.get_meta)()
 
     def process_input(self, ins: Union[str, List[Dict[str, Any]],Dict[str, Any]]):
         
@@ -158,7 +162,7 @@ class CustomSaasAPI:
         request_id[0] = str(uuid.uuid4())
         request_json["user"]["uid"] = request_id[0]
         request_json["request"]["reqid"] = request_id[0]                          
-        response = requests.post(f"{self.base_url}/api/v1/tts", json=request_json, headers=header)
+        response = await asyncfy_with_semaphore(lambda:requests.post(f"{self.base_url}/api/v1/tts", json=request_json, headers=header))()
         if "data" in response.json():
             data = response.json()["data"] 
         else: 
