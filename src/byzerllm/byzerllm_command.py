@@ -46,6 +46,7 @@ def main():
             return
         
         llm.setup_gpus_per_worker(args.gpus_per_worker).setup_cpus_per_worker(args.cpus_per_worker).setup_num_workers(args.num_workers)
+        llm.setup_worker_concurrency(args.woker_concurrency)
         if not args.pretrained_model_type.startswith("saas"):
             if args.infer_backend == "vllm":
                 llm.setup_infer_backend(InferBackend.VLLM)

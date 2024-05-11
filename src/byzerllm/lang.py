@@ -73,7 +73,11 @@ locales = {
     "already_deployed": {
         "en": "Model {0} already deployed",
         "zh": "模型 {0} 已经部署过了"
-    }
+    },
+    "help_worker_concurrency": {
+        "en": "Number of worker concurrency",
+        "zh": "工作节点并发数"
+    },
 }
 
 # 获取系统语言环境
