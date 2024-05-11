@@ -110,15 +110,23 @@ class CustomSaasAPI:
         
         return content   
     
-    async def embed_query(self, ins: str, **kwargs):                     
+    async def async_embed_query(self, ins: str, **kwargs):                     
         resp = await asyncfy_with_semaphore(lambda:self.client.embeddings.create(input = [ins], model=self.model))()
         embedding = resp.data[0].embedding
         usage = resp.usage
         return (embedding,{"metadata":{
                 "input_tokens_count":usage.prompt_tokens,
                 "generated_tokens_count":0}})
+
+    def embed_query(self, ins: str, **kwargs):                     
+        resp = self.client.embeddings.create(input = [ins], model=self.model)
+        embedding = resp.data[0].embedding
+        usage = resp.usage
+        return (embedding,{"metadata":{
+                "input_tokens_count":usage.prompt_tokens,
+                "generated_tokens_count":0}})
     
-    async def text_to_speech(self,stream:bool, ins: str, voice:str,chunk_size:int=None,**kwargs):
+    async def async_text_to_speech(self,stream:bool, ins: str, voice:str,chunk_size:int=None,**kwargs):
         if stream:
             server = ray.get_actor("BlockBinaryStreamServer")
             request_id = [None]
@@ -186,7 +194,7 @@ class CustomSaasAPI:
     def image_to_text(self, ins: str, **kwargs):
         pass
 
-    async def text_to_image(self, stream:bool, input: str,size:str,quality:str,n:int, **kwargs): 
+    async def async_text_to_image(self, stream:bool, input: str,size:str,quality:str,n:int, **kwargs): 
         if stream:
             raise Exception("Stream not supported for text to image")
         start_time = time.monotonic()       
@@ -237,7 +245,7 @@ class CustomSaasAPI:
             response_format = last_message.get("response_format","mp3")
             chunk_size = last_message.get("chunk_size",None)
             input = last_message["input"]            
-            return await self.text_to_speech(stream=stream,
+            return await self.async_text_to_speech(stream=stream,
                                              ins=input,
                                              voice=voice,
                                              chunk_size=chunk_size,
@@ -248,7 +256,7 @@ class CustomSaasAPI:
             size = last_message.get("size","1024x1024")
             quality = last_message.get("quality","standard")
             n = last_message.get("n",1)            
-            return await self.text_to_image(stream=stream,input=input,size=size,quality=quality,n=n)        
+            return await self.async_text_to_image(stream=stream,input=input,size=size,quality=quality,n=n)        
 
         
         server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
