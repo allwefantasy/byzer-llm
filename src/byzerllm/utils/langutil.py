@@ -53,7 +53,7 @@ def asyncfy(func):
 
 
 def asyncfy_with_semaphore(
-    func, semaphore: Optional[anyio.Semaphore], timeout: Optional[float] = None
+    func, semaphore: Optional[anyio.Semaphore]=None, timeout: Optional[float] = None
 ):
     """Decorator that makes a function async, as well as running in a separate thread,
     with the concurrency controlled by the semaphore. If Semaphore is None, we do not

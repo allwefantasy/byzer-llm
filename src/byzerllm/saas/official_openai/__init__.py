@@ -7,6 +7,7 @@ import io
 import json
 import ray
 from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 import threading
 import asyncio
 import traceback
@@ -109,8 +110,8 @@ class CustomSaasAPI:
         
         return content   
     
-    def embed_query(self, ins: str, **kwargs):                     
-        resp = self.client.embeddings.create(input = [ins], model=self.model)
+    async def embed_query(self, ins: str, **kwargs):                     
+        resp = await asyncfy_with_semaphore(lambda:self.client.embeddings.create(input = [ins], model=self.model))
         embedding = resp.data[0].embedding
         usage = resp.usage
         return (embedding,{"metadata":{
@@ -161,10 +162,10 @@ class CustomSaasAPI:
     
         start_time = time.monotonic()
         with io.BytesIO() as output:
-            with self.client.with_streaming_response.audio.speech.create(
+            async with asyncfy_with_semaphore(lambda:self.client.with_streaming_response.audio.speech.create(
                     model=self.model,
                     voice=voice,
-                    input=ins, **kwargs) as response:                
+                    input=ins, **kwargs)) as response:                
                 for chunk in response.iter_bytes():
                     output.write(chunk)
 
@@ -189,7 +190,7 @@ class CustomSaasAPI:
         if stream:
             raise Exception("Stream not supported for text to image")
         start_time = time.monotonic()       
-        response = self.client.images.generate(
+        response = await asyncfy_with_semaphore(lambda:self.client.images.generate(
                                     model=self.model,
                                     prompt=input,
                                     size=size,
@@ -197,7 +198,7 @@ class CustomSaasAPI:
                                     n=1,
                                     response_format="b64_json",
                                     **kwargs
-                                    )
+                                    ))
         time_cost = time.monotonic() - start_time
         base64_image = response.data[0].b64_json
         return [(base64_image,{"metadata":{
@@ -307,13 +308,13 @@ class CustomSaasAPI:
         else:
             try:
                 start_time = time.monotonic()
-                response = self.client.chat.completions.create(
+                response = await asyncfy_with_semaphore(lambda:self.client.chat.completions.create(
                                     messages=messages,
                                     model=model,
                                     max_tokens=max_length,
                                     temperature=temperature,
                                     top_p=top_p                            
-                                )
+                                ))
 
                 generated_text = response.choices[0].message.content
                 generated_tokens_count = response.usage.completion_tokens
