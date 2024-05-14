@@ -167,7 +167,7 @@ def deploy(infer_params:str,conf:Dict[str,str]):
     chat_name = conf["UDF_CLIENT"]
     
     llm.setup_num_workers(num_workers).setup_worker_concurrency(worker_concurrency)
-    llm.setup_num_cpus(num_cpus).setup_gpus_per_worker(num_gpus)
+    llm.setup_cpus_per_worker(num_cpus).setup_gpus_per_worker(num_gpus)
 
     llm.deploy(model_path=model_path,
             pretrained_model_type=pretrained_model_type,
