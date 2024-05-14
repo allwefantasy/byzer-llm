@@ -26,7 +26,7 @@ def prepare_env(globals_info:Dict[str,Any],context:PythonContext)->Env:
     conf:Dict[str,str] = context.conf
 
     ray_address = conf.get("rayAddress","auto")
-    disable_storage = conf.get("disable_storage","true") in ["true","True"]
+    enable_storage = conf.get("enable_storage","false") in ["true","True"]
     base_dir = conf.get("base_dir",None)
     storage_version = conf.get("storage_version",None)
     java_home = conf.get("java_home",None)
@@ -37,7 +37,7 @@ def prepare_env(globals_info:Dict[str,Any],context:PythonContext)->Env:
     code_search_path = None 
     storage_enabled = False
     
-    if not disable_storage:    
+    if enable_storage:    
         
         if not os.path.exists(base_dir):
             logger.info(f"Byzer Storage not found in {base_dir}")
