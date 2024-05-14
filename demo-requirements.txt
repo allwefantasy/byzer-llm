@@ -1,11 +1,11 @@
 contextlib2
 ninja
-netifaces
+# netifaces
 accelerate
 bitsandbytes==0.39.0
 transformers>=4.35.0
 torch==2.1.2
-ray[default]==2.9.1
+ray[default]>=2.9.1
 sentencepiece
 pyarrow==12.0.1
 sentence-transformers
@@ -13,10 +13,9 @@ datasets
 langchain
 paramiko
 einops
-tqdm==4.62.3
+tqdm
 loguru
-tensorboard
-pyjava==0.6.15
+pyjava>=0.6.20
 tiktoken
 transformers_stream_generator
 optimum
@@ -25,10 +24,16 @@ uvicorn
 retrying
 zhipuai
 dashscope
-
+tiktoken
+tabulate
+jupyter_client
+prompt-toolkit
+llama_index
+# selenium
 # dependencies only for sparkdesk
 # websockets
 websocket-client
+sqlmodel
 
 # dependencies only for saas/chatglm
 wudao
@@ -40,11 +45,6 @@ SwissArmyTransformer
 jieba
 # rouge_chinese
 # icetk
-
-## TGI dependencies for quick inference
-# pip install flash-attn --no-build-isolation
-
-protobuf==3.20.0
 
 # dependencies only for stable_diffusion
 # safetensors
@@ -59,4 +59,9 @@ protobuf==3.20.0
 
 # camelot-py
 # llama_index
-
+GitPython
+openai>=1.14.3
+anthropic
+google-generativeai
+protobuf
+azure-cognitiveservices-speech
