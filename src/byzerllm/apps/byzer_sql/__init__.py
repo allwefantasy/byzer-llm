@@ -29,6 +29,7 @@ def prepare_env(globals_info:Dict[str,Any],context:PythonContext)->Env:
     disable_storage = conf.get("disable_storage","False") in ["true","True"]
     base_dir = conf.get("base_dir",None)
     storage_version = conf.get("storage_version",None)
+    java_home = conf.get("java_home",None)
 
     version = storage_version or "0.1.11"        
     home = expanduser("~")        
