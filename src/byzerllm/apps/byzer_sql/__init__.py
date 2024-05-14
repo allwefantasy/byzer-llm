@@ -26,7 +26,7 @@ def prepare_env(globals_info:Dict[str,Any],context:PythonContext)->Env:
     conf:Dict[str,str] = context.conf
 
     ray_address = conf.get("rayAddress","auto")
-    disable_storage = conf.get("disable_storage","False") in ["true","True"]
+    disable_storage = conf.get("disable_storage","true") in ["true","True"]
     base_dir = conf.get("base_dir",None)
     storage_version = conf.get("storage_version",None)
     java_home = conf.get("java_home",None)
