@@ -58,7 +58,6 @@ jieba
 # tokenizers==0.13.3
 
 # camelot-py
-# llama_index
 GitPython
 openai>=1.14.3
 anthropic
