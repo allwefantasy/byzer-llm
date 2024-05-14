@@ -1,11 +1,13 @@
 try:
     from unittest.mock import patch
     def mock_nltk_data_find(resource_name, paths=None):
-        return os.path.join(get_cache_dir(), "nltk_data", resource_name)
+        return ""
     def mock_nltk_download(resource_name, download_dir=None):
         pass
-    patch("nltk.data.find", side_effect=mock_nltk_data_find)
-    patch("nltk.download", side_effect=mock_nltk_download)
+    patcher_find = patch("nltk.data.find", side_effect=mock_nltk_data_find)
+    patcher_download = patch("nltk.download", side_effect=mock_nltk_download)
+    patcher_find.start()
+    patcher_download.start()
 except Exception as e:
     print("Error in patching nltk.download", e)
     pass
