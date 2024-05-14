@@ -150,10 +150,10 @@ def deploy(infer_params:str,conf:Dict[str,str]):
     infer_params = json.loads(infer_params)
     llm = ByzerLLM()
     
-    num_gpus = int(conf.get("num_gpus",1))
-    num_cpus = int(conf.get("num_cpus",0.001))
-    num_workers = int(conf.get("maxConcurrency",1))
-    worker_concurrency = int(conf.get("workerConcurrency",1))
+    num_gpus = float(conf.get("gpus_per_worker",conf.get("gpusPerWorker",0)))
+    num_cpus = float(conf.get("cpus_per_worker",conf.get("cpusPerWorker",0.001)))
+    num_workers = int(conf.get("num_workers",conf.get("numWorkers",1)))
+    worker_concurrency = int(conf.get("worker_concurrency",conf.get("workerConcurrency",1)))
 
     pretrained_model_type = infer_params.get("pretrainedModelType","custom/auto")
     model_path = infer_params.get("localModelDir","")
@@ -163,7 +163,6 @@ def deploy(infer_params:str,conf:Dict[str,str]):
     infer_params.pop("udfName","")
     infer_params.pop("modelTable","")
     infer_params.pop("reconnect","")
-
 
     chat_name = conf["UDF_CLIENT"]
     
