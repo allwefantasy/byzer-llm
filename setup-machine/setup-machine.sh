@@ -37,20 +37,6 @@ else
     exit 1
 fi
 
-GIT_BYZER_LLM="https://gitee.com/allwefantasy/byzer-llm.git"
-GIT_AVIARY="https://gitee.com/allwefantasy/aviary.git"
-GIT_OPTIMUM="https://gitee.com/allwefantasy/optimum.git"
-GIT_AVIARY_DEEPSPEED="https://gitee.com/allwefantasy/DeepSpeed.git@aviary"
-GIT_PEFT="https://gitee.com/allwefantasy/peft.git"
-
-if [[ "${GIT_MIRROR}" == "github" ]]; then
-    GIT_BYZER_LLM="https://github.com/allwefantasy/byzer-llm.git"    
-    GIT_AVIARY="https://github.com/ray-project/aviary.git"
-    GIT_OPTIMUM="https://github.com/huggingface/optimum.git"
-    GIT_AVIARY_DEEPSPEED="https://github.com/Yard1/DeepSpeed.git@aviary"
-    GIT_PEFT="https://github.com/huggingface/peft.git"
-fi
-
 RAY_DASHBOARD_HOST=${RAY_DASHBOARD_HOST:-"0.0.0.0"}
 
 # --- define pypi download mirror ---
@@ -285,20 +271,7 @@ done
 
 
 echo "Install some basic python packages"
-if [[ -d "byzer-llm" ]]; then
-    echo "byzer-llm project is already exists"
-else    
-    git clone ${GIT_BYZER_LLM}
-fi
-
-
-pip install "git+${GIT_PEFT}"
-pip install -r byzer-llm/demo-requirements.txt
-
-# echo install byzer-llm package
-cd byzer-llm
-pip install .
-cd ..
+pip install -U auto-coder
 
 # in some cuda version, the 9.0 is not supported, if that case, try to remove 9.0 from TORCH_CUDA_ARCH_LIST_VALUE
 TORCH_CUDA_ARCH_LIST_VALUE="8.0 8.6 9.0"
@@ -306,38 +279,9 @@ TORCH_CUDA_ARCH_LIST_VALUE="8.0 8.6 9.0"
 if [[ "${VLLM_SUPPORT}" == "true" ]]; then
     echo "Setup VLLM support in Byzer-LLM"
     # pip install --no-deps "git+${GIT_VLLM}"
-    pip install vllm==0.2.6
+    pip install -U vllm
 fi
 
-if [[ "${AVIARY_SUPPORT}" == "true" ]]; then
-    pip uninstall -y ray && pip install -U https://gitee.com/allwefantasy/byzer-llm/releases/download/dependency-ray-3.0.0/ray-3.0.0.dev0-cp310-cp310-manylinux2014_x86_64.whl
-    export FORCE_CUDA=1 NVCC_PREPEND_FLAGS="--forward-unknown-opts" DS_BUILD_OPS=1 DS_BUILD_AIO=0 DS_BUILD_SPARSE_ATTN=0 ${TORCH_CUDA_ARCH_LIST_VALUE} && pip install \
-  "awscrt" \
-  "Jinja2" \
-  "numexpr>=2.7.3" \
-  "git+${GIT_AVIARY_DEEPSPEED}" \
-  "numpy<1.24" \
-  "ninja"
-    pip install --no-deps "git+${GIT_OPTIMUM}"
-    pip install --no-deps "git+${GIT_AVIARY}"
-fi
-
-## When use deepspeed inference, it will throws RuntimeError: Error building extension 'transformer_inference'. 
-## This is because the /home/byzerllm/miniconda3/envs/byzerllm-dev has no lib64, we should make a soft link to lib to fix this issue.
-## You can use the following command to reproduce this issue
-# python -c """
-# import deepspeed
-# import transformers
-# import os
-# model = transformers.AutoModelForCausalLM.from_pretrained('/home/byzerllm/models/llama-7b-cn')
-# world_size = int(os.getenv('WORLD_SIZE', '1'))
-# model = deepspeed.init_inference(
-#             model,
-#             mp_size=world_size,
-#             replace_with_kernel_inject=True,
-#             replace_method='auto',
-#         )
-# """
 
 if [[ -d "$CONDA_INSTALL_PATH/envs/byzerllm-dev/lib64" ]]; then
     echo "lib64 is already exists"

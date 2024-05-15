@@ -16,7 +16,7 @@ except Exception as e:
 import os
 from typing import Any, Callable, Dict, Optional, Sequence
 
-from llama_index.legacy.bridge.pydantic import Field, PrivateAttr
+from llama_index.core.bridge.pydantic import Field, PrivateAttr
 
 from llama_index.core.llms import (    
     ChatMessage,
