@@ -164,7 +164,7 @@ class CustomSaasAPI:
                     f.write(image_b)
 
                 content.append({"image": f"file://{image_file}"})
-            elif "text" in item:
+            if "text" in item:
                 text_data = item["text"]
                 content.append({"text": text_data})
 
