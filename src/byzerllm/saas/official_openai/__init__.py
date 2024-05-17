@@ -230,8 +230,8 @@ class CustomSaasAPI:
         model = self.model        
 
         if "model" in kwargs:
-            model = kwargs["model"]                  
-
+            model = kwargs["model"] 
+        
         messages = [{"role":message["role"],"content":self.process_input(message["content"])} for message in his] + [{"role": "user", "content": self.process_input(ins)}]
 
         stream = kwargs.get("stream",False)
