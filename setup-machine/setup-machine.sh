@@ -286,7 +286,7 @@ fi
 if [[ -d "$CONDA_INSTALL_PATH/envs/byzerllm-dev/lib64" ]]; then
     echo "lib64 is already exists"
 else
-    echo "$CONDA_INSTALL_PATH/envs/byzerllm-dev/lib64 in is not exists,this will cause RuntimeError: Error building extension 'transformer_inference' when use deepspeed inference"
+    echo "$CONDA_INSTALL_PATH/envs/byzerllm-dev/lib64 is not exists,this will cause RuntimeError: Error building extension 'transformer_inference' when use deepspeed inference"
     echo "Try to create a soft link to lib64"
     ln -s $CONDA_INSTALL_PATH/envs/byzerllm-dev/lib $CONDA_INSTALL_PATH/envs/byzerllm-dev/lib64
 fi
