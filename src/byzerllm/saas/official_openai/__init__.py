@@ -95,16 +95,41 @@ class CustomSaasAPI:
             return ins_json
         
         content = []
+    #     [
+    #     {"type": "text", "text": "What’s in this image?"},
+    #     {
+    #       "type": "image_url",
+    #       "image_url": {
+    #         "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg",
+    #         "detail": "high"
+    #       },
+    #     },
+    #   ],
         for item in ins_json:
-            if "image" in item or "image_url" in item:
+            # for format like this: {"image": "xxxxxx", "text": "What’s in this image?","detail":"high"}
+            # or {"image": "xxxxxx"}, {"text": "What’s in this image?"}
+            if ("image" in item or "image_url" in item) and "type" not in item:
                 image_data = item.get("image",item.get("image_url",""))
                 ## "data:image/jpeg;base64," 
                 if not image_data.startswith("data:"):
-                    image_data = "data:image/jpeg;base64," + image_data                                                                                
-                content.append({"image_url": {"url":image_data},"type": "image_url",})
-            elif "text" in item:
+                    image_data = "data:image/jpeg;base64," + image_data 
+
+                ## get the other fields except image/text/image_url
+                other_fields = {k:v for k,v in item.items() if k not in ["image","text","image_url"]}
+                content.append({"image_url": {"url":image_data},"type": "image_url",**other_fields})
+            if "text" in item and "type" not in item:
                 text_data = item["text"]
                 content.append({"text": text_data,"type":"text"})
+            
+            ## for format like this: {"type": "text", "text": "What’s in this image?"},
+            ## {"type": "image_url", "image_url": {"url":"","detail":"high"}}
+            ## this is the standard format, just return it
+            if "type" in item and item["type"] == "text":
+                content.append(item)
+
+            if "type" in item and item["type"] == "image_url":                
+                content.append(item)
+
         if not content:
             return ins
         
