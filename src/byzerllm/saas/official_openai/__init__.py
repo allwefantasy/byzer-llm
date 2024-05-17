@@ -116,7 +116,7 @@ class CustomSaasAPI:
 
                 ## get the other fields except image/text/image_url
                 other_fields = {k:v for k,v in item.items() if k not in ["image","text","image_url"]}
-                content.append({"image_url": {"url":image_data},"type": "image_url",**other_fields})
+                content.append({"image_url": {"url":image_data,**other_fields},"type": "image_url"})
             if "text" in item and "type" not in item:
                 text_data = item["text"]
                 content.append({"text": text_data,"type":"text"})
