@@ -193,6 +193,9 @@ class _PrompRunner:
         self.render = render
         self.check_result = check_result
         self._options = options
+        self.max_turns = 10
+        self.response_markers = None
+        self.auto_remove_response_markers_from_output = True
 
     def __call__(self, *args,**kwargs) -> Any:    
         if self.llm:
@@ -201,6 +204,16 @@ class _PrompRunner:
     
     def options(self,options:Dict[str,Any]):
         self._options = {**self._options,**options}
+        return self
+    
+    def with_response_markers(self,response_markers:List[str]):
+        if len(response_markers) != 2:
+            raise ValueError("response_markers should be a list of two elements")        
+        self.response_markers = response_markers
+        return self
+    
+    def with_max_turns(self,max_turns:int):
+        self.max_turns = max_turns
         return self
     
     def prompt(self,*args, **kwargs):
@@ -233,6 +246,57 @@ class _PrompRunner:
     def with_llm(self,llm):
         self.llm = llm
         return self
+    
+    def with_auto_remove_response_markers(self,flag:bool):
+        self.auto_remove_response_markers_from_output = flag
+        return self    
+
+    def _remove_response_markers(self,output:str):
+        [start,end] = self.response_markers        
+        start_index = output.find(start)
+        end_index = output.find(end)
+        return output[start_index+len(start):end_index]
+    
+    def _multi_turn_wrapper(self,llm,v:List[Any],signature:inspect.Signature):          
+        if not issubclass(signature.return_annotation,str):
+            raise ValueError("Return value of function should be a string when response_markers is set")
+        
+        conversations = []
+        response = v[0]  
+        s = response.output
+        conversations += response.input["history"] or []   
+        conversations.append({
+            "role":"user",
+            "content":response.input["instruction"]
+        })    
+        conversations.append({
+            "role":"assistant",
+            "content":response.output
+        })
+        turn = 1
+        end_marker = self.response_markers[1]
+        
+        while turn < self.max_turns and end_marker not in response.output:
+            conversations.append({
+                "role":"user",
+                "content":"接着前面的内容继续"
+            })
+            v1 = llm.chat_oai(
+                conversations = conversations,
+                **self._options
+            )
+            response = v1[0]
+            conversations.append({
+                "role":"assistant",
+                "content":response.output
+            })
+            s += response.output
+            turn += 1
+                
+        if self.auto_remove_response_markers_from_output:
+            output_content = self._remove_response_markers(output=s)
+        response.output = output_content           
+        return response.output
      
     def run(self,*args,**kwargs):
         func = self.func
@@ -252,17 +316,28 @@ class _PrompRunner:
             input_dict.update({ param: arguments.arguments[param] })         
 
         is_lambda = inspect.isfunction(llm) and llm.__name__ == '<lambda>'
-        if is_lambda:                          
-            return llm(self.instance).prompt(render=render,check_result=check_result,options=self._options)(func)(**input_dict)
+        if is_lambda:      
+            return_origin_response = True if self.response_markers else False
+            v = llm(self.instance).prompt(render=render,check_result=check_result,
+                                          options=self._options,
+                                          return_origin_response=return_origin_response)(func)(**input_dict)
+            return self._multi_turn_wrapper(llm(self.instance),v,signature)    
+
             
         if isinstance(llm,ByzerLLM):
-            return llm.prompt(render=render,check_result=check_result,options=self._options)(func)(**input_dict)
+            return_origin_response = True if self.response_markers else False
+            v = llm.prompt(render=render,check_result=check_result,options=self._options,
+                           return_origin_response=return_origin_response)(func)(**input_dict)
+            return self._multi_turn_wrapper(llm,v,signature)
         
         if isinstance(llm,str):
             _llm = ByzerLLM()
             _llm.setup_default_model_name(llm)
-            _llm.setup_template(llm,"auto")         
-            return _llm.prompt(render=render,check_result=check_result,options=self._options)(func)(**input_dict)  
+            _llm.setup_template(llm,"auto")  
+            return_origin_response = True if self.response_markers else False       
+            v = _llm.prompt(render=render,check_result=check_result,options=self._options,
+                            return_origin_response=return_origin_response)(func)(**input_dict)  
+            return self._multi_turn_wrapper(llm,v,signature)
                 
         else:
             raise ValueError("llm should be a lambda function or ByzerLLM instance or a string of model name")  
@@ -275,7 +350,7 @@ class _DescriptorPrompt:
         self.llm = llm
         self.render = render
         self.check_result = check_result
-        self._options = options
+        self._options = options        
         self.prompt_runner = _PrompRunner(self.wrapper,None,self.llm,self.render,self.check_result,options=self._options)
 
     def __get__(self, instance, owner):        
@@ -283,6 +358,20 @@ class _DescriptorPrompt:
             return self
         else:            
             return _PrompRunner(self.wrapper,instance,self.llm,self.render,self.check_result,options=self._options)
+    
+    def with_response_markers(self,response_markers:List[str]):
+        if len(response_markers) != 2:
+            raise ValueError("response_markers should be a list of two elements")        
+        self.prompt_runner.response_markers = response_markers
+        return self
+    
+    def with_auto_remove_response_markers(self,flag:bool):
+        self.prompt_runner.auto_remove_response_markers_from_output = flag
+        return self
+    
+    def with_max_turns(self,max_turns:int):
+        self.prompt_runner.max_turns = max_turns
+        return self    
 
     def __call__(self, *args, **kwargs):
         return self.prompt_runner(*args, **kwargs)
