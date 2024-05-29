@@ -672,8 +672,7 @@ The num_gpu_layers also accept a positive number to specify the number of layers
 You can use the following code to start a ByzerLLm OpenAI-Compatible RESTful API server:
 
 ```shell
-ray start --address="xxxxx:6379"  --num-gpus=0 --num-cpus=0 
-python -m byzerllm.utils.client.entrypoints.openai.api_server
+byzerllm serve --ray_address auto --port 8000
 ```
 
 By default, the server will listen on port 8000, you can use the following code to test the API:
