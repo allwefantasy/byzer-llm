@@ -134,15 +134,4 @@ def main():
         if args.served_model_name:
             llm_client.setup_template(args.served_model_name, args.template)                 
         server_args = ServerArgs(**{arg: getattr(args, arg) for arg in vars(ServerArgs())})                      
-        serve(llm=llm_client, args=server_args)            from byzerllm.utils.client.entrypoints.openai.serve import serve, ServerArgs
-    StoreNestedDict, get_command_args
-
-def main():
-    elif args.command == 'serve':
-        byzerllm.connect_cluster(address=args.ray_address) 
-        llm_client = ByzerLLM()
-        if args.served_model_name:
-            llm_client.setup_template(args.served_model_name, args.template)                 
-        server_args = ServerArgs(**{arg: getattr(args, arg) for arg in vars(ServerArgs())})                      
         serve(llm=llm_client, args=server_args)            
-
