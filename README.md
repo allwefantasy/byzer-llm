@@ -652,11 +652,20 @@ byzerllm deploy --pretrained_model_type custom/auto \
 --cpus_per_worker 0.001 \
 --gpus_per_worker 0 \
 --num_workers 1 \
+--worker_concurrency 10 \
 --infer_params verbose=true \
 --model_path /Users/allwefantasy/Downloads/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf \
 --model llama_3_chat
 ```
 
+You can set 
+
+1. `num_gpu_layers=-1` in `--infer_params` 
+2. gpu_gpus_per_worker=x
+
+to put all model to the GPU or `num_gpu_layers=0` and gpu_gpus_per_worker=0 to disable it.
+
+The num_gpu_layers also accept a positive number to specify the number of layers to use GPU.
 
 ## Byzer-LLM OpenAI-Compatible RESTful API server
 
@@ -2837,10 +2846,3 @@ storage_context = get_storage_context(llm,retrieval,chunk_collection="default",n
 5. [基于Byzer-Agent 框架开发智能数据分析工具](https://mp.weixin.qq.com/s/BcoHUEXF24wTjArc7mwNaw)
 6. [Byzer-LLM 支持同时开源和SaaS版通义千问](https://mp.weixin.qq.com/s/VvzMUV654D7IO0He47nv3A)
 7. [给开源大模型带来Function Calling、 Respond With Class](https://mp.weixin.qq.com/s/GTVCYUhR_atYMX9ymp0eCg)
-
-
-
-
-
-
-
