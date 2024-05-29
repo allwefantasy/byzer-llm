@@ -306,7 +306,7 @@ class CustomSaasAPI:
                 for chunk in response:                                                              
                     content = chunk.choices[0].delta.content or ""
                     r += content        
-                    if hasattr(chunk,"usage"):
+                    if hasattr(chunk,"usage") and chunk.usage:
                         input_tokens_count = chunk.usage.prompt_tokens
                         generated_tokens_count = chunk.usage.completion_tokens
                     else:

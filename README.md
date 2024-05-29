@@ -18,10 +18,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 *Latest News* 🔥
 
 - [2024/04] Release Byzer-LLM 0.1.87
-- [2024/04] Release Byzer-LLM 0.1.75
-- [2024/03] Release Byzer-LLM 0.1.55
-- [2024/02] Release Byzer-LLM 0.1.40
-- [2024/01] Release Byzer-LLM 0.1.39
+...
 - [2023/12] Release Byzer-LLM 0.1.30
 
 ---
@@ -66,18 +63,20 @@ The unique features of Byzer-LLM are:
     * [Pin Model Worker Mapping](#Pin-Model-Worker-Mapping)
     * [Model Worker Load Balance](#Model-Worker-Load-Balance)
 * [SaaS Models](#SaaS-Models)
-    * [qianwen/通义千问](#qianwen/通义千问)
+    * [qianwen/通义千问](#qianwen_通义千问)
+    * [qianwen_emb/通义千问](#qianwen_emb_通义千问)
     * [qianwen_vl/通义千问多模态](#qianwen_vl通义千问多模态)
     * [yi_vl_plus/01万物多模态](#yi_vl_plus01万物多模态)
     * [baichuan/百川](#baichuan/百川)
     * [azure openai](#azure-openai)
     * [openai](#openai)
     * [zhipu/智谱](#zhipu/智谱)
-    * [sparkdesk/星火](#sparkdesk/星火)         
+    * [sparkdesk/星火](#sparkdesk_星火)         
     * [AmazonBedrock](#AmazonBedrock)
     * [Claude](#claude)
     * [Gemini](#gemini)
-    * [Kimi](#moonshot/kimi)
+    * [Kimi](#moonshot_kimi)
+    * [DeepSeek](#deepseek)
     * [Volcano TTS](#volcano_tts)
     * [OpenAI TTS](#openai_tts)
     * [Azure TTS](#azure_tts)
@@ -97,43 +96,7 @@ The unique features of Byzer-LLM are:
 
 ## Versions
 - 0.1.71:  stream_chat_oai/async_chat_oai add delta_mode parameter
-- 0.1.53:  Optimize saas/official_openai model
-- 0.1.52:  Add Yi-VL-Plus Saas model support
-- 0.1.50:  Add byzerllm command line tool
-- 0.1.48:  Add qwen_vl_saas model support/ Callback support for Byzer-LLM 
-- 0.1.47:  Fix prompt function bugs
-- 0.1.46:  Add stream_reply to Byzer-Agent, please check this [link](https://github.com/allwefantasy/byzer-agent)
-- 0.1.45:  Optimize Byzer-Agent, please check this [link](https://github.com/allwefantasy/byzer-agent)
-- 0.1.44:  Prompt Function/Prompt Class help you to manage and execute your prompts.
-- 0.1.43： add pin_model_worker_mapping to ByzerLLM which can some request to the same worker(if you have a model with multiple workers), add load_balance parameter to ByzerLLM which can control the load balance strategy when the model has multiple workers
-and this parameter takes effect only when you deploy model.
-- 0.1.42： when use  tokenizer apply_chat_template we should  add_generation_prompt=True
-- 0.1.41： Fix vLLM bugs / vLLM 0.3.3 Support
-- 0.1.40： LlamaIndex support / vLLM 0.3.2 Support / Byzer-SQL new features / Qwen 1.5 support
-- 0.1.39： Enhance Function Impl / Upgrade SaaS SDK / Add OpenAI-Compatible API Server
-- 0.1.38： Upgrade saas/sparkdask model / add embedding rerank model / agent message store support
-- 0.1.37： Upgrade saas/zhipu model, you can choose glm-4 / embedding-2 for LLM or embedding purpose
-- 0.1.36： Fix data analysis agent bugs which caused by the upgrade of Byzer-Agent
-- 0.1.35： Add Baichuan Saas embedding model
-- 0.1.34： Enhance the Byzer-Agent API and fix some bugs in Byzer-LLM
-- 0.1.33： Fix Response Class bugs/ Add function implementation
-- 0.1.32： StableDiffusion optimization
-- 0.1.31： Stream Chat with token count information / Optimize multi modal model chat
-- 0.1.30： Apply chat template for vLLM backend
-- 0.1.29： Enhance DataAnalysis Agent
-- 0.1.28： Bug fix
-- 0.1.27： Bug fix
-- 0.1.26： Support QianWen Saas/ Support stream chat in QianWenSaas/ Fix some Saas model bugs
-- 0.1.24： Support get meta from model instance and auto setup template
-- 0.1.23： Fintune with python API/ Fix some bugs
-- 0.1.22： Function Calling support/ Response with pydantic class
-- 0.1.19： Fix embedding bugs
-- 0.1.18： Support stream chat/ Support Model Template
-- 0.1.17： None
-- 0.1.16： Enhance the API for byzer-retrieval
-- 0.1.14： add get_tables/get_databases API for byzer-retrieval
-- 0.1.13: support shutdown cluster for byzer-retrieval
-- 0.1.12: Support Python API (alpha)
+...
 - 0.1.5:  Support python wrapper for [byzer-retrieval](https://github.com/allwefantasy/byzer-retrieval)
 
 ---
@@ -1882,7 +1845,21 @@ There are some enum values for the `saas.model`:
 1. Baichuan2-Turbo
 2. Baichuan-Text-Embedding
 
-### qianwen/通义千问
+### qianwen_通义千问
+
+#### Command
+
+```shell
+byzerllm deploy --pretrained_model_type saas/qianwen \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 1 \
+--worker_concurrency 10 \
+--infer_params saas.api_key=${MODEL_QIANWEN_TOKEN}  saas.model=qwen-max \
+--model qianwen_chat
+```
+
+#### Python
 
 ```python
 from byzerllm.utils.client import ByzerLLM
@@ -1914,6 +1891,19 @@ There are some enum values for the `saas.model`:
 
 1. qwen-turbo
 2. qwen-max
+
+### qianwen_emb_通义千问
+
+#### Command
+
+```shell
+byzerllm deploy --pretrained_model_type saas/qianwen \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 2 \
+--infer_params saas.api_key=${MODEL_QIANWEN_TOKEN}  saas.model=text-embedding-v2 \
+--model qianwen_emb
+```
 
 ### yi_vl_plus/01万物多模态
 
@@ -1947,6 +1937,20 @@ v
 
 
 ### qianwen_vl/通义千问多模态
+
+#### Command
+
+```shell
+byzerllm deploy --pretrained_model_type saas/qianwen_vl \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 1 \
+--worker_concurrency 10 \
+--infer_params saas.api_key=${MODEL_QIANWEN_TOKEN}  saas.model=qwen-vl-max \
+--model qianwen_vl_max_chat
+```
+
+#### Python
 
 ```python
 import os
@@ -2036,7 +2040,21 @@ and modelTable="command";
 
 ### openai
 
-```sql
+#### Command Line
+
+```bash
+byzerllm deploy --pretrained_model_type saas/openai \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--worker_concurrency 10 \
+--num_workers 1 \
+--infer_params saas.api_key=${MODEL_OPENAI_TOKEN} saas.model=gpt-3.5-turbo-0125 \
+--model gpt3_5_chat
+```
+
+#### Python
+
+```python
 
 import ray
 
@@ -2051,7 +2069,7 @@ llm.setup_num_workers(1).setup_gpus_per_worker(0)
 chat_name = "openai_chat"
 
 llm.deploy(model_path="",
-           pretrained_model_type="saas/official_openai",
+           pretrained_model_type="saas/openai",
            udf_name=chat_name,
            infer_params={
             "saas.api_key":"xxxx",            
@@ -2124,9 +2142,9 @@ and modelTable="command";
 
 ```
 
-### sparkdesk/星火
+### sparkdesk_星火
 
-#### Command Line
+#### Command
 
 ```bash
 byzerllm deploy --pretrained_model_type saas/sparkdesk \
@@ -2279,17 +2297,29 @@ byzerllm deploy --pretrained_model_type saas/gemini \
 --model gemini_chat
 ```
 
-### Moonshot/Kimi
+### Moonshot_Kimi
 
 You can use the saas/offical_openai to deploy the Kimi model.
 
 ```bash
-byzerllm deploy --pretrained_model_type saas/official_openai \
+byzerllm deploy --pretrained_model_type saas/openai \
 --cpus_per_worker 0.001 \
 --gpus_per_worker 0 \
 --num_workers 2 \
 --infer_params saas.api_key=xxxxx saas.base_url="https://api.moonshot.cn/v1" saas.model=moonshot-v1-8k \
 --model kimi_8k_chat
+```
+
+### DeepSeek
+
+```bash
+byzerllm deploy --pretrained_model_type saas/openai \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--worker_concurrency 10 \
+--num_workers 1 \
+--infer_params saas.base_url="https://api.deepseek.com/v1" saas.api_key=${MODEL_DEEPSEEK_TOKEN} saas.model=deepseek-chat \
+--model deepseek_chat
 ```
 
 ### volcano_tts

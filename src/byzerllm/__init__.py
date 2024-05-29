@@ -321,6 +321,8 @@ class _PrompRunner:
             v = llm(self.instance).prompt(render=render,check_result=check_result,
                                           options=self._options,
                                           return_origin_response=return_origin_response)(func)(**input_dict)
+            if not return_origin_response:
+                return v
             return self._multi_turn_wrapper(llm(self.instance),v,signature)    
 
             
@@ -328,6 +330,8 @@ class _PrompRunner:
             return_origin_response = True if self.response_markers else False
             v = llm.prompt(render=render,check_result=check_result,options=self._options,
                            return_origin_response=return_origin_response)(func)(**input_dict)
+            if not return_origin_response:
+                return v
             return self._multi_turn_wrapper(llm,v,signature)
         
         if isinstance(llm,str):
@@ -336,7 +340,9 @@ class _PrompRunner:
             _llm.setup_template(llm,"auto")  
             return_origin_response = True if self.response_markers else False       
             v = _llm.prompt(render=render,check_result=check_result,options=self._options,
-                            return_origin_response=return_origin_response)(func)(**input_dict)  
+                            return_origin_response=return_origin_response)(func)(**input_dict) 
+            if not return_origin_response:
+                return v 
             return self._multi_turn_wrapper(llm,v,signature)
                 
         else:
