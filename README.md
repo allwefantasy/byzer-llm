@@ -9,7 +9,7 @@ Easy, fast, and cheap pretrain,finetune, serving for everyone
 </h3>
 
 <p align="center">
-| <a href="./docs/zh/"><b>English</b></a> | <a href="./docs/en/"><b>中文</b></a> |
+| <a href="./docs/en/"><b>English</b></a> | <a href="./docs/zh/"><b>中文</b></a> |
 
 </p>
 
