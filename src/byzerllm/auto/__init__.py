@@ -314,8 +314,12 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
 
         try:
             ray.get_actor("VLLM_STREAM_SERVER")
-        except ValueError:            
-            ray.remote(VLLMStreamServer).options(name="VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()
+        except ValueError:  
+            try:          
+                ray.remote(VLLMStreamServer).options(name="VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()
+            except Exception as e:
+                print(f"create VLLM_STREAM_SERVER error:{e}",flush=True)
+                pass
                         
         worker_use_ray: bool = get_bool(infer_params,"backend.worker_use_ray",True)
         
