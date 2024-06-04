@@ -102,8 +102,7 @@ class LlamaCppBackend:
             try:          
                 ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER",lifetime="detached",max_concurrency=1000).remote()
             except Exception as e:
-                print(f"create BlockVLLMStreamServer error:{e}",flush=True)
-                pass
+                print(f"create BlockVLLMStreamServer error:{e}",flush=True)                
 
 
     def get_meta(self):
