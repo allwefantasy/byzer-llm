@@ -12,7 +12,7 @@ import sys
 import traceback
 import io
 from enum import Enum
-from byzerllm.utils.types import BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer
+from byzerllm.utils.types import VLLMStreamServer, BlockVLLMStreamServer,StreamOutputs,SingleOutput,SingleOutputMeta,BlockBinaryStreamServer
 
 T = TypeVar("T")
 
@@ -873,5 +873,5 @@ def random_uuid() -> str:
     return str(uuid.uuid4().hex)
 
 
-__all__ = ["BlockVLLMStreamServer","StreamOutputs","SingleOutput","SingleOutputMeta","BlockBinaryStreamServer"]
+__all__ = ["VLLMStreamServer", "BlockVLLMStreamServer","StreamOutputs","SingleOutput","SingleOutputMeta","BlockBinaryStreamServer"]
 
