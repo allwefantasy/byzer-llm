@@ -4,7 +4,7 @@ ninja
 accelerate
 bitsandbytes==0.39.0
 transformers>=4.35.0
-torch==2.1.2
+torch>=2.1.2,<2.3
 ray[default]>=2.9.1
 sentencepiece
 pyarrow==12.0.1
@@ -15,7 +15,7 @@ paramiko
 einops
 tqdm
 loguru
-pyjava>=0.6.20
+pyjava>=0.6.21
 tiktoken
 transformers_stream_generator
 optimum
@@ -39,7 +39,7 @@ sqlmodel
 wudao
 
 # dependencies only for visualglm
-SwissArmyTransformer
+# SwissArmyTransformer
 
 # dependencies only for chatglm
 jieba
@@ -58,9 +58,18 @@ jieba
 # tokenizers==0.13.3
 
 # camelot-py
+# llama_index
+patch
+diff_match_patch
 GitPython
 openai>=1.14.3
 anthropic
 google-generativeai
 protobuf
 azure-cognitiveservices-speech
+python-docx
+reportlab
+pdf2image
+docx2pdf
+pandoc
+pypandoc
