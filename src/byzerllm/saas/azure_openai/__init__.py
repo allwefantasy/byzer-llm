@@ -28,13 +28,14 @@ class CustomSaasAPI:
     def get_meta(self):
         return [{
             "model_deploy_type": "saas",
-            "backend": "saas"
+            "backend": "saas",
+            "embedding_mode": "embedding" in self.model.lower()
         }]
-    
+
     async def async_get_meta(self):
         return await asyncfy_with_semaphore(self.get_meta)()
 
-    async def stream_chat(
+    async def async_stream_chat(
             self,
             tokenizer,
             ins: str,
@@ -44,7 +45,8 @@ class CustomSaasAPI:
             temperature: float = 0.9,
             **kwargs
     ):
-        request_id = random_uuid() if "request_id" not in kwargs else kwargs["request_id"]
+        request_id = random_uuid(
+        ) if "request_id" not in kwargs else kwargs["request_id"]
         messages = his
         if ins:
             messages += [{"role": "user", "content": ins}]
@@ -53,9 +55,10 @@ class CustomSaasAPI:
 
         answer = None
         try:
-            logger.info(f"Receiving request {request_id}: model: {self.model} messages: {messages}")
+            logger.info(
+                f"Receiving request {request_id}: model: {self.model} messages: {messages}")
 
-            completion = await asyncfy_with_semaphore(lambda:self.client.chat.completions.create(
+            completion = await asyncfy_with_semaphore(lambda: self.client.chat.completions.create(
                 model=self.model,
                 top_p=top_p,
                 temperature=temperature,
@@ -91,3 +94,31 @@ class CustomSaasAPI:
             logger.error(f"request azure openai failed: {e}")
             answer = f"Exception occurred during the request, please try again: {e}" if not answer else answer
             return [(answer, "")]
+
+    def embed_query(self, ins: str, **kwargs):
+        resp = self.client.embeddings.create(input=[ins], model=self.model)
+        embedding = resp.data[0].embedding
+        usage = resp.usage
+        return (
+            embedding,
+            {
+                "metadata": {
+                    "input_tokens_count": usage.prompt_tokens,
+                    "generated_tokens_count": 0
+                }
+            }
+        )
+
+    async def async_embed_query(self, ins: str, **kwargs):
+        resp = await asyncfy_with_semaphore(lambda: self.client.embeddings.create(input=[ins], model=self.model))()
+        embedding = resp.data[0].embedding
+        usage = resp.usage
+        return (
+            embedding,
+            {
+                "metadata": {
+                    "input_tokens_count": usage.prompt_tokens,
+                    "generated_tokens_count": 0
+                }
+            }
+        )
