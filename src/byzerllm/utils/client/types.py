@@ -59,7 +59,7 @@ class  FintuneRequest:
     model_path: str
     pretrained_model_type: str
     input_data_path: str
-    extra_params: FintuneRequestExtra = FintuneRequestExtra()
+    extra_params: FintuneRequestExtra = dataclasses.field(default_factory=FintuneRequestExtra)
 
 
 class InferBackend:

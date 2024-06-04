@@ -15,8 +15,6 @@ execute: true
 auto_merge: true
 human_as_model: true
 
-query: |      
-  pass
-     
-
-
+exclude_files:
+  - human://路径包含stable_diffusion目录
+  # - regex://.*/stable_diffusion/.*  

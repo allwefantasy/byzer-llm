@@ -1,6 +1,7 @@
 include_file:
   - ./common/diff.yml
 
+project_type: ts  
 query: |      
    参考 byzerllm.utils.client.entrypoints.openai.api_server， 
    在 byzerllm.py 文件添加一个新的命令行：
