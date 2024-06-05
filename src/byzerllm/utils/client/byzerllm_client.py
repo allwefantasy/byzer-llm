@@ -854,7 +854,14 @@ class ByzerLLM:
         
         r.value=ms
 
-        return r
+        return r  
+
+    def require_template(self,model:str):
+        meta = self.get_meta(model=model)
+        is_saas_model =  meta.get("model_deploy_type",None) == "saas"
+        is_message_format = meta.get("message_format",False)
+        support_chat_template = meta.get("support_chat_template",False)
+        return not is_saas_model and  not is_message_format and not support_chat_template          
 
     def abort(self,request_id:str,model:Optional[str]=None):
         if not model and not self.default_model_name:
