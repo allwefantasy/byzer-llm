@@ -128,9 +128,9 @@ class StorageSubCommand:
         home = expanduser("~")        
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
         libs_dir = os.path.join(base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")
-        data_dir = os.path.join(base_dir, "storage", "data",cluster)        
+        cluster_json = os.path.join(base_dir, "storage", "data",f"{cluster}.json")        
 
-        if not os.path.exists(data_dir) or not os.path.exists(libs_dir):
+        if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
             print("No instance find.")
             return
 
@@ -180,9 +180,9 @@ class StorageSubCommand:
         home = expanduser("~")        
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
         libs_dir = os.path.join(base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")
-        data_dir = os.path.join(base_dir, "storage", "data",cluster)        
+        cluster_json = os.path.join(base_dir, "storage", "data",f"{cluster}.json")
 
-        if not os.path.exists(data_dir) or not os.path.exists(libs_dir):
+        if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
             print("No instance find.")
             return
 
@@ -195,7 +195,7 @@ class StorageSubCommand:
         retrieval.launch_gateway()
 
         if not retrieval.is_cluster_exists(cluster):
-            with open(os.path.join(base_dir, "storage", "data",f"{cluster}.json"),"r") as f:
+            with open(cluster_json,"r") as f:
                 cluster_info = f.read()
             
             retrieval.restore_from_cluster_info(json.loads(cluster_info))
