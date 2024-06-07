@@ -1,6 +1,8 @@
 import sys
 import subprocess
 import os
+import platform
+import subprocess
 from dataclasses import dataclass
 import urllib.request
 import tarfile
@@ -9,6 +11,22 @@ from loguru import logger
 from packaging import version
 import re
 from os.path import expanduser
+
+def is_apple_m_series():
+    # 检查系统是否是 macOS
+    if platform.system() != 'Darwin':
+        return False
+
+    try:
+        # 使用 subprocess 获取系统信息
+        result = subprocess.run(['sysctl', 'machdep.cpu.brand_string'], capture_output=True, text=True)
+        # 检查输出中是否包含 "Apple M"
+        if 'Apple M' in result.stdout:
+            return True
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    
+    return False
 
 @dataclass
 class EnvInfo:
@@ -19,7 +37,8 @@ class EnvInfo:
    virtualenv: str
    has_bash: bool
    java_home: str
-   java_version: str 
+   java_version: str
+   cpu: str
 
 def find_jdk21_from_dir(directory):
     
@@ -65,12 +84,17 @@ def get_latest_byzer_retrieval_lib(directory):
 def detect_env() -> EnvInfo:
     os_name = sys.platform
     os_version = ""
+    cpu = "x86_64"
     if os_name == "win32":
         os_version = sys.getwindowsversion().major
     elif os_name == "darwin":
-        os_version = subprocess.check_output(["sw_vers", "-productVersion"]).decode('utf-8').strip()
+        os_version = subprocess.check_output(["sw_vers", "-productVersion"]).decode('utf-8').strip() 
+        if is_apple_m_series():
+            cpu = "arm64"
     elif os_name == "linux":
         os_version = subprocess.check_output(["uname", "-r"]).decode('utf-8').strip()
+        if "aarch64" in subprocess.check_output(["uname", "-m"]).decode('utf-8').strip().lower():
+            cpu = "arm64"
 
     python_version = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
 
@@ -118,7 +142,8 @@ def detect_env() -> EnvInfo:
         virtualenv=virtualenv,
         has_bash=has_bash,
         java_version=java_version,
-        java_home=java_home        
+        java_home=java_home,       
+        cpu=cpu
     )
 
 
@@ -133,9 +158,15 @@ def download_with_progressbar(url, filename):
 def download_and_install_jdk21(env_info: EnvInfo, install_dir: str):
    jdk_download_url = ""
    if env_info.os_name == "linux":
-       jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz"
+       if env_info.cpu == "arm64":
+           jdk_download_url = "https://download.oracle.com/java/21/archive/jdk-21.0.2_linux-aarch64_bin.tar.gz"
+       else:
+           jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz"
    elif env_info.os_name == "darwin":
-       jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_macos-x64_bin.tar.gz"
+       if env_info.cpu == "arm64": 
+           jdk_download_url = "https://download.oracle.com/java/21/archive/jdk-21.0.2_macos-aarch64_bin.tar.gz"
+       else:
+           jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_macos-x64_bin.tar.gz"
    elif env_info.os_name == "win32":
        jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_windows-x64_bin.zip"
 
