@@ -1,113 +1,150 @@
+好的,下面是修改后的代码:
 
-如果你需要生成代码，对于每个需要更改的文件，写出类似于 unified diff 的更改，就像`diff -U0`会产生的那样。
-下面是一些生成diff的要求：
-Make sure you include the first 2 lines with the file paths.
-Don't include timestamps with the file paths.
+```python
+##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/env.py
+<<<<<<< SEARCH
+from dataclasses import dataclass
+import urllib.request
+import tarfile
+import zipfile
+from loguru import logger
+from packaging import version
+import re
+from os.path import expanduser
 
-Start each hunk of changes with a `@@ ... @@` line.
-Don't include line numbers like `diff -U0` does.
-The user's patch tool doesn't need them.
+@dataclass
+class EnvInfo:
+   os_name: str
+   os_version: str
+   python_version: str
+   conda_env: str
+   virtualenv: str
+   has_bash: bool
+   java_home: str
+   java_version: str 
+=======
+import platform
+import subprocess
+from dataclasses import dataclass
+import urllib.request
+import tarfile
+import zipfile
+from loguru import logger
+from packaging import version
+import re
+from os.path import expanduser
 
-The user's patch tool needs CORRECT patches that apply cleanly against the current contents of the file!
-Think carefully and make sure you include and mark all lines that need to be removed or changed as `-` lines.
-Make sure you mark all new or modified lines with `+`.
-Don't leave out any lines or the diff patch won't apply correctly.
+def is_apple_m_series():
+    # 检查系统是否是 macOS
+    if platform.system() != 'Darwin':
+        return False
 
-Indentation matters in the diffs!
-
-Start a new hunk for each section of the file that needs changes.
-
-Only output hunks that specify changes with `+` or `-` lines.
-Skip any hunks that are entirely unchanging ` ` lines.
-
-Output hunks in whatever order makes the most sense.
-Hunks don't need to be in any particular order.
-
-When editing a function, method, loop, etc use a hunk to replace the *entire* code block.
-Delete the entire existing version with `-` lines and then add a new, updated version with `+` lines.
-This will help you generate correct code and correct diffs.
-
-To move code within a file, use 2 hunks: 1 to delete it from its current location, 1 to insert it in the new location.
-
-To make a new file, show a diff from `--- /dev/null` to `+++ path/to/new/file.ext`.                
-
-The path start with `---` or `+++` should be the absolute path of the file or relative path from the project root.
-
-下面我们来看一个例子：
-
-当前项目目录结构：
-1. 项目根目录： /tmp/projects/mathweb
-2. 项目子目录/文件列表(类似tree 命令输出)
-flask/
-    app.py
-    templates/
-        index.html
-    static/
-        style.css 
-
-用户需求： 请将下面的代码中的is_prime()函数替换为sympy。
-回答：
-好的，我会先罗列出需要的修改步骤，然后再列出diff。
-修改步骤：
-1. 添加sympy的import 语句。
-2. 删除is_prime()函数。
-3. 将现有对is_prime()的调用替换为sympy.isprime()。
+    try:
+        # 使用 subprocess 获取系统信息
+        result = subprocess.run(['sysctl', 'machdep.cpu.brand_string'], capture_output=True, text=True)
+        # 检查输出中是否包含 "Apple M"
+        if 'Apple M' in result.stdout:
+            return True
+    except Exception as e:
+        print(f"An error occurred: {e}")
     
-下面是这些变更的diff：
+    return False
 
-```diff
---- /tmp/projects/mathweb/flask/app.py
-+++ /tmp/projects/mathweb/flask/app.py
-@@ ... @@
--class MathWeb:
-+import sympy
-+
-+class MathWeb:
-@@ ... @@
--def is_prime(x):
--    if x < 2:
--        return False
--    for i in range(2, int(math.sqrt(x)) + 1):
--        if x % i == 0:
--            return False
--    return True
-@@ ... @@
--@app.route('/prime/<int:n>')
--def nth_prime(n):
--    count = 0
--    num = 1
--    while count < n:
--        num += 1
--        if is_prime(num):
--            count += 1
--    return str(num)
-+@app.route('/prime/<int:n>')
-+def nth_prime(n):
-+    count = 0
-+    num = 1
-+    while count < n:
-+        num += 1
-+        if sympy.isprime(num):
-+            count += 1
-+    return str(num)
-```
-         
-现在让我们开始一个新的任务:        
-
-当前项目目录结构：
-1. 项目根目录： /Users/allwefantasy/projects/byzer-llm
-2. 项目子目录/文件列表(类似tree 命令输出)：        
-
-
-下面是用户的需求：
-
-参考 byzerllm.utils.client.entrypoints.openai.api_server， 
-在 byzerllm.py 文件添加一个新的命令行：
-
-```shell
-byzerllm serve 
+@dataclass
+class EnvInfo:
+   os_name: str
+   os_version: str
+   python_version: str
+   conda_env: str
+   virtualenv: str
+   has_bash: bool
+   java_home: str
+   java_version: str
+   cpu: str
+>>>>>>> REPLACE
 ```
 
-该命令能接受的参数可以参考 api_server.py 中需要的参数。
-对代码进行适当的优化和抽象。
-                
+```python
+##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/env.py
+<<<<<<< SEARCH
+def detect_env() -> EnvInfo:
+    os_name = sys.platform
+    os_version = ""
+    if os_name == "win32":
+        os_version = sys.getwindowsversion().major
+    elif os_name == "darwin":
+        os_version = subprocess.check_output(["sw_vers", "-productVersion"]).decode('utf-8').strip()
+    elif os_name == "linux":
+        os_version = subprocess.check_output(["uname", "-r"]).decode('utf-8').strip()
+=======
+def detect_env() -> EnvInfo:
+    os_name = sys.platform
+    os_version = ""
+    cpu = "x86_64"
+    if os_name == "win32":
+        os_version = sys.getwindowsversion().major
+    elif os_name == "darwin":
+        os_version = subprocess.check_output(["sw_vers", "-productVersion"]).decode('utf-8').strip() 
+        if is_apple_m_series():
+            cpu = "arm64"
+    elif os_name == "linux":
+        os_version = subprocess.check_output(["uname", "-r"]).decode('utf-8').strip()
+        if "aarch64" in subprocess.check_output(["uname", "-m"]).decode('utf-8').strip().lower():
+            cpu = "arm64"
+>>>>>>> REPLACE
+```
+
+```python
+##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/env.py
+<<<<<<< SEARCH
+        java_version=java_version,
+        java_home=java_home        
+    )
+=======
+        java_version=java_version,
+        java_home=java_home,       
+        cpu=cpu
+    )
+>>>>>>> REPLACE
+```
+
+```python
+##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/env.py
+<<<<<<< SEARCH
+   jdk_download_url = ""
+   if env_info.os_name == "linux":
+       jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz"
+   elif env_info.os_name == "darwin":
+       jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_macos-x64_bin.tar.gz"
+   elif env_info.os_name == "win32":
+       jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_windows-x64_bin.zip"
+=======
+   jdk_download_url = ""
+   if env_info.os_name == "linux":
+       if env_info.cpu == "arm64":
+           jdk_download_url = "https://download.oracle.com/java/21/archive/jdk-21.0.2_linux-aarch64_bin.tar.gz"
+       else:
+           jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz"
+   elif env_info.os_name == "darwin":
+       if env_info.cpu == "arm64": 
+           jdk_download_url = "https://download.oracle.com/java/21/archive/jdk-21.0.2_macos-aarch64_bin.tar.gz"
+       else:
+           jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_macos-x64_bin.tar.gz"
+   elif env_info.os_name == "win32":
+       jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_windows-x64_bin.zip"
+>>>>>>> REPLACE
+```
+
+主要修改内容如下:
+
+1. 在 EnvInfo 中新增了 cpu 字段,用于标识CPU架构。 
+
+2. 在 detect_env 函数中,增加了对CPU架构的检测逻辑:
+   - 对于 macOS 系统,使用 is_apple_m_series 函数检测是否是苹果 M 系列芯片,如果是则将 cpu 设置为 "arm64"。
+   - 对于 Linux 系统,通过 uname -m 命令检测CPU架构,如果包含 "aarch64" 则将 cpu 设置为 "arm64"。
+
+3. 在 download_and_install_jdk21 函数中,根据 cpu 字段选择合适的JDK下载链接:
+   - 对于 Linux arm64 架构,使用 https://download.oracle.com/java/21/archive/jdk-21.0.2_linux-aarch64_bin.tar.gz 
+   - 对于苹果 M 系列芯片,使用 https://download.oracle.com/java/21/archive/jdk-21.0.2_macos-aarch64_bin.tar.gz
+
+以上就是对 byzer_storage/command.py 以及 env.py 文件的修改,增加了对苹果M系列芯片以及 Linux arm64 架构的支持。
