@@ -17,7 +17,7 @@ from loguru import logger
 
 class ClusterBuilder:
 
-    def __init__(self, br: "ByzerRetrievalProxy") -> None:
+    def __init__(self, br: "ByzerRetrievalProxy",pure_client:bool=False) -> None:
         self.name = None
         self.location = None
         self.numNodes = 1
@@ -35,6 +35,7 @@ class ClusterBuilder:
         self.custom_resources = {}
 
         self.br = br
+        self.pure_client = pure_client
 
     def set_name(self, name: str):
         self.name = name
@@ -111,14 +112,22 @@ class ClusterBuilder:
         )
 
     def start_cluster(self) -> bool:
-        self.build()
-        return ray.get(
-            self.br.start_cluster.remote(
-                self.cluster_settings,
-                self.env_settings,
-                self.jvm_settings,
-                self.resource_requirement_settings,
+        self.build() 
+        if self.pure_client:       
+            return ray.get(
+                self.br.start_cluster.remote(
+                    self.cluster_settings,
+                    self.env_settings,
+                    self.jvm_settings,
+                    self.resource_requirement_settings,
+                )
             )
+        
+        return self.br.start_cluster(
+            self.cluster_settings,
+            self.env_settings,
+            self.jvm_settings,
+            self.resource_requirement_settings,
         )
 
 
@@ -158,7 +167,7 @@ class ByzerRetrievalProxy:
 
     def cluster_builder(self) -> ClusterBuilder:
         br = self
-        return ClusterBuilder(br)
+        return ClusterBuilder(br,pure_client=False)
 
     def start_cluster(
         self,
@@ -478,7 +487,7 @@ class ByzerRetrieval:
         if not self.pure_client:
             return self.retrieval_proxy.cluster_builder()
         br = self.retrieval_proxy
-        return ClusterBuilder(br)
+        return ClusterBuilder(br,pure_client=self.pure_client)
 
     def start_cluster(
         self,
