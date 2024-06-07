@@ -83,7 +83,7 @@ class OpenAIServingChat(OpenAIServing):
             body: ChatCompletionRequest,
             request_id: str
     ) -> Union[ErrorResponse, AsyncGenerator[str, None]]:
-        model_name = self.server_model_name or body.model
+        model_name = self.server_model_name or body.model        
         created_time = int(time.time())
         chunk_object_type = "chat.completion.chunk"
 
@@ -177,7 +177,7 @@ class OpenAIServingChat(OpenAIServing):
             request_id: str
     ) -> Union[ErrorResponse, ChatCompletionResponse]:
         
-        model_name = self.server_model_name or  body.model
+        model_name = self.server_model_name or body.model        
 
         async def wrapper_chat_generator():
             r = self.llm_client.chat_oai(

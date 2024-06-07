@@ -41,6 +41,7 @@ class OpenAIServing:
         self.llm_client = llm_client
         self.max_model_len = 0
         self.tokenizer = None
+        self.server_model_name = server_model_name
         if server_model_name and prompt_template:
             self.llm_client.setup_template(
                 server_model_name, self._detect_prompt_template(prompt_template)
@@ -118,7 +119,7 @@ class OpenAIServing:
         return json_str
 
     async def _check_model(self, body) -> Optional[ErrorResponse]:
-        if self.llm_client.is_model_exist(body.model):
+        if  self.server_model_name or self.llm_client.is_model_exist(body.model):
             return
         return self.create_error_response(
             message=f"The model `{body.model}` does not exist.",
