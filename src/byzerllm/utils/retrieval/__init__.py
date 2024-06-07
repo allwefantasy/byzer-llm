@@ -8,7 +8,7 @@ import json
 
 class ClusterBuilder:
 
-    def __init__(self,br:'ByzerRetrieval') -> None:
+    def __init__(self,br:'ByzerRetrievalProxy') -> None:
         self.name = None
         self.location = None
         self.numNodes = 1
@@ -103,10 +103,10 @@ class ClusterBuilder:
     
     def start_cluster(self)-> bool:     
         self.build()
-        return self.br.start_cluster(self.cluster_settings,self.env_settings,self.jvm_settings,self.resource_requirement_settings)
+        return ray.get(self.br.start_cluster.remote(self.cluster_settings,self.env_settings,self.jvm_settings,self.resource_requirement_settings))
 
 
-class ByzerRetrieval:
+class ByzerRetrievalProxy:
     
     def __init__(self):
         self.launched = False
@@ -138,7 +138,7 @@ class ByzerRetrieval:
     def gateway(slef) -> ray.actor.ActorHandle:
         return ray.get_actor("RetrievalGateway")
 
-    def cluster_builder(self) -> ClusterBuilder:
+    def cluster_builder(self) -> ClusterBuilder:        
         br = self
         return ClusterBuilder(br)
 
@@ -347,6 +347,124 @@ class ByzerRetrieval:
         return ray.get(cluster.deleteByFilter.remote(database,table,json.dumps(filter,ensure_ascii=False)))    
 
 
+class ByzerRetrieval:
+    
+    def __init__(self):
+        self.launched = False
+        self.retrieval_proxy:ByzerRetrievalProxy = None
+        self.clusters = {}
+
+    def launch_gateway(self)-> ray.actor.ActorHandle:
+        
+        try:
+           self.retrieval_proxy = ray.get_actor("ByzerRetrievalProxy")
+        except Exception:
+            pass 
+
+        if self.retrieval_proxy:
+            self.launched = True
+            return self.retrieval_proxy
+        
+        self.retrieval_proxy = ray.remote(ByzerRetrievalProxy).options(name="ByzerRetrievalProxy",lifetime="detached").remote()
+        ray.get(self.retrieval_proxy.launch_gateway.remote())
+        self.launched = True
+        return self.retrieval_proxy
+
+
+    def gateway(self) -> ray.actor.ActorHandle:
+        return ray.get(self.retrieval_proxy.gateway.remote())
+
+    def cluster_builder(self) -> ClusterBuilder:
+        br = self.retrieval_proxy
+        return ClusterBuilder(br)
+
+    def start_cluster(self, cluster_settings:ClusterSettings,                       
+                      env_settings:EnvSettings, 
+                      jvm_settings:JVMSettings,
+                      resource_requirement_settings:ResourceRequirementSettings = ResourceRequirementSettings([])) -> bool:                      
+        return ray.get(self.retrieval_proxy.start_cluster.remote(cluster_settings,env_settings,jvm_settings,resource_requirement_settings)) 
+    
+    def cluster(self,name:str) -> ray.actor.ActorHandle:
+        return ray.get(self.retrieval_proxy.cluster.remote(name))
+    
+    def cluster_info(self,name:str) -> Dict[str,Any]:
+        return ray.get(self.retrieval_proxy.cluster_info.remote(name))
+    
+    def is_cluster_exists(self,name:str) -> bool:
+        return ray.get(self.retrieval_proxy.is_cluster_exists.remote(name))
+    
+    def get_table_settings(self,cluster_name:str, database:str, table:str) -> Optional[TableSettings]:               
+        return ray.get(self.retrieval_proxy.get_table_settings.remote(cluster_name,database,table))
+    
+    def check_table_exists(self,cluster_name:str, database:str, table:str) -> bool:
+        return ray.get(self.retrieval_proxy.check_table_exists.remote(cluster_name,database,table))
+        
+    
+    def restore_from_cluster_info(self,cluster_info:Dict[str,Any]) -> bool:        
+        return ray.get(self.retrieval_proxy.restore_from_cluster_info.remote(cluster_info))
+
+    def create_table(self,cluster_name:str, tableSettings:TableSettings)-> bool:        
+        return ray.get(self.retrieval_proxy.create_table.remote(cluster_name,tableSettings))     
+
+    def build(self, cluster_name:str, database:str, table:str, object_refs:List[ObjectRef[str]])-> bool:        
+        return ray.get(self.retrieval_proxy.build.remote(cluster_name,database,table,object_refs))
+    
+    def build_from_dicts(self, cluster_name:str, database:str, table:str, data:List[Dict[str,Any]])-> bool:
+        return ray.get(self.retrieval_proxy.build_from_dicts.remote(cluster_name,database,table,data))
+
+    def delete_by_ids(self,cluster_name:str, database:str, table:str,ids:List[Any])-> bool:
+        return ray.get(self.retrieval_proxy.delete_by_ids.remote(cluster_name,database,table,ids))
+    
+    def get_tables(self,cluster_name:str) -> List[TableSettings]:
+        return ray.get(self.retrieval_proxy.get_tables.remote(cluster_name))
+    
+    def get_databases(self,cluster_name:str) -> List[str]:
+        return ray.get(self.retrieval_proxy.get_databases.remote(cluster_name))
+        
+    
+    def shutdown_cluster(self,cluster_name:str)->bool:
+        return ray.get(self.retrieval_proxy.shutdown_cluster.remote(cluster_name))            
+
+    def commit(self,cluster_name:str, database:str, table:str)-> bool:        
+        return ray.get(self.retrieval_proxy.commit.remote(cluster_name,database,table))
+    
+    def truncate(self,cluster_name:str, database:str, table:str)-> bool:
+        return ray.get(self.retrieval_proxy.truncate.remote(cluster_name,database,table))        
+    
+    def close(self,cluster_name:str, database:str, table:str)-> bool:
+        return ray.get(self.retrieval_proxy.close.remote(cluster_name,database,table))
+    
+    def closeAndDeleteFile(self,cluster_name:str, database:str, table:str)-> bool:
+        return ray.get(self.retrieval_proxy.closeAndDeleteFile.remote(cluster_name,database,table))
+    
+    def search_keyword(self,cluster_name:str, 
+                       database:str, 
+                       table:str, 
+                       filters: Dict[str,Any],
+                       keyword:str, 
+                       fields:List[str], 
+                       limit:int=10) -> List[Dict[str,Any]]:                
+
+        return ray.get(self.retrieval_proxy.search_keyword.remote(cluster_name,database,table,filters,keyword,fields,limit))
+    
+    def search_vector(self,cluster_name:str, 
+                       database:str, 
+                       table:str, 
+                       filters: Dict[str,Any],
+                       vector:List[float], 
+                       vector_field:str,                        
+                       limit:int=10) -> List[Dict[str,Any]]:
+                
+        return ray.get(self.retrieval_proxy.search_vector.remote(cluster_name,database,table,filters,vector,vector_field,limit))
+    
+    def search(self,cluster_name:str,search_query: Union[List[SearchQuery],SearchQuery]) -> List[Dict[str,Any]]:        
+        return ray.get(self.retrieval_proxy.search.remote(cluster_name,search_query))
+    
+    def filter(self,cluster_name:str,search_query: Union[List[SearchQuery],SearchQuery]) -> List[Dict[str,Any]]:        
+        return ray.get(self.retrieval_proxy.filter.remote(cluster_name,search_query))
+
+    def delete_by_filter(self,cluster_name:str, database:str, table:str,filter:Dict[str,Any])-> bool:
+        return ray.get(self.retrieval_proxy.delete_by_filter.remote(cluster_name,database,table,filter))
     
     
     
