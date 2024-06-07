@@ -57,7 +57,7 @@ class OpenAIServingCompletion(OpenAIServing):
         if body.prompt_template:
             self.llm_client.setup_template(body.model, self._detect_prompt_template(body.prompt_template))
 
-        model_name = body.model
+        model_name = self.server_model_name or body.model
         request_id = f"cmpl-{random_uuid()}"
         created_time = int(time.monotonic())
 
@@ -168,9 +168,10 @@ class OpenAIServingCompletion(OpenAIServing):
             request_id: str,
             created_time: int
     ) -> AsyncGenerator[str, None]:
+        model_name = self.server_model_name or body.model
         previous_texts = [""] * body.n
         result_generator = self.llm_client.async_stream_chat_oai(
-            model=body.model,
+            model=model_name,
             conversations=[{
                 "role": "user",
                 "content": body.prompt

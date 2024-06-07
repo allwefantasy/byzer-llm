@@ -26,6 +26,7 @@ from ray.util.state.common import (
 )
 from ray.util.state.exception import RayStateApiException
 from ray.util.annotations import PublicAPI
+import ray
 
 def cancel_placement_group(group_id:str):
     remove_placement_group(PlacementGroup(
@@ -48,6 +49,11 @@ def get_actor_info(actor):
         return state
     except RayStateApiException as e:
         raise e
+
+def is_ray_in_client_mode():
+    if ray.is_initialized() and ray.util.client.ray.is_connected():
+        return True
+    return False    
     
 
     

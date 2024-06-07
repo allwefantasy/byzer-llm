@@ -12,6 +12,7 @@ from byzerllm.records import (
 from typing import List, Dict, Any, Optional, Union
 import byzerllm.utils.object_store_ref_util as ref_utils
 import json
+from loguru import logger
 
 
 class ClusterBuilder:
@@ -442,18 +443,17 @@ class ByzerRetrieval:
 
     def __init__(self, pure_client: bool = False):
         self.launched = False
-        self.retrieval_proxy: ByzerRetrievalProxy = None
-        self.clusters = {}
+        self.retrieval_proxy: ByzerRetrievalProxy = None        
         self.pure_client = pure_client
 
-    def launch_gateway(self) -> Union[ray.actor.ActorHandle, ByzerRetrievalProxy]:
-        if not self.pure_client:
+    def launch_gateway(self) -> Union[ray.actor.ActorHandle, ByzerRetrievalProxy]:        
+        if self.pure_client:
             try:
                 self.retrieval_proxy = ray.get_actor("ByzerRetrievalProxy")
-            except Exception:
+            except Exception:                
                 pass
 
-            if self.retrieval_proxy:
+            if self.retrieval_proxy:                
                 self.launched = True
                 return self.retrieval_proxy
 
