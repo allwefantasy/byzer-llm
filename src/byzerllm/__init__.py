@@ -372,7 +372,7 @@ class _PrompRunner:
 
         if isinstance(llm, ByzerLLM):
             return_origin_response = True if self.response_markers else False
-            
+            marker = None
             if self.response_markers:
                 marker = f"""输出的内容请以 {self.response_markers[0]}{self.response_markers[1]} 标签对包裹。"""
 
@@ -392,6 +392,7 @@ class _PrompRunner:
             _llm.setup_default_model_name(llm)
             _llm.setup_template(llm, "auto")
             return_origin_response = True if self.response_markers else False
+            marker = None
             
             if self.response_markers:
                 marker = f"""输出的内容请以 {self.response_markers[0]}{self.response_markers[1]} 标签对包裹。"""
@@ -451,9 +452,11 @@ class _DescriptorPrompt:
                 options=self._options,
             )
 
-    def with_response_markers(self, response_markers: List[str]):
-        if len(response_markers) != 2:
+    def with_response_markers(self, response_markers: Optional[List[str]] = None):
+        if response_markers is not None and len(response_markers) != 2:
             raise ValueError("response_markers should be a list of two elements")
+        if response_markers is None:
+            response_markers = ["<RESPONSE>", "</RESPONSE>"]
         self.prompt_runner.response_markers = response_markers
         return self
 

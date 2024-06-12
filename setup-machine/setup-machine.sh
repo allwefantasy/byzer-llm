@@ -13,6 +13,7 @@ cd ~
 
 ROLE=${ROLE:-"master"}
 OS="ubuntu"
+BYZER_USER=${BYZER_USER:-"byzerllm"}
 BYZER_VERSION="2.3.9"
 BYZER_NOTEBOOK_VERSION="1.2.6"
 DEFUALT_MYSQL_PASSWORD=${DEFUALT_MYSQL_PASSWORD:-"mlsql"}
@@ -70,10 +71,10 @@ The second time, this script install the byzer-llm enviroment for byzerllm user.
 EOF
 
 # check USER_PASSWORD is set or not
-if [[ -z "${USER_PASSWORD}" && "${USER}" != "byzerllm" ]]; then
-    echo "We will try to create a user byzerllm  in this Machine. You should specify the USER_PASSWORD of byzerllm first"
+if [[ -z "${USER_PASSWORD}" && "${USER}" != "${BYZER_USER}" ]]; then
+    echo "We will try to create a user ${BYZER_USER}  in this Machine. You should specify the USER_PASSWORD of byzerllm first"
     echo ""
-    echo "Please input the USER_PASSWORD of byzerllm: "
+    echo "Please input the USER_PASSWORD of ${BYZER_USER}: "
     echo ""
     read USER_PASSWORD    
 fi
@@ -146,15 +147,15 @@ fi
 
 echo "Setup basic user byzerllm "
 
-if id -u byzerllm >/dev/null 2>&1; then
+if id -u ${BYZER_USER} >/dev/null 2>&1; then
     echo "User exists"
 else
-    echo "User byzerllm does not exist"
+    echo "User ${BYZER_USER} does not exist"
     groupadd ai
-    useradd -m byzerllm -g ai -s /bin/bash
-    echo "byzerllm:${USER_PASSWORD}" | sudo chpasswd
+    useradd -m ${BYZER_USER} -g ai -s /bin/bash
+    echo "${BYZER_USER}:${USER_PASSWORD}" | sudo chpasswd
     echo "Grant user sudo permission"
-    echo "byzerllm ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    echo "${BYZER_USER} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
     cat <<EOF
 You have successfully setup a new user byzerllm in this machine.
 Please try to execute this script again in byzerllm user.
@@ -162,12 +163,12 @@ EOF
     exit 0
 fi
     
-if [[ "${USER}" != "byzerllm" ]];then
-    echo "Please try to execute this script again in byzerllm user."
+if [[ "${USER}" != "${BYZER_USER}" ]];then
+    echo "Please try to execute this script again in ${BYZER_USER} user."
     exit 0
 fi
 
-echo "Setup basic environment for byzerllm user"
+echo "Setup basic environment for ${BYZER_USER} user"
 echo "go to home directory"
 cd ~
 
