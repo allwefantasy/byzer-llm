@@ -1,150 +1,623 @@
-好的,下面是修改后的代码:
+
+如果你需要生成代码，对于每个需要更改的文件,你需要按 *SEARCH/REPLACE block* 的格式进行生成。
+
+# *SEARCH/REPLACE block* Rules:
+
+Every *SEARCH/REPLACE block* must use this format:
+1. The opening fence and code language, eg: ```python
+2. The file path alone on a line, starting with "##File:" and verbatim. No bold asterisks, no quotes around it, no escaping of characters, etc.
+3. The start of search block: <<<<<<< SEARCH
+4. A contiguous chunk of lines to search for in the existing source code
+5. The dividing line: =======
+6. The lines to replace into the source code
+7. The end of the replace block: >>>>>>> REPLACE
+8. The closing fence: ```
+
+Every *SEARCH* section must *EXACTLY MATCH* the existing source code, character for character, including all comments, docstrings, etc.
+
+*SEARCH/REPLACE* blocks will replace *all* matching occurrences.
+Include enough lines to make the SEARCH blocks unique.
+
+Include *ALL* the code being searched and replaced!
+
+To move code within a file, use 2 *SEARCH/REPLACE* blocks: 1 to delete it from its current location, 1 to insert it in the new location.
+
+If you want to put code in a new file, use a *SEARCH/REPLACE block* with:
+- A new file path, including dir name if needed
+- An empty `SEARCH` section
+- The new file's contents in the `REPLACE` section
+
+ONLY EVER RETURN CODE IN A *SEARCH/REPLACE BLOCK*!
+
+下面我们来看一个例子：
+
+当前项目目录结构：
+1. 项目根目录： /tmp/projects/mathweb
+2. 项目子目录/文件列表(类似tree 命令输出)
+flask/
+    app.py
+    templates/
+        index.html
+    static/
+        style.css
+
+用户需求： Change get_factorial() to use math.factorial
+
+回答： To make this change we need to modify `/tmp/projects/mathweb/flask/app.py` to:
+
+1. Import the math package.
+2. Remove the existing factorial() function.
+3. Update get_factorial() to call math.factorial instead.
+
+Here are the *SEARCH/REPLACE* blocks:
 
 ```python
-##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/env.py
+##File: /tmp/projects/mathweb/flask/app.py
 <<<<<<< SEARCH
-from dataclasses import dataclass
-import urllib.request
-import tarfile
-import zipfile
-from loguru import logger
-from packaging import version
-import re
-from os.path import expanduser
-
-@dataclass
-class EnvInfo:
-   os_name: str
-   os_version: str
-   python_version: str
-   conda_env: str
-   virtualenv: str
-   has_bash: bool
-   java_home: str
-   java_version: str 
+from flask import Flask
 =======
-import platform
-import subprocess
-from dataclasses import dataclass
-import urllib.request
-import tarfile
-import zipfile
-from loguru import logger
-from packaging import version
-import re
-from os.path import expanduser
+import math
+from flask import Flask
+>>>>>>> REPLACE
+```
 
-def is_apple_m_series():
-    # 检查系统是否是 macOS
-    if platform.system() != 'Darwin':
-        return False
+```python
+##File: /tmp/projects/mathweb/flask/app.py
+<<<<<<< SEARCH
+def factorial(n):
+    "compute factorial"
 
-    try:
-        # 使用 subprocess 获取系统信息
-        result = subprocess.run(['sysctl', 'machdep.cpu.brand_string'], capture_output=True, text=True)
-        # 检查输出中是否包含 "Apple M"
-        if 'Apple M' in result.stdout:
-            return True
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    if n == 0:
+        return 1
+    else:
+        return n * factorial(n-1)
+
+=======
+>>>>>>> REPLACE
+```
+
+```python
+##File: /tmp/projects/mathweb/flask/app.py
+<<<<<<< SEARCH
+    return str(factorial(n))
+=======
+    return str(math.factorial(n))
+>>>>>>> REPLACE
+```
+
+用户需求： Refactor hello() into its own file.
+
+回答：To make this change we need to modify `main.py` and make a new file `hello.py`:
+
+1. Make a new hello.py file with hello() in it.
+2. Remove hello() from main.py and replace it with an import.
+
+Here are the *SEARCH/REPLACE* blocks:
+
+```python
+##File: /tmp/projects/mathweb/hello.py
+<<<<<<< SEARCH
+=======
+def hello():
+    "print a greeting"
+
+    print("hello")
+>>>>>>> REPLACE
+```
+
+```python
+##File: /tmp/projects/mathweb/main.py
+<<<<<<< SEARCH
+def hello():
+    "print a greeting"
+
+    print("hello")
+=======
+from hello import hello
+>>>>>>> REPLACE
+```
+
+现在让我们开始一个新的任务:
+
+当前项目目录结构：
+1. 项目根目录： /Users/allwefantasy/projects/byzer-llm
+2. 项目子目录/文件列表(类似tree 命令输出)：        
+deploy.sh
+setup-machine/
+    setup-machine.sh
+下面是一些文件路径以及每个文件对应的源码：
+
+##File: /Users/allwefantasy/projects/byzer-llm/setup-machine/setup-machine.sh
+#! /bin/bash
+
+set -e # Exit immediately if any command exits with a non-zero status (i.e., an error).
+# set -x # Print each command before executing it, prefixed with the + character. This can be useful for debugging shell scripts.
+set -o pipefail # # Exit with a non-zero status if any command in a pipeline fails, rather than just the last command.
+
+echo ""
+echo ""
+
+echo "Welcome to Byzer-LLM setup script"
+
+cd ~
+
+ROLE=${ROLE:-"master"}
+OS="ubuntu"
+BYZER_USER=${BYZER_USER:-"byzerllm"}
+BYZER_VERSION="2.3.9"
+BYZER_NOTEBOOK_VERSION="1.2.6"
+DEFUALT_MYSQL_PASSWORD=${DEFUALT_MYSQL_PASSWORD:-"mlsql"}
+VLLM_SUPPORT=${VLLM_SUPPORT:-"false"}
+AVIARY_SUPPORT=${AVIARY_SUPPORT:-"false"}
+NOTEBOOK_LOGO=${NOTEBOOK_LOGO:-"Byzer Notebook"}
+
+CUDA_DNN_SUPPORT=${CUDA_DNN_SUPPORT:-"false"}
+PYPI_MIRROR=${PYPI_MIRROR:-"aliyun"}
+GIT_MIRROR=${GIT_MIRROR:-"gitee"}
+
+BYZER_LLM_EXTENSION_JAR="byzer-llm-3.3_2.12-0.1.9.jar"
+BYZER_LLM_EXTENSION_APP="tech.mlsql.plugins.llm.LLMApp"
+
+#valid conda channel
+CONDA_MIRROR=${CONDA_MIRROR:-"tuna"}
+support_conda_mirrors=("tuna" "anaconda")
+if [[ " ${support_conda_mirrors[@]} " =~ " ${CONDA_MIRROR} " ]]; then
+    echo "current conda channel is ${CONDA_MIRROR}"
+else
+    echo "not support conda channel: ${CONDA_MIRROR}, please set CONDA_MIRROR to one of ${support_conda_mirrors[@]}"
+    exit 1
+fi
+
+RAY_DASHBOARD_HOST=${RAY_DASHBOARD_HOST:-"0.0.0.0"}
+
+# --- define pypi download mirror ---
+setup_pypi_mirror() {
+  echo "Setup pip mirror"
+
+  if [[ ! -d "$HOME/.pip" ]]; then
+      mkdir -p ~/.pip
+  fi
+  
+  if [ ${PYPI_MIRROR} == "aliyun" ]; then
+    cat <<EOF > ~/.pip/pip.conf
+[global]
+ trusted-host = mirrors.aliyun.com
+ index-url = https://mirrors.aliyun.com/pypi/simple
+EOF
+  elif [ ${PYPI_MIRROR} == "tsinghua" ]; then
+    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+  fi
+}
+
+cat <<EOF
+This script will help you install Byzer-LLM enviroment on your machine (CentOS 8 or Ubuntu 20.04/22.04)
+
+You should execute this script twice, first time as root user, second time as byzerllm user.
+The first time, this script create a user byzerllm.
+The second time, this script install the byzer-llm enviroment for byzerllm user.
+
+1. Byzer-lang Version: ${BYZER_VERSION}
+2. Byzer-notebook Version: ${BYZER_NOTEBOOK_VERSION}
+EOF
+
+# check USER_PASSWORD is set or not
+if [[ -z "${USER_PASSWORD}" && "${USER}" != "${BYZER_USER}" ]]; then
+    echo "We will try to create a user ${BYZER_USER}  in this Machine. You should specify the USER_PASSWORD of byzerllm first"
+    echo ""
+    echo "Please input the USER_PASSWORD of ${BYZER_USER}: "
+    echo ""
+    read USER_PASSWORD    
+fi
+
+USER_PASSWORD=${USER_PASSWORD:-""}
+
+
+# Check if the system is running CentOS
+if [ -f /etc/centos-release ]; then
+    OS="centos"
+fi
+
+# Check if the system is running Ubuntu
+if [ -f /etc/lsb-release ]; then
+    . /etc/lsb-release
+    if [ "$DISTRIB_ID" == "Ubuntu" ]; then
+        OS="ubuntu"
+    fi
+fi
+
+echo "current system is ${OS}"
+
+
+if command -v git &> /dev/null; then
+    echo "git is installed"    
+else
+    echo "git is not installed, now install git"    
+    if [ "$OS" = "ubuntu" ]; then
+        apt install -y git
+    elif [ "$OS" = "centos" ]; then
+        yum install -y git
+    fi
+fi
+
+if command -v wget &> /dev/null; then
+    echo "wget is installed"    
+else
+    echo "wget is not installed, now install wget"    
+    if [ "$OS" = "ubuntu" ]; then
+        apt install -y wget
+    elif [ "$OS" = "centos" ]; then
+        yum install -y wget
+    fi
+fi
+
+if command -v curl &> /dev/null; then
+    echo "curl is installed"    
+else
+    echo "curl is not installed, now install curl"    
+    if [ "$OS" = "ubuntu" ]; then
+        apt install -y curl
+    elif [ "$OS" = "centos" ]; then
+        yum install -y curl
+    fi
+fi
+
+if command -v ifconfig &> /dev/null; then
+    echo "ifconfig is installed"    
+else
+    echo "ifconfig is not installed, now install ifconfig"    
+    if [ "$OS" = "ubuntu" ]; then
+        sudo apt install -y net-tools
+    elif [ "$OS" = "centos" ]; then
+        sudo yum install -y net-tools
+    fi
+fi
+
+# install gcc-c++
+
+
+echo "Setup basic user byzerllm "
+
+if id -u ${BYZER_USER} >/dev/null 2>&1; then
+    echo "User exists"
+else
+    echo "User ${BYZER_USER} does not exist"
+    groupadd ai
+    useradd -m ${BYZER_USER} -g ai -s /bin/bash
+    echo "${BYZER_USER}:${USER_PASSWORD}" | sudo chpasswd
+    echo "Grant user sudo permission"
+    echo "${BYZER_USER} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    cat <<EOF
+You have successfully setup a new user byzerllm in this machine.
+Please try to execute this script again in byzerllm user.
+EOF
+    exit 0
+fi
     
-    return False
+if [[ "${USER}" != "${BYZER_USER}" ]];then
+    echo "Please try to execute this script again in ${BYZER_USER} user."
+    exit 0
+fi
 
-@dataclass
-class EnvInfo:
-   os_name: str
-   os_version: str
-   python_version: str
-   conda_env: str
-   virtualenv: str
-   has_bash: bool
-   java_home: str
-   java_version: str
-   cpu: str
->>>>>>> REPLACE
-```
+echo "Setup basic environment for ${BYZER_USER} user"
+echo "go to home directory"
+cd ~
 
-```python
-##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/env.py
-<<<<<<< SEARCH
-def detect_env() -> EnvInfo:
-    os_name = sys.platform
-    os_version = ""
-    if os_name == "win32":
-        os_version = sys.getwindowsversion().major
-    elif os_name == "darwin":
-        os_version = subprocess.check_output(["sw_vers", "-productVersion"]).decode('utf-8').strip()
-    elif os_name == "linux":
-        os_version = subprocess.check_output(["uname", "-r"]).decode('utf-8').strip()
-=======
-def detect_env() -> EnvInfo:
-    os_name = sys.platform
-    os_version = ""
-    cpu = "x86_64"
-    if os_name == "win32":
-        os_version = sys.getwindowsversion().major
-    elif os_name == "darwin":
-        os_version = subprocess.check_output(["sw_vers", "-productVersion"]).decode('utf-8').strip() 
-        if is_apple_m_series():
-            cpu = "arm64"
-    elif os_name == "linux":
-        os_version = subprocess.check_output(["uname", "-r"]).decode('utf-8').strip()
-        if "aarch64" in subprocess.check_output(["uname", "-m"]).decode('utf-8').strip().lower():
-            cpu = "arm64"
->>>>>>> REPLACE
-```
+echo "Install Conda environment"
 
-```python
-##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/env.py
-<<<<<<< SEARCH
-        java_version=java_version,
-        java_home=java_home        
-    )
-=======
-        java_version=java_version,
-        java_home=java_home,       
-        cpu=cpu
-    )
->>>>>>> REPLACE
-```
+CONDA_INSTALL_PATH=$HOME/miniconda3
+CONDA_PREFIX=$CONDA_INSTALL_PATH
+CONDA_COMMAND=$CONDA_INSTALL_PATH/bin/conda
 
-```python
-##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/env.py
-<<<<<<< SEARCH
-   jdk_download_url = ""
-   if env_info.os_name == "linux":
-       jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz"
-   elif env_info.os_name == "darwin":
-       jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_macos-x64_bin.tar.gz"
-   elif env_info.os_name == "win32":
-       jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_windows-x64_bin.zip"
-=======
-   jdk_download_url = ""
-   if env_info.os_name == "linux":
-       if env_info.cpu == "arm64":
-           jdk_download_url = "https://download.oracle.com/java/21/archive/jdk-21.0.2_linux-aarch64_bin.tar.gz"
-       else:
-           jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_linux-x64_bin.tar.gz"
-   elif env_info.os_name == "darwin":
-       if env_info.cpu == "arm64": 
-           jdk_download_url = "https://download.oracle.com/java/21/archive/jdk-21.0.2_macos-aarch64_bin.tar.gz"
-       else:
-           jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_macos-x64_bin.tar.gz"
-   elif env_info.os_name == "win32":
-       jdk_download_url = "https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_windows-x64_bin.zip"
->>>>>>> REPLACE
-```
+echo "Download the latest version of Miniconda"
 
-主要修改内容如下:
+if [[ -d "$HOME/miniconda3" ]]; then
+    echo "Miniconda is already installed"
+else
+    if [[ $CONDA_MIRROR == "anaconda" ]]; then
+        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+    elif [[ $CONDA_MIRROR == "tuna" ]]; then
+        wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+    fi
+    chmod +x ~/miniconda.sh
+    ./miniconda.sh -b -p $HOME/miniconda3    
+fi
 
-1. 在 EnvInfo 中新增了 cpu 字段,用于标识CPU架构。 
+# echo "export PATH=\"$CONDA_INSTALL_PATH/bin:\$PATH\"" >> ~/.bashrc
+echo "Initialize conda and activate the base environment"
+$CONDA_INSTALL_PATH/bin/conda init bash
+source ~/.bashrc
 
-2. 在 detect_env 函数中,增加了对CPU架构的检测逻辑:
-   - 对于 macOS 系统,使用 is_apple_m_series 函数检测是否是苹果 M 系列芯片,如果是则将 cpu 设置为 "arm64"。
-   - 对于 Linux 系统,通过 uname -m 命令检测CPU架构,如果包含 "aarch64" 则将 cpu 设置为 "arm64"。
+echo "Now check the nvidia driver and toolkit"
 
-3. 在 download_and_install_jdk21 函数中,根据 cpu 字段选择合适的JDK下载链接:
-   - 对于 Linux arm64 架构,使用 https://download.oracle.com/java/21/archive/jdk-21.0.2_linux-aarch64_bin.tar.gz 
-   - 对于苹果 M 系列芯片,使用 https://download.oracle.com/java/21/archive/jdk-21.0.2_macos-aarch64_bin.tar.gz
+TOOLKIT_INSTALLED=true
+DRIVER_INSTALLED=true
 
-以上就是对 byzer_storage/command.py 以及 env.py 文件的修改,增加了对苹果M系列芯片以及 Linux arm64 架构的支持。
+if command -v nvidia-smi &> /dev/null; then
+    echo "NVIDIA driver are installed"    
+else
+    echo "NVIDIA driver are not installed"    
+    DRIVER_INSTALLED=false
+fi
+
+
+if [[ $DRIVER_INSTALLED == false ]];then
+    echo "Now install the NVIDIA driver"
+    if [ "$OS" = "ubuntu" ]; then
+        sudo apt-get update
+        sudo apt install -y  nvidia-driver-535
+    elif [ "$OS" = "centos" ]; then
+        sudo dnf config-manager --add-repo http://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo
+        # here we install cuda also, but it will not be used since will use the cuda installed by conda
+        # sudo dnf install -y cuda 
+        # sudo dnf remove "cuda*" "*cublas*" "*cufft*" "*cufile*" "*curand*" "*cusolver*" "*cusparse*" "*gds-tools*" "*npp*" "*nvjpeg*" "nsight*" "*nvvm*"
+        # sudo dnf module remove --all nvidia-driver
+        # sudo dnf module reset nvidia-driver     
+        # https://www.nvidia.com/content/DriverDownloads/confirmation.php?url=/XFree86/Linux-x86_64/535.154.05/NVIDIA-Linux-x86_64-535.154.05.run&lang=us&type=geforcem   
+        sudo dnf module install -y nvidia-driver
+    fi
+fi
+
+echo "Create conda environments: byzerllm-dev"
+
+if ${CONDA_COMMAND} env list | grep -q "^byzerllm-dev "; then
+    echo "Conda environment byzerllm-dev exists"
+else
+    ${CONDA_COMMAND} create -y --name byzerllm-dev python=3.10.11
+fi
+
+source $CONDA_PREFIX/bin/activate byzerllm-dev
+
+setup_pypi_mirror
+
+echo "Now install the NVIDIA toolkit with conda"
+
+# for now pytorch use cuda 11.8.0 by default.
+# We should update this version when pytorch update the default version
+# ${CONDA_COMMAND} install -y cuda -c nvidia/label/cuda-11.8.0
+${CONDA_COMMAND} install -y nvidia/label/cuda-12.1.0::cuda
+
+if [[ $CUDA_DNN_SUPPORT == "true" ]]; then
+    ${CONDA_COMMAND} install -y libcublas -c nvidia/label/cuda-12.1.0
+    ${CONDA_COMMAND} install -y cudnn -c nvidia/label/cuda-12.1.0
+fi
+
+
+
+if command -v nvcc &> /dev/null; then
+    echo "NVIDIA toolkit is installed from conda"
+else
+    echo "Fail to install NVIDIA toolkit from conda"
+    exit 1
+fi
+
+echo "Create some basic folders: models projects byzerllm_stroage softwares data"
+
+for dir in models projects byzerllm_stroage softwares data; do
+    if [[ -d "$HOME/$dir" ]]; then
+        echo "$dir is already created"
+    else
+        mkdir $HOME/$dir
+    fi
+done
+
+
+echo "Install some basic python packages"
+pip install -U auto-coder
+
+# in some cuda version, the 9.0 is not supported, if that case, try to remove 9.0 from TORCH_CUDA_ARCH_LIST_VALUE
+TORCH_CUDA_ARCH_LIST_VALUE="8.0 8.6 9.0"
+
+if [[ "${VLLM_SUPPORT}" == "true" ]]; then
+    echo "Setup VLLM support in Byzer-LLM"
+    # pip install --no-deps "git+${GIT_VLLM}"
+    pip install -U vllm
+fi
+
+
+if [[ -d "$CONDA_INSTALL_PATH/envs/byzerllm-dev/lib64" ]]; then
+    echo "lib64 is already exists"
+else
+    echo "$CONDA_INSTALL_PATH/envs/byzerllm-dev/lib64 is not exists,this will cause RuntimeError: Error building extension 'transformer_inference' when use deepspeed inference"
+    echo "Try to create a soft link to lib64"
+    ln -s $CONDA_INSTALL_PATH/envs/byzerllm-dev/lib $CONDA_INSTALL_PATH/envs/byzerllm-dev/lib64
+fi
+
+
+cd $HOME/softwares
+
+if [[ $ROLE == "master" ]];then
+    echo "Since we are in master mode, we should install Byzer Lang and Byzer Notebook"
+    
+    if [[ ! -f "byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz" ]]; then
+       wget "https://download.byzer.org/byzer/byzer-lang/${BYZER_VERSION}/byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz" -O byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz    
+    fi
+
+    tar -zxvf byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}.tar.gz    
+    BYZER_LANG_HOME=$HOME/softwares/byzer-lang-all-in-one-linux-amd64-3.3.0-${BYZER_VERSION}
+    
+    if [[ ! -f "byzer-notebook-${BYZER_NOTEBOOK_VERSION}.tar.gz" ]]; then
+        wget "https://download.byzer.org/byzer/byzer-notebook/${BYZER_NOTEBOOK_VERSION}/byzer-notebook-${BYZER_NOTEBOOK_VERSION}.tar.gz" -O byzer-notebook-${BYZER_NOTEBOOK_VERSION}.tar.gz
+    fi    
+    tar -zxvf byzer-notebook-${BYZER_NOTEBOOK_VERSION}.tar.gz
+    BYZER_NOTEBOOK_HOME=$HOME/softwares/byzer-notebook
+
+    echo "Setup JDK"
+    # On some Linux distributions, such as Ubuntu 22.04, the contents of the ~/.bashrc file are not executed \
+    # in non-interactive mode, so we need to explicitly set the variables JAVA_HOME and PATH in the script
+    export JAVA_HOME=${BYZER_LANG_HOME}/jdk8
+    export PATH=${JAVA_HOME}/bin:$PATH
+    
+    cat <<EOF >> ~/.bashrc
+export JAVA_HOME=${BYZER_LANG_HOME}/jdk8
+export PATH=\${JAVA_HOME}/bin:\$PATH
+EOF
+
+    source ~/.bashrc
+
+    echo "Setup MySQL"
+    if command -v docker &> /dev/null; then
+        echo "docker is installed"    
+    else
+        echo "docker is not installed, now install docker"    
+        if [ "$OS" = "ubuntu" ]; then
+            sudo apt install -y docker.io || STATUS=$?
+            if [ $STATUS -eq 0 ]; then
+                echo "install docker.io succeeded"
+            else
+                echo "change docker source to docker.com"
+                sudo apt-get update
+                sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+                curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+                sudo add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+                sudo apt-get update
+                sudo apt-get install -y docker-ce
+                sudo systemctl start docker 
+                sudo systemctl enable docker 
+            fi          
+        elif [ "$OS" = "centos" ]; then
+            sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+            sudo dnf install -y docker-ce docker-ce-cli containerd.io
+            sudo systemctl start docker
+            sudo systemctl enable docker
+        fi
+    fi
+
+
+
+    echo "Start MySQL"
+
+    if sudo docker ps -a | grep -q "metadb"; then
+        echo "docker is already running"
+    else 
+        echo "docker is not running, now start docker"
+        MAX_RETRIES=3
+        RETRY_DELAY=5
+        for i in $(seq 1 $MAX_RETRIES); do
+            sudo docker run --name metadb -e MYSQL_ROOT_PASSWORD=${DEFUALT_MYSQL_PASSWORD} -p 3306:3306 -d mysql:5.7 && break
+            echo "Failed to start container. Retrying in $RETRY_DELAY seconds..."
+            sleep $RETRY_DELAY
+        done
+    fi
+    
+
+    
+    echo "Setup Ray"
+
+    cat <<EOF > ~/softwares/ray.start.master.sh
+ray stop && ray start --head --dashboard-host ${RAY_DASHBOARD_HOST} '--resources={"master": 1, "passwordless_ssh_node": 1000}'
+EOF
+    
+    chmod u+x ~/softwares/ray.start.master.sh
+
+    echo "Start Ray"
+    ~/softwares/ray.start.master.sh
+        
+    # echo "Modify the byzer config file"    
+    cat <<EOF > ${BYZER_LANG_HOME}/conf/byzer.properties.override
+byzer.server.mode=all-in-one
+byzer.server.dryrun=false
+
+byzer.server.runtime.driver-memory=24g
+
+streaming.name=Byzer-lang-engine
+streaming.rest=true
+streaming.thrift=false
+streaming.platform=spark
+streaming.spark.service=true
+streaming.job.cancel=true
+streaming.datalake.path=./data/
+streaming.driver.port=9003
+streaming.enableHiveSupport=false
+streaming.plugin.clzznames=tech.mlsql.plugins.ds.MLSQLExcelApp,tech.mlsql.plugins.assert.app.MLSQLAssert,tech.mlsql.plugins.shell.app.MLSQLShell,tech.mlsql.plugins.mllib.app.MLSQLMllib,tech.mlsql.plugins.llm.LLMApp,tech.mlsql.plugins.execsql.ExecSQLApp
+
+spark.mlsql.log.driver.enablePrint=true
+spark.mlsql.path.schemas=oss,s3a,s3,abfs,file
+spark.mlsql.session.expireTime=10d
+spark.local.dir=/home/${BYZER_USER}/byzerllm_stroage    
+
+EOF
+
+wget https://download.byzer.org/byzer-extensions/nightly-build/${BYZER_LLM_EXTENSION_JAR} -O $BYZER_LANG_HOME/plugin/${BYZER_LLM_EXTENSION_JAR}
+
+# echo "Modify the byzer notebook config file"
+
+cat <<EOF > ${BYZER_NOTEBOOK_HOME}/conf/notebook.properties
+notebook.logo=${NOTEBOOK_LOGO}
+notebook.port=9002
+notebook.session.timeout=12h
+notebook.security.key=6173646661736466e4bda0e8bf983161
+notebook.services.communication.token=6173646661736466e4bda0e8bf983161
+
+notebook.database.type=mysql
+notebook.database.ip=localhost
+notebook.database.port=3306
+notebook.database.name=notebook
+notebook.database.username=root
+notebook.database.password=${DEFUALT_MYSQL_PASSWORD}
+notebook.user.home=/home/${BYZER_USER}/data/notebook
+notebook.url=http://localhost:9002
+notebook.mlsql.engine-url=http://127.0.0.1:9003
+notebook.mlsql.engine-backup-url=http://127.0.0.1:9003
+notebook.mlsql.auth-client=streaming.dsl.auth.client.DefaultConsoleClient
+
+notebook.job.history.max-size=2000000
+notebook.job.history.max-time=30
+notebook.env.is-trial=false
+
+EOF
+
+echo "Start Byzer lang"
+cd $BYZER_LANG_HOME
+./bin/byzer.sh restart
+
+sleep 10
+cd $BYZER_NOTEBOOK_HOME
+echo "Start Byzer notebook"
+
+./bin/notebook.sh restart
+
+    cat <<EOF
+1. The byzer-lang is installed at ${BYZER_LANG_HOME}
+   1.1 Use ./conf/byzer.properties.override to config byzer-lang
+   1.2 Use ./bin/byzer.sh start to start byzer-lang
+
+2. The byzer-notebook is installed at ${BYZER_NOTEBOOK_HOME}
+   3.1 Use ./conf/notebook.properties to config byzer-notebook
+   3.2 Use ./bin/notebook.sh start to start byzer-notebook
+
+3. ray start script is installed at $HOME/softwares/ray.start.master.sh
+   4.1 You can use bash ray.start.master.sh to start ray cluster
+   4.2 You can use bash ray.start.worker.sh to start ray worker
+
+4. Please according to the https://docs.byzer.org/#/byzer-lang/zh-cn/byzer-llm/deploy to setup the byzer-lang and byzer-notebook
+EOF
+
+fi
+
+
+if [[ $ROLE == "worker" ]];then
+
+    cat <<EOF > ~/softwares/ray.start.worker.sh
+echo -n "The master ip is: "
+read masterIP
+echo -n "The name of this worker is: "
+read workerName
+ray stop && ray start --address="\${masterIP}:6379"  "--resources={\"\${workerName}\": 1}"
+EOF
+
+chmod u+x ~/softwares/ray.start.worker.sh
+
+    cat <<EOF
+ray start script is installed at $HOME/softwares/ray.start.worker.sh
+    You can use \`bash ray.start.master.sh\` to start ray cluster
+    You can use \`bash ray.start.worker.sh\` to start ray worker
+EOF
+
+fi
+
+
+
+下面是用户的需求：
+
+关注 setup-machine.sh ，允许通过一个参数禁用 docker 安装 和 启动，默认为禁用。
+

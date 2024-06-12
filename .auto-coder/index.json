@@ -1,4 +1,4 @@
-{  
+{
   "/Users/allwefantasy/projects/byzer-llm/setup-machine/convert_safetensor.py": {
     "symbols": "```\n函数：convert_safetensor, auto_implement_function_template, check_file_size, create_diff, convert_generic, convert_multi, convert_single, convert_file, shared_pointers, rename, check_final_model\n变量：a\n类：AlreadyExists\n导入语句：import os, time, from loguru import logger, import byzerllm\n```",
     "last_modified": 1696905908.698807,
@@ -956,5 +956,17 @@
     "symbols": "函数：build_model_input, async_call_model, call_model\n变量：\n类：\n导入语句：import pyarrow as pa, import json, from pyjava.udf import UDFBuilder, from pyjava import PythonContext, RayContext, import uuid",
     "last_modified": 1696905908.785478,
     "md5": "cd7c241e35b06c052eefd7cd4e687df1"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/deploy.sh": {
+    "module_name": "/Users/allwefantasy/projects/byzer-llm/deploy.sh",
+    "symbols": "用途：主要用于自动化部署和版本管理脚本。\n函数：\n变量：project, version, MODE\n类：\n导入语句：",
+    "last_modified": 1714299265.1402738,
+    "md5": "93b918e961b2aa8fceae4ecfc8db133f"
+  },
+  "/Users/allwefantasy/projects/byzer-llm/setup-machine/setup-machine.sh": {
+    "module_name": "/Users/allwefantasy/projects/byzer-llm/setup-machine/setup-machine.sh",
+    "symbols": "用途：主要用于设置Byzer-LLM环境。\n函数：\n变量：ROLE, OS, BYZER_USER, BYZER_VERSION, BYZER_NOTEBOOK_VERSION, DEFUALT_MYSQL_PASSWORD, VLLM_SUPPORT, AVIARY_SUPPORT, NOTEBOOK_LOGO, CUDA_DNN_SUPPORT, PYPI_MIRROR, GIT_MIRROR, BYZER_LLM_EXTENSION_JAR, BYZER_LLM_EXTENSION_APP, CONDA_MIRROR, RAY_DASHBOARD_HOST, USER_PASSWORD\n类：\n导入语句：",
+    "last_modified": 1718159466.8322418,
+    "md5": "1c6ca004c20c026ed6b8200facb1e745"
   }
 }
