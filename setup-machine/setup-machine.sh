@@ -21,6 +21,7 @@ VLLM_SUPPORT=${VLLM_SUPPORT:-"false"}
 AVIARY_SUPPORT=${AVIARY_SUPPORT:-"false"}
 NOTEBOOK_LOGO=${NOTEBOOK_LOGO:-"Byzer Notebook"}
 
+DISABLE_DOCKER=${DISABLE_DOCKER:-"true"}
 CUDA_DNN_SUPPORT=${CUDA_DNN_SUPPORT:-"false"}
 PYPI_MIRROR=${PYPI_MIRROR:-"aliyun"}
 GIT_MIRROR=${GIT_MIRROR:-"gitee"}
@@ -324,51 +325,54 @@ EOF
 
     source ~/.bashrc
 
-    echo "Setup MySQL"
-    if command -v docker &> /dev/null; then
-        echo "docker is installed"    
-    else
-        echo "docker is not installed, now install docker"    
-        if [ "$OS" = "ubuntu" ]; then
-            sudo apt install -y docker.io || STATUS=$?
-            if [ $STATUS -eq 0 ]; then
-                echo "install docker.io succeeded"
-            else
-                echo "change docker source to docker.com"
-                sudo apt-get update
-                sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-                curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-                sudo add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-                sudo apt-get update
-                sudo apt-get install -y docker-ce
-                sudo systemctl start docker 
-                sudo systemctl enable docker 
-            fi          
-        elif [ "$OS" = "centos" ]; then
-            sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-            sudo dnf install -y docker-ce docker-ce-cli containerd.io
-            sudo systemctl start docker
-            sudo systemctl enable docker
+    if [[ "${DISABLE_DOCKER}" == "false" ]]; then
+        echo "Setup MySQL"
+        if command -v docker &> /dev/null; then
+            echo "docker is installed"    
+        else
+            echo "docker is not installed, now install docker"    
+            if [ "$OS" = "ubuntu" ]; then
+                sudo apt install -y docker.io || STATUS=$?
+                if [ $STATUS -eq 0 ]; then
+                    echo "install docker.io succeeded"
+                else
+                    echo "change docker source to docker.com"
+                    sudo apt-get update
+                    sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+                    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+                    sudo add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+                    sudo apt-get update
+                    sudo apt-get install -y docker-ce
+                    sudo systemctl start docker 
+                    sudo systemctl enable docker 
+                fi          
+            elif [ "$OS" = "centos" ]; then
+                sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+                sudo dnf install -y docker-ce docker-ce-cli containerd.io
+                sudo systemctl start docker
+                sudo systemctl enable docker
+            fi
         fi
+
+
+
+        echo "Start MySQL"
+
+        if sudo docker ps -a | grep -q "metadb"; then
+            echo "docker is already running"
+        else 
+            echo "docker is not running, now start docker"
+            MAX_RETRIES=3
+            RETRY_DELAY=5
+            for i in $(seq 1 $MAX_RETRIES); do
+                sudo docker run --name metadb -e MYSQL_ROOT_PASSWORD=${DEFUALT_MYSQL_PASSWORD} -p 3306:3306 -d mysql:5.7 && break
+                echo "Failed to start container. Retrying in $RETRY_DELAY seconds..."
+                sleep $RETRY_DELAY
+            done
+        fi
+    else
+        echo "Skip MySQL setup since DISABLE_DOCKER is set to true"
     fi
-
-
-
-    echo "Start MySQL"
-
-    if sudo docker ps -a | grep -q "metadb"; then
-        echo "docker is already running"
-    else 
-        echo "docker is not running, now start docker"
-        MAX_RETRIES=3
-        RETRY_DELAY=5
-        for i in $(seq 1 $MAX_RETRIES); do
-            sudo docker run --name metadb -e MYSQL_ROOT_PASSWORD=${DEFUALT_MYSQL_PASSWORD} -p 3306:3306 -d mysql:5.7 && break
-            echo "Failed to start container. Retrying in $RETRY_DELAY seconds..."
-            sleep $RETRY_DELAY
-        done
-    fi
-    
 
     
     echo "Setup Ray"
