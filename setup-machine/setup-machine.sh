@@ -16,12 +16,18 @@ OS="ubuntu"
 BYZER_USER=${BYZER_USER:-"byzerllm"}
 BYZER_VERSION="2.3.9"
 BYZER_NOTEBOOK_VERSION="1.2.6"
+
+DEFUALT_MYSQL_HOST=${DEFUALT_MYSQL_HOST:-"localhost"}
+DEFUALT_MYSQL_PORT=${DEFUALT_MYSQL_PORT:-"3306"}
+DEFUALT_MYSQL_USER=${DEFUALT_MYSQL_USER:-"root"}
 DEFUALT_MYSQL_PASSWORD=${DEFUALT_MYSQL_PASSWORD:-"mlsql"}
+DISABLE_DOCKER=${DISABLE_DOCKER:-"false"}
+
 VLLM_SUPPORT=${VLLM_SUPPORT:-"false"}
 AVIARY_SUPPORT=${AVIARY_SUPPORT:-"false"}
 NOTEBOOK_LOGO=${NOTEBOOK_LOGO:-"Byzer Notebook"}
 
-DISABLE_DOCKER=${DISABLE_DOCKER:-"true"}
+
 CUDA_DNN_SUPPORT=${CUDA_DNN_SUPPORT:-"false"}
 PYPI_MIRROR=${PYPI_MIRROR:-"aliyun"}
 GIT_MIRROR=${GIT_MIRROR:-"gitee"}
@@ -423,10 +429,10 @@ notebook.security.key=6173646661736466e4bda0e8bf983161
 notebook.services.communication.token=6173646661736466e4bda0e8bf983161
 
 notebook.database.type=mysql
-notebook.database.ip=localhost
-notebook.database.port=3306
+notebook.database.ip=${DEFUALT_MYSQL}
+notebook.database.port=${DEFUALT_MYSQL_PORT}
 notebook.database.name=notebook
-notebook.database.username=root
+notebook.database.username=${DEFUALT_MYSQL_USER}
 notebook.database.password=${DEFUALT_MYSQL_PASSWORD}
 notebook.user.home=/home/${BYZER_USER}/data/notebook
 notebook.url=http://localhost:9002
