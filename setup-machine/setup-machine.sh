@@ -403,7 +403,7 @@ streaming.plugin.clzznames=tech.mlsql.plugins.ds.MLSQLExcelApp,tech.mlsql.plugin
 spark.mlsql.log.driver.enablePrint=true
 spark.mlsql.path.schemas=oss,s3a,s3,abfs,file
 spark.mlsql.session.expireTime=10d
-spark.local.dir=/home/byzerllm/byzerllm_stroage    
+spark.local.dir=/home/${BYZER_USER}/byzerllm_stroage    
 
 EOF
 
@@ -424,7 +424,7 @@ notebook.database.port=3306
 notebook.database.name=notebook
 notebook.database.username=root
 notebook.database.password=${DEFUALT_MYSQL_PASSWORD}
-notebook.user.home=/home/byzerllm/data/notebook
+notebook.user.home=/home/${BYZER_USER}/data/notebook
 notebook.url=http://localhost:9002
 notebook.mlsql.engine-url=http://127.0.0.1:9003
 notebook.mlsql.engine-backup-url=http://127.0.0.1:9003
