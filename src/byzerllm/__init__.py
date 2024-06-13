@@ -246,6 +246,7 @@ class _PrompRunner:
         self.max_turns = 10
         self.response_markers = None
         self.auto_remove_response_markers_from_output = True
+        self.extractor = None
 
     def __call__(self, *args, **kwargs) -> Any:
         if self.llm:
@@ -260,6 +261,10 @@ class _PrompRunner:
         if len(response_markers) != 2:
             raise ValueError("response_markers should be a list of two elements")
         self.response_markers = response_markers
+        return self
+    
+    def with_extractor(self,func):
+        self.extractor = func
         return self
 
     def with_max_turns(self, max_turns: int):
@@ -332,6 +337,8 @@ class _PrompRunner:
         if self.auto_remove_response_markers_from_output:
             output_content = self._remove_response_markers(output=s)
         response.output = output_content
+        if self.extractor:
+            return self.extractor(response)
         return response.output
 
     def run(self, *args, **kwargs):
@@ -367,6 +374,8 @@ class _PrompRunner:
                 marker=marker,
             )(func)(**input_dict)
             if not return_origin_response:
+                if self.extractor:
+                    return self.extractor(v)
                 return v
             return self._multi_turn_wrapper(llm(self.instance), v, signature)
 
@@ -384,6 +393,8 @@ class _PrompRunner:
                 marker=marker,
             )(func)(**input_dict)
             if not return_origin_response:
+                if self.extractor:
+                    return self.extractor(v)
                 return v
             return self._multi_turn_wrapper(llm, v, signature)
 
@@ -405,6 +416,8 @@ class _PrompRunner:
                 marker=marker,
             )(func)(**input_dict)
             if not return_origin_response:
+                if self.extractor:
+                    return self.extractor(v)
                 return v
             return self._multi_turn_wrapper(llm, v, signature)
 
@@ -480,6 +493,10 @@ class _DescriptorPrompt:
     def with_llm(self, llm):
         self.llm = llm
         self.prompt_runner.with_llm(llm)
+        return self
+    
+    def with_extractor(self,func):
+        self.prompt_runner.with_extractor(func)
         return self
 
     def options(self, options: Dict[str, Any]):
