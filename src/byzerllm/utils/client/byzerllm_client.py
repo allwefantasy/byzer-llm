@@ -1094,7 +1094,7 @@ class ByzerLLM:
             if response_class:
                 base_abilities.append(BaseAbility.RESPONSE_WITH_CLASS)
             if impl_func:
-                base_abilities.append(BaseAbility.RESPONSE_WITH_IMPL_FUNC)
+                base_abilities.append(BaseAbility.FUNCTION_IMPL)
             if tools or tool_choice:
                 base_abilities.append(BaseAbility.FUNCTION_CALLING)
 

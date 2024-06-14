@@ -5,7 +5,7 @@
 </p>
 
 <h3 align="center">
-Easy, fast, and cheap pretrain,finetune, serving for everyone
+Easy, fast, and cheap pretrain,finetune, serving, python api for everyone
 </h3>
 
 <p align="center">
