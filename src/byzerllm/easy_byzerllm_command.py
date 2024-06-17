@@ -1,5 +1,5 @@
 import argparse
-import subprocess
+from byzerllm.byzerllm_command import main as byzerllm_main
 
 def main():
     parser = argparse.ArgumentParser(description='Easy ByzerLLM command line interface')
