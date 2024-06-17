@@ -6,3 +6,5 @@ flash-attention/
 vllm/
 **/__pycache__/**
 *.log
+output.txt
+.auto-coder/
