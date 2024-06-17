@@ -1,0 +1,10 @@
+auto_merge: editblock
+human_as_model: false
+include_file:
+- ./base/base.yml
+query: "新增一个 easy_byzerllm__command.py 和 byzerllm_command.py 处于同一级目录. 提供如下命令行:  easy_byzerllm\n\
+  \  start deepseek --token xxxx 转化为对 byzerllm_command.py 的调用"
+skip_build_index: true
+skip_confirm: true
+urls:
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm_command.py

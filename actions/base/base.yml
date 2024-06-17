@@ -1,0 +1,20 @@
+source_dir: /Users/allwefantasy/projects/byzer-llm
+target_file: /Users/allwefantasy/projects/byzer-llm/output.txt
+
+model: deepseek_chat
+model_max_input_length: 30000
+enable_multi_round_generate: false
+
+skip_build_index: false
+anti_quota_limit: 0
+index_filter_level: 1
+index_filter_workers: 4
+index_build_workers: 4
+
+execute: true
+auto_merge: true
+human_as_model: true
+
+exclude_files:
+  - human://路径包含stable_diffusion目录
+  # - regex://.*/stable_diffusion/.*  

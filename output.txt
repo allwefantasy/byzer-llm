@@ -1,131 +1,21 @@
-根据您的需求,我们需要修改 setup-machine.sh 脚本,允许通过一个参数禁用 docker 的安装和启动,默认为禁用。以下是需要修改的地方:
+为了满足用户的需求，我们需要创建一个新的文件 `easy_byzerllm_command.py` 在 `/Users/allwefantasy/projects/byzer-llm/src/byzerllm/` 目录下，并实现一个命令行接口 `easy_byzerllm`，该接口将调用 `byzerllm_command.py` 中的相应功能。下面是实现这一需求的 *SEARCH/REPLACE* 代码块：
 
-```bash
-##File: /Users/allwefantasy/projects/byzer-llm/setup-machine/setup-machine.sh
+```python
+##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/easy_byzerllm_command.py
 <<<<<<< SEARCH
-NOTEBOOK_LOGO=${NOTEBOOK_LOGO:-"Byzer Notebook"}
-
-CUDA_DNN_SUPPORT=${CUDA_DNN_SUPPORT:-"false"}
 =======
-NOTEBOOK_LOGO=${NOTEBOOK_LOGO:-"Byzer Notebook"}
+import argparse
+import subprocess
 
-DISABLE_DOCKER=${DISABLE_DOCKER:-"true"}
-CUDA_DNN_SUPPORT=${CUDA_DNN_SUPPORT:-"false"}
+def main():
+    parser = argparse.ArgumentParser(description='Easy ByzerLLM command line interface')
+    parser.add_argument('command', type=str, help='Command to execute')
+    parser.add_argument('--token', type=str, required=True, help='Token for authentication')
+    args = parser.parse_args()
+
+    if args.command == 'start':
+        subprocess.run(['python', 'byzerllm_command.py', 'deploy', '--token', args.token])
 >>>>>>> REPLACE
 ```
 
-```bash
-##File: /Users/allwefantasy/projects/byzer-llm/setup-machine/setup-machine.sh
-<<<<<<< SEARCH
-    source ~/.bashrc
-
-    echo "Setup MySQL"
-    if command -v docker &> /dev/null; then
-        echo "docker is installed"    
-    else
-        echo "docker is not installed, now install docker"    
-        if [ "$OS" = "ubuntu" ]; then
-            sudo apt install -y docker.io || STATUS=$?
-            if [ $STATUS -eq 0 ]; then
-                echo "install docker.io succeeded"
-            else
-                echo "change docker source to docker.com"
-                sudo apt-get update
-                sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-                curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-                sudo add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-                sudo apt-get update
-                sudo apt-get install -y docker-ce
-                sudo systemctl start docker 
-                sudo systemctl enable docker 
-            fi          
-        elif [ "$OS" = "centos" ]; then
-            sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-            sudo dnf install -y docker-ce docker-ce-cli containerd.io
-            sudo systemctl start docker
-            sudo systemctl enable docker
-        fi
-    fi
-
-
-
-    echo "Start MySQL"
-
-    if sudo docker ps -a | grep -q "metadb"; then
-        echo "docker is already running"
-    else 
-        echo "docker is not running, now start docker"
-        MAX_RETRIES=3
-        RETRY_DELAY=5
-        for i in $(seq 1 $MAX_RETRIES); do
-            sudo docker run --name metadb -e MYSQL_ROOT_PASSWORD=${DEFUALT_MYSQL_PASSWORD} -p 3306:3306 -d mysql:5.7 && break
-            echo "Failed to start container. Retrying in $RETRY_DELAY seconds..."
-            sleep $RETRY_DELAY
-        done
-    fi
-    
-
-=======
-    source ~/.bashrc
-
-    if [[ "${DISABLE_DOCKER}" == "false" ]]; then
-        echo "Setup MySQL"
-        if command -v docker &> /dev/null; then
-            echo "docker is installed"    
-        else
-            echo "docker is not installed, now install docker"    
-            if [ "$OS" = "ubuntu" ]; then
-                sudo apt install -y docker.io || STATUS=$?
-                if [ $STATUS -eq 0 ]; then
-                    echo "install docker.io succeeded"
-                else
-                    echo "change docker source to docker.com"
-                    sudo apt-get update
-                    sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
-                    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-                    sudo add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-                    sudo apt-get update
-                    sudo apt-get install -y docker-ce
-                    sudo systemctl start docker 
-                    sudo systemctl enable docker 
-                fi          
-            elif [ "$OS" = "centos" ]; then
-                sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-                sudo dnf install -y docker-ce docker-ce-cli containerd.io
-                sudo systemctl start docker
-                sudo systemctl enable docker
-            fi
-        fi
-
-
-
-        echo "Start MySQL"
-
-        if sudo docker ps -a | grep -q "metadb"; then
-            echo "docker is already running"
-        else 
-            echo "docker is not running, now start docker"
-            MAX_RETRIES=3
-            RETRY_DELAY=5
-            for i in $(seq 1 $MAX_RETRIES); do
-                sudo docker run --name metadb -e MYSQL_ROOT_PASSWORD=${DEFUALT_MYSQL_PASSWORD} -p 3306:3306 -d mysql:5.7 && break
-                echo "Failed to start container. Retrying in $RETRY_DELAY seconds..."
-                sleep $RETRY_DELAY
-            done
-        fi
-    else
-        echo "Skip MySQL setup since DISABLE_DOCKER is set to true"
-    fi
-
->>>>>>> REPLACE
-```
-
-这些修改主要包括:
-
-1. 添加一个新的环境变量 DISABLE_DOCKER,默认值为 "true",表示禁用 docker 的安装和启动。
-
-2. 在安装和启动 MySQL 的代码块外面添加一个 if 判断,只有当 DISABLE_DOCKER 为 "false" 时才会执行里面的代码。
-
-3. 在 else 分支中添加一个提示,表示由于 DISABLE_DOCKER 设置为 true,所以跳过 MySQL 的安装。
-
-通过以上修改,脚本现在可以通过设置 DISABLE_DOCKER 环境变量来控制是否安装和启动 docker 了。默认情况下 DISABLE_DOCKER 为 true,即禁用 docker。如果需要启用 docker,可以在执行脚本前设置 DISABLE_DOCKER=false。
+这个 *SEARCH/REPLACE* 代码块创建了一个新的 Python 文件 `easy_byzerllm_command.py`，其中包含一个简单的命令行接口，用于调用 `byzerllm_command.py` 中的 `deploy` 命令，并传递 `--token` 参数。这样，用户可以通过 `easy_byzerllm start deepseek --token xxxx` 来简化对 `byzerllm_command.py` 的调用。
