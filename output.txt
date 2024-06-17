@@ -1,21 +1,31 @@
-为了满足用户的需求，我们需要创建一个新的文件 `easy_byzerllm_command.py` 在 `/Users/allwefantasy/projects/byzer-llm/src/byzerllm/` 目录下，并实现一个命令行接口 `easy_byzerllm`，该接口将调用 `byzerllm_command.py` 中的相应功能。下面是实现这一需求的 *SEARCH/REPLACE* 代码块：
+为了让 `easy_byzerllm` 直接调用 `byzerllm_command` 的 `main` 方法而不是使用 `subprocess`，我们需要修改 `easy_byzerllm_command.py` 文件。以下是需要的 *SEARCH/REPLACE* 块：
 
 ```python
 ##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/easy_byzerllm_command.py
 <<<<<<< SEARCH
-=======
-import argparse
 import subprocess
-
-def main():
-    parser = argparse.ArgumentParser(description='Easy ByzerLLM command line interface')
-    parser.add_argument('command', type=str, help='Command to execute')
-    parser.add_argument('--token', type=str, required=True, help='Token for authentication')
-    args = parser.parse_args()
-
-    if args.command == 'start':
-        subprocess.run(['python', 'byzerllm_command.py', 'deploy', '--token', args.token])
+=======
+from byzerllm.byzerllm_command import main as byzerllm_main
 >>>>>>> REPLACE
 ```
 
-这个 *SEARCH/REPLACE* 代码块创建了一个新的 Python 文件 `easy_byzerllm_command.py`，其中包含一个简单的命令行接口，用于调用 `byzerllm_command.py` 中的 `deploy` 命令，并传递 `--token` 参数。这样，用户可以通过 `easy_byzerllm start deepseek --token xxxx` 来简化对 `byzerllm_command.py` 的调用。
+```python
+##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/easy_byzerllm_command.py
+<<<<<<< SEARCH
+    command = ["byzerllm"] + sys.argv[1:]
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    print(result.stdout)
+    print(result.stderr, file=sys.stderr)
+    sys.exit(result.returncode)
+=======
+    byzerllm_main(sys.argv[1:])
+>>>>>>> REPLACE
+```
+
+这些修改将：
+
+1. 移除 `subprocess` 的导入，改为从 `byzerllm.byzerllm_command` 导入 `main` 函数并重命名为 `byzerllm_main`。
+
+2. 移除使用 `subprocess.run` 执行 `byzerllm` 命令的代码，改为直接调用 `byzerllm_main` 函数，并传入 `sys.argv[1:]` 作为参数（排除第一个参数，因为它是脚本名称）。
+
+这样修改后，`easy_byzerllm` 将直接在同一个 Python 进程中调用 `byzerllm_command` 的 `main` 函数，而不是通过 `subprocess` 执行一个新的进程。

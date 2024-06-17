@@ -1,10 +1,33 @@
 {
-  "conversation": [],
+  "conversation": [
+    {
+      "role": "user",
+      "content": "新增一个 easy_byzerllm__command.py 和 byzerllm_command.py 处于同一级目录. 提供如下命令行:  easy_byzerllm start deepseek --token xxxx 转化为对 byzerllm_command.py 的调用"
+    },
+    {
+      "role": "user",
+      "content": "cd /Users/allwefantasy/projects/byzer-llm"
+    },
+    {
+      "role": "user",
+      "content": "auto-coder --file /Users/allwefantasy/projects/byzer-llm/actions/021_chat_action.yml"
+    },
+    {
+      "role": "user",
+      "content": "新增一个 easy_byzerllm__command.py 和 byzerllm_command.py 处于同一级目录. 提供如下命令行:  easy_byzerllm\n  start deepseek --token xxxx 转化为对 byzerllm_command.py 的调用"
+    },
+    {
+      "role": "user",
+      "content": "新增一个 easy_byzerllm__command.py 和 byzerllm_command.py 处于同一级目录. 提供如下命令行:  easy_byzerllm\n  start deepseek --token xxxx 转化为对 byzerllm_command.py 的调用"
+    }
+  ],
   "current_files": {
     "files": [
       "/Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm_command.py"
     ]
   },
-  "conf": {},
+  "conf": {
+    "code_model": "opus_chat"
+  },
   "exclude_dirs": []
 }
