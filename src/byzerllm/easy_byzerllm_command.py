@@ -8,4 +8,4 @@ def main():
     args = parser.parse_args()
 
     if args.command == 'start':
-        subprocess.run(['python', 'byzerllm_command.py', 'deploy', '--token', args.token])
+        byzerllm_main(['deploy', '--token', args.token])
