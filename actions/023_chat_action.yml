@@ -1,0 +1,10 @@
+auto_merge: editblock
+code_model: opus_chat
+human_as_model: true
+include_file:
+- ./base/base.yml
+query: easy_byzerllm 不用subprocess 而是直接调用  byzerllm_command 的main方法
+skip_build_index: true
+skip_confirm: true
+urls:
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm_command.py
