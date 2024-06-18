@@ -63,7 +63,11 @@ def main():
             "--model", args.model,
             "--ray_address", args.ray_address,
             "--infer_params", infer_params,
-            "--pretrained_model_type", pretrained_model_type
+            "--pretrained_model_type", pretrained_model_type,
+            "--cpus_per_worker", "0.001",
+            "--gpus_per_worker", "0",
+            "--num_workers", "1",
+            "--worker_concurrency", "10"
         ])
     elif args.command == "undeploy":
         byzerllm_main([
