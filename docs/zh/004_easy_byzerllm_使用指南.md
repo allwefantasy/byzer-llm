@@ -24,9 +24,25 @@ Easy ByzerLLM 提供了三个主要命令:
 easy_byzerllm deploy <model_name> --token <your_token>
 ```
 
-其中,`<model_name>` 是要部署的模型名称,`<your_token>` 是模型的访问令牌。例如,要部署 `gpt-3.5-turbo-0125` 模型,可以运行:
+其中,`<model_name>` 是要部署的模型名称,`<your_token>` 是模型的访问令牌。
 
-```bash
+目前可用的模型以及对应的 base_url 如下:
+
+- `gpt-3.5-turbo-0125`: OpenAI 的 GPT-3.5-turbo 模型,base_url 为 `https://api.openai.com/v1`
+- `text-embedding-3-small`: OpenAI 的文本嵌入模型,base_url 为 `https://api.openai.com/v1`  
+- `deepseek-chat`: DeepSeek 的聊天模型,base_url 为 `https://api.deepseek.com/v1`
+- `moonshot-v1-32k`: Moonshot 的聊天模型,base_url 为 `https://api.moonshot.cn/v1`
+- `qwen1.5-32b-chat`: 启文 1.5 的 32B 聊天模型,base_url 为默认值
+- `alibaba/Qwen1.5-110B-Chat`: 启文 1.5 的 110B 聊天模型,base_url 为 `https://api.siliconflow.cn/v1`
+- `deepseek-ai/deepseek-v2-chat`: DeepSeek v2 聊天模型,base_url 为 `https://api.siliconflow.cn/v1` 
+- `alibaba/Qwen2-72B-Instruct`: 启文 2 的 72B 指令微调模型,base_url 为 `https://api.siliconflow.cn/v1`
+- `qwen-vl-chat-v1`: 启文的视觉语言聊天模型,base_url 为默认值
+- `qwen-vl-max`: 启文的 Max 视觉语言聊天模型,base_url 为默认值
+- `yi-vision`: Yi 的视觉语言模型,base_url 为 `https://api.lingyiwanwu.com/v1`
+
+例如,要部署 `gpt-3.5-turbo-0125` 模型,可以运行:
+
+```bash  
 easy_byzerllm deploy gpt-3.5-turbo-0125 --token your_openai_api_key
 ```
 
