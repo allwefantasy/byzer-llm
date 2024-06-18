@@ -31,12 +31,23 @@ MODEL_PRETRAINED_TYPE_MAP = {
 
 def main():
     parser = argparse.ArgumentParser(description="Easy ByzerLLM command line interface")
-    parser.add_argument("command", type=str, help="Command to execute, e.g. 'start'")
-    parser.add_argument("model", type=str, help="Model name to deploy")
-    parser.add_argument("--token", type=str, required=True, help="The model token")
-    parser.add_argument("--ray_address", default="auto", help="Ray cluster address to connect to")
-    parser.add_argument("--infer_params", type=str, default="", help="Infer params for the model")
-    parser.add_argument("--force", action="store_true", help="Force undeploy the model")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    deploy_parser = subparsers.add_parser("deploy", help="Deploy a model")
+    deploy_parser.add_argument("model", type=str, help="Model name to deploy")
+    deploy_parser.add_argument("--token", type=str, required=True, help="The model token")
+    deploy_parser.add_argument("--ray_address", default="auto", help="Ray cluster address to connect to")
+    deploy_parser.add_argument("--infer_params", type=str, default="", help="Infer params for the model")
+
+    undeploy_parser = subparsers.add_parser("undeploy", help="Undeploy a model")
+    undeploy_parser.add_argument("model", type=str, help="Model name to undeploy")
+    undeploy_parser.add_argument("--ray_address", default="auto", help="Ray cluster address to connect to")
+    undeploy_parser.add_argument("--force", action="store_true", help="Force undeploy the model")
+
+    chat_parser = subparsers.add_parser("chat", help="Chat with a deployed model")
+    chat_parser.add_argument("model", type=str, help="Model name to chat with")
+    chat_parser.add_argument("query", type=str, help="User query")
+    chat_parser.add_argument("--ray_address", default="auto", help="Ray cluster address to connect to")
 
     args = parser.parse_args()
 
@@ -61,5 +72,10 @@ def main():
             "--ray_address", args.ray_address,
             "--force" if args.force else ""
         ])
-    else:
-        print(f"Unknown command: {args.command}")
+    elif args.command == "chat":
+        byzerllm_main([
+            "query",
+            "--model", args.model,
+            "--ray_address", args.ray_address,
+            "--query", args.query
+        ])
