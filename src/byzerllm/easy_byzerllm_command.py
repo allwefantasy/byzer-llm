@@ -3,18 +3,18 @@ from byzerllm.byzerllm_command import main as byzerllm_main
 
 MODEL_INFER_PARAMS_MAP = {
     "gpt-3.5-turbo-0125": "saas.api_key=${MODEL_TOKEN} saas.model=gpt-3.5-turbo-0125",
-    "text-embedding-3-small": "saas.api_key=${MODEL_TOKEN}",
-    "deepseek-chat": 'saas.base_url="https://api.deepseek.com/v1" saas.api_key=${MODEL_TOKEN}',
-    "deepseek-coder": 'saas.base_url="https://api.deepseek.com/v1" saas.api_key=${MODEL_TOKEN}',
-    "moonshot-v1-32k": 'saas.api_key=${MODEL_TOKEN} saas.base_url="https://api.moonshot.cn/v1"',
-    "qwen1.5-32b-chat": "saas.api_key=${MODEL_TOKEN}",
-    "qwen-max": "saas.api_key=${MODEL_TOKEN}",
-    "alibaba/Qwen1.5-110B-Chat": 'saas.base_url="https://api.siliconflow.cn/v1" saas.api_key=${MODEL_TOKEN}',
-    "deepseek-ai/deepseek-v2-chat": 'saas.base_url="https://api.siliconflow.cn/v1" saas.api_key=${MODEL_TOKEN}',
-    "alibaba/Qwen2-72B-Instruct": 'saas.base_url="https://api.siliconflow.cn/v1" saas.api_key=${MODEL_TOKEN}',
-    "qwen-vl-chat-v1": "saas.api_key=${MODEL_TOKEN}",
-    "qwen-vl-max": "saas.api_key=${MODEL_TOKEN}",
-    "yi-vision": "saas.api_key=${MODEL_TOKEN} saas.base_url=https://api.lingyiwanwu.com/v1",
+    "text-embedding-3-small": "saas.api_key=${MODEL_TOKEN} saas.model=text-embedding-3-small",
+    "deepseek-chat": 'saas.base_url="https://api.deepseek.com/v1" saas.api_key=${MODEL_TOKEN} saas.model=deepseek-chat',
+    "deepseek-coder": 'saas.base_url="https://api.deepseek.com/v1" saas.api_key=${MODEL_TOKEN} saas.model=deepseek-coder',
+    "moonshot-v1-32k": 'saas.api_key=${MODEL_TOKEN} saas.base_url="https://api.moonshot.cn/v1" saas.model=moonshot-v1-32k',
+    "qwen1.5-32b-chat": "saas.api_key=${MODEL_TOKEN} saas.model=qwen1.5-32b-chat",
+    "qwen-max": "saas.api_key=${MODEL_TOKEN} saas.model=qwen-max",
+    "alibaba/Qwen1.5-110B-Chat": 'saas.base_url="https://api.siliconflow.cn/v1" saas.api_key=${MODEL_TOKEN} saas.model=alibaba/Qwen1.5-110B-Chat',
+    "deepseek-ai/deepseek-v2-chat": 'saas.base_url="https://api.siliconflow.cn/v1" saas.api_key=${MODEL_TOKEN} saas.model=deepseek-ai/deepseek-v2-chat',
+    "alibaba/Qwen2-72B-Instruct": 'saas.base_url="https://api.siliconflow.cn/v1" saas.api_key=${MODEL_TOKEN} saas.model=alibaba/Qwen2-72B-Instruct',
+    "qwen-vl-chat-v1": "saas.api_key=${MODEL_TOKEN} saas.model=qwen-vl-chat-v1",
+    "qwen-vl-max": "saas.api_key=${MODEL_TOKEN} saas.model=qwen-vl-max",
+    "yi-vision": "saas.api_key=${MODEL_TOKEN} saas.base_url=https://api.lingyiwanwu.com/v1 saas.model=yi-vision",
 }
 
 import re
