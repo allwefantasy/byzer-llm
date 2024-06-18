@@ -1,0 +1,14 @@
+auto_merge: editblock
+code_model: opus_chat
+human_as_model: true
+include_file:
+- ./base/base.yml
+query: "参考run.txt 文件里的模板.添加 infer_params 参数给到 byzerllm_main, 枚举  saas.model 的值,以及对应的\n\
+  \  infer_params 模板,得到一个map, 然后根据 model 参数获取这个 map 里对应的infer_parmas"
+skip_build_index: true
+skip_confirm: true
+urls:
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm_command.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/easy_byzerllm_command.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/command_args.py
+- /Users/allwefantasy/projects/doc_repo/deploy_models/run.txt
