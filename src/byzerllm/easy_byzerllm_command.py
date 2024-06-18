@@ -2,7 +2,7 @@ import argparse
 from byzerllm.byzerllm_command import main as byzerllm_main
 
 MODEL_INFER_PARAMS_MAP = {
-    "gpt-3.5-turbo-0125": "saas.api_key=${MODEL_TOKEN}",
+    "gpt-3.5-turbo-0125": "saas.api_key=${MODEL_TOKEN} saas.model=gpt-3.5-turbo-0125",
     "text-embedding-3-small": "saas.api_key=${MODEL_TOKEN}",
     "deepseek-chat": 'saas.base_url="https://api.deepseek.com/v1" saas.api_key=${MODEL_TOKEN}',
     "deepseek-coder": 'saas.base_url="https://api.deepseek.com/v1" saas.api_key=${MODEL_TOKEN}',
