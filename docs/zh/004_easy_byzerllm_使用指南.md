@@ -28,17 +28,17 @@ easy_byzerllm deploy <model_name> --token <your_token>
 
 目前可用的模型以及对应的 base_url 如下:
 
-- `gpt-3.5-turbo-0125`: OpenAI 的 GPT-3.5-turbo 模型,base_url 为 `https://api.openai.com/v1`
-- `text-embedding-3-small`: OpenAI 的文本嵌入模型,base_url 为 `https://api.openai.com/v1`  
-- `deepseek-chat`: DeepSeek 的聊天模型,base_url 为 `https://api.deepseek.com/v1`
-- `moonshot-v1-32k`: Moonshot 的聊天模型,base_url 为 `https://api.moonshot.cn/v1`
-- `qwen1.5-32b-chat`: 启文 1.5 的 32B 聊天模型,base_url 为默认值
-- `alibaba/Qwen1.5-110B-Chat`: 启文 1.5 的 110B 聊天模型,base_url 为 `https://api.siliconflow.cn/v1`
-- `deepseek-ai/deepseek-v2-chat`: DeepSeek v2 聊天模型,base_url 为 `https://api.siliconflow.cn/v1` 
-- `alibaba/Qwen2-72B-Instruct`: 启文 2 的 72B 指令微调模型,base_url 为 `https://api.siliconflow.cn/v1`
-- `qwen-vl-chat-v1`: 启文的视觉语言聊天模型,base_url 为默认值
-- `qwen-vl-max`: 启文的 Max 视觉语言聊天模型,base_url 为默认值
-- `yi-vision`: Yi 的视觉语言模型,base_url 为 `https://api.lingyiwanwu.com/v1`
+- `gpt-3.5-turbo-0125`: OpenAI 的 GPT-3.5-turbo 模型,token申请: OpenAI 官网
+- `text-embedding-3-small`: OpenAI 的文本嵌入模型,token申请: OpenAI 官网  
+- `deepseek-chat`: DeepSeek 的聊天模型,token申请: DeepSeek 官网
+- `moonshot-v1-32k`: Moonshot 的聊天模型,token申请: Mooshoot 官网
+- `qwen1.5-32b-chat`: 启文 1.5 的 32B 聊天模型,申请： Qwen 官网
+- `alibaba/Qwen1.5-110B-Chat`: 启文 1.5 的 110B 聊天模型, Token 申请： 硅基流动官网
+- `deepseek-ai/deepseek-v2-chat`: DeepSeek v2 聊天模型,Token 申请： 硅基流动官网
+- `alibaba/Qwen2-72B-Instruct`: 启文 2 的 72B 指令微调模型,Token 申请： 硅基流动官网
+- `qwen-vl-chat-v1`: 启文的视觉语言聊天模型,Token 申请： Qwen 官网
+- `qwen-vl-max`: 启文的 Max 视觉语言聊天模型,Token 申请： Qwen 官网
+- `yi-vision`: Yi 的视觉语言模型, Token 申请： Yi（01万物） 官网
 
 例如,要部署 `gpt-3.5-turbo-0125` 模型,可以运行:
 
