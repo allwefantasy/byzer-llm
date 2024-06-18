@@ -31,7 +31,8 @@ easy_byzerllm deploy <model_name> --token <your_token>
 - `gpt-3.5-turbo-0125`: OpenAI 的 GPT-3.5-turbo 模型,token申请: OpenAI 官网
 - `text-embedding-3-small`: OpenAI 的文本嵌入模型,token申请: OpenAI 官网  
 - `deepseek-chat`: DeepSeek 的聊天模型,token申请: DeepSeek 官网
-- `moonshot-v1-32k`: Moonshot 的聊天模型,token申请: Mooshoot 官网
+- `deepseek-coder`: DeepSeek 的代码生成模型,token申请: DeepSeek 官网
+- `moonshot-v1-32k`: Moonshot 的聊天模型,token申请: Moonshot 官网
 - `qwen1.5-32b-chat`: 启文 1.5 的 32B 聊天模型,申请： Qwen 官网
 - `alibaba/Qwen1.5-110B-Chat`: 启文 1.5 的 110B 聊天模型, Token 申请： 硅基流动官网
 - `deepseek-ai/deepseek-v2-chat`: DeepSeek v2 聊天模型,Token 申请： 硅基流动官网
