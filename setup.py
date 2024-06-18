@@ -31,6 +31,7 @@ setup(
     entry_points={
         'console_scripts': [
             'byzerllm = byzerllm.byzerllm_command:main',
+            'easy-byzerllm = byzerllm.easy_byzerllm_command:main',
         ],
     },
     package_dir={"": "src"},
