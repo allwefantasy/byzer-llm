@@ -36,6 +36,7 @@ def main():
     parser.add_argument("--token", type=str, required=True, help="The model token")
     parser.add_argument("--ray_address", default="auto", help="Ray cluster address to connect to")
     parser.add_argument("--infer_params", type=str, default="", help="Infer params for the model")
+    parser.add_argument("--force", action="store_true", help="Force undeploy the model")
 
     args = parser.parse_args()
 
@@ -52,6 +53,13 @@ def main():
             "--ray_address", args.ray_address,
             "--infer_params", infer_params,
             "--pretrained_model_type", pretrained_model_type
+        ])
+    elif args.command == "undeploy":
+        byzerllm_main([
+            "undeploy",
+            "--model", args.model, 
+            "--ray_address", args.ray_address,
+            "--force" if args.force else ""
         ])
     else:
         print(f"Unknown command: {args.command}")
