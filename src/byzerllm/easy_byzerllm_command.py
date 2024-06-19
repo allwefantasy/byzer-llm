@@ -55,6 +55,9 @@ def main():
     deploy_parser.add_argument(
         "--infer_params", type=str, default="", help="Infer params for the model"
     )
+    deploy_parser.add_argument(
+        "--alias", type=str, default="", help="Alias name for the deployed model"
+    )
 
     undeploy_parser = subparsers.add_parser("undeploy", help="Undeploy a model")
     undeploy_parser.add_argument("model", type=str, help="Model name to undeploy")
@@ -73,7 +76,7 @@ def main():
     )
 
     args = parser.parse_args()
-    instance_name = model_to_instance(args.model)
+    instance_name = args.alias or model_to_instance(args.model)
 
     if args.command == "deploy":
         infer_params = args.infer_params or MODEL_INFER_PARAMS_MAP.get(args.model, "")
