@@ -47,6 +47,7 @@ easy_byzerllm deploy <model_name> --token <your_token>
 easy_byzerllm deploy gpt-3.5-turbo-0125 --token your_openai_api_key
 ```
 
+
 部署完成后,你就可以开始与模型聊天了。
 
 ### 取消部署

@@ -37,7 +37,7 @@ MODEL_PRETRAINED_TYPE_MAP = {
 
 
 def model_to_instance(model_name):
-    return re.sub(r"[/-]", "_", model_name)
+    return model_name
 
 
 def main():
@@ -78,6 +78,8 @@ def main():
     if args.command == "deploy":
         infer_params = args.infer_params or MODEL_INFER_PARAMS_MAP.get(args.model, "")
         pretrained_model_type = MODEL_PRETRAINED_TYPE_MAP.get(args.model, "")
+        if not pretrained_model_type:
+            raise ValueError(f"Pretrained model type not found for model {args.model}")
 
         infer_params = infer_params.replace("${MODEL_TOKEN}", args.token)
 
