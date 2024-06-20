@@ -56,7 +56,7 @@ def init_model(model_dir,infer_params:Dict[str,str]={},sys_conf:Dict[str,str]={}
         
     model.eval()       
     import types
-    # model.stream_chat = types.MethodType(stream_chat, model)  
+    model.stream_chat = types.MethodType(stream_chat, model)
     model.get_meta = types.MethodType(get_meta, model)     
     return (model,tokenizer)
 
