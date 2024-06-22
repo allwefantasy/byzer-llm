@@ -76,9 +76,10 @@ def main():
     )
 
     args = parser.parse_args()
-    instance_name = args.alias or model_to_instance(args.model)
+    instance_name = model_to_instance(args.model)
 
     if args.command == "deploy":
+        instance_name = args.alias or model_to_instance(args.model)
         infer_params = args.infer_params or MODEL_INFER_PARAMS_MAP.get(args.model, "")
         pretrained_model_type = MODEL_PRETRAINED_TYPE_MAP.get(args.model, "")
         if not pretrained_model_type:
