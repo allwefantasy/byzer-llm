@@ -15,25 +15,13 @@ byzerllm 支持私有化模型或者SaaS模型的部署。
 这里以 deepseek 官方API 为例：
 
 ```bash
-byzerllm deploy --pretrained_model_type saas/openai \
---cpus_per_worker 0.001 \
---gpus_per_worker 0 \
---worker_concurrency 10 \
---num_workers 1 \
---infer_params saas.base_url="https://api.deepseek.com/v1" saas.api_key=${MODEL_DEEPSEEK_TOKEN} saas.model=deepseek-chat \
---model deepseek_chat
+easy-byzerllm deploy deepseek-chat --token xxxxx --alias deepseek_chat
 ```
 
 或者跬基流动API:
 
 ```bash
-byzerllm deploy --pretrained_model_type saas/openai \
---cpus_per_worker 0.001 \
---gpus_per_worker 0 \
---num_workers 1 \
---worker_concurrency 10 \
---infer_params saas.base_url="https://api.siliconflow.cn/v1" saas.api_key=${MODEL_silcon_flow_TOKEN}  saas.model=alibaba/Qwen1.5-110B-Chat \
---model qwen110b_chat
+easy-byzerllm deploy alibaba/Qwen1.5-110B-Chat --token xxxxx --alias qwen110b_chat
 ```
 
 将上面的 API KEY 替换成你们自己的。
@@ -480,6 +468,7 @@ t[0].values
 
 1. prompt函数方法体返回只能是dict，实际的返回类型和方法签名可以不一样，但是方法体返回只能是dict。
 2. 大部分情况prompt函数体为空，如果一定要有方法体，可以返回一个空字典。
+3. 调用prompt方法的时候，如果在@byzerllm.prompt()里没有指定llm对象，那么需要在调用的时候通过with_llm方法指定llm对象。
 
 
 

@@ -257,9 +257,11 @@ class _PrompRunner:
         self._options = {**self._options, **options}
         return self
 
-    def with_response_markers(self, response_markers: List[str]):
-        if len(response_markers) != 2:
+    def with_response_markers(self, response_markers: Optional[List[str]] = None):
+        if response_markers is not None and len(response_markers) != 2:
             raise ValueError("response_markers should be a list of two elements")
+        if response_markers is None:
+            response_markers = ["<RESPONSE>", "</RESPONSE>"]
         self.response_markers = response_markers
         return self
     
@@ -338,7 +340,10 @@ class _PrompRunner:
             output_content = self._remove_response_markers(output=s)
         response.output = output_content
         if self.extractor:
-            return self.extractor(response)
+            if isinstance(self.extractor, str):
+                return self.extractor(response)
+            else:
+                return self.extractor(response.output)
         return response.output
 
     def run(self, *args, **kwargs):
