@@ -324,7 +324,7 @@ def from_vllm_backend(
     )
     disable_log_stats: bool = get_bool(infer_params, "backend.disable_log_stats", False)
 
-    ohter_params = {}
+    other_params = {}
 
     def parse_value(v):
         v = v.strip()
@@ -346,7 +346,7 @@ def from_vllm_backend(
             "backend.disable_log_stats",
         ]:
             new_k = k[len("backend."):]
-            ohter_params[new_k] = parse_value(v)
+            other_params[new_k] = parse_value(v)
 
     engine_args = AsyncEngineArgs(
         engine_use_ray=engine_use_ray,
@@ -355,7 +355,7 @@ def from_vllm_backend(
         tensor_parallel_size=tensor_parallel_size,
         gpu_memory_utilization=gpu_memory_utilization,
         disable_log_stats=disable_log_stats,
-        **ohter_params,
+        **other_params,
     )
     llm = AsyncLLMEngine.from_engine_args(engine_args)
     tokenizer = get_local_tokenizer(llm, engine_args)
