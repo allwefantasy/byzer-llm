@@ -326,6 +326,18 @@ def from_vllm_backend(
 
     ohter_params = {}
 
+    def parse_value(v):
+        v = v.strip()
+        if v.lower() in ['true', 'false']:
+            return v.lower() == 'true'
+        try:
+            return int(v)
+        except ValueError:
+            try:
+                return float(v)
+            except ValueError:
+                return v
+
     for k, v in infer_params.items():
         if k.startswith("backend.") and k not in [
             "backend.worker_use_ray",
@@ -333,21 +345,8 @@ def from_vllm_backend(
             "backend.gpu_memory_utilization",
             "backend.disable_log_stats",
         ]:
-            new_k = k[len("backend.") :]
-            if k == "backend.max_model_len":
-                ohter_params[new_k] = int(v)
-            elif k == "backend.enforce_eager":
-                ohter_params[new_k] = v in ["true", "True"]
-            elif k == "backend.trust_remote_code":
-                ohter_params[new_k] = v in ["true", "True"]
-            elif k == "bakcend.enable_lora":
-                ohter_params[new_k] = v in ["true", "True"]
-            elif k == "backend.enable_prefix_caching":
-                ohter_params[new_k] = v in ["true", "True"]    
-            elif k == "backend.max_lora_rank":
-                ohter_params[new_k] = int(v)
-            else:
-                ohter_params[new_k] = v
+            new_k = k[len("backend."):]
+            ohter_params[new_k] = parse_value(v)
 
     engine_args = AsyncEngineArgs(
         engine_use_ray=engine_use_ray,
