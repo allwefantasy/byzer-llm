@@ -43,6 +43,37 @@ class QueryBuilder:
             limit=self.limit
         )
 
+class WriteBuilder:
+    def __init__(self, storage: 'ByzerStorage'):
+        self.storage = storage
+        self.data = []
+
+    def add_item(self, item: Dict[str, Any]):
+        self.data.append(item)
+        return self
+
+    def add_items(self, items: List[Dict[str, Any]]):
+        self.data.extend(items)
+        return self
+
+    def execute(self) -> bool:
+        return self.storage.add(self.data)
+
+class SchemaBuilder:
+    def __init__(self):
+        self.fields = []
+
+    def add_field(self, name: str, data_type: str, options: List[str] = None):
+        field = f"field({name},{data_type}"
+        if options:
+            field += f",{','.join(options)}"
+        field += ")"
+        self.fields.append(field)
+        return self
+
+    def build(self) -> str:
+        return f"st({','.join(self.fields)})"
+
 class ByzerStorage:
     def __init__(self, cluster_name: str, database: str, table: str):
         self.retrieval = ByzerRetrieval()
@@ -52,6 +83,12 @@ class ByzerStorage:
 
     def query_builder(self) -> QueryBuilder:
         return QueryBuilder(self)
+
+    def write_builder(self) -> WriteBuilder:
+        return WriteBuilder(self)
+
+    def schema_builder(self) -> SchemaBuilder:
+        return SchemaBuilder()
 
     def query(self, keyword: str = None, vector: List[float] = None, 
                vector_field: str = None, filters: Dict[str, Any] = None, 
