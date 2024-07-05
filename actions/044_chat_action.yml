@@ -1,0 +1,13 @@
+auto_merge: editblock
+emb_model: gpt_emb
+human_as_model: true
+include_file:
+- ./base/base.yml
+query: easy_storage.py 对 ByzerRetrievalProxy 对象提供一个更好,更易用的API封装.当前只封装两个方法, search
+  和 build_from_dicts 方法,一个是用于查询，一个是用于写入数据的.
+skip_build_index: true
+skip_confirm: true
+urls:
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/retrieval/__init__.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/easy_storage.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/records/__init__.py
