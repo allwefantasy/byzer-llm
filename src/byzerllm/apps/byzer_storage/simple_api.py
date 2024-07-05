@@ -1,6 +1,23 @@
 from byzerllm.utils.retrieval import ByzerRetrieval
 from byzerllm.records import SearchQuery, TableSettings
 from typing import List, Dict, Any, Union
+from enum import Enum, auto
+
+class DataType(Enum):
+    STRING = "string"
+    LONG = "long"
+    INT = "int"
+    FLOAT = "float"
+    DOUBLE = "double"
+    BOOLEAN = "boolean"
+    ARRAY = "array"
+    MAP = "map"
+    STRUCT = "st"
+
+class FieldOption(Enum):
+    ANALYZE = "analyze"
+    SORT = "sort"
+    NO_INDEX = "no_index"
 
 class QueryBuilder:
     def __init__(self, storage: 'ByzerStorage'):
@@ -63,10 +80,34 @@ class SchemaBuilder:
     def __init__(self):
         self.fields = []
 
-    def add_field(self, name: str, data_type: str, options: List[str] = None):
-        field = f"field({name},{data_type}"
+    def add_field(self, name: str, data_type: DataType, options: List[FieldOption] = None):
+        field = f"field({name},{data_type.value}"
         if options:
-            field += f",{','.join(options)}"
+            field += f",{','.join([opt.value for opt in options])}"
+        field += ")"
+        self.fields.append(field)
+        return self
+
+    def add_array_field(self, name: str, element_type: DataType, options: List[FieldOption] = None):
+        field = f"field({name},array({element_type.value})"
+        if options:
+            field += f",{','.join([opt.value for opt in options])}"
+        field += ")"
+        self.fields.append(field)
+        return self
+
+    def add_map_field(self, name: str, key_type: DataType, value_type: DataType, options: List[FieldOption] = None):
+        field = f"field({name},map({key_type.value},{value_type.value})"
+        if options:
+            field += f",{','.join([opt.value for opt in options])}"
+        field += ")"
+        self.fields.append(field)
+        return self
+
+    def add_struct_field(self, name: str, struct_builder: 'SchemaBuilder', options: List[FieldOption] = None):
+        field = f"field({name},{struct_builder.build()}"
+        if options:
+            field += f",{','.join([opt.value for opt in options])}"
         field += ")"
         self.fields.append(field)
         return self
@@ -133,4 +174,3 @@ class ByzerStorage:
         Commit changes to the storage.
         """
         return self.retrieval.commit(self.cluster_name, self.database, self.table)
-
