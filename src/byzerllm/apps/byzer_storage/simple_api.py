@@ -96,3 +96,4 @@ class ByzerStorage:
         Commit changes to the storage.
         """
         return self.retrieval.commit(self.cluster_name, self.database, self.table)
+
