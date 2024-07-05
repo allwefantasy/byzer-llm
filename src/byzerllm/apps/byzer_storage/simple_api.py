@@ -2,12 +2,56 @@ from byzerllm.utils.retrieval import ByzerRetrieval
 from byzerllm.records import SearchQuery, TableSettings
 from typing import List, Dict, Any, Union
 
+class QueryBuilder:
+    def __init__(self, storage: 'ByzerStorage'):
+        self.storage = storage
+        self.keyword = None
+        self.vector = None
+        self.vector_field = None
+        self.filters = {}
+        self.fields = []
+        self.limit = 10
+
+    def set_keyword(self, keyword: str):
+        self.keyword = keyword
+        return self
+
+    def set_vector(self, vector: List[float], vector_field: str):
+        self.vector = vector
+        self.vector_field = vector_field
+        return self
+
+    def add_filter(self, field: str, value: Any):
+        self.filters[field] = value
+        return self
+
+    def set_fields(self, fields: List[str]):
+        self.fields = fields
+        return self
+
+    def set_limit(self, limit: int):
+        self.limit = limit
+        return self
+
+    def execute(self) -> List[Dict[str, Any]]:
+        return self.storage.query(
+            keyword=self.keyword,
+            vector=self.vector,
+            vector_field=self.vector_field,
+            filters=self.filters,
+            fields=self.fields,
+            limit=self.limit
+        )
+
 class ByzerStorage:
     def __init__(self, cluster_name: str, database: str, table: str):
         self.retrieval = ByzerRetrieval()
         self.cluster_name = cluster_name
         self.database = database
         self.table = table
+
+    def query_builder(self) -> QueryBuilder:
+        return QueryBuilder(self)
 
     def query(self, keyword: str = None, vector: List[float] = None, 
                vector_field: str = None, filters: Dict[str, Any] = None, 
