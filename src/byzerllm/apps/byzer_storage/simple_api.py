@@ -140,6 +140,7 @@ class SchemaBuilder:
 class ByzerStorage:
     def __init__(self, cluster_name: str, database: str, table: str):
         self.retrieval = ByzerRetrieval()
+        self.retrieval.launch_gateway()
         self.cluster_name = cluster_name
         self.database = database
         self.table = table
@@ -152,6 +153,8 @@ class ByzerStorage:
 
     def schema_builder(self) -> SchemaBuilder:
         return SchemaBuilder(self)
+
+        
 
     def query(self, keyword: str = None, vector: List[float] = None, 
                vector_field: str = None, filters: Dict[str, Any] = None, 
