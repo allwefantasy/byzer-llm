@@ -77,8 +77,11 @@ class WriteBuilder:
         return self.storage.add(self.data)
 
 class SchemaBuilder:
-    def __init__(self):
+    def __init__(self, storage: 'ByzerStorage'):
         self.fields = []
+        self.storage = storage
+        self.num_shards = 1
+        self.location = None
 
     def add_field(self, name: str, data_type: DataType, options: List[FieldOption] = None):
         field = f"field({name},{data_type.value}"
@@ -112,8 +115,27 @@ class SchemaBuilder:
         self.fields.append(field)
         return self
 
+    def set_num_shards(self, num_shards: int):
+        self.num_shards = num_shards
+        return self
+
+    def set_location(self, location: str):
+        self.location = location
+        return self
+
     def build(self) -> str:
         return f"st({','.join(self.fields)})"
+
+    def execute(self) -> bool:
+        schema = self.build()
+        table_settings = TableSettings(
+            database=self.storage.database,
+            table=self.storage.table,
+            schema=schema,
+            location=self.location,
+            num_shards=self.num_shards
+        )
+        return self.storage.retrieval.create_table(self.storage.cluster_name, table_settings)
 
 class ByzerStorage:
     def __init__(self, cluster_name: str, database: str, table: str):
@@ -129,7 +151,7 @@ class ByzerStorage:
         return WriteBuilder(self)
 
     def schema_builder(self) -> SchemaBuilder:
-        return SchemaBuilder()
+        return SchemaBuilder(self)
 
     def query(self, keyword: str = None, vector: List[float] = None, 
                vector_field: str = None, filters: Dict[str, Any] = None, 
@@ -154,20 +176,6 @@ class ByzerStorage:
         Build index from a list of dictionaries.
         """
         return self.retrieval.build_from_dicts(self.cluster_name, self.database, self.table, data)
-
-    def initialize(self, schema: str, num_shards: int = 1):
-        """
-        Initialize the storage by creating the table if it doesn't exist.
-        """
-        if not self.retrieval.check_table_exists(self.cluster_name, self.database, self.table):
-            table_settings = TableSettings(
-                database=self.database,
-                table=self.table,
-                schema=schema,
-                location=None,  # Let the system decide the location
-                num_shards=num_shards
-            )
-            self.retrieval.create_table(self.cluster_name, table_settings)
 
     def commit(self) -> bool:
         """
