@@ -2,14 +2,14 @@ from byzerllm.utils.retrieval import ByzerRetrieval
 from byzerllm.records import SearchQuery, TableSettings
 from typing import List, Dict, Any, Union
 
-class EasyStorage:
+class ByzerStorage:
     def __init__(self, cluster_name: str, database: str, table: str):
         self.retrieval = ByzerRetrieval()
         self.cluster_name = cluster_name
         self.database = database
         self.table = table
 
-    def search(self, keyword: str = None, vector: List[float] = None, 
+    def query(self, keyword: str = None, vector: List[float] = None, 
                vector_field: str = None, filters: Dict[str, Any] = None, 
                fields: List[str] = None, limit: int = 10) -> List[Dict[str, Any]]:
         """
@@ -27,7 +27,7 @@ class EasyStorage:
         )
         return self.retrieval.search(self.cluster_name, search_query)
 
-    def build_from_dicts(self, data: List[Dict[str, Any]]) -> bool:
+    def add(self, data: List[Dict[str, Any]]) -> bool:
         """
         Build index from a list of dictionaries.
         """
