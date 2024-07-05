@@ -1,6 +1,6 @@
 from byzerllm.utils.retrieval import ByzerRetrieval
-from byzerllm.records import SearchQuery, TableSettings
-from typing import List, Dict, Any, Union
+from byzerllm.records import SearchQuery, TableSettings, ClusterSettings, EnvSettings, JVMSettings, ResourceRequirementSettings, ResourceRequirement
+from typing import List, Dict, Any, Union, Optional
 from enum import Enum, auto
 
 class DataType(Enum):
@@ -137,6 +137,61 @@ class SchemaBuilder:
         )
         return self.storage.retrieval.create_table(self.storage.cluster_name, table_settings)
 
+class SimpleClusterBuilder:
+    def __init__(self, storage: 'ByzerStorage'):
+        self.storage = storage
+        self.name = None
+        self.location = None
+        self.num_nodes = 1
+        self.node_memory = "2g"
+        self.node_cpu = 1
+        self.java_home = None
+        self.path = None
+
+    def set_name(self, name: str):
+        self.name = name
+        return self
+
+    def set_location(self, location: str):
+        self.location = location
+        return self
+
+    def set_num_nodes(self, num_nodes: int):
+        self.num_nodes = num_nodes
+        return self
+
+    def set_node_memory(self, node_memory: str):
+        self.node_memory = node_memory
+        return self
+
+    def set_node_cpu(self, node_cpu: int):
+        self.node_cpu = node_cpu
+        return self
+
+    def set_java_home(self, java_home: str):
+        self.java_home = java_home
+        return self
+
+    def set_path(self, path: str):
+        self.path = path
+        return self
+
+    def build(self) -> bool:
+        if not all([self.name, self.location, self.java_home, self.path]):
+            raise ValueError("Name, location, Java home, and path are required.")
+
+        cluster_settings = ClusterSettings(self.name, self.location, self.num_nodes)
+        env_settings = EnvSettings(self.java_home, self.path)
+        jvm_settings = JVMSettings([f"-Xmx{self.node_memory}", "-XX:+UseZGC"])
+        resource_settings = ResourceRequirementSettings([ResourceRequirement("CPU", self.node_cpu)])
+
+        return self.storage.retrieval.start_cluster(
+            cluster_settings,
+            env_settings,
+            jvm_settings,
+            resource_settings
+        )
+
 class ByzerStorage:
     def __init__(self, cluster_name: str, database: str, table: str):
         self.retrieval = ByzerRetrieval()
@@ -154,7 +209,8 @@ class ByzerStorage:
     def schema_builder(self) -> SchemaBuilder:
         return SchemaBuilder(self)
 
-        
+    def cluster_builder(self) -> SimpleClusterBuilder:
+        return SimpleClusterBuilder(self)
 
     def query(self, keyword: str = None, vector: List[float] = None, 
                vector_field: str = None, filters: Dict[str, Any] = None, 
@@ -185,3 +241,18 @@ class ByzerStorage:
         Commit changes to the storage.
         """
         return self.retrieval.commit(self.cluster_name, self.database, self.table)
+
+    def start_cluster(self, name: str, location: str, java_home: str, path: str, 
+                      num_nodes: int = 1, node_memory: str = "2g", node_cpu: int = 1) -> bool:
+        """
+        Simplified method to start a cluster.
+        """
+        return self.cluster_builder() \
+            .set_name(name) \
+            .set_location(location) \
+            .set_java_home(java_home) \
+            .set_path(path) \
+            .set_num_nodes(num_nodes) \
+            .set_node_memory(node_memory) \
+            .set_node_cpu(node_cpu) \
+            .build()
