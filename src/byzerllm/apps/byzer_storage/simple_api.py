@@ -1,7 +1,19 @@
 from byzerllm.utils.retrieval import ByzerRetrieval
-from byzerllm.records import SearchQuery, TableSettings, ClusterSettings, EnvSettings, JVMSettings, ResourceRequirementSettings, ResourceRequirement
+from byzerllm.records import (
+    SearchQuery,
+    TableSettings,
+    ClusterSettings,
+    EnvSettings,
+    JVMSettings,
+    ResourceRequirementSettings,
+    ResourceRequirement,
+)
 from typing import List, Dict, Any, Union, Optional
 from enum import Enum, auto
+import os
+import byzerllm
+import jieba
+
 
 class DataType(Enum):
     STRING = "string"
@@ -14,13 +26,15 @@ class DataType(Enum):
     MAP = "map"
     STRUCT = "st"
 
+
 class FieldOption(Enum):
     ANALYZE = "analyze"
     SORT = "sort"
     NO_INDEX = "no_index"
 
+
 class QueryBuilder:
-    def __init__(self, storage: 'ByzerStorage'):
+    def __init__(self, storage: "ByzerStorage"):
         self.storage = storage
         self.keyword = None
         self.vector = None
@@ -29,8 +43,10 @@ class QueryBuilder:
         self.fields = []
         self.limit = 10
 
-    def set_keyword(self, keyword: str):
+    def set_keyword(self, keyword: str, fields: Optional[List[str]] = None):
         self.keyword = keyword
+        if fields:
+            self.fields = fields
         return self
 
     def set_vector(self, vector: List[float], vector_field: str):
@@ -51,17 +67,18 @@ class QueryBuilder:
         return self
 
     def execute(self) -> List[Dict[str, Any]]:
-        return self.storage.query(
+        return self.storage._query(
             keyword=self.keyword,
             vector=self.vector,
             vector_field=self.vector_field,
             filters=self.filters,
             fields=self.fields,
-            limit=self.limit
+            limit=self.limit,
         )
 
+
 class WriteBuilder:
-    def __init__(self, storage: 'ByzerStorage'):
+    def __init__(self, storage: "ByzerStorage"):
         self.storage = storage
         self.data = []
 
@@ -74,16 +91,19 @@ class WriteBuilder:
         return self
 
     def execute(self) -> bool:
-        return self.storage.add(self.data)
+        return self.storage._add(self.data)
+
 
 class SchemaBuilder:
-    def __init__(self, storage: 'ByzerStorage'):
+    def __init__(self, storage: "ByzerStorage"):
         self.fields = []
         self.storage = storage
         self.num_shards = 1
-        self.location = None
+        self.location = ""
 
-    def add_field(self, name: str, data_type: DataType, options: List[FieldOption] = None):
+    def add_field(
+        self, name: str, data_type: DataType, options: List[FieldOption] = None
+    ):
         field = f"field({name},{data_type.value}"
         if options:
             field += f",{','.join([opt.value for opt in options])}"
@@ -91,7 +111,9 @@ class SchemaBuilder:
         self.fields.append(field)
         return self
 
-    def add_array_field(self, name: str, element_type: DataType, options: List[FieldOption] = None):
+    def add_array_field(
+        self, name: str, element_type: DataType, options: List[FieldOption] = None
+    ):
         field = f"field({name},array({element_type.value})"
         if options:
             field += f",{','.join([opt.value for opt in options])}"
@@ -99,7 +121,13 @@ class SchemaBuilder:
         self.fields.append(field)
         return self
 
-    def add_map_field(self, name: str, key_type: DataType, value_type: DataType, options: List[FieldOption] = None):
+    def add_map_field(
+        self,
+        name: str,
+        key_type: DataType,
+        value_type: DataType,
+        options: List[FieldOption] = None,
+    ):
         field = f"field({name},map({key_type.value},{value_type.value})"
         if options:
             field += f",{','.join([opt.value for opt in options])}"
@@ -107,7 +135,12 @@ class SchemaBuilder:
         self.fields.append(field)
         return self
 
-    def add_struct_field(self, name: str, struct_builder: 'SchemaBuilder', options: List[FieldOption] = None):
+    def add_struct_field(
+        self,
+        name: str,
+        struct_builder: "SchemaBuilder",
+        options: List[FieldOption] = None,
+    ):
         field = f"field({name},{struct_builder.build()}"
         if options:
             field += f",{','.join([opt.value for opt in options])}"
@@ -115,88 +148,65 @@ class SchemaBuilder:
         self.fields.append(field)
         return self
 
-    def set_num_shards(self, num_shards: int):
-        self.num_shards = num_shards
-        return self
-
-    def set_location(self, location: str):
-        self.location = location
-        return self
-
     def build(self) -> str:
         return f"st({','.join(self.fields)})"
 
     def execute(self) -> bool:
+        if self.storage.retrieval.check_table_exists(
+            self.storage.cluster_name, self.storage.database, self.storage.table
+        ):
+            return False
+
         schema = self.build()
         table_settings = TableSettings(
             database=self.storage.database,
             table=self.storage.table,
             schema=schema,
             location=self.location,
-            num_shards=self.num_shards
+            num_shards=self.num_shards,
         )
-        return self.storage.retrieval.create_table(self.storage.cluster_name, table_settings)
-
-class SimpleClusterBuilder:
-    def __init__(self, storage: 'ByzerStorage'):
-        self.storage = storage
-        self.name = None
-        self.location = None
-        self.num_nodes = 1
-        self.node_memory = "2g"
-        self.node_cpu = 1
-        self.java_home = None
-        self.path = None
-
-    def set_name(self, name: str):
-        self.name = name
-        return self
-
-    def set_location(self, location: str):
-        self.location = location
-        return self
-
-    def set_num_nodes(self, num_nodes: int):
-        self.num_nodes = num_nodes
-        return self
-
-    def set_node_memory(self, node_memory: str):
-        self.node_memory = node_memory
-        return self
-
-    def set_node_cpu(self, node_cpu: int):
-        self.node_cpu = node_cpu
-        return self
-
-    def set_java_home(self, java_home: str):
-        self.java_home = java_home
-        return self
-
-    def set_path(self, path: str):
-        self.path = path
-        return self
-
-    def build(self) -> bool:
-        if not all([self.name, self.location, self.java_home, self.path]):
-            raise ValueError("Name, location, Java home, and path are required.")
-
-        cluster_settings = ClusterSettings(self.name, self.location, self.num_nodes)
-        env_settings = EnvSettings(self.java_home, self.path)
-        jvm_settings = JVMSettings([f"-Xmx{self.node_memory}", "-XX:+UseZGC"])
-        resource_settings = ResourceRequirementSettings([ResourceRequirement("CPU", self.node_cpu)])
-
-        return self.storage.retrieval.start_cluster(
-            cluster_settings,
-            env_settings,
-            jvm_settings,
-            resource_settings
+        return self.storage.retrieval.create_table(
+            self.storage.cluster_name, table_settings
         )
+
 
 class ByzerStorage:
-    def __init__(self, cluster_name: str, database: str, table: str):
+    @staticmethod
+    def _connect_cluster(
+        cluster_name: Optional[str],
+        base_dir: Optional[str] = None,
+        ray_address: str = "auto",
+    ):
+        version = "0.1.11"
+        cluster = cluster_name
+        home = os.path.expanduser("~")
+        base_dir = base_dir or os.path.join(home, ".auto-coder")
+        libs_dir = os.path.join(
+            base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}"
+        )
+        cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
+
+        if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
+            print("No instance find.")
+            return False
+
+        code_search_path = [libs_dir]
+
+        byzerllm.connect_cluster(address=ray_address, code_search_path=code_search_path)
+        return True
+
+    def __init__(
+        self,
+        cluster_name: Optional[str],
+        database: str,
+        table: str,
+        base_dir: Optional[str] = None,
+        ray_address: str = "auto",
+    ):
+        ByzerStorage._connect_cluster(cluster_name, base_dir, ray_address)
         self.retrieval = ByzerRetrieval()
         self.retrieval.launch_gateway()
-        self.cluster_name = cluster_name
+        self.cluster_name = cluster_name or "byzerai_store"
         self.database = database
         self.table = table
 
@@ -209,12 +219,15 @@ class ByzerStorage:
     def schema_builder(self) -> SchemaBuilder:
         return SchemaBuilder(self)
 
-    def cluster_builder(self) -> SimpleClusterBuilder:
-        return SimpleClusterBuilder(self)
-
-    def query(self, keyword: str = None, vector: List[float] = None, 
-               vector_field: str = None, filters: Dict[str, Any] = None, 
-               fields: List[str] = None, limit: int = 10) -> List[Dict[str, Any]]:
+    def _query(
+        self,
+        keyword: str = None,
+        vector: List[float] = None,
+        vector_field: str = None,
+        filters: Dict[str, Any] = None,
+        fields: List[str] = None,
+        limit: int = 10,
+    ) -> List[Dict[str, Any]]:
         """
         Unified search method supporting both keyword and vector search.
         """
@@ -226,33 +239,26 @@ class ByzerStorage:
             vectorField=vector_field,
             filters=filters or {},
             fields=fields or [],
-            limit=limit
+            limit=limit,
         )
         return self.retrieval.search(self.cluster_name, search_query)
 
-    def add(self, data: List[Dict[str, Any]]) -> bool:
+    def _add(self, data: List[Dict[str, Any]]) -> bool:
         """
         Build index from a list of dictionaries.
         """
-        return self.retrieval.build_from_dicts(self.cluster_name, self.database, self.table, data)
+        return self.retrieval.build_from_dicts(
+            self.cluster_name, self.database, self.table, data
+        )
+
+    def setokenize(self, s: str):
+        seg_list = jieba.cut(s, cut_all=False)
+        # return self.llm.apply_sql_func("select mkString(' ',parse(value)) as value",[
+        # {"value":s}],url=self.byzer_engine_url)["value"]
+        return " ".join(seg_list)
 
     def commit(self) -> bool:
         """
         Commit changes to the storage.
         """
         return self.retrieval.commit(self.cluster_name, self.database, self.table)
-
-    def start_cluster(self, name: str, location: str, java_home: str, path: str, 
-                      num_nodes: int = 1, node_memory: str = "2g", node_cpu: int = 1) -> bool:
-        """
-        Simplified method to start a cluster.
-        """
-        return self.cluster_builder() \
-            .set_name(name) \
-            .set_location(location) \
-            .set_java_home(java_home) \
-            .set_path(path) \
-            .set_num_nodes(num_nodes) \
-            .set_node_memory(node_memory) \
-            .set_node_cpu(node_cpu) \
-            .build()
