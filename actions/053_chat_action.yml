@@ -1,0 +1,17 @@
+auto_merge: editblock
+human_as_model: true
+include_file:
+- ./base/base.yml
+query: 'QueryBuilder里的filter 需要增加AndBuilder 和 OrBuilder  AndBuilder最后拼接格式如下: {"and":[{"field":"chunk_collection"
+
+  ,"value":self.chunk_collection}]}  同理 or, and 和 or 可以互相嵌套,比如 {"and":{"or":[{"field":"chunk_collection"
+
+  ,"value":self.chunk_collection}]}}'
+skip_build_index: true
+skip_confirm: true
+urls:
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/retrieval/__init__.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/records/__init__.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/simple_api.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/simple_retrieval_client.py
+- /Users/allwefantasy/projects/byzer-retrieval/src/main/java/tech/mlsql/retrieval/schema/SimpleSchemaParser.java

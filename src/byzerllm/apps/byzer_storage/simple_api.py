@@ -1,4 +1,5 @@
 from byzerllm.utils.retrieval import ByzerRetrieval
+from byzerllm.utils.client import ByzerLLM, InferBackend, LLMRequest
 from byzerllm.records import (
     SearchQuery,
     TableSettings,
@@ -11,14 +12,13 @@ from byzerllm.records import (
 from typing import List, Dict, Any, Union, Optional
 from enum import Enum, auto
 import os
-import byzerllm
 import jieba
+from loguru import logger
 
 
 class DataType(Enum):
     STRING = "string"
-    LONG = "long"
-    INT = "int"
+    LONG = "long"    
     FLOAT = "float"
     DOUBLE = "double"
     BOOLEAN = "boolean"
@@ -43,15 +43,18 @@ class QueryBuilder:
         self.fields = []
         self.limit = 10
 
-    def set_keyword(self, keyword: str, fields: Optional[List[str]] = None):
-        self.keyword = keyword
+    def set_search_query(self, query: str, fields: Optional[List[str]] = None):
+        self.keyword = self.storage.tokenize(query)
         if fields:
             self.fields = fields
         return self
 
-    def set_vector(self, vector: List[float], vector_field: str):
-        self.vector = vector
-        self.vector_field = vector_field
+    def set_vector_query(self, query: Union[List[float], str], fields: Optional[List[str]]):
+        if isinstance(query, str):
+            self.vector = self.storage.emb(query)
+        else:
+            self.vector = query
+        self.vector_field = fields[0]
         return self
 
     def add_filter(self, field: str, value: Any):
@@ -82,12 +85,35 @@ class WriteBuilder:
         self.storage = storage
         self.data = []
 
-    def add_item(self, item: Dict[str, Any]):
+    def add_item(
+        self,
+        item: Dict[str, Any],
+        vector_fields: List[str] = [],
+        search_fields: List[str] = [],
+    ):
+        if not vector_fields and not search_fields:
+            raise ValueError("At least one of vector_fields or search_fields is required.")
+        for field in vector_fields:
+            item[field] = self.storage.emb(item[field])
+        for field in search_fields:
+            item[field] = self.storage.tokenize(item[field])
         self.data.append(item)
         return self
 
-    def add_items(self, items: List[Dict[str, Any]]):
-        self.data.extend(items)
+    def add_items(
+        self,
+        items: List[Dict[str, Any]],
+        vector_fields: List[str] = [],
+        search_fields: List[str] = [],
+    ):
+        if not vector_fields and not search_fields:
+            raise ValueError("At least one of vector_fields or search_fields is required.")
+        for item in items:
+            for field in vector_fields:
+                item[field] = self.storage.emb(item[field])
+            for field in search_fields:
+                item[field] = self.storage.tokenize(item[field])
+            self.data.append(item)
         return self
 
     def execute(self) -> bool:
@@ -152,12 +178,13 @@ class SchemaBuilder:
         return f"st({','.join(self.fields)})"
 
     def execute(self) -> bool:
+        schema = self.build()  
+        logger.info(schema)
         if self.storage.retrieval.check_table_exists(
             self.storage.cluster_name, self.storage.database, self.storage.table
-        ):
+        ):            
             return False
-
-        schema = self.build()
+              
         table_settings = TableSettings(
             database=self.storage.database,
             table=self.storage.table,
@@ -198,6 +225,8 @@ class ByzerStorage:
 
         code_search_path = [libs_dir]
 
+        import byzerllm
+
         byzerllm.connect_cluster(address=ray_address, code_search_path=code_search_path)
         cls._is_connected = True
         return True
@@ -209,14 +238,19 @@ class ByzerStorage:
         table: str,
         base_dir: Optional[str] = None,
         ray_address: str = "auto",
+        emb_model: str = "emb",
     ):
         if not ByzerStorage._is_connected:
             ByzerStorage._connect_cluster(cluster_name, base_dir, ray_address)
         self.retrieval = ByzerRetrieval()
         self.retrieval.launch_gateway()
         self.cluster_name = cluster_name or "byzerai_store"
+        self.emb_model = emb_model
         self.database = database
         self.table = table
+
+        self.llm = ByzerLLM()
+        self.llm.setup_default_emb_model_name(self.emb_model)
 
     def query_builder(self) -> QueryBuilder:
         return QueryBuilder(self)
@@ -254,16 +288,21 @@ class ByzerStorage:
     def _add(self, data: List[Dict[str, Any]]) -> bool:
         """
         Build index from a list of dictionaries.
-        """
+        """        
         return self.retrieval.build_from_dicts(
             self.cluster_name, self.database, self.table, data
         )
 
-    def setokenize(self, s: str):
+    def tokenize(self, s: str):
         seg_list = jieba.cut(s, cut_all=False)
         # return self.llm.apply_sql_func("select mkString(' ',parse(value)) as value",[
         # {"value":s}],url=self.byzer_engine_url)["value"]
         return " ".join(seg_list)
+
+    def emb(self, s: str):
+        return self.llm.emb(self.llm.default_emb_model_name, LLMRequest(instruction=s))[
+            0
+        ].output
 
     def commit(self) -> bool:
         """

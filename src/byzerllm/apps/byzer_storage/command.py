@@ -103,6 +103,37 @@ class StorageSubCommand:
             print(f"Cluster {cluster} exists already, stop it first.")
             return 
         
+        base_model_dir = os.path.join(base_dir, "storage","models")
+        os.makedirs(base_model_dir,exist_ok=True)
+        bge_model = os.path.join(base_model_dir,"AI-ModelScope","bge-large-zh")
+        
+        from modelscope.hub.snapshot_download import snapshot_download
+        import huggingface_hub
+        if not os.path.exists(bge_model):
+            model_path = snapshot_download(
+                model_id="AI-ModelScope/bge-large-zh",
+                cache_dir=base_model_dir,
+                local_files_only=huggingface_hub.constants.HF_HUB_OFFLINE                
+            )
+        else:
+            model_path = bge_model        
+        print(f"emb Model {model_path} downloaded successfully.")  
+
+        llm = byzerllm.ByzerLLM()        
+        if not llm.is_model_exist("emb"): 
+            print("Deploying emb model...")  
+            from byzerllm.utils.client import InferBackend         
+            base_model_dir = os.path.join(base_dir, "storage","models")        
+            bge_model = os.path.join(base_model_dir,"AI-ModelScope","bge-large-zh")        
+            llm.setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
+            llm.setup_gpus_per_worker(0).setup_cpus_per_worker(0.01).setup_worker_concurrency(20)
+            llm.deploy(
+                model_path=bge_model,
+                pretrained_model_type="custom/bge",
+                udf_name="emb",            
+                infer_params={}
+            )               
+        
         cluster_json = os.path.join(base_dir, "storage", "data",f"{cluster}.json")
         if os.path.exists(cluster_json):
             StorageSubCommand.restore(args)
@@ -116,8 +147,7 @@ class StorageSubCommand:
         
         with open(os.path.join(base_dir, "storage", "data",f"{cluster}.json"),"w") as f:
             f.write(json.dumps(retrieval.cluster_info(cluster),ensure_ascii=False))
-
-        print("Byzer Storage started successfully")
+        
 
     @staticmethod 
     def stop(args):    
