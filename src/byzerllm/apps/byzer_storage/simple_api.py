@@ -18,7 +18,7 @@ from loguru import logger
 
 class DataType(Enum):
     STRING = "string"
-    LONG = "long"    
+    LONG = "long"
     FLOAT = "float"
     DOUBLE = "double"
     BOOLEAN = "boolean"
@@ -33,6 +33,11 @@ class FieldOption(Enum):
     NO_INDEX = "no_index"
 
 
+class SortOption(Enum):
+    DESC = "desc"
+    ASC = "asc"
+
+
 class FilterBuilder:
     def __init__(self, query_builder: "QueryBuilder"):
         self.conditions = []
@@ -45,47 +50,63 @@ class FilterBuilder:
     def build(self):
         return self.conditions
 
-    def execute(self) -> List[Dict[str, Any]]:
-        self.query_builder.filters = self.build()
-        return self.query_builder.execute()
 
 class AndBuilder(FilterBuilder):
     def build(self):
-        return {"and": super().build()}
+        v = {"and": super().build()}
+        self.query_builder.filters = v
+        return self.query_builder
+
 
 class OrBuilder(FilterBuilder):
     def build(self):
-        return {"or": super().build()}
+        v = {"or": super().build()}
+        self.query_builder.filters = v
+        return self.query_builder
+
 
 class QueryBuilder:
     def __init__(self, storage: "ByzerStorage"):
         self.storage = storage
         self.keyword = None
-        self.vector = None
+        self.vector = []
         self.vector_field = None
-        self.filters = None
+        self.filters = {}
         self.fields = []
         self.limit = 10
+        self.sorts = []
 
-    def set_search_query(self, query: str, fields: Optional[List[str]] = None):
+    def set_search_query(self, query: str, fields: Union[List[str], str]):
         self.keyword = self.storage.tokenize(query)
-        if fields:
+        if isinstance(fields, str):
+            self.fields = fields.split(",")
+        else:
             self.fields = fields
         return self
 
-    def set_vector_query(self, query: Union[List[float], str], fields: Optional[List[str]]):
+    def set_vector_query(
+        self, query: Union[List[float], str], fields: Union[List[str], str]
+    ):
         if isinstance(query, str):
             self.vector = self.storage.emb(query)
         else:
             self.vector = query
-        self.vector_field = fields[0]
+
+        if isinstance(fields, str):
+            self.vector_field = fields.split(",")[0]
+        else:
+            self.vector_field = fields[0]
         return self
 
     def and_filter(self) -> AndBuilder:
         return AndBuilder(self)
 
     def or_filter(self) -> OrBuilder:
-        return OrBuilder(self)    
+        return OrBuilder(self)
+
+    def sort(self, field: str, order: SortOption = SortOption.DESC):
+        self.sorts.append({field: order.value})
+        return self
 
     def set_fields(self, fields: List[str]):
         self.fields = fields
@@ -102,8 +123,24 @@ class QueryBuilder:
             vector_field=self.vector_field,
             filters=self.filters,
             fields=self.fields,
+            sorts=self.sorts,
             limit=self.limit,
         )
+
+    def delete(self):
+        if self.filters and not self.keyword and not self.vector_field:
+            print(self.filters)
+            self.storage.retrieval.delete_by_filter(
+                self.storage.cluster_name,
+                self.storage.database,
+                self.storage.table,
+                self.filters,
+            )
+            self.storage.retrieval.commit(
+                self.storage.cluster_name, self.storage.database, self.storage.table
+            )
+        else:
+            raise ValueError("Only support delete by filter")
 
 
 class WriteBuilder:
@@ -118,7 +155,9 @@ class WriteBuilder:
         search_fields: List[str] = [],
     ):
         if not vector_fields and not search_fields:
-            raise ValueError("At least one of vector_fields or search_fields is required.")
+            raise ValueError(
+                "At least one of vector_fields or search_fields is required."
+            )
         for field in vector_fields:
             item[field] = self.storage.emb(item[field])
         for field in search_fields:
@@ -133,7 +172,9 @@ class WriteBuilder:
         search_fields: List[str] = [],
     ):
         if not vector_fields and not search_fields:
-            raise ValueError("At least one of vector_fields or search_fields is required.")
+            raise ValueError(
+                "At least one of vector_fields or search_fields is required."
+            )
         for item in items:
             for field in vector_fields:
                 item[field] = self.storage.emb(item[field])
@@ -204,13 +245,12 @@ class SchemaBuilder:
         return f"st({','.join(self.fields)})"
 
     def execute(self) -> bool:
-        schema = self.build()  
-        logger.info(schema)
+        schema = self.build()        
         if self.storage.retrieval.check_table_exists(
             self.storage.cluster_name, self.storage.database, self.storage.table
-        ):            
+        ):
             return False
-              
+
         table_settings = TableSettings(
             database=self.storage.database,
             table=self.storage.table,
@@ -294,6 +334,7 @@ class ByzerStorage:
         vector_field: str = None,
         filters: Dict[str, Any] = None,
         fields: List[str] = None,
+        sorts: List[Dict[str, str]] = [],
         limit: int = 10,
     ) -> List[Dict[str, Any]]:
         """
@@ -307,14 +348,17 @@ class ByzerStorage:
             vectorField=vector_field,
             filters=filters or {},
             fields=fields or [],
+            sorts=sorts,
             limit=limit,
-        )
+        )        
+        if search_query.filters and not search_query.keyword and not vector_field:
+            return self.retrieval.filter(self.cluster_name, search_query)
         return self.retrieval.search(self.cluster_name, search_query)
 
     def _add(self, data: List[Dict[str, Any]]) -> bool:
         """
         Build index from a list of dictionaries.
-        """        
+        """
         return self.retrieval.build_from_dicts(
             self.cluster_name, self.database, self.table, data
         )
@@ -335,3 +379,12 @@ class ByzerStorage:
         Commit changes to the storage.
         """
         return self.retrieval.commit(self.cluster_name, self.database, self.table)
+
+    def delete_by_ids(self, ids: List[Union[str, int]]):
+        self.retrieval.delete_by_ids(self.cluster_name, self.database, self.table, ids)
+        self.retrieval.commit(self.cluster_name, self.database, self.table)
+
+    def drop(self):
+        self.retrieval.closeAndDeleteFile(self.cluster_name, self.database, self.table)
+        self.retrieval.commit(self.cluster_name, self.database, self.table)
+        

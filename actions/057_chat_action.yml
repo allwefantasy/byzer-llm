@@ -1,0 +1,11 @@
+auto_merge: editblock
+human_as_model: true
+include_file:
+- ./base/base.yml
+query: 对  command.py中的 start 方法调整,优化日志输出,使用checklist style的形态打印日志,输出信息需要带上合理的配色.
+skip_build_index: true
+skip_confirm: true
+urls:
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/command.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/easy_byzerllm_command.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm_command.py

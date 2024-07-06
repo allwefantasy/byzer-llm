@@ -34,6 +34,9 @@ llama_index
 # websockets
 websocket-client
 sqlmodel
+jieba
+modelscope
+huggingface_hub
 
 # dependencies only for saas/chatglm
 wudao
@@ -41,8 +44,6 @@ wudao
 # dependencies only for visualglm
 # SwissArmyTransformer
 
-# dependencies only for chatglm
-jieba
 # rouge_chinese
 # icetk
 
