@@ -3,13 +3,16 @@ from os.path import expanduser
 import urllib.request
 import tarfile
 from loguru import logger
-
-import os
-import re
-from packaging import version
 import json
+from rich.console import Console
+from rich.panel import Panel
+from rich.progress import Progress
+from rich import print as rprint
+
 from byzerllm.apps.byzer_storage.env import get_latest_byzer_retrieval_lib
 from byzerllm.apps.byzer_storage import env
+
+console = Console()
 
 class StorageSubCommand:
         
@@ -82,71 +85,79 @@ class StorageSubCommand:
         home = expanduser("~")        
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
         
-        libs_dir = os.path.join(base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")
-        data_dir = os.path.join(base_dir, "storage", "data")
+        with console.status("[bold green]Starting Byzer Storage...") as status:
+            libs_dir = os.path.join(base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")
+            data_dir = os.path.join(base_dir, "storage", "data")
 
-        if not os.path.exists(os.path.join(data_dir,cluster)):
-            os.makedirs(data_dir,exist_ok=True)
-                
-        if not os.path.exists(libs_dir):            
-            StorageSubCommand.install(args)
+            if not os.path.exists(os.path.join(data_dir,cluster)):
+                os.makedirs(data_dir,exist_ok=True)
+                rprint("[green]✓[/green] Created data directory")
 
-        code_search_path = [libs_dir]
-        
-        logger.info(f"Connect and start Byzer Retrieval version {version}")
-        env_vars = byzerllm.connect_cluster(address=args.ray_address,code_search_path=code_search_path)
-        
-        retrieval = ByzerRetrieval()
-        retrieval.launch_gateway()
+            if not os.path.exists(libs_dir):            
+                StorageSubCommand.install(args)
+                rprint("[green]✓[/green] Installed Byzer Storage")
 
-        if retrieval.is_cluster_exists(name=cluster):
-            print(f"Cluster {cluster} exists already, stop it first.")
-            return 
-        
-        base_model_dir = os.path.join(base_dir, "storage","models")
-        os.makedirs(base_model_dir,exist_ok=True)
-        bge_model = os.path.join(base_model_dir,"AI-ModelScope","bge-large-zh")
-        
-        from modelscope.hub.snapshot_download import snapshot_download
-        import huggingface_hub
-        if not os.path.exists(bge_model):
-            model_path = snapshot_download(
-                model_id="AI-ModelScope/bge-large-zh",
-                cache_dir=base_model_dir,
-                local_files_only=huggingface_hub.constants.HF_HUB_OFFLINE                
-            )
-        else:
-            model_path = bge_model        
-        print(f"emb Model {model_path} downloaded successfully.")  
-
-        llm = byzerllm.ByzerLLM()        
-        if not llm.is_model_exist("emb"): 
-            print("Deploying emb model...")  
-            from byzerllm.utils.client import InferBackend         
-            base_model_dir = os.path.join(base_dir, "storage","models")        
-            bge_model = os.path.join(base_model_dir,"AI-ModelScope","bge-large-zh")        
-            llm.setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
-            llm.setup_gpus_per_worker(0).setup_cpus_per_worker(0.01).setup_worker_concurrency(20)
-            llm.deploy(
-                model_path=bge_model,
-                pretrained_model_type="custom/bge",
-                udf_name="emb",            
-                infer_params={}
-            )               
-        
-        cluster_json = os.path.join(base_dir, "storage", "data",f"{cluster}.json")
-        if os.path.exists(cluster_json):
-            StorageSubCommand.restore(args)
-            print("Byzer Storage started successfully")
-            return 
+            code_search_path = [libs_dir]
             
-        builder = retrieval.cluster_builder()
-        builder.set_name(cluster).set_location(data_dir).set_num_nodes(1).set_node_cpu(1).set_node_memory("2g")
-        builder.set_java_home(env_vars["JAVA_HOME"]).set_path(env_vars["PATH"]).set_enable_zgc()
-        builder.start_cluster()
-        
-        with open(os.path.join(base_dir, "storage", "data",f"{cluster}.json"),"w") as f:
-            f.write(json.dumps(retrieval.cluster_info(cluster),ensure_ascii=False))
+            status.update("[bold blue]Connecting to cluster...")
+            env_vars = byzerllm.connect_cluster(address=args.ray_address,code_search_path=code_search_path)
+            rprint("[green]✓[/green] Connected to cluster")
+            
+            retrieval = ByzerRetrieval()
+            retrieval.launch_gateway()
+            rprint("[green]✓[/green] Launched gateway")
+
+            if retrieval.is_cluster_exists(name=cluster):
+                console.print(Panel(f"[yellow]Cluster {cluster} already exists. Please stop it first.[/yellow]"))
+                return 
+            
+            base_model_dir = os.path.join(base_dir, "storage","models")
+            os.makedirs(base_model_dir,exist_ok=True)
+            bge_model = os.path.join(base_model_dir,"AI-ModelScope","bge-large-zh")
+            
+            status.update("[bold blue]Downloading embedding model...")
+            from modelscope.hub.snapshot_download import snapshot_download
+            import huggingface_hub
+            if not os.path.exists(bge_model):
+                model_path = snapshot_download(
+                    model_id="AI-ModelScope/bge-large-zh",
+                    cache_dir=base_model_dir,
+                    local_files_only=huggingface_hub.constants.HF_HUB_OFFLINE                
+                )
+            else:
+                model_path = bge_model        
+            rprint(f"[green]✓[/green] Embedding model downloaded: {model_path}")
+
+            llm = byzerllm.ByzerLLM()        
+            if not llm.is_model_exist("emb"): 
+                status.update("[bold blue]Deploying embedding model...")
+                from byzerllm.utils.client import InferBackend         
+                llm.setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
+                llm.setup_gpus_per_worker(0).setup_cpus_per_worker(0.01).setup_worker_concurrency(20)
+                llm.deploy(
+                    model_path=bge_model,
+                    pretrained_model_type="custom/bge",
+                    udf_name="emb",            
+                    infer_params={}
+                )               
+                rprint("[green]✓[/green] Deployed embedding model")
+            
+            cluster_json = os.path.join(base_dir, "storage", "data",f"{cluster}.json")
+            if os.path.exists(cluster_json):
+                StorageSubCommand.restore(args)
+                console.print(Panel("[green]Byzer Storage restored and started successfully[/green]"))
+                return 
+                
+            status.update("[bold blue]Starting cluster...")
+            builder = retrieval.cluster_builder()
+            builder.set_name(cluster).set_location(data_dir).set_num_nodes(1).set_node_cpu(1).set_node_memory("2g")
+            builder.set_java_home(env_vars["JAVA_HOME"]).set_path(env_vars["PATH"]).set_enable_zgc()
+            builder.start_cluster()
+            
+            with open(os.path.join(base_dir, "storage", "data",f"{cluster}.json"),"w") as f:
+                f.write(json.dumps(retrieval.cluster_info(cluster),ensure_ascii=False))
+            
+            console.print(Panel("[green]Byzer Storage started successfully[/green]"))
         
 
     @staticmethod 
