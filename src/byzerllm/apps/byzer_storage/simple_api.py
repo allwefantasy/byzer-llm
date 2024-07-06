@@ -171,12 +171,18 @@ class SchemaBuilder:
 
 
 class ByzerStorage:
-    @staticmethod
+    _is_connected = False
+
+    @classmethod
     def _connect_cluster(
+        cls,
         cluster_name: Optional[str],
         base_dir: Optional[str] = None,
         ray_address: str = "auto",
     ):
+        if cls._is_connected:
+            return True
+
         version = "0.1.11"
         cluster = cluster_name
         home = os.path.expanduser("~")
@@ -187,12 +193,13 @@ class ByzerStorage:
         cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
 
         if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
-            print("No instance find.")
+            print("No instance found.")
             return False
 
         code_search_path = [libs_dir]
 
         byzerllm.connect_cluster(address=ray_address, code_search_path=code_search_path)
+        cls._is_connected = True
         return True
 
     def __init__(
@@ -203,7 +210,8 @@ class ByzerStorage:
         base_dir: Optional[str] = None,
         ray_address: str = "auto",
     ):
-        ByzerStorage._connect_cluster(cluster_name, base_dir, ray_address)
+        if not ByzerStorage._is_connected:
+            ByzerStorage._connect_cluster(cluster_name, base_dir, ray_address)
         self.retrieval = ByzerRetrieval()
         self.retrieval.launch_gateway()
         self.cluster_name = cluster_name or "byzerai_store"
