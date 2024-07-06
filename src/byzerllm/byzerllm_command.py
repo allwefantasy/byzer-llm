@@ -2,6 +2,7 @@ import os
 import ray
 import jinja2
 import yaml
+import subprocess
 from typing import List, Optional
 from byzerllm.utils.client import ByzerLLM, InferBackend
 from byzerllm.utils.client.types import Templates
@@ -10,9 +11,37 @@ from byzerllm.utils.client.entrypoints.openai.serve import serve, ServerArgs
 import byzerllm
 from byzerllm.lang import locales, lang
 from byzerllm.command_args import StoreNestedDict, get_command_args
+from rich.console import Console
+from rich.panel import Panel
 
+console = Console()
+
+def check_ray_status():
+    try:
+        subprocess.run(["ray", "status"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+def start_ray():
+    try:
+        subprocess.run(["ray", "start", "--head"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except subprocess.CalledProcessError:
+        return False
 
 def main(input_args: Optional[List[str]] = None):
+    with console.status("[bold green]Checking Ray status...") as status:
+        if check_ray_status():
+            console.print("[green]✓[/green] Ray is already running")
+        else:
+            console.print("[yellow]![/yellow] Ray is not running. Starting Ray...")
+            if start_ray():
+                console.print("[green]✓[/green] Ray started successfully")
+            else:
+                console.print("[red]✗[/red] Failed to start Ray. Please start Ray manually.")
+                return
+
     args = get_command_args(input_args=input_args)
 
     if args.file:
