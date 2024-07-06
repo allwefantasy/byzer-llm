@@ -80,11 +80,7 @@ class QueryBuilder:
         return AndBuilder()
 
     def or_filter(self) -> OrBuilder:
-        return OrBuilder()
-
-    def set_filter(self, filter_builder: Union[AndBuilder, OrBuilder]):
-        self.filters = filter_builder.build()
-        return self
+        return OrBuilder()    
 
     def set_fields(self, fields: List[str]):
         self.fields = fields

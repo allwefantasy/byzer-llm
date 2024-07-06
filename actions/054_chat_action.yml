@@ -1,0 +1,13 @@
+auto_merge: editblock
+human_as_model: true
+include_file:
+- ./base/base.yml
+query: and_filter 和  or_fitler 都要支持 execute
+skip_build_index: true
+skip_confirm: true
+urls:
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/utils/retrieval/__init__.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/records/__init__.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/simple_api.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/agent/extensions/simple_retrieval_client.py
+- /Users/allwefantasy/projects/byzer-retrieval/src/main/java/tech/mlsql/retrieval/schema/SimpleSchemaParser.java
