@@ -33,13 +33,32 @@ class FieldOption(Enum):
     NO_INDEX = "no_index"
 
 
+class FilterBuilder:
+    def __init__(self):
+        self.conditions = []
+
+    def add_condition(self, field: str, value: Any):
+        self.conditions.append({"field": field, "value": value})
+        return self
+
+    def build(self):
+        return self.conditions
+
+class AndBuilder(FilterBuilder):
+    def build(self):
+        return {"and": super().build()}
+
+class OrBuilder(FilterBuilder):
+    def build(self):
+        return {"or": super().build()}
+
 class QueryBuilder:
     def __init__(self, storage: "ByzerStorage"):
         self.storage = storage
         self.keyword = None
         self.vector = None
         self.vector_field = None
-        self.filters = {}
+        self.filters = None
         self.fields = []
         self.limit = 10
 
@@ -57,8 +76,14 @@ class QueryBuilder:
         self.vector_field = fields[0]
         return self
 
-    def add_filter(self, field: str, value: Any):
-        self.filters[field] = value
+    def and_filter(self) -> AndBuilder:
+        return AndBuilder()
+
+    def or_filter(self) -> OrBuilder:
+        return OrBuilder()
+
+    def set_filter(self, filter_builder: Union[AndBuilder, OrBuilder]):
+        self.filters = filter_builder.build()
         return self
 
     def set_fields(self, fields: List[str]):
