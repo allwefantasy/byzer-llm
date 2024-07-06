@@ -40,11 +40,25 @@ easy_byzerllm deploy <model_name> --token <your_token>
 - `qwen-vl-chat-v1`: 启文的视觉语言聊天模型,Token 申请： Qwen 官网
 - `qwen-vl-max`: 启文的 Max 视觉语言聊天模型,Token 申请： Qwen 官网
 - `yi-vision`: Yi 的视觉语言模型, Token 申请： Yi（01万物） 官网
+- `sonnet3.5`: Claude 的 Sonnet 3.5 模型, Token 申请： Claude 官网
+- `gpt4o`: OpenAI 的 GPT-4 模型, Token 申请： OpenAI 官网
 
 例如,要部署 `gpt-3.5-turbo-0125` 模型,可以运行:
 
 ```bash  
 easy_byzerllm deploy gpt-3.5-turbo-0125 --token your_openai_api_key
+```
+
+如果你使用了代理，可以这样：
+
+```bash
+easy_byzerllm deploy gpt-3.5-turbo-0125 --base_url <你的代理地址> --token your_openai_api_key
+```
+
+默认模型名字和模型一致。你也可以通过 alias 参数指定模型的别名：
+
+```bash
+easy_byzerllm deploy gpt-3.5-turbo-0125 --alias my_model --token your_openai_api_key
 ```
 
 

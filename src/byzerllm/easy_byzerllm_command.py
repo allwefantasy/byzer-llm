@@ -15,8 +15,8 @@ MODEL_INFER_PARAMS_MAP = {
     "qwen-vl-chat-v1": "saas.api_key=${MODEL_TOKEN} saas.model=qwen-vl-chat-v1",
     "qwen-vl-max": "saas.api_key=${MODEL_TOKEN} saas.model=qwen-vl-max",
     "yi-vision": "saas.api_key=${MODEL_TOKEN} saas.base_url=https://api.lingyiwanwu.com/v1 saas.model=yi-vision",
-    "gpt4o_chat": "saas.api_key=${MODEL_TOKEN} saas.model=gpt-4o",
-    "sonnet_3_5_chat": "saas.api_key=${MODEL_TOKEN} saas.model=claude-3-5-sonnet-20240620",
+    "gpt4o": "saas.api_key=${MODEL_TOKEN} saas.model=gpt-4o",
+    "sonnet3.5": "saas.api_key=${MODEL_TOKEN} saas.model=claude-3-5-sonnet-20240620",
 }
 
 import re
@@ -35,8 +35,8 @@ MODEL_PRETRAINED_TYPE_MAP = {
     "qwen-vl-chat-v1": "saas/qianwen_vl",
     "qwen-vl-max": "saas/qianwen_vl",
     "yi-vision": "saas/openai",
-    "gpt4o_chat": "saas/openai",
-    "sonnet_3_5_chat": "saas/claude",
+    "gpt4o": "saas/openai",
+    "sonnet3.5": "saas/claude",
 }
 
 
@@ -58,6 +58,9 @@ def main():
     )
     deploy_parser.add_argument(
         "--infer_params", type=str, default="", help="Infer params for the model"
+    )
+    deploy_parser.add_argument(
+        "--base_url", type=str, default="", help="base url"
     )
     deploy_parser.add_argument(
         "--alias", type=str, default="", help="Alias name for the deployed model"
@@ -85,6 +88,13 @@ def main():
     if args.command == "deploy":
         instance_name = args.alias or model_to_instance(args.model)
         infer_params = args.infer_params or MODEL_INFER_PARAMS_MAP.get(args.model, "")
+        
+        if args.base_url:
+            if "saas.base_url" in infer_params:
+                infer_params = re.sub(r"saas.base_url=[^ ]+", f"saas.base_url={args.base_url}", infer_params)
+            else:
+                infer_params += f" saas.base_url={args.base_url}"
+
         pretrained_model_type = MODEL_PRETRAINED_TYPE_MAP.get(args.model, "")
         if not pretrained_model_type:
             raise ValueError(f"Pretrained model type not found for model {args.model}")
