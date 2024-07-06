@@ -1,0 +1,12 @@
+auto_merge: editblock
+human_as_model: true
+include_file:
+- ./base/base.yml
+query: 在main启动时,通过ray status 检测 ray 是不是启动了,如果没有启动,使用  ray start --head 启动. 使用 rich
+  实现类似checklist 风格的日志输出
+skip_build_index: true
+skip_confirm: true
+urls:
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/command.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/easy_byzerllm_command.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm_command.py
