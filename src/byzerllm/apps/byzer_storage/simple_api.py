@@ -34,8 +34,9 @@ class FieldOption(Enum):
 
 
 class FilterBuilder:
-    def __init__(self):
+    def __init__(self, query_builder: "QueryBuilder"):
         self.conditions = []
+        self.query_builder = query_builder
 
     def add_condition(self, field: str, value: Any):
         self.conditions.append({"field": field, "value": value})
@@ -43,6 +44,10 @@ class FilterBuilder:
 
     def build(self):
         return self.conditions
+
+    def execute(self) -> List[Dict[str, Any]]:
+        self.query_builder.filters = self.build()
+        return self.query_builder.execute()
 
 class AndBuilder(FilterBuilder):
     def build(self):
@@ -77,10 +82,10 @@ class QueryBuilder:
         return self
 
     def and_filter(self) -> AndBuilder:
-        return AndBuilder()
+        return AndBuilder(self)
 
     def or_filter(self) -> OrBuilder:
-        return OrBuilder()    
+        return OrBuilder(self)    
 
     def set_fields(self, fields: List[str]):
         self.fields = fields
