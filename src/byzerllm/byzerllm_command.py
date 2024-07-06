@@ -30,18 +30,7 @@ def start_ray():
     except subprocess.CalledProcessError:
         return False
 
-def main(input_args: Optional[List[str]] = None):
-    with console.status("[bold green]Checking Ray status...") as status:
-        if check_ray_status():
-            console.print("[green]✓[/green] Ray is already running")
-        else:
-            console.print("[yellow]![/yellow] Ray is not running. Starting Ray...")
-            if start_ray():
-                console.print("[green]✓[/green] Ray started successfully")
-            else:
-                console.print("[red]✗[/red] Failed to start Ray. Please start Ray manually.")
-                return
-
+def main(input_args: Optional[List[str]] = None):    
     args = get_command_args(input_args=input_args)
 
     if args.file:
@@ -71,6 +60,18 @@ def main(input_args: Optional[List[str]] = None):
         else:
             print(f"{arg:20}: {value}")
     print("-" * 50)
+
+    if args.ray_address == "auto":
+        with console.status("[bold green]Checking Ray status...") as status:
+            if check_ray_status():
+                console.print("[green]✓[/green] Ray is already running")
+            else:
+                console.print("[yellow]![/yellow] Ray is not running. Starting Ray...")
+                if start_ray():
+                    console.print("[green]✓[/green] Ray started successfully")
+                else:
+                    console.print("[red]✗[/red] Failed to start Ray. Please start Ray manually.")
+                    return
 
     if args.command == "deploy":
         byzerllm.connect_cluster(address=args.ray_address)
