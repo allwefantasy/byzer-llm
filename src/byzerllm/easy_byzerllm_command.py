@@ -15,6 +15,8 @@ MODEL_INFER_PARAMS_MAP = {
     "qwen-vl-chat-v1": "saas.api_key=${MODEL_TOKEN} saas.model=qwen-vl-chat-v1",
     "qwen-vl-max": "saas.api_key=${MODEL_TOKEN} saas.model=qwen-vl-max",
     "yi-vision": "saas.api_key=${MODEL_TOKEN} saas.base_url=https://api.lingyiwanwu.com/v1 saas.model=yi-vision",
+    "gpt4o_chat": "saas.api_key=${MODEL_TOKEN} saas.model=gpt-4o",
+    "sonnet_3_5_chat": "saas.api_key=${MODEL_TOKEN} saas.model=claude-3-5-sonnet-20240620",
 }
 
 import re
@@ -33,6 +35,8 @@ MODEL_PRETRAINED_TYPE_MAP = {
     "qwen-vl-chat-v1": "saas/qianwen_vl",
     "qwen-vl-max": "saas/qianwen_vl",
     "yi-vision": "saas/openai",
+    "gpt4o_chat": "saas/openai",
+    "sonnet_3_5_chat": "saas/claude",
 }
 
 
