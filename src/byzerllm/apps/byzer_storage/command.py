@@ -233,8 +233,8 @@ class StorageSubCommand:
                 if downloaded:
                     check_dependencies()
                     start_long_memory = (
-                        console.input(
-                            "[bold yellow]Do you want to start the long-term memory model now? (y/n): [/bold yellow]"
+                        input(
+                            "Do you want to start the long-term memory model now? (y/n):"
                         )
                         .strip()
                         .lower()
