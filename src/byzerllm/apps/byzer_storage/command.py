@@ -374,29 +374,58 @@ class StorageSubCommand:
         cluster = args.cluster
         home = expanduser("~")
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
-        libs_dir = os.path.join(
-            base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}"
-        )
-        cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
+        
+        error_summary = []
 
-        if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
-            print("No instance find.")
-            return
+        with console.status("[bold blue]Exporting Byzer Storage...") as status:
+            libs_dir = os.path.join(
+                base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}"
+            )
+            cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
 
-        code_search_path = [libs_dir]
+            if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
+                console.print("[red]✗[/red] No instance found.")
+                error_summary.append("No instance found. Please check if Byzer Storage is properly installed.")
+                return
 
-        logger.info(f"Connect and restore Byzer Retrieval version {version}")
-        byzerllm.connect_cluster(
-            address=args.ray_address, code_search_path=code_search_path
-        )
+            code_search_path = [libs_dir]
 
-        retrieval = ByzerRetrieval()
-        retrieval.launch_gateway()
+            status.update("[bold blue]Connecting to cluster...")
+            try:
+                byzerllm.connect_cluster(
+                    address=args.ray_address, code_search_path=code_search_path
+                )
+                rprint("[green]✓[/green] Connected to cluster")
+            except Exception as e:
+                rprint(f"[red]✗[/red] Failed to connect to cluster: {str(e)}")
+                error_summary.append("Failed to connect to cluster. Please check your network connection and Ray setup.")
 
-        with open(cluster_json, "w") as f:
-            f.write(json.dumps(retrieval.cluster_info(cluster), ensure_ascii=False))
+            status.update("[bold blue]Launching gateway...")
+            try:
+                retrieval = ByzerRetrieval()
+                retrieval.launch_gateway()
+                rprint("[green]✓[/green] Gateway launched")
+            except Exception as e:
+                rprint(f"[red]✗[/red] Failed to launch gateway: {str(e)}")
+                error_summary.append("Failed to launch gateway. Please check if Byzer Retrieval is properly installed.")
 
-        print(f"Byzer Storage export successfully. Please check {cluster_json}")
+            status.update(f"[bold blue]Exporting cluster {cluster} information...")
+            try:
+                cluster_info = retrieval.cluster_info(cluster)
+                with open(cluster_json, "w") as f:
+                    json.dump(cluster_info, f, ensure_ascii=False, indent=2)
+                rprint(f"[green]✓[/green] Cluster {cluster} information exported to {cluster_json}")
+            except Exception as e:
+                rprint(f"[red]✗[/red] Failed to export cluster {cluster} information: {str(e)}")
+                error_summary.append(f"Failed to export cluster {cluster} information. You may need to check the cluster status.")
+
+        if error_summary:
+            console.print(Panel("[yellow]Byzer Storage exported with some issues[/yellow]"))
+            console.print("[bold red]The following steps need manual attention:[/bold red]")
+            for error in error_summary:
+                console.print(f"- {error}")
+        else:
+            console.print(Panel("[green]Byzer Storage exported successfully[/green]"))
 
     def restore(args):
         import byzerllm
