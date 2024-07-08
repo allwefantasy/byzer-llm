@@ -427,6 +427,7 @@ class StorageSubCommand:
         else:
             console.print(Panel("[green]Byzer Storage exported successfully[/green]"))
 
+    @staticmethod
     def restore(args):
         import byzerllm
         from byzerllm.utils.retrieval import ByzerRetrieval
@@ -435,31 +436,59 @@ class StorageSubCommand:
         cluster = args.cluster
         home = expanduser("~")
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
-        libs_dir = os.path.join(
-            base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}"
-        )
-        cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
+        
+        error_summary = []
 
-        if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
-            print("No instance find.")
-            return
+        with console.status("[bold blue]Restoring Byzer Storage...") as status:
+            libs_dir = os.path.join(
+                base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}"
+            )
+            cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
 
-        code_search_path = [libs_dir]
+            if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
+                console.print("[red]✗[/red] No instance found.")
+                error_summary.append("No instance found. Please check if Byzer Storage is properly installed.")
+                return
 
-        logger.info(f"Connect and restore Byzer Retrieval version {version}")
-        byzerllm.connect_cluster(
-            address=args.ray_address, code_search_path=code_search_path
-        )
+            code_search_path = [libs_dir]
 
-        retrieval = ByzerRetrieval()
-        retrieval.launch_gateway()
+            status.update("[bold blue]Connecting to cluster...")
+            try:
+                byzerllm.connect_cluster(
+                    address=args.ray_address, code_search_path=code_search_path
+                )
+                rprint("[green]✓[/green] Connected to cluster")
+            except Exception as e:
+                rprint(f"[red]✗[/red] Failed to connect to cluster: {str(e)}")
+                error_summary.append("Failed to connect to cluster. Please check your network connection and Ray setup.")
 
-        if not retrieval.is_cluster_exists(cluster):
-            with open(cluster_json, "r") as f:
-                cluster_info = f.read()
+            status.update("[bold blue]Launching gateway...")
+            try:
+                retrieval = ByzerRetrieval()
+                retrieval.launch_gateway()
+                rprint("[green]✓[/green] Gateway launched")
+            except Exception as e:
+                rprint(f"[red]✗[/red] Failed to launch gateway: {str(e)}")
+                error_summary.append("Failed to launch gateway. Please check if Byzer Retrieval is properly installed.")
 
-            retrieval.restore_from_cluster_info(json.loads(cluster_info))
+            status.update(f"[bold blue]Restoring cluster {cluster}...")
+            try:
+                if not retrieval.is_cluster_exists(cluster):
+                    with open(cluster_json, "r") as f:
+                        cluster_info = json.load(f)
+                    retrieval.restore_from_cluster_info(cluster_info)
+                    rprint(f"[green]✓[/green] Cluster {cluster} restored successfully")
+                else:
+                    rprint(f"[yellow]![/yellow] Cluster {cluster} already exists")
+                    error_summary.append(f"Cluster {cluster} already exists. No restoration needed.")
+            except Exception as e:
+                rprint(f"[red]✗[/red] Failed to restore cluster {cluster}: {str(e)}")
+                error_summary.append(f"Failed to restore cluster {cluster}. You may need to check the cluster status and configuration.")
 
-            print("Byzer Storage restore successfully")
+        if error_summary:
+            console.print(Panel("[yellow]Byzer Storage restored with some issues[/yellow]"))
+            console.print("[bold red]The following steps need manual attention:[/bold red]")
+            for error in error_summary:
+                console.print(f"- {error}")
         else:
-            print(f"Cluster {cluster} is already exists")
+            console.print(Panel("[green]Byzer Storage restored successfully[/green]"))
