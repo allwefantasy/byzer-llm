@@ -115,6 +115,14 @@ class StorageSubCommand:
             os.makedirs(base_model_dir,exist_ok=True)
             bge_model = os.path.join(base_model_dir,"AI-ModelScope","bge-large-zh")
             
+            status.update("[bold blue]Checking GPU availability...")
+            import torch
+            has_gpu = torch.cuda.is_available()
+            if has_gpu:
+                rprint("[green]✓[/green] GPU detected")
+            else:
+                rprint("[yellow]![/yellow] No GPU detected, using CPU")
+
             status.update("[bold blue]Downloading embedding model...")
             from modelscope.hub.snapshot_download import snapshot_download
             import huggingface_hub
@@ -141,6 +149,20 @@ class StorageSubCommand:
                     infer_params={}
                 )               
                 rprint("[green]✓[/green] Deployed embedding model")
+
+            if has_gpu:
+                status.update("[bold blue]Checking Meta-Llama-3-8B-Instruct-GPTQ model...")
+                llama_model = os.path.join(base_model_dir, "meta-llama", "Meta-Llama-3-8B-Instruct-GPTQ")
+                if not os.path.exists(llama_model):
+                    status.update("[bold blue]Downloading Meta-Llama-3-8B-Instruct-GPTQ model...")
+                    model_path = snapshot_download(
+                        model_id="meta-llama/Meta-Llama-3-8B-Instruct-GPTQ",
+                        cache_dir=base_model_dir,
+                        local_files_only=huggingface_hub.constants.HF_HUB_OFFLINE                
+                    )
+                    rprint(f"[green]✓[/green] Meta-Llama-3-8B-Instruct-GPTQ model downloaded: {model_path}")
+                else:
+                    rprint("[green]✓[/green] Meta-Llama-3-8B-Instruct-GPTQ model already exists")
             
             cluster_json = os.path.join(base_dir, "storage", "data",f"{cluster}.json")
             if os.path.exists(cluster_json):
