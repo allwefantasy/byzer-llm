@@ -12,6 +12,9 @@ from rich import print as rprint
 from byzerllm.apps.byzer_storage.env import get_latest_byzer_retrieval_lib
 from byzerllm.apps.byzer_storage import env
 import torch
+from modelscope.hub.snapshot_download import snapshot_download
+import huggingface_hub
+
 console = Console()
 
 
@@ -162,10 +165,10 @@ class StorageSubCommand:
                 rprint("[yellow]![/yellow] No GPU detected, using CPU")
 
             status.update("[bold blue]Downloading embedding model...")
-            from modelscope.hub.snapshot_download import snapshot_download
-            import huggingface_hub
-
+            
+            downloaded = True
             if not os.path.exists(bge_model):
+                downloaded = False
                 try:
                     model_path = snapshot_download(
                         model_id="AI-ModelScope/bge-large-zh",
@@ -173,18 +176,18 @@ class StorageSubCommand:
                         local_files_only=huggingface_hub.constants.HF_HUB_OFFLINE,
                     )
                     rprint(f"[green]✓[/green] Embedding model downloaded: {model_path}")
+                    downloaded = True
                 except Exception as e:
                     rprint(f"[red]✗[/red] Failed to download embedding model: {str(e)}")
                     rprint("[yellow]![/yellow] Please manually download the model 'AI-ModelScope/bge-large-zh'")
                     rprint(f"[yellow]![/yellow] and place it in the directory: {bge_model}")
-                    rprint("[yellow]![/yellow] Then restart this process.")
-                    return
+                    rprint("[yellow]![/yellow] Then restart this process.")                    
             else:
                 model_path = bge_model
                 rprint(f"[green]✓[/green] Embedding model found: {model_path}")
 
             llm = byzerllm.ByzerLLM()
-            if not llm.is_model_exist("emb"):
+            if downloaded and not llm.is_model_exist("emb"):
                 status.update("[bold blue]Deploying embedding model...")
                 from byzerllm.utils.client import InferBackend
 
@@ -201,11 +204,13 @@ class StorageSubCommand:
                 rprint("[green]✓[/green] Deployed embedding model")
 
             if has_gpu:
+                downloaded = True
                 status.update("[bold blue]Checking Long-Memory model...")
                 llama_model = os.path.join(
                     base_model_dir, "meta-llama", "Meta-Llama-3-8B-Instruct-GPTQ"
                 )
                 if not os.path.exists(llama_model):
+                    downloaded = False
                     status.update("[bold blue]Downloading Long-Memory model...")
                     try:
                         model_path = snapshot_download(
@@ -216,47 +221,44 @@ class StorageSubCommand:
                         rprint(
                             f"[green]✓[/green] Long-Memory model downloaded: {model_path}"
                         )
+                        downloaded = True
                     except Exception as e:
                         rprint(f"[red]✗[/red] Failed to download Long-Memory model: {str(e)}")
                         rprint("[yellow]![/yellow] Please manually download the model 'meta-llama/Meta-Llama-3-8B-Instruct-GPTQ'")
                         rprint(f"[yellow]![/yellow] and place it in the directory: {llama_model}")
-                        rprint("[yellow]![/yellow] Then restart this process.")
-                        return
+                        rprint("[yellow]![/yellow] Then restart this process.")                        
                 else:
                     rprint("[green]✓[/green] Long-Memory model already exists")
                 
-                check_dependencies()
-                start_long_memory = (
-                    console.input(
-                        "[bold yellow]Do you want to start the long-term memory model now? (y/n): [/bold yellow]"
-                    )
-                    .strip()
-                    .lower()
-                )
-                if start_long_memory == "y":
-                    status.update("[bold blue]Starting long-term memory model...")
-                    if not os.path.exists(llama_model):
-                        rprint("[red]✗[/red] Long-Memory model not found. Cannot start the model.")
-                        rprint("[yellow]![/yellow] Please ensure you have downloaded the model before starting.")
-                        return
-                    llm.setup_gpus_per_worker(1).setup_cpus_per_worker(
-                        0.001
-                    ).setup_num_workers(1)
-                    llm.setup_infer_backend(InferBackend.VLLM)
-                    try:
-                        llm.deploy(
-                            model_path=llama_model,
-                            pretrained_model_type="custom/auto",
-                            udf_name="long_memory",
-                            infer_params={
-                                "backend.max_model_len": 8000,
-                                "backend.enable_lora": True,
-                            },
+                if downloaded:
+                    check_dependencies()
+                    start_long_memory = (
+                        console.input(
+                            "[bold yellow]Do you want to start the long-term memory model now? (y/n): [/bold yellow]"
                         )
-                        rprint("[green]✓[/green] Long-term memory model started")
-                    except Exception as e:
-                        rprint(f"[red]✗[/red] Failed to start Long-Memory model: {str(e)}")
-                        rprint("[yellow]![/yellow] Please check the error message and try again.")
+                        .strip()
+                        .lower()
+                    )
+                    if start_long_memory == "y":
+                        status.update("[bold blue]Starting long-term memory model...")                        
+                        llm.setup_gpus_per_worker(1).setup_cpus_per_worker(
+                            0.001
+                        ).setup_num_workers(1)
+                        llm.setup_infer_backend(InferBackend.VLLM)
+                        try:
+                            llm.deploy(
+                                model_path=llama_model,
+                                pretrained_model_type="custom/auto",
+                                udf_name="long_memory",
+                                infer_params={
+                                    "backend.max_model_len": 8000,
+                                    "backend.enable_lora": True,
+                                },
+                            )
+                            rprint("[green]✓[/green] Long-term memory model started")
+                        except Exception as e:
+                            rprint(f"[red]✗[/red] Failed to start Long-Memory model: {str(e)}")
+                            rprint("[yellow]![/yellow] Please check the error message and try again.")
 
             cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
             if os.path.exists(cluster_json):
