@@ -296,28 +296,45 @@ class StorageSubCommand:
         cluster = args.cluster
         home = expanduser("~")
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
-        libs_dir = os.path.join(
-            base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}"
-        )
-        cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
 
-        if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
-            print("No instance find.")
-            return
+        with console.status("[bold red]Stopping Byzer Storage...") as status:
+            libs_dir = os.path.join(
+                base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}"
+            )
+            cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
 
-        code_search_path = [libs_dir]
+            if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
+                console.print("[red]✗[/red] No instance found.")
+                return
 
-        logger.info(f"Connect and start Byzer Retrieval version {version}")
-        byzerllm.connect_cluster(
-            address=args.ray_address, code_search_path=code_search_path
-        )
-        retrieval = ByzerRetrieval()
-        retrieval.launch_gateway()
-        retrieval.shutdown_cluster(cluster_name=cluster)
+            code_search_path = [libs_dir]
 
-        llm = byzerllm.ByzerLLM()        
-        llm.undeploy("emb")
-        llm.undeploy("long_memory")
+            status.update("[bold blue]Connecting to cluster...")
+            byzerllm.connect_cluster(
+                address=args.ray_address, code_search_path=code_search_path
+            )
+            rprint("[green]✓[/green] Connected to cluster")
+
+            status.update("[bold blue]Launching gateway...")
+            retrieval = ByzerRetrieval()
+            retrieval.launch_gateway()
+            rprint("[green]✓[/green] Gateway launched")
+
+            status.update(f"[bold blue]Shutting down cluster {cluster}...")
+            retrieval.shutdown_cluster(cluster_name=cluster)
+            rprint(f"[green]✓[/green] Cluster {cluster} shut down")
+
+            llm = byzerllm.ByzerLLM()
+            
+            status.update("[bold blue]Undeploying embedding model...")
+            llm.undeploy("emb")
+            rprint("[green]✓[/green] Embedding model undeployed")
+
+            status.update("[bold blue]Undeploying long-term memory model...")
+            llm.undeploy("long_memory")
+            rprint("[green]✓[/green] Long-term memory model undeployed")
+
+        console.print(Panel("[green]Byzer Storage stopped successfully[/green]"))
         
 
     @staticmethod
