@@ -1,5 +1,6 @@
 from byzerllm.utils.retrieval import ByzerRetrieval
 from byzerllm.utils.client import ByzerLLM, InferBackend, LLMRequest
+from byzerllm.utils.client.byzerllm_client import Templates        
 from byzerllm.records import (
     SearchQuery,
     TableSettings,
@@ -15,6 +16,7 @@ import os
 import jieba
 from loguru import logger
 from byzerllm.apps.byzer_storage.memory_model_based import MemoryManager
+import asyncio
 
 
 class DataType(Enum):
@@ -316,8 +318,11 @@ class ByzerStorage:
         self.database = database
         self.table = table
 
+        self.base_dir = base_dir
+
         self.llm = ByzerLLM()
         self.llm.setup_default_emb_model_name(self.emb_model)
+        self.memory_manager = MemoryManager(self, base_dir)
 
     def query_builder(self) -> QueryBuilder:
         return QueryBuilder(self)
@@ -365,14 +370,22 @@ class ByzerStorage:
         )
     
     def memorize(self,memories:List[str]):
-        pass
+        asyncio.run(self.memory_manager.memorize(memories))
 
-    def remember(self, tips: str):
-        pass
+    def remember(self, query: str):                
+        llm = ByzerLLM()
+        llm.setup_default_model_name("long_memory")
+        llm.setup_template("long_memory",Templates.qwen())
+        name = f"{self.database}_{self.table}"
+        loras_dir = os.path.join(self.base_dir, "storage", "loras")
+        target_lora_dir = os.path.join(loras_dir, f"{name}")
 
-    
-
-    
+        ## lora_name 和 lora_int_id 两个参数后续需要修改
+        v= llm.chat_oai(conversations=[{
+            "role": "user",
+            "content": query
+        }],llm_config={"gen.adapter_name_or_path": f"{target_lora_dir}","gen.lora_name":"default","gen.lora_int_id":1})
+        return v[0].output
 
     def tokenize(self, s: str):
         seg_list = jieba.cut(s, cut_all=False)

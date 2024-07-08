@@ -35,13 +35,7 @@ class MemoryManager:
             await instance.memorize(name, memories)
             cls._queue.task_done()
         cls._is_processing = False
-
-    @classmethod
-    def get_instance(cls):
-        # This method should return an instance of MemoryManager
-        # You might need to implement a proper way to get or create an instance
-        return cls(None, None)  # Replace with proper instance creation
-
+    
     async def memorize(self, name: str, memories: List[str]):
         loop = asyncio.get_running_loop()
         output = await loop.run_in_executor(
