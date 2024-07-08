@@ -315,6 +315,11 @@ class StorageSubCommand:
         retrieval.launch_gateway()
         retrieval.shutdown_cluster(cluster_name=cluster)
 
+        llm = byzerllm.ByzerLLM()        
+        llm.undeploy("emb")
+        llm.undeploy("long_memory")
+        
+
     @staticmethod
     def export(args):
         import byzerllm
