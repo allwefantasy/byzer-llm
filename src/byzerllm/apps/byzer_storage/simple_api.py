@@ -362,6 +362,16 @@ class ByzerStorage:
         return self.retrieval.build_from_dicts(
             self.cluster_name, self.database, self.table, data
         )
+    
+    def memorize(self,memories:List[str]):
+        pass
+
+    def remember(self, tips: str):
+        pass
+
+    
+
+    
 
     def tokenize(self, s: str):
         seg_list = jieba.cut(s, cut_all=False)

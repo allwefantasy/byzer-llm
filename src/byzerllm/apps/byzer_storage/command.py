@@ -12,12 +12,12 @@ from rich import print as rprint
 from byzerllm.apps.byzer_storage.env import get_latest_byzer_retrieval_lib
 from byzerllm.apps.byzer_storage import env
 import torch
-import importlib
-from packaging import version
 
 console = Console()
 
 def check_dependencies():
+    import importlib
+    from packaging import version
     dependencies = {
         'vllm': '0.4.3',
         'torch': '2.3.0',
@@ -105,7 +105,7 @@ class StorageSubCommand:
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
         
         with console.status("[bold green]Starting Byzer Storage...") as status:
-            check_dependencies()
+            
             libs_dir = os.path.join(base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")
             data_dir = os.path.join(base_dir, "storage", "data")
 
@@ -183,7 +183,7 @@ class StorageSubCommand:
                     rprint(f"[green]✓[/green] Long-Memory model downloaded: {model_path}")
                 else:
                     rprint("[green]✓[/green] Long-Memory model already exists")
-                    
+
             
             cluster_json = os.path.join(base_dir, "storage", "data",f"{cluster}.json")
             if os.path.exists(cluster_json):
