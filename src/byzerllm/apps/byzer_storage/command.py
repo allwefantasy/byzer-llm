@@ -166,14 +166,22 @@ class StorageSubCommand:
             import huggingface_hub
 
             if not os.path.exists(bge_model):
-                model_path = snapshot_download(
-                    model_id="AI-ModelScope/bge-large-zh",
-                    cache_dir=base_model_dir,
-                    local_files_only=huggingface_hub.constants.HF_HUB_OFFLINE,
-                )
+                try:
+                    model_path = snapshot_download(
+                        model_id="AI-ModelScope/bge-large-zh",
+                        cache_dir=base_model_dir,
+                        local_files_only=huggingface_hub.constants.HF_HUB_OFFLINE,
+                    )
+                    rprint(f"[green]✓[/green] Embedding model downloaded: {model_path}")
+                except Exception as e:
+                    rprint(f"[red]✗[/red] Failed to download embedding model: {str(e)}")
+                    rprint("[yellow]![/yellow] Please manually download the model 'AI-ModelScope/bge-large-zh'")
+                    rprint(f"[yellow]![/yellow] and place it in the directory: {bge_model}")
+                    rprint("[yellow]![/yellow] Then restart this process.")
+                    return
             else:
                 model_path = bge_model
-            rprint(f"[green]✓[/green] Embedding model downloaded: {model_path}")
+                rprint(f"[green]✓[/green] Embedding model found: {model_path}")
 
             llm = byzerllm.ByzerLLM()
             if not llm.is_model_exist("emb"):
@@ -199,14 +207,21 @@ class StorageSubCommand:
                 )
                 if not os.path.exists(llama_model):
                     status.update("[bold blue]Downloading Long-Memory model...")
-                    model_path = snapshot_download(
-                        model_id="meta-llama/Meta-Llama-3-8B-Instruct-GPTQ",
-                        cache_dir=base_model_dir,
-                        local_files_only=huggingface_hub.constants.HF_HUB_OFFLINE,
-                    )
-                    rprint(
-                        f"[green]✓[/green] Long-Memory model downloaded: {model_path}"
-                    )
+                    try:
+                        model_path = snapshot_download(
+                            model_id="meta-llama/Meta-Llama-3-8B-Instruct-GPTQ",
+                            cache_dir=base_model_dir,
+                            local_files_only=huggingface_hub.constants.HF_HUB_OFFLINE,
+                        )
+                        rprint(
+                            f"[green]✓[/green] Long-Memory model downloaded: {model_path}"
+                        )
+                    except Exception as e:
+                        rprint(f"[red]✗[/red] Failed to download Long-Memory model: {str(e)}")
+                        rprint("[yellow]![/yellow] Please manually download the model 'meta-llama/Meta-Llama-3-8B-Instruct-GPTQ'")
+                        rprint(f"[yellow]![/yellow] and place it in the directory: {llama_model}")
+                        rprint("[yellow]![/yellow] Then restart this process.")
+                        return
                 else:
                     rprint("[green]✓[/green] Long-Memory model already exists")
                 
@@ -220,20 +235,28 @@ class StorageSubCommand:
                 )
                 if start_long_memory == "y":
                     status.update("[bold blue]Starting long-term memory model...")
+                    if not os.path.exists(llama_model):
+                        rprint("[red]✗[/red] Long-Memory model not found. Cannot start the model.")
+                        rprint("[yellow]![/yellow] Please ensure you have downloaded the model before starting.")
+                        return
                     llm.setup_gpus_per_worker(1).setup_cpus_per_worker(
                         0.001
                     ).setup_num_workers(1)
                     llm.setup_infer_backend(InferBackend.VLLM)
-                    llm.deploy(
-                        model_path=llama_model,
-                        pretrained_model_type="custom/auto",
-                        udf_name="long_memory",
-                        infer_params={
-                            "backend.max_model_len": 8000,
-                            "backend.enable_lora": True,
-                        },
-                    )
-                    rprint("[green]✓[/green] Long-term memory model started")            
+                    try:
+                        llm.deploy(
+                            model_path=llama_model,
+                            pretrained_model_type="custom/auto",
+                            udf_name="long_memory",
+                            infer_params={
+                                "backend.max_model_len": 8000,
+                                "backend.enable_lora": True,
+                            },
+                        )
+                        rprint("[green]✓[/green] Long-term memory model started")
+                    except Exception as e:
+                        rprint(f"[red]✗[/red] Failed to start Long-Memory model: {str(e)}")
+                        rprint("[yellow]![/yellow] Please check the error message and try again.")
 
             cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
             if os.path.exists(cluster_json):
