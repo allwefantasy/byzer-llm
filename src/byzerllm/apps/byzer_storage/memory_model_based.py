@@ -10,7 +10,8 @@ import sys
 from contextlib import redirect_stdout, redirect_stderr
 
 
-class MemoryManager:
+class MemoryManager():
+
     def __init__(self, storage: ByzerStorage, base_dir: str):
         self.storage = storage
         self.queue = asyncio.Queue()
@@ -34,16 +35,23 @@ class MemoryManager:
 
     async def memorize(self, name: str, memories: List[str]):
         loop = asyncio.get_running_loop()
-        output = await loop.run_in_executor(self.thread_pool, self._memorize_with_logs, name, memories)
+        output = await loop.run_in_executor(
+            self.thread_pool, self._memorize_with_logs, name, memories
+        )
         print(f"Memorization for {name} completed. Output:")
         print(output)
 
     def _memorize_with_logs(self, name: str, memories: List[str]) -> str:
-        # Capture all output
+
+        logs_dir = os.path.join(self.base_dir, "storage", "logs", "memorize")
+        os.makedirs(logs_dir, exist_ok=True)
+
         output_buffer = io.StringIO()
         with redirect_stdout(output_buffer), redirect_stderr(output_buffer):
             self._memorize(name, memories)
-        return output_buffer.getvalue()
+        v = output_buffer.getvalue()
+        with open(f"{logs_dir}/{name}.log", "w") as f:
+            f.write(v)
 
     def _memorize(self, name: str, memories: List[str]):
         data = []
@@ -58,8 +66,8 @@ class MemoryManager:
             base_model_dir, "meta-llama", "Meta-Llama-3-8B-Instruct-GPTQ"
         )
 
-        loras_dir = os.path.join(base_model_dir, "storage", "loras")
-        dataset_dir = os.path.join(base_model_dir, "storage", "datasets", name)
+        loras_dir = os.path.join(self.base_dir, "storage", "loras")
+        dataset_dir = os.path.join(self.base_dir, "storage", "datasets", name)
 
         os.makedirs(loras_dir, exist_ok=True)
         os.makedirs(dataset_dir, exist_ok=True)
@@ -70,7 +78,7 @@ class MemoryManager:
         with open(f"{dataset_dir}/dataset_info.json", "w", encoding="utf-8") as f:
             f.write(
                 json.dumps(
-                    {"test": {"file_name": "data.json", "columns": {"prompt": "text"}}},
+                    {"data": {"file_name": "data.json", "columns": {"prompt": "text"}}},
                     indent=2,
                 )
             )
@@ -109,3 +117,5 @@ class MemoryManager:
         from llamafactory.train import tuner
 
         tuner.run_exp(args)
+
+

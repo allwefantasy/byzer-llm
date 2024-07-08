@@ -14,6 +14,7 @@ from enum import Enum, auto
 import os
 import jieba
 from loguru import logger
+from byzerllm.apps.byzer_storage.memory_model_based import MemoryManager
 
 
 class DataType(Enum):
