@@ -11,9 +11,27 @@ from rich import print as rprint
 
 from byzerllm.apps.byzer_storage.env import get_latest_byzer_retrieval_lib
 from byzerllm.apps.byzer_storage import env
-import torch            
+import torch
+import importlib
+from packaging import version
 
 console = Console()
+
+def check_dependencies():
+    dependencies = {
+        'vllm': '0.4.3',
+        'torch': '2.3.0',
+        'flash_attn': '2.5.9.post1'
+    }
+    
+    for package, required_version in dependencies.items():
+        try:
+            module = importlib.import_module(package)
+            current_version = module.__version__
+            if version.parse(current_version) != version.parse(required_version):
+                console.print(f"[yellow]Warning: {package} version mismatch. Required: {required_version}, Found: {current_version}[/yellow]")
+        except ImportError:
+            console.print(f"[yellow]Warning: {package} is not installed.[/yellow]")
 
 class StorageSubCommand:
         
@@ -87,6 +105,7 @@ class StorageSubCommand:
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
         
         with console.status("[bold green]Starting Byzer Storage...") as status:
+            check_dependencies()
             libs_dir = os.path.join(base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")
             data_dir = os.path.join(base_dir, "storage", "data")
 
