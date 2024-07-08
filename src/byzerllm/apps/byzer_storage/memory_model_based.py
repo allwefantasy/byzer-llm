@@ -10,28 +10,37 @@ import sys
 from contextlib import redirect_stdout, redirect_stderr
 
 
-class MemoryManager():
+class MemoryManager:
+    _queue = asyncio.Queue()
+    _is_processing = False
 
     def __init__(self, storage: ByzerStorage, base_dir: str):
         self.storage = storage
-        self.queue = asyncio.Queue()
-        self.is_processing = False
         home = os.path.expanduser("~")
         self.base_dir = base_dir or os.path.join(home, ".auto-coder")
         self.thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=5)
 
-    async def add_to_queue(self, name: str, memories: List[str]):
-        await self.queue.put((name, memories))
-        if not self.is_processing:
-            asyncio.create_task(self.process_queue())
+    @classmethod
+    async def add_to_queue(cls, name: str, memories: List[str]):
+        await cls._queue.put((name, memories))
+        if not cls._is_processing:
+            asyncio.create_task(cls.process_queue())
 
-    async def process_queue(self):
-        self.is_processing = True
-        while not self.queue.empty():
-            name, memories = await self.queue.get()
-            await self.memorize(name, memories)
-            self.queue.task_done()
-        self.is_processing = False
+    @classmethod
+    async def process_queue(cls):
+        cls._is_processing = True
+        while not cls._queue.empty():
+            name, memories = await cls._queue.get()
+            instance = cls.get_instance()
+            await instance.memorize(name, memories)
+            cls._queue.task_done()
+        cls._is_processing = False
+
+    @classmethod
+    def get_instance(cls):
+        # This method should return an instance of MemoryManager
+        # You might need to implement a proper way to get or create an instance
+        return cls(None, None)  # Replace with proper instance creation
 
     async def memorize(self, name: str, memories: List[str]):
         loop = asyncio.get_running_loop()
@@ -42,7 +51,6 @@ class MemoryManager():
         print(output)
 
     def _memorize_with_logs(self, name: str, memories: List[str]) -> str:
-
         logs_dir = os.path.join(self.base_dir, "storage", "logs", "memorize")
         os.makedirs(logs_dir, exist_ok=True)
 
@@ -52,6 +60,7 @@ class MemoryManager():
         v = output_buffer.getvalue()
         with open(f"{logs_dir}/{name}.log", "w") as f:
             f.write(v)
+        return v
 
     def _memorize(self, name: str, memories: List[str]):
         data = []
