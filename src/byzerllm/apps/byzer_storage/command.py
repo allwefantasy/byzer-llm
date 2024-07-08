@@ -296,6 +296,8 @@ class StorageSubCommand:
         cluster = args.cluster
         home = expanduser("~")
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
+        
+        error_summary = []
 
         with console.status("[bold red]Stopping Byzer Storage...") as status:
             libs_dir = os.path.join(
@@ -305,37 +307,63 @@ class StorageSubCommand:
 
             if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
                 console.print("[red]✗[/red] No instance found.")
+                error_summary.append("No instance found. Please check if Byzer Storage is properly installed.")
                 return
 
             code_search_path = [libs_dir]
 
             status.update("[bold blue]Connecting to cluster...")
-            byzerllm.connect_cluster(
-                address=args.ray_address, code_search_path=code_search_path
-            )
-            rprint("[green]✓[/green] Connected to cluster")
+            try:
+                byzerllm.connect_cluster(
+                    address=args.ray_address, code_search_path=code_search_path
+                )
+                rprint("[green]✓[/green] Connected to cluster")
+            except Exception as e:
+                rprint(f"[red]✗[/red] Failed to connect to cluster: {str(e)}")
+                error_summary.append("Failed to connect to cluster. Please check your network connection and Ray setup.")
 
             status.update("[bold blue]Launching gateway...")
-            retrieval = ByzerRetrieval()
-            retrieval.launch_gateway()
-            rprint("[green]✓[/green] Gateway launched")
+            try:
+                retrieval = ByzerRetrieval()
+                retrieval.launch_gateway()
+                rprint("[green]✓[/green] Gateway launched")
+            except Exception as e:
+                rprint(f"[red]✗[/red] Failed to launch gateway: {str(e)}")
+                error_summary.append("Failed to launch gateway. Please check if Byzer Retrieval is properly installed.")
 
             status.update(f"[bold blue]Shutting down cluster {cluster}...")
-            retrieval.shutdown_cluster(cluster_name=cluster)
-            rprint(f"[green]✓[/green] Cluster {cluster} shut down")
+            try:
+                retrieval.shutdown_cluster(cluster_name=cluster)
+                rprint(f"[green]✓[/green] Cluster {cluster} shut down")
+            except Exception as e:
+                rprint(f"[red]✗[/red] Failed to shut down cluster {cluster}: {str(e)}")
+                error_summary.append(f"Failed to shut down cluster {cluster}. You may need to manually stop it.")
 
             llm = byzerllm.ByzerLLM()
             
             status.update("[bold blue]Undeploying embedding model...")
-            llm.undeploy("emb")
-            rprint("[green]✓[/green] Embedding model undeployed")
+            try:
+                llm.undeploy("emb")
+                rprint("[green]✓[/green] Embedding model undeployed")
+            except Exception as e:
+                rprint(f"[red]✗[/red] Failed to undeploy embedding model: {str(e)}")
+                error_summary.append("Failed to undeploy embedding model. You may need to manually undeploy it.")
 
             status.update("[bold blue]Undeploying long-term memory model...")
-            llm.undeploy("long_memory")
-            rprint("[green]✓[/green] Long-term memory model undeployed")
+            try:
+                llm.undeploy("long_memory")
+                rprint("[green]✓[/green] Long-term memory model undeployed")
+            except Exception as e:
+                rprint(f"[red]✗[/red] Failed to undeploy long-term memory model: {str(e)}")
+                error_summary.append("Failed to undeploy long-term memory model. You may need to manually undeploy it.")
 
-        console.print(Panel("[green]Byzer Storage stopped successfully[/green]"))
-        
+        if error_summary:
+            console.print(Panel("[yellow]Byzer Storage stopped with some issues[/yellow]"))
+            console.print("[bold red]The following steps need manual attention:[/bold red]")
+            for error in error_summary:
+                console.print(f"- {error}")
+        else:
+            console.print(Panel("[green]Byzer Storage stopped successfully[/green]"))
 
     @staticmethod
     def export(args):
