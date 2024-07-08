@@ -4,6 +4,10 @@ from byzerllm.apps.byzer_storage.simple_api import ByzerStorage
 import time
 import json
 import os
+import concurrent.futures
+import io
+import sys
+from contextlib import redirect_stdout, redirect_stderr
 
 
 class MemoryManager:
@@ -13,25 +17,35 @@ class MemoryManager:
         self.is_processing = False
         home = os.path.expanduser("~")
         self.base_dir = base_dir or os.path.join(home, ".auto-coder")
+        self.thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=5)
 
-    async def add_to_queue(self, memories: List[str]):
-        await self.queue.put(memories)
+    async def add_to_queue(self, name: str, memories: List[str]):
+        await self.queue.put((name, memories))
         if not self.is_processing:
             asyncio.create_task(self.process_queue())
 
     async def process_queue(self):
         self.is_processing = True
         while not self.queue.empty():
-            memories = await self.queue.get()
-            await self.memorize(memories)
+            name, memories = await self.queue.get()
+            await self.memorize(name, memories)
             self.queue.task_done()
         self.is_processing = False
 
     async def memorize(self, name: str, memories: List[str]):
-        pass
+        loop = asyncio.get_running_loop()
+        output = await loop.run_in_executor(self.thread_pool, self._memorize_with_logs, name, memories)
+        print(f"Memorization for {name} completed. Output:")
+        print(output)
+
+    def _memorize_with_logs(self, name: str, memories: List[str]) -> str:
+        # Capture all output
+        output_buffer = io.StringIO()
+        with redirect_stdout(output_buffer), redirect_stderr(output_buffer):
+            self._memorize(name, memories)
+        return output_buffer.getvalue()
 
     def _memorize(self, name: str, memories: List[str]):
-
         data = []
         for memory in memories:
             item = {
