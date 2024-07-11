@@ -191,8 +191,9 @@ class StorageSubCommand:
             model_path = bge_model
             rprint(f"[green]✓[/green] Embedding model found: {model_path}")
         
+        llm = byzerllm.ByzerLLM()  
         if args.enable_emb and downloaded and not llm.is_model_exist("emb"):
-            llm = byzerllm.ByzerLLM()
+            
             console.print("[bold blue]Deploying embedding model...[/bold blue]")
             llm.setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
             if has_gpu:
@@ -209,6 +210,7 @@ class StorageSubCommand:
             )
             rprint("[green]✓[/green] Deployed embedding model")
 
+        llm = byzerllm.ByzerLLM() 
         if args.enable_model_memory and has_gpu:
             console.print("[bold blue]Checking Long-Memory model...[/bold blue]")
             downloaded = True
@@ -241,8 +243,7 @@ class StorageSubCommand:
             else:
                 rprint("[green]✓[/green] Long-Memory model already exists")
 
-            if downloaded:
-                llm = byzerllm.ByzerLLM()
+            if downloaded:                
                 console.print("[bold blue]Checking dependencies...[/bold blue]")
                 check_dependencies()
                 console.print(
