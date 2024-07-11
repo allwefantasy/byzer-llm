@@ -15,6 +15,17 @@ import torch
 from modelscope.hub.snapshot_download import snapshot_download
 from byzerllm.utils.client import InferBackend
 import huggingface_hub
+import byzerllm
+from pydantic import BaseModel
+
+
+class StorageLocation(BaseModel):
+    version: str
+    cluster: str
+    base_dir: str
+    libs_dir: str
+    data_dir: str
+
 
 console = Console()
 
@@ -238,10 +249,7 @@ class StorageSubCommand:
             print("Please provide collection name.")
 
     @staticmethod
-    def start(args):
-        import byzerllm
-        from byzerllm.utils.retrieval import ByzerRetrieval
-
+    def get_store_location(args):
         version = args.version
         cluster = args.cluster
         home = expanduser("~")
@@ -251,40 +259,60 @@ class StorageSubCommand:
             base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}"
         )
         data_dir = os.path.join(base_dir, "storage", "data")
+        return StorageLocation(
+            version=version,
+            cluster=cluster,
+            base_dir=base_dir,
+            libs_dir=libs_dir,
+            data_dir=data_dir,
+        )
+
+    @staticmethod
+    def connect_cluster(args):
+        store_location = StorageSubCommand.get_store_location(args)
 
         console.print("[bold green]Starting Byzer Storage...[/bold green]")
 
-        if not os.path.exists(os.path.join(data_dir, cluster)):
-            os.makedirs(data_dir, exist_ok=True)
+        if not os.path.exists(
+            os.path.join(store_location.data_dir, store_location.cluster)
+        ):
+            os.makedirs(store_location.data_dir, exist_ok=True)
             rprint("[green]✓[/green] Created data directory")
 
-        if not os.path.exists(libs_dir):
+        if not os.path.exists(store_location.libs_dir):
             rprint("[bold blue]Installing Byzer Storage...[/bold blue]")
             StorageSubCommand.install(args)
             rprint("[green]✓[/green] Installed Byzer Storage")
 
-        code_search_path = [libs_dir]
+        code_search_path = [store_location.libs_dir]
 
         console.print("[bold blue]Connecting to cluster...[/bold blue]")
         env_vars = byzerllm.connect_cluster(
             address=args.ray_address, code_search_path=code_search_path
         )
         rprint("[green]✓[/green] Connected to cluster")
+        return (env_vars, store_location)
+
+    @staticmethod
+    def start(args):
+        from byzerllm.utils.retrieval import ByzerRetrieval
+
+        env_vars, store_location = StorageSubCommand.connect_cluster(args)
 
         console.print("[bold blue]Launching gateway...[/bold blue]")
         retrieval = ByzerRetrieval()
         retrieval.launch_gateway()
         rprint("[green]✓[/green] Launched gateway")
 
-        if retrieval.is_cluster_exists(name=cluster):
+        if retrieval.is_cluster_exists(name=store_location.cluster):
             console.print(
                 Panel(
-                    f"[yellow]Cluster {cluster} already exists. Please stop it first.[/yellow]"
+                    f"[yellow]Cluster {store_location.cluster} already exists. Please stop it first.[/yellow]"
                 )
             )
             return
 
-        base_model_dir = os.path.join(base_dir, "storage", "models")
+        base_model_dir = os.path.join(store_location.base_dir, "storage", "models")
         os.makedirs(base_model_dir, exist_ok=True)
         bge_model = os.path.join(base_model_dir, "AI-ModelScope", "bge-large-zh")
 
@@ -324,7 +352,9 @@ class StorageSubCommand:
         if args.enable_model_memory and has_gpu:
             StorageSubCommand.model_memory_start(args)
 
-        cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
+        cluster_json = os.path.join(
+            store_location.base_dir, "storage", "data", f"{store_location.cluster}.json"
+        )
         if os.path.exists(cluster_json):
             console.print("[bold blue]Restoring Byzer Storage...[/bold blue]")
             StorageSubCommand.restore(args)
@@ -335,18 +365,28 @@ class StorageSubCommand:
 
         console.print("[bold blue]Starting cluster...[/bold blue]")
         builder = retrieval.cluster_builder()
-        builder.set_name(cluster).set_location(data_dir).set_num_nodes(1).set_node_cpu(
-            1
-        ).set_node_memory("2g")
+        builder.set_name(store_location.cluster).set_location(
+            store_location.data_dir
+        ).set_num_nodes(1).set_node_cpu(1).set_node_memory("2g")
         builder.set_java_home(env_vars["JAVA_HOME"]).set_path(
             env_vars["PATH"]
         ).set_enable_zgc()
         builder.start_cluster()
 
         with open(
-            os.path.join(base_dir, "storage", "data", f"{cluster}.json"), "w"
+            os.path.join(
+                store_location.base_dir,
+                "storage",
+                "data",
+                f"{store_location.cluster}.json",
+            ),
+            "w",
         ) as f:
-            f.write(json.dumps(retrieval.cluster_info(cluster), ensure_ascii=False))
+            f.write(
+                json.dumps(
+                    retrieval.cluster_info(store_location.cluster), ensure_ascii=False
+                )
+            )
 
         console.print(Panel("[green]Byzer Storage started successfully[/green]"))
 
@@ -355,18 +395,18 @@ class StorageSubCommand:
         import byzerllm
         from byzerllm.utils.retrieval import ByzerRetrieval
 
-        version = args.version
-        cluster = args.cluster
-        home = expanduser("~")
-        base_dir = args.base_dir or os.path.join(home, ".auto-coder")
-
         error_summary = []
-
+        store_location = StorageSubCommand.get_store_location(args)
         console.print("[bold red]Stopping Byzer Storage...")
         libs_dir = os.path.join(
-            base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}"
+            store_location.base_dir,
+            "storage",
+            "libs",
+            f"byzer-retrieval-lib-{store_location.version}",
         )
-        cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
+        cluster_json = os.path.join(
+            store_location.base_dir, "storage", "data", f"{store_location.cluster}.json"
+        )
 
         if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
             console.print("[red]✗[/red] No instance found.")
@@ -375,20 +415,7 @@ class StorageSubCommand:
             )
             return
 
-        code_search_path = [libs_dir]
-
-        console.print("[bold blue]Connecting to cluster...")
-        try:
-            byzerllm.connect_cluster(
-                address=args.ray_address, code_search_path=code_search_path
-            )
-            rprint("[green]✓[/green] Connected to cluster")
-        except Exception as e:
-            rprint(f"[red]✗[/red] Failed to connect to cluster: {str(e)}")
-            error_summary.append(
-                "Failed to connect to cluster. Please check your network connection and Ray setup."
-            )
-
+        env_vars, _ = StorageSubCommand.connect_cluster(args)
         console.print("[bold blue]Launching gateway...")
         try:
             retrieval = ByzerRetrieval()
@@ -400,14 +427,16 @@ class StorageSubCommand:
                 "Failed to launch gateway. Please check if Byzer Retrieval is properly installed."
             )
 
-        console.print(f"[bold blue]Shutting down cluster {cluster}...")
+        console.print(f"[bold blue]Shutting down cluster {store_location.cluster}...")
         try:
-            retrieval.shutdown_cluster(cluster_name=cluster)
-            rprint(f"[green]✓[/green] Cluster {cluster} shut down")
+            retrieval.shutdown_cluster(cluster_name=store_location.cluster)
+            rprint(f"[green]✓[/green] Cluster {store_location.cluster} shut down")
         except Exception as e:
-            rprint(f"[red]✗[/red] Failed to shut down cluster {cluster}: {str(e)}")
+            rprint(
+                f"[red]✗[/red] Failed to shut down cluster {store_location.cluster}: {str(e)}"
+            )
             error_summary.append(
-                f"Failed to shut down cluster {cluster}. You may need to manually stop it."
+                f"Failed to shut down cluster {store_location.cluster}. You may need to manually stop it."
             )
 
         StorageSubCommand.emb_stop(args)
