@@ -40,17 +40,17 @@ class MemoryManager:
             cls._queue.task_done()
         cls._is_processing = False
 
-    async def memorize(self, name: str, memories: List[str]):
+    async def memorize(self, name: str, memories: List[str],options: Dict[str, Any] = {}):
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(
-            self.thread_pool, self._memorize_with_logs, name, memories
+            self.thread_pool, self._memorize_with_logs, name, memories,options
         )
         print(f"Memorization for {name} completed.")
 
-    def _memorize_with_logs(self, name: str, memories: List[str]):
+    def _memorize_with_logs(self, name: str, memories: List[str],options: Dict[str, Any] = {}):
 
         if self.remote:
-            self._memorize(name, memories)
+            self._memorize(name, memories,options=options)
             return
 
         logs_dir = os.path.join(self.base_dir, "storage", "logs", "memorize")
