@@ -390,7 +390,8 @@ class ByzerStorage:
     def memorize(self,memories:List[str]):        
         from byzerllm.apps.byzer_storage.memory_model_based import MemoryManager
         memory_manager = MemoryManager(self,self.base_dir)
-        task = threading.Thread(target=memory_manager.memorize,args=(memories,))
+        name = f"{self.database}_{self.table}"
+        task = threading.Thread(target=memory_manager.memorize,args=(name,memories))
         task.start()
         logger.info("Memorization task started.")
 
