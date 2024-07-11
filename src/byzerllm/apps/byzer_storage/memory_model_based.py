@@ -88,8 +88,7 @@ class MemoryManager:
                 except queue.Empty:
                     continue
 
-    def _memorize(self, name: str, memories: List[str]):
-        # Ensure the total length of memories is at least 1024*10 characters
+    def _memorize(self, name: str, memories: List[str]):        
         target_length = 1024 * 10 * 10
         original_memories = memories.copy()
         while sum(len(memory) for memory in memories) < target_length:
@@ -115,14 +114,14 @@ class MemoryManager:
         os.makedirs(dataset_dir, exist_ok=True)
 
         with open(f"{dataset_dir}/data.json", "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
+            json.dump(data, f, indent=2,ensure_ascii=False)
 
         with open(f"{dataset_dir}/dataset_info.json", "w", encoding="utf-8") as f:
             f.write(
                 json.dumps(
                     {"data": {"file_name": "data.json", "columns": {"prompt": "text"}}},
                     indent=2,
-                )
+                ensure_ascii=False)
             )
 
         args = dict(
