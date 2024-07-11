@@ -327,6 +327,8 @@ def from_vllm_backend(
     other_params = {}
 
     def parse_value(v):
+        if not isinstance(v, str):
+            return v
         v = v.strip()
         if v.lower() in ['true', 'false']:
             return v.lower() == 'true'
