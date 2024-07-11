@@ -244,38 +244,30 @@ class StorageSubCommand:
                     rprint("[green]✓[/green] Long-Memory model already exists")
 
                 if downloaded:
-                    check_dependencies()
-                    start_long_memory = (
-                        input(
-                            "Do you want to start the long-term memory model now? (y/n):"
+                    check_dependencies()                    
+                    status.update("[bold blue]Starting long-term memory model...")
+                    llm.setup_gpus_per_worker(1).setup_cpus_per_worker(
+                        0.001
+                    ).setup_num_workers(1)
+                    llm.setup_infer_backend(InferBackend.VLLM)
+                    try:
+                        llm.deploy(
+                            model_path=llama_model,
+                            pretrained_model_type="custom/auto",
+                            udf_name="long_memory",
+                            infer_params={
+                                "backend.max_model_len": 8000,
+                                "backend.enable_lora": True,
+                            },
                         )
-                        .strip()
-                        .lower()
-                    )
-                    if start_long_memory == "y":
-                        status.update("[bold blue]Starting long-term memory model...")
-                        llm.setup_gpus_per_worker(1).setup_cpus_per_worker(
-                            0.001
-                        ).setup_num_workers(1)
-                        llm.setup_infer_backend(InferBackend.VLLM)
-                        try:
-                            llm.deploy(
-                                model_path=llama_model,
-                                pretrained_model_type="custom/auto",
-                                udf_name="long_memory",
-                                infer_params={
-                                    "backend.max_model_len": 8000,
-                                    "backend.enable_lora": True,
-                                },
-                            )
-                            rprint("[green]✓[/green] Long-term memory model started")
-                        except Exception as e:
-                            rprint(
-                                f"[red]✗[/red] Failed to start Long-Memory model: {str(e)}"
-                            )
-                            rprint(
-                                "[yellow]![/yellow] Please check the error message and try again."
-                            )
+                        rprint("[green]✓[/green] Long-term memory model started")
+                    except Exception as e:
+                        rprint(
+                            f"[red]✗[/red] Failed to start Long-Memory model: {str(e)}"
+                        )
+                        rprint(
+                            "[yellow]![/yellow] Please check the error message and try again."
+                        )
 
             cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
             if os.path.exists(cluster_json):
