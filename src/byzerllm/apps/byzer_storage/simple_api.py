@@ -270,6 +270,7 @@ class ModelWriteBuilder:
     def __init__(self, storage: "ByzerStorage"):
         self.storage = storage
         self.memories = []
+        self.options = {}
 
     def add_memory(self, memory: str):
         self.memories.append(memory)
@@ -279,8 +280,16 @@ class ModelWriteBuilder:
         self.memories.extend(memories)
         return self
 
-    def execute(self):
-        self.storage.memorize(self.memories)
+    def add_option(self, key: str, value: Any):
+        self.options[key] = value
+        return self
+
+    def add_options(self, options: Dict[str, Any]):
+        self.options.update(options)
+        return self
+
+    def execute(self, remote: bool = True):
+        return self.storage.memorize(self.memories, remote=remote, options=self.options)
 
 
 class ByzerStorage:
@@ -388,7 +397,7 @@ class ByzerStorage:
             self.cluster_name, self.database, self.table, data
         )
 
-    def memorize(self, memories: List[str], remote: bool = True):
+    def memorize(self, memories: List[str], remote: bool = True,options: Dict[str, Any] = {}):
         if not remote:
 
             def run():
@@ -397,7 +406,7 @@ class ByzerStorage:
                 memory_manager = MemoryManager(self, self.base_dir,remote=False)
                 self.memory_manager = memory_manager
                 name = f"{self.database}_{self.table}"
-                asyncio.run(memory_manager.memorize(name, memories))
+                asyncio.run(memory_manager.memorize(name, memories,options))
 
             task = threading.Thread(target=run)
             task.start()
@@ -413,7 +422,7 @@ class ByzerStorage:
                 .options(name=name, num_gpus=1, lifetime="detached")
                 .remote(self, self.base_dir,remote=True)
             )
-            mm.memorize.remote(f"{self.database}_{self.table}", memories)
+            mm.memorize.remote(f"{self.database}_{self.table}", memories,options)
             logger.info(f"Memorization task started. Please check ray dashboard for actor: `{name}`")
             return mm
     

@@ -98,7 +98,7 @@ class MemoryManager:
                 except queue.Empty:
                     continue
 
-    def _memorize(self, name: str, memories: List[str]):
+    def _memorize(self, name: str, memories: List[str],options: Dict[str, Any] = {}):
         # target_length = 1024 * 10 * 10
         # original_memories = memories.copy()
         # while sum(len(memory) for memory in memories) < target_length:
@@ -168,4 +168,4 @@ class MemoryManager:
         os.environ["WANDB_DISABLED"] = "true"
         from llamafactory.train import tuner
 
-        tuner.run_exp(args)
+        tuner.run_exp({**args, **options})
