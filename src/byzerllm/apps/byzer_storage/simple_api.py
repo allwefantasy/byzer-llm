@@ -271,6 +271,11 @@ class ModelWriteBuilder:
         self.storage = storage
         self.memories = []
         self.options = {}
+        self.cutoff_len = 1024
+        self.max_samples = 1000000
+        self.per_device_train_batch_size = 2
+        self.gradient_accumulation_steps = 4
+        self.num_train_epochs = 1000.0
 
     def add_memory(self, memory: str):
         self.memories.append(memory)
@@ -288,8 +293,36 @@ class ModelWriteBuilder:
         self.options.update(options)
         return self
 
+    def set_cutoff_len(self, cutoff_len: int):
+        self.cutoff_len = cutoff_len
+        return self
+
+    def set_max_samples(self, max_samples: int):
+        self.max_samples = max_samples
+        return self
+
+    def set_per_device_train_batch_size(self, per_device_train_batch_size: int):
+        self.per_device_train_batch_size = per_device_train_batch_size
+        return self
+
+    def set_gradient_accumulation_steps(self, gradient_accumulation_steps: int):
+        self.gradient_accumulation_steps = gradient_accumulation_steps
+        return self
+
+    def set_num_train_epochs(self, num_train_epochs: float):
+        self.num_train_epochs = num_train_epochs
+        return self
+
     def execute(self, remote: bool = True):
-        return self.storage.memorize(self.memories, remote=remote, options=self.options)
+        config = {
+            "cutoff_len": self.cutoff_len,
+            "max_samples": self.max_samples,
+            "per_device_train_batch_size": self.per_device_train_batch_size,
+            "gradient_accumulation_steps": self.gradient_accumulation_steps,
+            "num_train_epochs": self.num_train_epochs,
+            **self.options
+        }
+        return self.storage.memorize(self.memories, remote=remote, options=config)
 
 
 class ByzerStorage:
