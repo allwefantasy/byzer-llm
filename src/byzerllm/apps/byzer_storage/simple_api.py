@@ -387,11 +387,14 @@ class ByzerStorage:
             self.cluster_name, self.database, self.table, data
         )
     
-    def memorize(self,memories:List[str]):        
-        from byzerllm.apps.byzer_storage.memory_model_based import MemoryManager
-        memory_manager = MemoryManager(self,self.base_dir)
-        name = f"{self.database}_{self.table}"
-        task = threading.Thread(target=memory_manager.memorize,args=(name,memories))
+    def memorize(self,memories:List[str]):                
+        def run():                     
+            from byzerllm.apps.byzer_storage.memory_model_based import MemoryManager        
+            memory_manager = MemoryManager(self,self.base_dir)                
+            name = f"{self.database}_{self.table}"   
+            asyncio.run(memory_manager.memorize(name,memories))
+
+        task = threading.Thread(target=run)
         task.start()
         logger.info("Memorization task started.")
 

@@ -1,4 +1,0 @@
-include_file:
-  - ./local.yml 
-
-auto_merge: diff   

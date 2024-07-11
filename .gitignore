@@ -7,4 +7,5 @@ vllm/
 **/__pycache__/**
 *.log
 output.txt
-.auto-coder/
+.auto-coder
+actions
