@@ -40,6 +40,135 @@ def check_dependencies():
 class StorageSubCommand:
 
     @staticmethod
+    def emb_start(args):
+        import byzerllm
+        from byzerllm.utils.retrieval import ByzerRetrieval
+
+        home = expanduser("~")
+        base_dir = args.base_dir or os.path.join(home, ".auto-coder")
+        base_model_dir = os.path.join(base_dir, "storage", "models")
+        bge_model = os.path.join(base_model_dir, "AI-ModelScope", "bge-large-zh")
+
+        console.print("[bold blue]Starting embedding model...")
+
+        if not os.path.exists(bge_model):
+            console.print("[red]✗[/red] Embedding model not found.")
+            console.print(f"Please download the model to: {bge_model}")
+            return
+
+        byzerllm.connect_cluster(address=args.ray_address)
+        llm = byzerllm.ByzerLLM()
+
+        if llm.is_model_exist("emb"):
+            console.print("[yellow]![/yellow] Embedding model already deployed.")
+            return
+
+        console.print("[bold blue]Deploying embedding model...")
+        llm.setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
+
+        if torch.cuda.is_available():
+            llm.setup_gpus_per_worker(0.1)
+        else:
+            llm.setup_gpus_per_worker(0)
+
+        llm.setup_cpus_per_worker(0.01).setup_worker_concurrency(20)
+        llm.deploy(
+            model_path=bge_model,
+            pretrained_model_type="custom/bge",
+            udf_name="emb",
+            infer_params={},
+        )
+        console.print("[green]✓[/green] Embedding model deployed successfully")
+
+    @staticmethod
+    def emb_stop(args):
+        import byzerllm
+
+        console.print("[bold blue]Stopping embedding model...")
+        byzerllm.connect_cluster(address=args.ray_address)
+        llm = byzerllm.ByzerLLM()
+
+        try:
+            llm.undeploy("emb")
+            console.print("[green]✓[/green] Embedding model stopped successfully")
+        except Exception as e:
+            console.print(f"[red]✗[/red] Failed to stop embedding model: {str(e)}")
+
+    @staticmethod
+    def model_memory_start(args):
+        import byzerllm
+        from byzerllm.utils.retrieval import ByzerRetrieval
+
+        home = expanduser("~")
+        base_dir = args.base_dir or os.path.join(home, ".auto-coder")
+        base_model_dir = os.path.join(base_dir, "storage", "models")
+        llama_model = os.path.join(
+            base_model_dir, "meta-llama", "Meta-Llama-3-8B-Instruct-GPTQ"
+        )
+
+        console.print("[bold blue]Starting long-term memory model...")
+
+        if not os.path.exists(llama_model):
+            console.print("[red]✗[/red] Long-term memory model not found.")
+            console.print(f"Please download the model to: {llama_model}")
+            return
+
+        if not torch.cuda.is_available():
+            console.print(
+                "[red]✗[/red] GPU not available. Long-term memory model requires GPU."
+            )
+            return
+
+        byzerllm.connect_cluster(address=args.ray_address)
+        llm = byzerllm.ByzerLLM()
+
+        if llm.is_model_exist("long_memory"):
+            console.print("[yellow]![/yellow] Long-term memory model already deployed.")
+            return
+
+        console.print("[bold blue]Checking dependencies...")
+        check_dependencies()
+
+        console.print("[bold blue]Deploying long-term memory model...")
+        llm.setup_gpus_per_worker(0.9).setup_cpus_per_worker(0.001).setup_num_workers(1)
+        llm.setup_infer_backend(InferBackend.VLLM)
+        try:
+            llm.deploy(
+                model_path=llama_model,
+                pretrained_model_type="custom/auto",
+                udf_name="long_memory",
+                infer_params={
+                    "backend.max_model_len": 8000,
+                    "backend.enable_lora": True,
+                },
+            )
+            console.print(
+                "[green]✓[/green] Long-term memory model deployed successfully"
+            )
+        except Exception as e:
+            console.print(
+                f"[red]✗[/red] Failed to deploy long-term memory model: {str(e)}"
+            )
+
+    @staticmethod
+    def model_memory_stop(args):
+        import byzerllm
+
+        console.print("[bold blue]Stopping long-term memory model...")
+        byzerllm.connect_cluster(address=args.ray_address)
+        llm = byzerllm.ByzerLLM()
+
+        try:
+            llm.undeploy("long_memory")
+            console.print(
+                "[green]✓[/green] Long-term memory model stopped successfully"
+            )
+        except Exception as e:
+            console.print(
+                f"[red]✗[/red] Failed to stop long-term memory model: {str(e)}"
+            )
+
+    @staticmethod
     def install(args):
         version = args.version
         home = expanduser("~")
@@ -183,94 +312,17 @@ class StorageSubCommand:
                 rprint(
                     "[yellow]![/yellow] Please manually download the model 'AI-ModelScope/bge-large-zh'"
                 )
-                rprint(
-                    f"[yellow]![/yellow] and place it in the directory: {bge_model}"
-                )
+                rprint(f"[yellow]![/yellow] and place it in the directory: {bge_model}")
                 rprint("[yellow]![/yellow] Then restart this process.")
         else:
             model_path = bge_model
             rprint(f"[green]✓[/green] Embedding model found: {model_path}")
-        
-        llm = byzerllm.ByzerLLM()  
-        if args.enable_emb and downloaded and not llm.is_model_exist("emb"):
-            
-            console.print("[bold blue]Deploying embedding model...[/bold blue]")
-            llm.setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
-            if has_gpu:
-                llm.setup_gpus_per_worker(0.1)
-            else:
-                llm.setup_gpus_per_worker(0)
 
-            llm.setup_cpus_per_worker(0.01).setup_worker_concurrency(20)
-            llm.deploy(
-                model_path=bge_model,
-                pretrained_model_type="custom/bge",
-                udf_name="emb",
-                infer_params={},
-            )
-            rprint("[green]✓[/green] Deployed embedding model")
+        if args.enable_emb and downloaded:
+            StorageSubCommand.emb_start(args)
 
-        llm = byzerllm.ByzerLLM() 
         if args.enable_model_memory and has_gpu:
-            console.print("[bold blue]Checking Long-Memory model...[/bold blue]")
-            downloaded = True
-            llama_model = os.path.join(
-                base_model_dir, "meta-llama", "Meta-Llama-3-8B-Instruct-GPTQ"
-            )
-            if not os.path.exists(llama_model):
-                downloaded = False
-                try:
-                    model_path = snapshot_download(
-                        model_id="meta-llama/Meta-Llama-3-8B-Instruct-GPTQ",
-                        cache_dir=base_model_dir,
-                        local_files_only=huggingface_hub.constants.HF_HUB_OFFLINE,
-                    )
-                    rprint(
-                        f"[green]✓[/green] Long-Memory model downloaded: {model_path}"
-                    )
-                    downloaded = True
-                except Exception as e:
-                    rprint(
-                        f"[red]✗[/red] Failed to download Long-Memory model: {str(e)}"
-                    )
-                    rprint(
-                        "[yellow]![/yellow] Please manually download the model 'meta-llama/Meta-Llama-3-8B-Instruct-GPTQ'"
-                    )
-                    rprint(
-                        f"[yellow]![/yellow] and place it in the directory: {llama_model}"
-                    )
-                    rprint("[yellow]![/yellow] Then restart this process.")
-            else:
-                rprint("[green]✓[/green] Long-Memory model already exists")
-
-            if downloaded:                
-                console.print("[bold blue]Checking dependencies...[/bold blue]")
-                check_dependencies()
-                console.print(
-                    "[bold blue]Starting long-term memory model...[/bold blue]"
-                )
-                llm.setup_gpus_per_worker(0.9).setup_cpus_per_worker(
-                    0.001
-                ).setup_num_workers(1)
-                llm.setup_infer_backend(InferBackend.VLLM)
-                try:
-                    llm.deploy(
-                        model_path=llama_model,
-                        pretrained_model_type="custom/auto",
-                        udf_name="long_memory",
-                        infer_params={
-                            "backend.max_model_len": 8000,
-                            "backend.enable_lora": True,
-                        },
-                    )
-                    rprint("[green]✓[/green] Long-term memory model started")
-                except Exception as e:
-                    rprint(
-                        f"[red]✗[/red] Failed to start Long-Memory model: {str(e)}"
-                    )
-                    rprint(
-                        "[yellow]![/yellow] Please check the error message and try again."
-                    )
+            StorageSubCommand.model_memory_start(args)
 
         cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
         if os.path.exists(cluster_json):
@@ -283,9 +335,9 @@ class StorageSubCommand:
 
         console.print("[bold blue]Starting cluster...[/bold blue]")
         builder = retrieval.cluster_builder()
-        builder.set_name(cluster).set_location(data_dir).set_num_nodes(
+        builder.set_name(cluster).set_location(data_dir).set_num_nodes(1).set_node_cpu(
             1
-        ).set_node_cpu(1).set_node_memory("2g")
+        ).set_node_memory("2g")
         builder.set_java_home(env_vars["JAVA_HOME"]).set_path(
             env_vars["PATH"]
         ).set_enable_zgc()
@@ -358,29 +410,8 @@ class StorageSubCommand:
                 f"Failed to shut down cluster {cluster}. You may need to manually stop it."
             )
 
-        llm = byzerllm.ByzerLLM()
-
-        console.print("[bold blue]Undeploying embedding model...")
-        try:
-            llm.undeploy("emb")
-            rprint("[green]✓[/green] Embedding model undeployed")
-        except Exception as e:
-            rprint(f"[red]✗[/red] Failed to undeploy embedding model: {str(e)}")
-            error_summary.append(
-                "Failed to undeploy embedding model. You may need to manually undeploy it."
-            )
-
-        console.print("[bold blue]Undeploying long-term memory model...")
-        try:
-            llm.undeploy("long_memory")
-            rprint("[green]✓[/green] Long-term memory model undeployed")
-        except Exception as e:
-            rprint(
-                f"[red]✗[/red] Failed to undeploy long-term memory model: {str(e)}"
-            )
-            error_summary.append(
-                "Failed to undeploy long-term memory model. You may need to manually undeploy it."
-            )
+        StorageSubCommand.emb_stop(args)
+        StorageSubCommand.model_memory_stop(args)
 
         if error_summary:
             console.print(

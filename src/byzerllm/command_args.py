@@ -114,6 +114,22 @@ def get_command_args(input_args: Optional[List[str]] = None):
     storage_cmd = subparsers.add_parser("storage", help="Manage Byzer Storage")
     storage_cmd_subparsers = storage_cmd.add_subparsers(dest="storage_command")
 
+    emb_parser = storage_cmd_subparsers.add_parser("emb", help="Manage embedding model")
+    emb_subparsers = emb_parser.add_subparsers(dest="emb_command", required=True)
+    emb_start_parser = emb_subparsers.add_parser("start", help="Start embedding model")
+    emb_stop_parser = emb_subparsers.add_parser("stop", help="Stop embedding model")
+
+    model_memory_parser = storage_cmd_subparsers.add_parser("enable_model_memory", help="Manage long-term memory model")
+    model_memory_subparsers = model_memory_parser.add_subparsers(dest="model_memory_command", required=True)
+    model_memory_start_parser = model_memory_subparsers.add_parser("start", help="Start long-term memory model")
+    model_memory_stop_parser = model_memory_subparsers.add_parser("stop", help="Stop long-term memory model")
+
+    # Add common arguments for all new subcommands
+    for subparser in [emb_start_parser, emb_stop_parser, model_memory_start_parser, model_memory_stop_parser]:
+        subparser.add_argument("--ray_address", default="auto", help="Ray cluster address to connect to")
+        subparser.add_argument("--base_dir", type=str, help="Base directory for storage")
+
+
     # install 子命令
     storage_install_cmd = storage_cmd_subparsers.add_parser(
         "install", help="Install Byzer Storage"

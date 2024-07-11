@@ -173,6 +173,16 @@ def main(input_args: Optional[List[str]] = None):
             StorageSubCommand.export(args)
         elif args.storage_command == "collection":
             StorageSubCommand.collection(args)
+        elif args.storage_command == "emb":
+            if args.emb_command == "start":
+                StorageSubCommand.emb_start(args)
+            elif args.emb_command == "stop":
+                StorageSubCommand.emb_stop(args)
+        elif args.storage_command == "enable_model_memory":
+            if args.model_memory_command == "start":
+                StorageSubCommand.model_memory_start(args)
+            elif args.model_memory_command == "stop":
+                StorageSubCommand.model_memory_stop(args)    
 
     elif args.command == "serve":
         byzerllm.connect_cluster(address=args.ray_address)
