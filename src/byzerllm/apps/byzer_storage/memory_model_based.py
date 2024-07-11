@@ -131,7 +131,7 @@ class MemoryManager:
             dataset="data",
             dataset_dir=dataset_dir,
             cutoff_len=1024,
-            max_samples=10,
+            max_samples=1000000,
             overwrite_cache=True,
             preprocessing_num_workers=1,
             template="llama3",
