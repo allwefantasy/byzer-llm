@@ -165,7 +165,7 @@ class StorageSubCommand:
                 rprint("[yellow]![/yellow] No GPU detected, using CPU")
 
             status.update("[bold blue]Downloading embedding model...")
-            
+
             downloaded = True
             if not os.path.exists(bge_model):
                 downloaded = False
@@ -179,22 +179,29 @@ class StorageSubCommand:
                     downloaded = True
                 except Exception as e:
                     rprint(f"[red]✗[/red] Failed to download embedding model: {str(e)}")
-                    rprint("[yellow]![/yellow] Please manually download the model 'AI-ModelScope/bge-large-zh'")
-                    rprint(f"[yellow]![/yellow] and place it in the directory: {bge_model}")
-                    rprint("[yellow]![/yellow] Then restart this process.")                    
+                    rprint(
+                        "[yellow]![/yellow] Please manually download the model 'AI-ModelScope/bge-large-zh'"
+                    )
+                    rprint(
+                        f"[yellow]![/yellow] and place it in the directory: {bge_model}"
+                    )
+                    rprint("[yellow]![/yellow] Then restart this process.")
             else:
                 model_path = bge_model
                 rprint(f"[green]✓[/green] Embedding model found: {model_path}")
 
             llm = byzerllm.ByzerLLM()
-            if downloaded and not llm.is_model_exist("emb"):
+            if  args.enable_emb and  downloaded and not llm.is_model_exist("emb"):
                 status.update("[bold blue]Deploying embedding model...")
                 from byzerllm.utils.client import InferBackend
 
                 llm.setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
-                llm.setup_gpus_per_worker(0).setup_cpus_per_worker(
-                    0.01
-                ).setup_worker_concurrency(20)
+                if has_gpu:
+                    llm.setup_gpus_per_worker(0.1)
+                else:
+                    llm.setup_gpus_per_worker(0)
+
+                llm.setup_cpus_per_worker(0.01).setup_worker_concurrency(20)
                 llm.deploy(
                     model_path=bge_model,
                     pretrained_model_type="custom/bge",
@@ -203,7 +210,7 @@ class StorageSubCommand:
                 )
                 rprint("[green]✓[/green] Deployed embedding model")
 
-            if has_gpu:
+            if args.enable_model_memory and has_gpu:
                 downloaded = True
                 status.update("[bold blue]Checking Long-Memory model...")
                 llama_model = os.path.join(
@@ -223,13 +230,19 @@ class StorageSubCommand:
                         )
                         downloaded = True
                     except Exception as e:
-                        rprint(f"[red]✗[/red] Failed to download Long-Memory model: {str(e)}")
-                        rprint("[yellow]![/yellow] Please manually download the model 'meta-llama/Meta-Llama-3-8B-Instruct-GPTQ'")
-                        rprint(f"[yellow]![/yellow] and place it in the directory: {llama_model}")
-                        rprint("[yellow]![/yellow] Then restart this process.")                        
+                        rprint(
+                            f"[red]✗[/red] Failed to download Long-Memory model: {str(e)}"
+                        )
+                        rprint(
+                            "[yellow]![/yellow] Please manually download the model 'meta-llama/Meta-Llama-3-8B-Instruct-GPTQ'"
+                        )
+                        rprint(
+                            f"[yellow]![/yellow] and place it in the directory: {llama_model}"
+                        )
+                        rprint("[yellow]![/yellow] Then restart this process.")
                 else:
                     rprint("[green]✓[/green] Long-Memory model already exists")
-                
+
                 if downloaded:
                     check_dependencies()
                     start_long_memory = (
@@ -240,7 +253,7 @@ class StorageSubCommand:
                         .lower()
                     )
                     if start_long_memory == "y":
-                        status.update("[bold blue]Starting long-term memory model...")                        
+                        status.update("[bold blue]Starting long-term memory model...")
                         llm.setup_gpus_per_worker(1).setup_cpus_per_worker(
                             0.001
                         ).setup_num_workers(1)
@@ -257,8 +270,12 @@ class StorageSubCommand:
                             )
                             rprint("[green]✓[/green] Long-term memory model started")
                         except Exception as e:
-                            rprint(f"[red]✗[/red] Failed to start Long-Memory model: {str(e)}")
-                            rprint("[yellow]![/yellow] Please check the error message and try again.")
+                            rprint(
+                                f"[red]✗[/red] Failed to start Long-Memory model: {str(e)}"
+                            )
+                            rprint(
+                                "[yellow]![/yellow] Please check the error message and try again."
+                            )
 
             cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
             if os.path.exists(cluster_json):
@@ -296,7 +313,7 @@ class StorageSubCommand:
         cluster = args.cluster
         home = expanduser("~")
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
-        
+
         error_summary = []
 
         with console.status("[bold red]Stopping Byzer Storage...") as status:
@@ -307,7 +324,9 @@ class StorageSubCommand:
 
             if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
                 console.print("[red]✗[/red] No instance found.")
-                error_summary.append("No instance found. Please check if Byzer Storage is properly installed.")
+                error_summary.append(
+                    "No instance found. Please check if Byzer Storage is properly installed."
+                )
                 return
 
             code_search_path = [libs_dir]
@@ -320,7 +339,9 @@ class StorageSubCommand:
                 rprint("[green]✓[/green] Connected to cluster")
             except Exception as e:
                 rprint(f"[red]✗[/red] Failed to connect to cluster: {str(e)}")
-                error_summary.append("Failed to connect to cluster. Please check your network connection and Ray setup.")
+                error_summary.append(
+                    "Failed to connect to cluster. Please check your network connection and Ray setup."
+                )
 
             status.update("[bold blue]Launching gateway...")
             try:
@@ -329,7 +350,9 @@ class StorageSubCommand:
                 rprint("[green]✓[/green] Gateway launched")
             except Exception as e:
                 rprint(f"[red]✗[/red] Failed to launch gateway: {str(e)}")
-                error_summary.append("Failed to launch gateway. Please check if Byzer Retrieval is properly installed.")
+                error_summary.append(
+                    "Failed to launch gateway. Please check if Byzer Retrieval is properly installed."
+                )
 
             status.update(f"[bold blue]Shutting down cluster {cluster}...")
             try:
@@ -337,29 +360,41 @@ class StorageSubCommand:
                 rprint(f"[green]✓[/green] Cluster {cluster} shut down")
             except Exception as e:
                 rprint(f"[red]✗[/red] Failed to shut down cluster {cluster}: {str(e)}")
-                error_summary.append(f"Failed to shut down cluster {cluster}. You may need to manually stop it.")
+                error_summary.append(
+                    f"Failed to shut down cluster {cluster}. You may need to manually stop it."
+                )
 
             llm = byzerllm.ByzerLLM()
-            
+
             status.update("[bold blue]Undeploying embedding model...")
             try:
                 llm.undeploy("emb")
                 rprint("[green]✓[/green] Embedding model undeployed")
             except Exception as e:
                 rprint(f"[red]✗[/red] Failed to undeploy embedding model: {str(e)}")
-                error_summary.append("Failed to undeploy embedding model. You may need to manually undeploy it.")
+                error_summary.append(
+                    "Failed to undeploy embedding model. You may need to manually undeploy it."
+                )
 
             status.update("[bold blue]Undeploying long-term memory model...")
             try:
                 llm.undeploy("long_memory")
                 rprint("[green]✓[/green] Long-term memory model undeployed")
             except Exception as e:
-                rprint(f"[red]✗[/red] Failed to undeploy long-term memory model: {str(e)}")
-                error_summary.append("Failed to undeploy long-term memory model. You may need to manually undeploy it.")
+                rprint(
+                    f"[red]✗[/red] Failed to undeploy long-term memory model: {str(e)}"
+                )
+                error_summary.append(
+                    "Failed to undeploy long-term memory model. You may need to manually undeploy it."
+                )
 
         if error_summary:
-            console.print(Panel("[yellow]Byzer Storage stopped with some issues[/yellow]"))
-            console.print("[bold red]The following steps need manual attention:[/bold red]")
+            console.print(
+                Panel("[yellow]Byzer Storage stopped with some issues[/yellow]")
+            )
+            console.print(
+                "[bold red]The following steps need manual attention:[/bold red]"
+            )
             for error in error_summary:
                 console.print(f"- {error}")
         else:
@@ -374,7 +409,7 @@ class StorageSubCommand:
         cluster = args.cluster
         home = expanduser("~")
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
-        
+
         error_summary = []
 
         with console.status("[bold blue]Exporting Byzer Storage...") as status:
@@ -385,7 +420,9 @@ class StorageSubCommand:
 
             if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
                 console.print("[red]✗[/red] No instance found.")
-                error_summary.append("No instance found. Please check if Byzer Storage is properly installed.")
+                error_summary.append(
+                    "No instance found. Please check if Byzer Storage is properly installed."
+                )
                 return
 
             code_search_path = [libs_dir]
@@ -398,7 +435,9 @@ class StorageSubCommand:
                 rprint("[green]✓[/green] Connected to cluster")
             except Exception as e:
                 rprint(f"[red]✗[/red] Failed to connect to cluster: {str(e)}")
-                error_summary.append("Failed to connect to cluster. Please check your network connection and Ray setup.")
+                error_summary.append(
+                    "Failed to connect to cluster. Please check your network connection and Ray setup."
+                )
 
             status.update("[bold blue]Launching gateway...")
             try:
@@ -407,21 +446,33 @@ class StorageSubCommand:
                 rprint("[green]✓[/green] Gateway launched")
             except Exception as e:
                 rprint(f"[red]✗[/red] Failed to launch gateway: {str(e)}")
-                error_summary.append("Failed to launch gateway. Please check if Byzer Retrieval is properly installed.")
+                error_summary.append(
+                    "Failed to launch gateway. Please check if Byzer Retrieval is properly installed."
+                )
 
             status.update(f"[bold blue]Exporting cluster {cluster} information...")
             try:
                 cluster_info = retrieval.cluster_info(cluster)
                 with open(cluster_json, "w") as f:
                     json.dump(cluster_info, f, ensure_ascii=False, indent=2)
-                rprint(f"[green]✓[/green] Cluster {cluster} information exported to {cluster_json}")
+                rprint(
+                    f"[green]✓[/green] Cluster {cluster} information exported to {cluster_json}"
+                )
             except Exception as e:
-                rprint(f"[red]✗[/red] Failed to export cluster {cluster} information: {str(e)}")
-                error_summary.append(f"Failed to export cluster {cluster} information. You may need to check the cluster status.")
+                rprint(
+                    f"[red]✗[/red] Failed to export cluster {cluster} information: {str(e)}"
+                )
+                error_summary.append(
+                    f"Failed to export cluster {cluster} information. You may need to check the cluster status."
+                )
 
         if error_summary:
-            console.print(Panel("[yellow]Byzer Storage exported with some issues[/yellow]"))
-            console.print("[bold red]The following steps need manual attention:[/bold red]")
+            console.print(
+                Panel("[yellow]Byzer Storage exported with some issues[/yellow]")
+            )
+            console.print(
+                "[bold red]The following steps need manual attention:[/bold red]"
+            )
             for error in error_summary:
                 console.print(f"- {error}")
         else:
@@ -436,7 +487,7 @@ class StorageSubCommand:
         cluster = args.cluster
         home = expanduser("~")
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
-        
+
         error_summary = []
 
         with console.status("[bold blue]Restoring Byzer Storage...") as status:
@@ -447,7 +498,9 @@ class StorageSubCommand:
 
             if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
                 console.print("[red]✗[/red] No instance found.")
-                error_summary.append("No instance found. Please check if Byzer Storage is properly installed.")
+                error_summary.append(
+                    "No instance found. Please check if Byzer Storage is properly installed."
+                )
                 return
 
             code_search_path = [libs_dir]
@@ -460,7 +513,9 @@ class StorageSubCommand:
                 rprint("[green]✓[/green] Connected to cluster")
             except Exception as e:
                 rprint(f"[red]✗[/red] Failed to connect to cluster: {str(e)}")
-                error_summary.append("Failed to connect to cluster. Please check your network connection and Ray setup.")
+                error_summary.append(
+                    "Failed to connect to cluster. Please check your network connection and Ray setup."
+                )
 
             status.update("[bold blue]Launching gateway...")
             try:
@@ -469,7 +524,9 @@ class StorageSubCommand:
                 rprint("[green]✓[/green] Gateway launched")
             except Exception as e:
                 rprint(f"[red]✗[/red] Failed to launch gateway: {str(e)}")
-                error_summary.append("Failed to launch gateway. Please check if Byzer Retrieval is properly installed.")
+                error_summary.append(
+                    "Failed to launch gateway. Please check if Byzer Retrieval is properly installed."
+                )
 
             status.update(f"[bold blue]Restoring cluster {cluster}...")
             try:
@@ -480,14 +537,22 @@ class StorageSubCommand:
                     rprint(f"[green]✓[/green] Cluster {cluster} restored successfully")
                 else:
                     rprint(f"[yellow]![/yellow] Cluster {cluster} already exists")
-                    error_summary.append(f"Cluster {cluster} already exists. No restoration needed.")
+                    error_summary.append(
+                        f"Cluster {cluster} already exists. No restoration needed."
+                    )
             except Exception as e:
                 rprint(f"[red]✗[/red] Failed to restore cluster {cluster}: {str(e)}")
-                error_summary.append(f"Failed to restore cluster {cluster}. You may need to check the cluster status and configuration.")
+                error_summary.append(
+                    f"Failed to restore cluster {cluster}. You may need to check the cluster status and configuration."
+                )
 
         if error_summary:
-            console.print(Panel("[yellow]Byzer Storage restored with some issues[/yellow]"))
-            console.print("[bold red]The following steps need manual attention:[/bold red]")
+            console.print(
+                Panel("[yellow]Byzer Storage restored with some issues[/yellow]")
+            )
+            console.print(
+                "[bold red]The following steps need manual attention:[/bold red]"
+            )
             for error in error_summary:
                 console.print(f"- {error}")
         else:

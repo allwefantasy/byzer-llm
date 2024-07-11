@@ -154,6 +154,8 @@ def get_command_args(input_args: Optional[List[str]] = None):
     )
     storage_start_command.add_argument("--cluster", default="byzerai_store", help="")
     storage_start_command.add_argument("--base_dir", default="", help="")
+    storage_start_command.add_argument("--enable_emb", action="store_true", help="Enable embedding model")
+    storage_start_command.add_argument("--enable_model_memory", action="store_true", help="Enable model memory")
 
     # stop 子命令
     storage_stop_command = storage_cmd_subparsers.add_parser(
