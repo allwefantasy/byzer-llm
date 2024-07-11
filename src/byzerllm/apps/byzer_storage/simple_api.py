@@ -414,6 +414,7 @@ class ByzerStorage:
                 .remote(self, self.base_dir)
             )
             mm.memorize.remote(f"{self.database}_{self.table}", memories)
+            logger.info(f"Memorization task started. Please check ray dashboard for actor: `{name}`")
             return mm
     
     def cancel_job(self):
