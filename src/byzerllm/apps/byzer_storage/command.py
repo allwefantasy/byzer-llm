@@ -247,7 +247,7 @@ class StorageSubCommand:
                 console.print(
                     "[bold blue]Starting long-term memory model...[/bold blue]"
                 )
-                llm.setup_gpus_per_worker(1).setup_cpus_per_worker(
+                llm.setup_gpus_per_worker(0.9).setup_cpus_per_worker(
                     0.001
                 ).setup_num_workers(1)
                 llm.setup_infer_backend(InferBackend.VLLM)
