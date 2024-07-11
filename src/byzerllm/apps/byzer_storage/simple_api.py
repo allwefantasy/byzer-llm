@@ -406,13 +406,14 @@ class ByzerStorage:
         else:
             import ray
             from byzerllm.apps.byzer_storage.memory_model_based import MemoryManager
+
             name = f"{self.database}_{self.table}"
             mm = (
                 ray.remote(MemoryManager)
                 .options(name=name, num_gpus=1, lifetime="detached")
                 .remote(self, self.base_dir)
-                .memorize(f"{self.database}_{self.table}", memories)
             )
+            mm.memorize.remote(f"{self.database}_{self.table}", memories)
             return mm
 
     def remember(self, query: str):
