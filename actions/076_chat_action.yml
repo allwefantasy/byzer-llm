@@ -1,0 +1,15 @@
+auto_merge: editblock
+human_as_model: true
+include_file:
+- ./base/base.yml
+query: 'task = threading.Thread(target=memory_manager.memorize,args=(memories,)) 我这么使用:
+  storage.memorize(data) 会报错误:TypeError: MemoryManager.memorize() missing 1 required
+  positional argument: ''memories'''
+skip_build_index: true
+skip_confirm: true
+urls:
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/command.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/easy_byzerllm_command.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm_command.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/simple_api.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/memory_model_based.py

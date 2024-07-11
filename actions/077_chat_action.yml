@@ -1,0 +1,13 @@
+auto_merge: editblock
+human_as_model: true
+include_file:
+- ./base/base.yml
+query: 添加一个 write_model_builder 实现调用  memorize方法
+skip_build_index: true
+skip_confirm: true
+urls:
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/command.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/easy_byzerllm_command.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/byzerllm_command.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/simple_api.py
+- /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/memory_model_based.py
