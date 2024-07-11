@@ -178,7 +178,7 @@ def main(input_args: Optional[List[str]] = None):
                 StorageSubCommand.emb_start(args)
             elif args.emb_command == "stop":
                 StorageSubCommand.emb_stop(args)
-        elif args.storage_command == "enable_model_memory":
+        elif args.storage_command == "model_memory":
             if args.model_memory_command == "start":
                 StorageSubCommand.model_memory_start(args)
             elif args.model_memory_command == "stop":

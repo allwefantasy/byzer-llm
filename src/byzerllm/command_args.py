@@ -119,7 +119,7 @@ def get_command_args(input_args: Optional[List[str]] = None):
     emb_start_parser = emb_subparsers.add_parser("start", help="Start embedding model")
     emb_stop_parser = emb_subparsers.add_parser("stop", help="Stop embedding model")
 
-    model_memory_parser = storage_cmd_subparsers.add_parser("enable_model_memory", help="Manage long-term memory model")
+    model_memory_parser = storage_cmd_subparsers.add_parser("model_memory", help="Manage long-term memory model")
     model_memory_subparsers = model_memory_parser.add_subparsers(dest="model_memory_command", required=True)
     model_memory_start_parser = model_memory_subparsers.add_parser("start", help="Start long-term memory model")
     model_memory_stop_parser = model_memory_subparsers.add_parser("stop", help="Stop long-term memory model")
