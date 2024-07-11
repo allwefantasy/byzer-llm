@@ -415,6 +415,12 @@ class ByzerStorage:
             )
             mm.memorize.remote(f"{self.database}_{self.table}", memories)
             return mm
+    
+    def cancel_job(self):
+        import ray
+        name = f"{self.database}_{self.table}"
+        ray.kill(ray.get_actor(name))
+
 
     def remember(self, query: str):
         llm = ByzerLLM()
