@@ -394,7 +394,7 @@ class ByzerStorage:
             def run():
                 from byzerllm.apps.byzer_storage.memory_model_based import MemoryManager
 
-                memory_manager = MemoryManager(self, self.base_dir)
+                memory_manager = MemoryManager(self, self.base_dir,remote=False)
                 self.memory_manager = memory_manager
                 name = f"{self.database}_{self.table}"
                 asyncio.run(memory_manager.memorize(name, memories))
@@ -411,7 +411,7 @@ class ByzerStorage:
             mm = (
                 ray.remote(MemoryManager)
                 .options(name=name, num_gpus=1, lifetime="detached")
-                .remote(self, self.base_dir)
+                .remote(self, self.base_dir,remote=True)
             )
             mm.memorize.remote(f"{self.database}_{self.table}", memories)
             logger.info(f"Memorization task started. Please check ray dashboard for actor: `{name}`")

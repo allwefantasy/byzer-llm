@@ -1,4 +1,3 @@
-##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/memory_model_based.py
 import asyncio
 from typing import List, Dict, Any
 from byzerllm.apps.byzer_storage.simple_api import ByzerStorage
@@ -12,16 +11,18 @@ from contextlib import redirect_stdout, redirect_stderr
 import queue
 import threading
 
+
 class MemoryManager:
     _queue = asyncio.Queue()
     _is_processing = False
 
-    def __init__(self, storage: ByzerStorage, base_dir: str):
+    def __init__(self, storage: ByzerStorage, base_dir: str, remote: bool = True):
         self.storage = storage
         home = os.path.expanduser("~")
         self.base_dir = base_dir or os.path.join(home, ".auto-coder")
         self.thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=5)
         self.log_file = None
+        self.remote = remote
 
     @classmethod
     async def add_to_queue(cls, name: str, memories: List[str]):
@@ -38,7 +39,7 @@ class MemoryManager:
             await instance.memorize(name, memories)
             cls._queue.task_done()
         cls._is_processing = False
-    
+
     async def memorize(self, name: str, memories: List[str]):
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(
@@ -47,6 +48,11 @@ class MemoryManager:
         print(f"Memorization for {name} completed.")
 
     def _memorize_with_logs(self, name: str, memories: List[str]):
+
+        if self.remote:
+            self._memorize(name, memories)
+            return
+
         logs_dir = os.path.join(self.base_dir, "storage", "logs", "memorize")
         os.makedirs(logs_dir, exist_ok=True)
         log_file = os.path.join(logs_dir, f"{name}.log")
@@ -55,7 +61,9 @@ class MemoryManager:
         stop_event = threading.Event()
 
         # Start the log writer thread
-        log_writer_thread = threading.Thread(target=self._log_writer, args=(log_queue, log_file, stop_event))
+        log_writer_thread = threading.Thread(
+            target=self._log_writer, args=(log_queue, log_file, stop_event)
+        )
         self.log_file = log_file
         log_writer_thread.start()
 
@@ -78,7 +86,9 @@ class MemoryManager:
         stop_event.set()
         log_writer_thread.join()
 
-    def _log_writer(self, log_queue: queue.Queue, log_file: str, stop_event: threading.Event):
+    def _log_writer(
+        self, log_queue: queue.Queue, log_file: str, stop_event: threading.Event
+    ):
         with open(log_file, "w") as f:
             while not stop_event.is_set() or not log_queue.empty():
                 try:
@@ -88,7 +98,7 @@ class MemoryManager:
                 except queue.Empty:
                     continue
 
-    def _memorize(self, name: str, memories: List[str]):        
+    def _memorize(self, name: str, memories: List[str]):
         # target_length = 1024 * 10 * 10
         # original_memories = memories.copy()
         # while sum(len(memory) for memory in memories) < target_length:
@@ -114,14 +124,15 @@ class MemoryManager:
         os.makedirs(dataset_dir, exist_ok=True)
 
         with open(f"{dataset_dir}/data.json", "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2,ensure_ascii=False)
+            json.dump(data, f, indent=2, ensure_ascii=False)
 
         with open(f"{dataset_dir}/dataset_info.json", "w", encoding="utf-8") as f:
             f.write(
                 json.dumps(
                     {"data": {"file_name": "data.json", "columns": {"prompt": "text"}}},
                     indent=2,
-                ensure_ascii=False)
+                    ensure_ascii=False,
+                )
             )
 
         args = dict(
