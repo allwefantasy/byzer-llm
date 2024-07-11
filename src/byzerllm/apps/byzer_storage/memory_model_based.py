@@ -1,3 +1,4 @@
+##File: /Users/allwefantasy/projects/byzer-llm/src/byzerllm/apps/byzer_storage/memory_model_based.py
 import asyncio
 from typing import List, Dict, Any
 from byzerllm.apps.byzer_storage.simple_api import ByzerStorage
@@ -8,7 +9,8 @@ import concurrent.futures
 import io
 import sys
 from contextlib import redirect_stdout, redirect_stderr
-
+import queue
+import threading
 
 class MemoryManager:
     _queue = asyncio.Queue()
@@ -19,6 +21,7 @@ class MemoryManager:
         home = os.path.expanduser("~")
         self.base_dir = base_dir or os.path.join(home, ".auto-coder")
         self.thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=5)
+        self.log_file = None
 
     @classmethod
     async def add_to_queue(cls, name: str, memories: List[str]):
@@ -38,25 +41,55 @@ class MemoryManager:
     
     async def memorize(self, name: str, memories: List[str]):
         loop = asyncio.get_running_loop()
-        output = await loop.run_in_executor(
+        await loop.run_in_executor(
             self.thread_pool, self._memorize_with_logs, name, memories
         )
-        print(f"Memorization for {name} completed. Output:")
-        print(output)
+        print(f"Memorization for {name} completed.")
 
-    def _memorize_with_logs(self, name: str, memories: List[str]) -> str:
+    def _memorize_with_logs(self, name: str, memories: List[str]):
         logs_dir = os.path.join(self.base_dir, "storage", "logs", "memorize")
         os.makedirs(logs_dir, exist_ok=True)
+        log_file = os.path.join(logs_dir, f"{name}.log")
 
-        output_buffer = io.StringIO()
-        with redirect_stdout(output_buffer), redirect_stderr(output_buffer):
+        log_queue = queue.Queue()
+        stop_event = threading.Event()
+
+        # Start the log writer thread
+        log_writer_thread = threading.Thread(target=self._log_writer, args=(log_queue, log_file, stop_event))
+        self.log_file = log_file
+        log_writer_thread.start()
+
+        class QueueStream:
+            def __init__(self, queue):
+                self.queue = queue
+
+            def write(self, msg):
+                self.queue.put(msg)
+
+            def flush(self):
+                pass
+
+        queue_stream = QueueStream(log_queue)
+
+        with redirect_stdout(queue_stream), redirect_stderr(queue_stream):
             self._memorize(name, memories)
-        v = output_buffer.getvalue()
-        with open(f"{logs_dir}/{name}.log", "w") as f:
-            f.write(v)
-        return v
+
+        # Signal the log writer to stop and wait for it to finish
+        stop_event.set()
+        log_writer_thread.join()
+
+    def _log_writer(self, log_queue: queue.Queue, log_file: str, stop_event: threading.Event):
+        with open(log_file, "w") as f:
+            while not stop_event.is_set() or not log_queue.empty():
+                try:
+                    msg = log_queue.get(timeout=0.1)
+                    f.write(msg)
+                    f.flush()
+                except queue.Empty:
+                    continue
 
     def _memorize(self, name: str, memories: List[str]):
+        # The rest of the _memorize method remains unchanged
         data = []
         for memory in memories:
             item = {
@@ -120,5 +153,3 @@ class MemoryManager:
         from llamafactory.train import tuner
 
         tuner.run_exp(args)
-
-
