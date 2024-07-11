@@ -13,6 +13,7 @@ from byzerllm.apps.byzer_storage.env import get_latest_byzer_retrieval_lib
 from byzerllm.apps.byzer_storage import env
 import torch
 from modelscope.hub.snapshot_download import snapshot_download
+from byzerllm.utils.client import InferBackend
 import huggingface_hub
 
 console = Console()
@@ -192,9 +193,7 @@ class StorageSubCommand:
 
             llm = byzerllm.ByzerLLM()
             if  args.enable_emb and  downloaded and not llm.is_model_exist("emb"):
-                status.update("[bold blue]Deploying embedding model...")
-                from byzerllm.utils.client import InferBackend
-
+                status.update("[bold blue]Deploying embedding model...")                
                 llm.setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
                 if has_gpu:
                     llm.setup_gpus_per_worker(0.1)
