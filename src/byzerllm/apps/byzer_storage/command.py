@@ -118,55 +118,55 @@ class StorageSubCommand:
         home = expanduser("~")
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
 
-        with console.status("[bold green]Starting Byzer Storage...") as status:
+        libs_dir = os.path.join(
+            base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}"
+        )
+        data_dir = os.path.join(base_dir, "storage", "data")
 
-            libs_dir = os.path.join(
-                base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}"
-            )
-            data_dir = os.path.join(base_dir, "storage", "data")
+        console.print("[bold green]Starting Byzer Storage...[/bold green]")
 
-            if not os.path.exists(os.path.join(data_dir, cluster)):
-                os.makedirs(data_dir, exist_ok=True)
-                rprint("[green]✓[/green] Created data directory")
+        if not os.path.exists(os.path.join(data_dir, cluster)):
+            os.makedirs(data_dir, exist_ok=True)
+            rprint("[green]✓[/green] Created data directory")
 
-            if not os.path.exists(libs_dir):
+        if not os.path.exists(libs_dir):
+            with console.status("[bold blue]Installing Byzer Storage...[/bold blue]"):
                 StorageSubCommand.install(args)
-                rprint("[green]✓[/green] Installed Byzer Storage")
+            rprint("[green]✓[/green] Installed Byzer Storage")
 
-            code_search_path = [libs_dir]
+        code_search_path = [libs_dir]
 
-            status.update("[bold blue]Connecting to cluster...")
+        with console.status("[bold blue]Connecting to cluster...[/bold blue]"):
             env_vars = byzerllm.connect_cluster(
                 address=args.ray_address, code_search_path=code_search_path
             )
-            rprint("[green]✓[/green] Connected to cluster")
+        rprint("[green]✓[/green] Connected to cluster")
 
+        with console.status("[bold blue]Launching gateway...[/bold blue]"):
             retrieval = ByzerRetrieval()
             retrieval.launch_gateway()
-            rprint("[green]✓[/green] Launched gateway")
+        rprint("[green]✓[/green] Launched gateway")
 
-            if retrieval.is_cluster_exists(name=cluster):
-                console.print(
-                    Panel(
-                        f"[yellow]Cluster {cluster} already exists. Please stop it first.[/yellow]"
-                    )
+        if retrieval.is_cluster_exists(name=cluster):
+            console.print(
+                Panel(
+                    f"[yellow]Cluster {cluster} already exists. Please stop it first.[/yellow]"
                 )
-                return
+            )
+            return
 
-            base_model_dir = os.path.join(base_dir, "storage", "models")
-            os.makedirs(base_model_dir, exist_ok=True)
-            bge_model = os.path.join(base_model_dir, "AI-ModelScope", "bge-large-zh")
+        base_model_dir = os.path.join(base_dir, "storage", "models")
+        os.makedirs(base_model_dir, exist_ok=True)
+        bge_model = os.path.join(base_model_dir, "AI-ModelScope", "bge-large-zh")
 
-            status.update("[bold blue]Checking GPU availability...")
-
+        with console.status("[bold blue]Checking GPU availability...[/bold blue]"):
             has_gpu = torch.cuda.is_available()
-            if has_gpu:
-                rprint("[green]✓[/green] GPU detected")
-            else:
-                rprint("[yellow]![/yellow] No GPU detected, using CPU")
+        if has_gpu:
+            rprint("[green]✓[/green] GPU detected")
+        else:
+            rprint("[yellow]![/yellow] No GPU detected, using CPU")
 
-            status.update("[bold blue]Downloading embedding model...")
-
+        with console.status("[bold blue]Checking embedding model...[/bold blue]"):
             downloaded = True
             if not os.path.exists(bge_model):
                 downloaded = False
@@ -191,9 +191,9 @@ class StorageSubCommand:
                 model_path = bge_model
                 rprint(f"[green]✓[/green] Embedding model found: {model_path}")
 
-            llm = byzerllm.ByzerLLM()
-            if  args.enable_emb and  downloaded and not llm.is_model_exist("emb"):
-                status.update("[bold blue]Deploying embedding model...")                
+        llm = byzerllm.ByzerLLM()
+        if args.enable_emb and downloaded and not llm.is_model_exist("emb"):
+            with console.status("[bold blue]Deploying embedding model...[/bold blue]"):
                 llm.setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
                 if has_gpu:
                     llm.setup_gpus_per_worker(0.1)
@@ -207,17 +207,16 @@ class StorageSubCommand:
                     udf_name="emb",
                     infer_params={},
                 )
-                rprint("[green]✓[/green] Deployed embedding model")
+            rprint("[green]✓[/green] Deployed embedding model")
 
-            if args.enable_model_memory and has_gpu:
+        if args.enable_model_memory and has_gpu:
+            with console.status("[bold blue]Checking Long-Memory model...[/bold blue]"):
                 downloaded = True
-                status.update("[bold blue]Checking Long-Memory model...")
                 llama_model = os.path.join(
                     base_model_dir, "meta-llama", "Meta-Llama-3-8B-Instruct-GPTQ"
                 )
                 if not os.path.exists(llama_model):
                     downloaded = False
-                    status.update("[bold blue]Downloading Long-Memory model...")
                     try:
                         model_path = snapshot_download(
                             model_id="meta-llama/Meta-Llama-3-8B-Instruct-GPTQ",
@@ -242,9 +241,12 @@ class StorageSubCommand:
                 else:
                     rprint("[green]✓[/green] Long-Memory model already exists")
 
-                if downloaded:
-                    check_dependencies()                    
-                    status.update("[bold blue]Starting long-term memory model...")
+            if downloaded:
+                with console.status("[bold blue]Checking dependencies...[/bold blue]"):
+                    check_dependencies()
+                with console.status(
+                    "[bold blue]Starting long-term memory model...[/bold blue]"
+                ):
                     llm.setup_gpus_per_worker(1).setup_cpus_per_worker(
                         0.001
                     ).setup_num_workers(1)
@@ -268,17 +270,16 @@ class StorageSubCommand:
                             "[yellow]![/yellow] Please check the error message and try again."
                         )
 
-            cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
-            if os.path.exists(cluster_json):
+        cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
+        if os.path.exists(cluster_json):
+            with console.status("[bold blue]Restoring Byzer Storage...[/bold blue]"):
                 StorageSubCommand.restore(args)
-                console.print(
-                    Panel(
-                        "[green]Byzer Storage restored and started successfully[/green]"
-                    )
-                )
-                return
+            console.print(
+                Panel("[green]Byzer Storage restored and started successfully[/green]")
+            )
+            return
 
-            status.update("[bold blue]Starting cluster...")
+        with console.status("[bold blue]Starting cluster...[/bold blue]"):
             builder = retrieval.cluster_builder()
             builder.set_name(cluster).set_location(data_dir).set_num_nodes(
                 1
@@ -288,12 +289,12 @@ class StorageSubCommand:
             ).set_enable_zgc()
             builder.start_cluster()
 
-            with open(
-                os.path.join(base_dir, "storage", "data", f"{cluster}.json"), "w"
-            ) as f:
-                f.write(json.dumps(retrieval.cluster_info(cluster), ensure_ascii=False))
+        with open(
+            os.path.join(base_dir, "storage", "data", f"{cluster}.json"), "w"
+        ) as f:
+            f.write(json.dumps(retrieval.cluster_info(cluster), ensure_ascii=False))
 
-            console.print(Panel("[green]Byzer Storage started successfully[/green]"))
+        console.print(Panel("[green]Byzer Storage started successfully[/green]"))
 
     @staticmethod
     def stop(args):
