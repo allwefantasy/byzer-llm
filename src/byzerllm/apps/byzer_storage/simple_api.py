@@ -1,6 +1,6 @@
 from byzerllm.utils.retrieval import ByzerRetrieval
 from byzerllm.utils.client import ByzerLLM, InferBackend, LLMRequest
-from byzerllm.utils.client.byzerllm_client import Templates        
+from byzerllm.utils.client.byzerllm_client import Templates
 from byzerllm.records import (
     SearchQuery,
     TableSettings,
@@ -248,7 +248,7 @@ class SchemaBuilder:
         return f"st({','.join(self.fields)})"
 
     def execute(self) -> bool:
-        schema = self.build()        
+        schema = self.build()
         if self.storage.retrieval.check_table_exists(
             self.storage.cluster_name, self.storage.database, self.storage.table
         ):
@@ -281,6 +281,7 @@ class ModelWriteBuilder:
 
     def execute(self):
         self.storage.memorize(self.memories)
+
 
 class ByzerStorage:
     _is_connected = False
@@ -333,11 +334,11 @@ class ByzerStorage:
         self.emb_model = emb_model
         self.database = database
         self.table = table
-
+        self.memory_manager = None
         self.base_dir = base_dir
 
         self.llm = ByzerLLM()
-        self.llm.setup_default_emb_model_name(self.emb_model)               
+        self.llm.setup_default_emb_model_name(self.emb_model)
 
     def query_builder(self) -> QueryBuilder:
         return QueryBuilder(self)
@@ -374,7 +375,7 @@ class ByzerStorage:
             fields=fields or [],
             sorts=sorts,
             limit=limit,
-        )        
+        )
         if search_query.filters and not search_query.keyword and not vector_field:
             return self.retrieval.filter(self.cluster_name, search_query)
         return self.retrieval.search(self.cluster_name, search_query)
@@ -386,31 +387,51 @@ class ByzerStorage:
         return self.retrieval.build_from_dicts(
             self.cluster_name, self.database, self.table, data
         )
-    
-    def memorize(self,memories:List[str]):                
-        def run():                     
-            from byzerllm.apps.byzer_storage.memory_model_based import MemoryManager        
-            memory_manager = MemoryManager(self,self.base_dir)                
-            name = f"{self.database}_{self.table}"   
-            asyncio.run(memory_manager.memorize(name,memories))
 
-        task = threading.Thread(target=run)
-        task.start()
-        logger.info("Memorization task started.")
+    def memorize(self, memories: List[str], remote: bool = True):
+        if not remote:
 
-    def remember(self, query: str):                
+            def run():
+                from byzerllm.apps.byzer_storage.memory_model_based import MemoryManager
+
+                memory_manager = MemoryManager(self, self.base_dir)
+                self.memory_manager = memory_manager
+                name = f"{self.database}_{self.table}"
+                asyncio.run(memory_manager.memorize(name, memories))
+
+            task = threading.Thread(target=run)
+            task.start()
+            logger.info("Memorization task started.")
+            return self.memory_manager
+        else:
+            import ray
+            from byzerllm.apps.byzer_storage.memory_model_based import MemoryManager
+            name = f"{self.database}_{self.table}"
+            mm = (
+                ray.remote(MemoryManager)
+                .options(name=name, num_gpus=1, lifetime="detached")
+                .remote(self, self.base_dir)
+                .memorize(f"{self.database}_{self.table}", memories)
+            )
+            return mm
+
+    def remember(self, query: str):
         llm = ByzerLLM()
         llm.setup_default_model_name("long_memory")
-        llm.setup_template("long_memory",Templates.qwen())
+        llm.setup_template("long_memory", Templates.qwen())
         name = f"{self.database}_{self.table}"
         loras_dir = os.path.join(self.base_dir, "storage", "loras")
         target_lora_dir = os.path.join(loras_dir, f"{name}")
 
         ## lora_name 和 lora_int_id 两个参数后续需要修改
-        v= llm.chat_oai(conversations=[{
-            "role": "user",
-            "content": query
-        }],llm_config={"gen.adapter_name_or_path": f"{target_lora_dir}","gen.lora_name":"default","gen.lora_int_id":1})
+        v = llm.chat_oai(
+            conversations=[{"role": "user", "content": query}],
+            llm_config={
+                "gen.adapter_name_or_path": f"{target_lora_dir}",
+                "gen.lora_name": "default",
+                "gen.lora_int_id": 1,
+            },
+        )
         return v[0].output
 
     def tokenize(self, s: str):
@@ -437,4 +458,3 @@ class ByzerStorage:
     def drop(self):
         self.retrieval.closeAndDeleteFile(self.cluster_name, self.database, self.table)
         self.retrieval.commit(self.cluster_name, self.database, self.table)
-        

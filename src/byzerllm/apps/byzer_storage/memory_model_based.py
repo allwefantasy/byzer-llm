@@ -89,10 +89,10 @@ class MemoryManager:
                     continue
 
     def _memorize(self, name: str, memories: List[str]):        
-        target_length = 1024 * 10 * 10
-        original_memories = memories.copy()
-        while sum(len(memory) for memory in memories) < target_length:
-            memories.extend(original_memories)
+        # target_length = 1024 * 10 * 10
+        # original_memories = memories.copy()
+        # while sum(len(memory) for memory in memories) < target_length:
+        #     memories.extend(original_memories)
 
         # The rest of the _memorize method remains unchanged
         data = []
