@@ -266,6 +266,22 @@ class SchemaBuilder:
         )
 
 
+class ModelWriteBuilder:
+    def __init__(self, storage: "ByzerStorage"):
+        self.storage = storage
+        self.memories = []
+
+    def add_memory(self, memory: str):
+        self.memories.append(memory)
+        return self
+
+    def add_memories(self, memories: List[str]):
+        self.memories.extend(memories)
+        return self
+
+    def execute(self):
+        self.storage.memorize(self.memories)
+
 class ByzerStorage:
     _is_connected = False
 
@@ -331,6 +347,9 @@ class ByzerStorage:
 
     def schema_builder(self) -> SchemaBuilder:
         return SchemaBuilder(self)
+
+    def write_model_builder(self) -> ModelWriteBuilder:
+        return ModelWriteBuilder(self)
 
     def _query(
         self,
