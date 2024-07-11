@@ -15,7 +15,6 @@ from enum import Enum, auto
 import os
 import jieba
 from loguru import logger
-from byzerllm.apps.byzer_storage.memory_model_based import MemoryManager
 import asyncio
 import threading
 
@@ -322,8 +321,7 @@ class ByzerStorage:
         self.base_dir = base_dir
 
         self.llm = ByzerLLM()
-        self.llm.setup_default_emb_model_name(self.emb_model)
-        self.memory_manager = MemoryManager(self, base_dir)         
+        self.llm.setup_default_emb_model_name(self.emb_model)               
 
     def query_builder(self) -> QueryBuilder:
         return QueryBuilder(self)
@@ -370,8 +368,10 @@ class ByzerStorage:
             self.cluster_name, self.database, self.table, data
         )
     
-    def memorize(self,memories:List[str]):
-        task = threading.Thread(target=self.memory_manager.memorize,args=(memories,))
+    def memorize(self,memories:List[str]):        
+        from byzerllm.apps.byzer_storage.memory_model_based import MemoryManager
+        memory_manager = MemoryManager(self,self.base_dir)
+        task = threading.Thread(target=memory_manager.memorize,args=(memories,))
         task.start()
         logger.info("Memorization task started.")
 
