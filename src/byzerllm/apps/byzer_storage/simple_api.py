@@ -342,7 +342,7 @@ class ByzerStorage:
     _is_connected = False
     
     @classmethod
-    def get_base_dir(cls):
+    def get_base_dir(cls,base_dir:str=None):
         home = os.path.expanduser("~")
         base_dir = base_dir or os.path.join(home, ".auto-coder")
         return base_dir
