@@ -284,6 +284,7 @@ class ModelWriteBuilder:
         self.per_device_train_batch_size = 2
         self.gradient_accumulation_steps = 4
         self.num_train_epochs = 1000.0
+        self.num_gpus = 1
 
     def add_memory(self, memory: str):
         self.memories.append(memory)
@@ -319,7 +320,11 @@ class ModelWriteBuilder:
 
     def set_num_train_epochs(self, num_train_epochs: float):
         self.num_train_epochs = num_train_epochs
-        return self
+        return self 
+
+    def set_num_gpus(self, num_gpus: int):
+        self.num_gpus = num_gpus
+        return self   
 
     def execute(self, remote: bool = True):
         config = {
@@ -330,7 +335,7 @@ class ModelWriteBuilder:
             "num_train_epochs": self.num_train_epochs,
             **self.options,
         }
-        return self.storage.memorize(self.memories, remote=remote, options=config)
+        return self.storage.memorize(self.memories, remote=remote, options=config, num_gpus=self.num_gpus)
 
 
 class ByzerStorage:
@@ -472,7 +477,8 @@ class ByzerStorage:
         self,
         memories: List[str],
         remote: bool = True,
-        options: Dict[str, Any] = {},        
+        options: Dict[str, Any] = {}, 
+        num_gpus: int = 1       
     ):        
         if not remote:
             def run():
@@ -494,7 +500,7 @@ class ByzerStorage:
             name = f"{self.database}_{self.table}"
             mm = (
                 ray.remote(MemoryManager)
-                .options(name=name, num_gpus=1, lifetime="detached")
+                .options(name=name, num_gpus=num_gpus, lifetime="detached")
                 .remote(self, self.base_dir, remote=True)
             )
             mm.memorize.remote(f"{self.database}_{self.table}", memories, options)
