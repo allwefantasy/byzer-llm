@@ -509,7 +509,7 @@ class ByzerStorage:
         name = f"{self.database}_{self.table}"
         ray.kill(ray.get_actor(name))
 
-    def remember(self, query: str, quick_memory: bool = True):       
+    def remember(self, query: str):       
         llm = ByzerLLM()
         llm.setup_default_model_name("long_memory")
         llm.setup_template("long_memory", Templates.qwen())
