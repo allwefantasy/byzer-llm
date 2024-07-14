@@ -19,6 +19,8 @@ import asyncio
 import threading
 import hashlib
 import time
+from byzerllm.utils.client.byzerllm_client import Template
+from langchain.prompts import PromptTemplate
 
 
 def generate_md5_hash(input_string: str) -> str:
@@ -521,9 +523,7 @@ class ByzerStorage:
         name = f"{self.database}_{self.table}"
         ray.kill(ray.get_actor(name))
 
-    def remember(self, query: str):   
-        from byzerllm.utils.client.byzerllm_client import Template
-        from langchain.prompts import PromptTemplate
+    def template(self):
         def llama3():
             def clean_func(v):            
                 if "<|im_end|>" in v:
@@ -548,10 +548,13 @@ class ByzerStorage:
                             generation_config={                            
                                 "generation.repetition_penalty":1.1,
                                 "generation.stop_token_ids":[128000,128001]},                  
-                            clean_func=clean_func)    
+                            clean_func=clean_func) 
+        return template    
+
+    def remember(self, query: str):                      
         llm = ByzerLLM()
         llm.setup_default_model_name("long_memory")
-        llm.setup_template("long_memory", llama3())
+        llm.setup_template("long_memory", self.llama3())
         name = f"{self.database}_{self.table}"
         loras_dir = os.path.join(self.base_dir, "storage", "loras")
         target_lora_dir = os.path.join(loras_dir, f"{name}")
