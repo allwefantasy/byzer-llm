@@ -459,7 +459,7 @@ class ByzerStorage:
                 "content": item,
                 "raw_content": item,
                 "summary": item,
-                "created_time": time.time() * 1000,
+                "created_time": int(time.time()),
             }
             for item in memories
         ]
