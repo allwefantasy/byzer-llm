@@ -17,6 +17,14 @@ import jieba
 from loguru import logger
 import asyncio
 import threading
+import hashlib
+import time
+
+
+def generate_md5_hash(input_string: str) -> str:
+    md5_hash = hashlib.md5()
+    md5_hash.update(input_string.encode("utf-8"))
+    return md5_hash.hexdigest()
 
 
 class DataType(Enum):
@@ -320,7 +328,7 @@ class ModelWriteBuilder:
             "per_device_train_batch_size": self.per_device_train_batch_size,
             "gradient_accumulation_steps": self.gradient_accumulation_steps,
             "num_train_epochs": self.num_train_epochs,
-            **self.options
+            **self.options,
         }
         return self.storage.memorize(self.memories, remote=remote, options=config)
 
@@ -430,16 +438,55 @@ class ByzerStorage:
             self.cluster_name, self.database, self.table, data
         )
 
-    def memorize(self, memories: List[str], remote: bool = True,options: Dict[str, Any] = {}):
+    def _short_memory(self, memories: List[str], options: Dict[str, Any] = {}):
+        if not self.retrieval.check_table_exists(
+            self.cluster_name, self.database, self.table
+        ):
+            _ = (
+                self.schema_builder()
+                .add_field("_id", DataType.STRING)
+                .add_field("name", DataType.STRING)
+                .add_field("content", DataType.STRING, [FieldOption.ANALYZE])
+                .add_field("raw_content", DataType.STRING, [FieldOption.NO_INDEX])
+                .add_array_field("summary", DataType.FLOAT)
+                .add_field("created_time", DataType.LONG, [FieldOption.SORT])
+                .execute()
+            )
+        data = [
+            {
+                "_id": f"{self.database}_{self.table}_{generate_md5_hash(item)}",
+                "name": "short_memory",
+                "content": item,
+                "raw_content": item,
+                "summary": item,
+                "created_time": time.time() * 1000,
+            }
+            for item in memories
+        ]
+
+        self.write_builder().add_items(
+            data, vector_fields=["summary"], search_fields=["content"]
+        ).execute()
+
+    def memorize(
+        self,
+        memories: List[str],
+        remote: bool = True,
+        options: Dict[str, Any] = {},
+        short_memory: bool = True,
+    ):
+        if short_memory:
+            self._short_memory(memories, options)
+            return
         if not remote:
 
             def run():
                 from byzerllm.apps.byzer_storage.memory_model_based import MemoryManager
 
-                memory_manager = MemoryManager(self, self.base_dir,remote=False)
+                memory_manager = MemoryManager(self, self.base_dir, remote=False)
                 self.memory_manager = memory_manager
                 name = f"{self.database}_{self.table}"
-                asyncio.run(memory_manager.memorize(name, memories,options))
+                asyncio.run(memory_manager.memorize(name, memories, options))
 
             task = threading.Thread(target=run)
             task.start()
@@ -453,19 +500,27 @@ class ByzerStorage:
             mm = (
                 ray.remote(MemoryManager)
                 .options(name=name, num_gpus=1, lifetime="detached")
-                .remote(self, self.base_dir,remote=True)
+                .remote(self, self.base_dir, remote=True)
             )
-            mm.memorize.remote(f"{self.database}_{self.table}", memories,options)
-            logger.info(f"Memorization task started. Please check ray dashboard for actor: `{name}`")
+            mm.memorize.remote(f"{self.database}_{self.table}", memories, options)
+            logger.info(
+                f"Memorization task started. Please check ray dashboard for actor: `{name}`"
+            )
             return mm
-    
+
     def cancel_job(self):
         import ray
+
         name = f"{self.database}_{self.table}"
         ray.kill(ray.get_actor(name))
 
+    def remember(self, query: str, short_memory: bool = True):
+        if short_memory:
+            query = self.query_builder()
+            query.set_vector_query(query, fields=["summary"])
+            results = query.set_search_query(query, fields=["content"]).execute()
+            return results
 
-    def remember(self, query: str):
         llm = ByzerLLM()
         llm.setup_default_model_name("long_memory")
         llm.setup_template("long_memory", Templates.qwen())
@@ -482,7 +537,7 @@ class ByzerStorage:
                 "gen.lora_int_id": 1,
             },
         )
-        return v[0].output
+        return [v[0].output]
 
     def tokenize(self, s: str):
         seg_list = jieba.cut(s, cut_all=False)
