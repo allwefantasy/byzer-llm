@@ -516,9 +516,9 @@ class ByzerStorage:
 
     def remember(self, query: str, quick_memory: bool = True):
         if quick_memory:
-            query = self.query_builder()
-            query.set_vector_query(query, fields=["summary"])
-            results = query.set_search_query(query, fields=["content"]).execute()
+            query_builder = self.query_builder()
+            query_builder.set_vector_query(query, fields=["summary"])
+            results = query_builder.set_search_query(query, fields=["content"]).execute()
             return results
 
         llm = ByzerLLM()
