@@ -438,7 +438,7 @@ class ByzerStorage:
             self.cluster_name, self.database, self.table, data
         )
 
-    def _quick_memory(self, memories: List[str], options: Dict[str, Any] = {}):
+    def quick_memory(self, memories: List[str], options: Dict[str, Any] = {}):
         if not self.retrieval.check_table_exists(
             self.cluster_name, self.database, self.table
         ):
@@ -472,14 +472,9 @@ class ByzerStorage:
         self,
         memories: List[str],
         remote: bool = True,
-        options: Dict[str, Any] = {},
-        quick_memory: bool = True,
-    ):
-        if quick_memory:
-            self._quick_memory(memories, options)
-            return
+        options: Dict[str, Any] = {},        
+    ):        
         if not remote:
-
             def run():
                 from byzerllm.apps.byzer_storage.memory_model_based import MemoryManager
 
@@ -514,13 +509,7 @@ class ByzerStorage:
         name = f"{self.database}_{self.table}"
         ray.kill(ray.get_actor(name))
 
-    def remember(self, query: str, quick_memory: bool = True):
-        if quick_memory:
-            query_builder = self.query_builder()
-            query_builder.set_vector_query(query, fields=["summary"])
-            results = query_builder.set_search_query(query, fields=["content"]).execute()
-            return results
-
+    def remember(self, query: str, quick_memory: bool = True):       
         llm = ByzerLLM()
         llm.setup_default_model_name("long_memory")
         llm.setup_template("long_memory", Templates.qwen())
