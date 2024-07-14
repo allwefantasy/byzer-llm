@@ -554,7 +554,7 @@ class ByzerStorage:
     def remember(self, query: str):                      
         llm = ByzerLLM()
         llm.setup_default_model_name("long_memory")
-        llm.setup_template("long_memory", self.llama3())
+        llm.setup_template("long_memory", self.templatess())
         name = f"{self.database}_{self.table}"
         loras_dir = os.path.join(self.base_dir, "storage", "loras")
         target_lora_dir = os.path.join(loras_dir, f"{name}")
