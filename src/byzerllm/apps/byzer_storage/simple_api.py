@@ -549,7 +549,7 @@ class ByzerStorage:
                                 "generation.repetition_penalty":1.1,
                                 "generation.stop_token_ids":[128000,128001]},                  
                             clean_func=clean_func) 
-        return template    
+        return llama3()    
 
     def remember(self, query: str):                      
         llm = ByzerLLM()
