@@ -521,10 +521,37 @@ class ByzerStorage:
         name = f"{self.database}_{self.table}"
         ray.kill(ray.get_actor(name))
 
-    def remember(self, query: str):       
+    def remember(self, query: str):   
+        from byzerllm.utils.client.byzerllm_client import Template
+        from langchain.prompts import PromptTemplate
+        def llama3():
+            def clean_func(v):            
+                if "<|im_end|>" in v:
+                    v = v.split("<|im_end|>")[0]
+                if "<|endoftext|>" in v:
+                    v = v.split("<|endoftext|>")[0] 
+                if "<|im_start|>" in v:             
+                    v = v.split("<|im_start|>")[0]   
+                return v   
+
+            def sys_format(t,v):
+                m = PromptTemplate.from_template(t)
+                return m.format(system_msg=v)
+
+
+            return Template(role_mapping={
+                            "user_role":"<|im_start|>user\n",
+                            "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
+                            "system_msg":"<|im_start|>system\n{system_msg}<|im_end|>",
+                            "system_msg_func":sys_format
+                            },
+                            generation_config={                            
+                                "generation.repetition_penalty":1.1,
+                                "generation.stop_token_ids":[128000,128001]},                  
+                            clean_func=clean_func)    
         llm = ByzerLLM()
         llm.setup_default_model_name("long_memory")
-        llm.setup_template("long_memory", Templates.qwen())
+        llm.setup_template("long_memory", llama3())
         name = f"{self.database}_{self.table}"
         loras_dir = os.path.join(self.base_dir, "storage", "loras")
         target_lora_dir = os.path.join(loras_dir, f"{name}")
