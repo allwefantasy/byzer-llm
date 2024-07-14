@@ -1,5 +1,7 @@
 import asyncio
 from typing import List, Dict, Any
+
+import ray.experimental
 from byzerllm.apps.byzer_storage.simple_api import ByzerStorage
 import time
 import json
@@ -10,6 +12,7 @@ import sys
 from contextlib import redirect_stdout, redirect_stderr
 import queue
 import threading
+import ray
 
 
 class MemoryManager:
@@ -167,5 +170,12 @@ class MemoryManager:
         )
         os.environ["WANDB_DISABLED"] = "true"
         from llamafactory.train import tuner
+        try:
+            tuner.run_exp({**args, **options})
+        except Exception as e:
+            print(f"Error: {e}")
+            if self.remote:
+                ray.actor.exit_actor()
+            
 
-        tuner.run_exp({**args, **options})
+
