@@ -318,7 +318,7 @@ def from_vllm_backend(
     if "backend.engine_use_ray" in infer_params:
         engine_use_ray = get_bool(infer_params, "backend.engine_use_ray", False)
 
-    tensor_parallel_size: int = int(num_gpus+1) if num_gpus >= 1 else 1
+    tensor_parallel_size: int = num_gpus
     gpu_memory_utilization: float = float(
         infer_params.get("backend.gpu_memory_utilization", 0.90)
     )
