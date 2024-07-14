@@ -438,7 +438,7 @@ class ByzerStorage:
             self.cluster_name, self.database, self.table, data
         )
 
-    def _short_memory(self, memories: List[str], options: Dict[str, Any] = {}):
+    def _quick_memory(self, memories: List[str], options: Dict[str, Any] = {}):
         if not self.retrieval.check_table_exists(
             self.cluster_name, self.database, self.table
         ):
@@ -473,10 +473,10 @@ class ByzerStorage:
         memories: List[str],
         remote: bool = True,
         options: Dict[str, Any] = {},
-        short_memory: bool = True,
+        quick_memory: bool = True,
     ):
-        if short_memory:
-            self._short_memory(memories, options)
+        if quick_memory:
+            self._quick_memory(memories, options)
             return
         if not remote:
 
@@ -514,8 +514,8 @@ class ByzerStorage:
         name = f"{self.database}_{self.table}"
         ray.kill(ray.get_actor(name))
 
-    def remember(self, query: str, short_memory: bool = True):
-        if short_memory:
+    def remember(self, query: str, quick_memory: bool = True):
+        if quick_memory:
             query = self.query_builder()
             query.set_vector_query(query, fields=["summary"])
             results = query.set_search_query(query, fields=["content"]).execute()
