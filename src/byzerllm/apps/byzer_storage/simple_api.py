@@ -284,7 +284,7 @@ class ModelWriteBuilder:
         self.per_device_train_batch_size = 2
         self.gradient_accumulation_steps = 4
         self.num_train_epochs = 1000.0
-        self.num_gpus = 1
+        self.num_gpus = 1.0
 
     def add_memory(self, memory: str):
         self.memories.append(memory)
@@ -322,7 +322,7 @@ class ModelWriteBuilder:
         self.num_train_epochs = num_train_epochs
         return self 
 
-    def set_num_gpus(self, num_gpus: int):
+    def set_num_gpus(self, num_gpus: float):
         self.num_gpus = num_gpus
         return self   
 
@@ -478,7 +478,7 @@ class ByzerStorage:
         memories: List[str],
         remote: bool = True,
         options: Dict[str, Any] = {}, 
-        num_gpus: int = 1       
+        num_gpus: float = 1       
     ):        
         if not remote:
             def run():
