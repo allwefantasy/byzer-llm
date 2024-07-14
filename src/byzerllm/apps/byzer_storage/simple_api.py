@@ -340,6 +340,12 @@ class ModelWriteBuilder:
 
 class ByzerStorage:
     _is_connected = False
+    
+    @classmethod
+    def get_base_dir(cls):
+        home = os.path.expanduser("~")
+        base_dir = base_dir or os.path.join(home, ".auto-coder")
+        return base_dir
 
     @classmethod
     def _connect_cluster(
@@ -370,7 +376,7 @@ class ByzerStorage:
 
         byzerllm.connect_cluster(address=ray_address, code_search_path=code_search_path)
         cls._is_connected = True
-        return True
+        return base_dir
 
     def __init__(
         self,
@@ -381,17 +387,17 @@ class ByzerStorage:
         ray_address: str = "auto",
         emb_model: str = "emb",
     ):
+        self.base_dir = ByzerStorage.get_base_dir(base_dir)
         if not ByzerStorage._is_connected:
             ByzerStorage._connect_cluster(cluster_name, base_dir, ray_address)
+
         self.retrieval = ByzerRetrieval()
         self.retrieval.launch_gateway()
         self.cluster_name = cluster_name or "byzerai_store"
         self.emb_model = emb_model
         self.database = database
         self.table = table
-        self.memory_manager = None
-        self.base_dir = base_dir
-
+        self.memory_manager = None        
         self.llm = ByzerLLM()
         self.llm.setup_default_emb_model_name(self.emb_model)
 
