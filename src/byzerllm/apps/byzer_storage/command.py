@@ -18,6 +18,7 @@ import huggingface_hub
 import byzerllm
 from pydantic import BaseModel
 from huggingface_hub import snapshot_download as hf_snapshot_download
+from typing import List, Optional, Tuple
 
 
 class StorageLocation(BaseModel):
@@ -196,14 +197,18 @@ class StorageSubCommand:
             llm = byzerllm.ByzerLLM()
 
             if llm.is_model_exist("long_memory"):
-                console.print("[yellow]![/yellow] Long-term memory model already deployed.")
+                console.print(
+                    "[yellow]![/yellow] Long-term memory model already deployed."
+                )
                 return error_summary
 
             console.print("[bold blue]Checking dependencies...")
             check_dependencies()
 
             console.print("[bold blue]Deploying long-term memory model...")
-            llm.setup_gpus_per_worker(1).setup_cpus_per_worker(0.001).setup_num_workers(1)
+            llm.setup_gpus_per_worker(1).setup_cpus_per_worker(0.001).setup_num_workers(
+                1
+            )
             llm.setup_infer_backend(InferBackend.VLLM)
             llm.deploy(
                 model_path=llama_model,
@@ -226,24 +231,28 @@ class StorageSubCommand:
 
     @staticmethod
     def model_memory_stop(args):
+        error_summary = []
         import byzerllm
 
         console.print("[bold blue]Stopping long-term memory model...")
-        byzerllm.connect_cluster(address=args.ray_address)
-        llm = byzerllm.ByzerLLM()
-
         try:
+            byzerllm.connect_cluster(address=args.ray_address)
+            llm = byzerllm.ByzerLLM()
+
             llm.undeploy("long_memory")
             console.print(
                 "[green]✓[/green] Long-term memory model stopped successfully"
             )
         except Exception as e:
-            console.print(
-                f"[red]✗[/red] Failed to stop long-term memory model: {str(e)}"
-            )
+            error_msg = f"Failed to stop long-term memory model: {str(e)}"
+            console.print(f"[red]✗[/red] {error_msg}")
+            error_summary.append(error_msg)
+
+        return error_summary
 
     @staticmethod
     def install(args):
+        error_summary = []
         version = args.version
         home = expanduser("~")
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
@@ -251,63 +260,88 @@ class StorageSubCommand:
             base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}"
         )
         if os.path.exists(libs_dir):
-            print(f"Byzer Storage version {version} already installed.")
-            return
+            logger.info(f"Byzer Storage version {version} already installed.")
+            return error_summary
 
-        if not os.path.exists(base_dir):
-            os.makedirs(base_dir, exist_ok=True)
+        try:
+            if not os.path.exists(base_dir):
+                os.makedirs(base_dir, exist_ok=True)
 
-        env_info = env.detect_env()
+            env_info = env.detect_env()
 
-        logger.info("Current environment:")
-        logger.info(env_info)
+            logger.info("Current environment:")
+            logger.info(env_info)
 
-        if env_info.java_version == "" or int(env_info.java_version) < 21:
-            logger.info("JDK 21 not found, downloading and installing JDK 21...")
-            try:
-                env.download_and_install_jdk21(env_info, base_dir)
-            except Exception as e:
-                logger.error(
-                    f"Error downloading and installing JDK 21: {str(e)}. You may need to install JDK 21 manually."
-                )
+            if env_info.java_version == "" or int(env_info.java_version) < 21:
+                logger.info("JDK 21 not found, downloading and installing JDK 21...")
+                try:
+                    env.download_and_install_jdk21(env_info, base_dir)
+                except Exception as e:
+                    error_msg = f"Error downloading and installing JDK 21: {str(e)}. You may need to install JDK 21 manually."
+                    logger.error(error_msg)
+                    error_summary.append(error_msg)
 
-        download_url = f"https://download.byzer.org/byzer-retrieval/byzer-retrieval-lib-{version}.tar.gz"
-        libs_dir = os.path.join(base_dir, "storage", "libs")
+            download_url = f"https://download.byzer.org/byzer-retrieval/byzer-retrieval-lib-{version}.tar.gz"
+            libs_dir = os.path.join(base_dir, "storage", "libs")
 
-        os.makedirs(libs_dir, exist_ok=True)
-        download_path = os.path.join(libs_dir, f"byzer-retrieval-lib-{version}.tar.gz")
-        if os.path.exists(download_path):
-            logger.info(f"Byzer Storage version {version} already downloaded.")
-        else:
+            os.makedirs(libs_dir, exist_ok=True)
+            download_path = os.path.join(
+                libs_dir, f"byzer-retrieval-lib-{version}.tar.gz"
+            )
+            if os.path.exists(download_path):
+                logger.info(f"Byzer Storage version {version} already downloaded.")
+            else:
 
-            def download_with_progressbar(url, filename):
-                def progress(count, block_size, total_size):
-                    percent = int(count * block_size * 100 / total_size)
-                    print(f"\rDownload progress: {percent}%", end="")
+                def download_with_progressbar(url, filename):
+                    def progress(count, block_size, total_size):
+                        percent = int(count * block_size * 100 / total_size)
+                        print(f"\rDownload progress: {percent}%", end="")
 
-                urllib.request.urlretrieve(url, filename, reporthook=progress)
+                    urllib.request.urlretrieve(url, filename, reporthook=progress)
 
-            logger.info(f"Download Byzer Storage version {version}: {download_url}")
-            download_with_progressbar(download_url, download_path)
+                logger.info(f"Download Byzer Storage version {version}: {download_url}")
+                download_with_progressbar(download_url, download_path)
 
-            with tarfile.open(download_path, "r:gz") as tar:
-                tar.extractall(path=libs_dir)
+                with tarfile.open(download_path, "r:gz") as tar:
+                    tar.extractall(path=libs_dir)
 
+        except Exception as e:
+            error_msg = f"Failed to install Byzer Storage: {str(e)}"
+            logger.error(error_msg)
+            error_summary.append(error_msg)
+
+        return error_summary
+
+    @staticmethod
     def collection(args):
-        from byzerllm.apps.llama_index.collection_manager import (
-            CollectionManager,
-            CollectionItem,
-        )
+        error_summary = []
+        try:
+            from byzerllm.apps.llama_index.collection_manager import (
+                CollectionManager,
+                CollectionItem,
+            )
 
-        home = expanduser("~")
-        base_dir = args.base_dir or os.path.join(home, ".auto-coder")
-        collection_manager = CollectionManager(base_dir)
-        if args.name:
-            collection = CollectionItem(name=args.name, description=args.description)
-            collection_manager.add_collection(collection)
-            print(f"Collection {args.name} added successfully.")
-        else:
-            print("Please provide collection name.")
+            home = expanduser("~")
+            base_dir = args.base_dir or os.path.join(home, ".auto-coder")
+            collection_manager = CollectionManager(base_dir)
+            if args.name:
+                collection = CollectionItem(
+                    name=args.name, description=args.description
+                )
+                collection_manager.add_collection(collection)
+                console.print(
+                    f"[green]✓[/green] Collection {args.name} added successfully."
+                )
+            else:
+                error_msg = "Please provide collection name."
+                console.print(f"[red]✗[/red] {error_msg}")
+                error_summary.append(error_msg)
+        except Exception as e:
+            error_msg = f"Failed to add collection: {str(e)}"
+            console.print(f"[red]✗[/red] {error_msg}")
+            error_summary.append(error_msg)
+
+        return error_summary
 
     @staticmethod
     def get_store_location(args):
@@ -330,104 +364,145 @@ class StorageSubCommand:
 
     @staticmethod
     def connect_cluster(args):
+        error_summary = []
         store_location = StorageSubCommand.get_store_location(args)
 
         console.print("[bold green]Starting Byzer Storage...[/bold green]")
 
-        if not os.path.exists(
-            os.path.join(store_location.data_dir, store_location.cluster)
-        ):
-            os.makedirs(store_location.data_dir, exist_ok=True)
-            rprint("[green]✓[/green] Created data directory")
+        try:
+            if not os.path.exists(
+                os.path.join(store_location.data_dir, store_location.cluster)
+            ):
+                os.makedirs(store_location.data_dir, exist_ok=True)
+                rprint("[green]✓[/green] Created data directory")
 
-        if not os.path.exists(store_location.libs_dir):
-            rprint("[bold blue]Installing Byzer Storage...[/bold blue]")
-            StorageSubCommand.install(args)
-            rprint("[green]✓[/green] Installed Byzer Storage")
+            if not os.path.exists(store_location.libs_dir):
+                rprint("[bold blue]Installing Byzer Storage...[/bold blue]")
+                install_errors = StorageSubCommand.install(args)
+                error_summary.extend(install_errors)
+                if not install_errors:
+                    rprint("[green]✓[/green] Installed Byzer Storage")
 
-        code_search_path = [store_location.libs_dir]
+            code_search_path = [store_location.libs_dir]
 
-        console.print("[bold blue]Connecting to cluster...[/bold blue]")
-        env_vars = byzerllm.connect_cluster(
-            address=args.ray_address, code_search_path=code_search_path
-        )
-        rprint("[green]✓[/green] Connected to cluster")
-        return (env_vars, store_location)
+            console.print("[bold blue]Connecting to cluster...[/bold blue]")
+            env_vars = byzerllm.connect_cluster(
+                address=args.ray_address, code_search_path=code_search_path
+            )
+            rprint("[green]✓[/green] Connected to cluster")
+        except Exception as e:
+            error_msg = f"Failed to connect to cluster: {str(e)}"
+            console.print(f"[red]✗[/red] {error_msg}")
+            error_summary.append(error_msg)
+            return None, None, error_summary
+
+        return env_vars, store_location, error_summary
 
     @staticmethod
     def start(args):
+        error_summary = []
         from byzerllm.utils.retrieval import ByzerRetrieval
 
-        env_vars, store_location = StorageSubCommand.connect_cluster(args)
-
-        console.print("[bold blue]Launching gateway...[/bold blue]")
-        retrieval = ByzerRetrieval()
-        retrieval.launch_gateway()
-        rprint("[green]✓[/green] Launched gateway")
-
-        if retrieval.is_cluster_exists(name=store_location.cluster):
-            console.print(
-                Panel(
-                    f"[yellow]Cluster {store_location.cluster} already exists. Please stop it first.[/yellow]"
-                )
-            )
-            return
-
-        base_model_dir = os.path.join(store_location.base_dir, "storage", "models")
-        os.makedirs(base_model_dir, exist_ok=True)
-
-        console.print("[bold blue]Checking GPU availability...[/bold blue]")
-        has_gpu = torch.cuda.is_available()
-        if has_gpu:
-            rprint("[green]✓[/green] GPU detected")
-        else:
-            rprint("[yellow]![/yellow] No GPU detected, using CPU")
-
-        if args.enable_emb:
-            StorageSubCommand.emb_start(args)
-
-        if args.enable_model_memory and has_gpu:
-            StorageSubCommand.model_memory_start(args)
-
-        cluster_json = os.path.join(
-            store_location.base_dir, "storage", "data", f"{store_location.cluster}.json"
+        env_vars, store_location, connect_errors = StorageSubCommand.connect_cluster(
+            args
         )
-        if os.path.exists(cluster_json):
-            console.print("[bold blue]Restoring Byzer Storage...[/bold blue]")
-            StorageSubCommand.restore(args)
-            console.print(
-                Panel("[green]Byzer Storage restored and started successfully[/green]")
-            )
-            return
+        error_summary.extend(connect_errors)
 
-        console.print("[bold blue]Starting cluster...[/bold blue]")
-        builder = retrieval.cluster_builder()
-        builder.set_name(store_location.cluster).set_location(
-            store_location.data_dir
-        ).set_num_nodes(args.num_nodes).set_node_cpu(args.node_cpus).set_node_memory(
-            f"{args.node_memory}g"
-        )
-        builder.set_java_home(env_vars["JAVA_HOME"]).set_path(
-            env_vars["PATH"]
-        ).set_enable_zgc()
-        builder.start_cluster()
+        if env_vars is None or store_location is None:
+            return error_summary
 
-        with open(
-            os.path.join(
+        try:
+            console.print("[bold blue]Launching gateway...[/bold blue]")
+            retrieval = ByzerRetrieval()
+            retrieval.launch_gateway()
+            rprint("[green]✓[/green] Launched gateway")
+
+            if retrieval.is_cluster_exists(name=store_location.cluster):
+                error_msg = f"Cluster {store_location.cluster} already exists. Please stop it first."
+                console.print(Panel(f"[yellow]{error_msg}[/yellow]"))
+                error_summary.append(error_msg)
+                return error_summary
+
+            base_model_dir = os.path.join(store_location.base_dir, "storage", "models")
+            os.makedirs(base_model_dir, exist_ok=True)
+
+            console.print("[bold blue]Checking GPU availability...[/bold blue]")
+            has_gpu = torch.cuda.is_available()
+            if has_gpu:
+                rprint("[green]✓[/green] GPU detected")
+            else:
+                rprint("[yellow]![/yellow] No GPU detected, using CPU")
+
+            if args.enable_emb:
+                emb_errors = StorageSubCommand.emb_start(args)
+                error_summary.extend(emb_errors)
+
+            if args.enable_model_memory and has_gpu:
+                memory_errors = StorageSubCommand.model_memory_start(args)
+                error_summary.extend(memory_errors)
+
+            cluster_json = os.path.join(
                 store_location.base_dir,
                 "storage",
                 "data",
                 f"{store_location.cluster}.json",
-            ),
-            "w",
-        ) as f:
-            f.write(
-                json.dumps(
-                    retrieval.cluster_info(store_location.cluster), ensure_ascii=False
-                )
             )
+            if os.path.exists(cluster_json):
+                console.print("[bold blue]Restoring Byzer Storage...[/bold blue]")
+                restore_errors = StorageSubCommand.restore(args)
+                error_summary.extend(restore_errors)
+                if not restore_errors:
+                    console.print(
+                        Panel(
+                            "[green]Byzer Storage restored and started successfully[/green]"
+                        )
+                    )
+                return error_summary
 
-        console.print(Panel("[green]Byzer Storage started successfully[/green]"))
+            console.print("[bold blue]Starting cluster...[/bold blue]")
+            try:
+                builder = retrieval.cluster_builder()
+                builder.set_name(store_location.cluster).set_location(
+                    store_location.data_dir
+                ).set_num_nodes(args.num_nodes).set_node_cpu(
+                    args.node_cpus
+                ).set_node_memory(
+                    f"{args.node_memory}g"
+                )
+                builder.set_java_home(env_vars["JAVA_HOME"]).set_path(
+                    env_vars["PATH"]
+                ).set_enable_zgc()
+                builder.start_cluster()
+
+                with open(
+                    os.path.join(
+                        store_location.base_dir,
+                        "storage",
+                        "data",
+                        f"{store_location.cluster}.json",
+                    ),
+                    "w",
+                ) as f:
+                    f.write(
+                        json.dumps(
+                            retrieval.cluster_info(store_location.cluster),
+                            ensure_ascii=False,
+                        )
+                    )
+
+                console.print(
+                    Panel("[green]Byzer Storage started successfully[/green]")
+                )
+            except Exception as e:
+                error_msg = f"Failed to start Byzer Storage cluster: {str(e)}"
+                console.print(f"[red]✗[/red] {error_msg}")
+                error_summary.append(error_msg)
+        except Exception as e:
+            error_msg = f"An unexpected error occurred: {str(e)}"
+            console.print(f"[red]✗[/red] {error_msg}")
+            error_summary.append(error_msg)
+
+        return error_summary
 
     @staticmethod
     def stop(args):
@@ -448,22 +523,27 @@ class StorageSubCommand:
         )
 
         if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
-            console.print("[red]✗[/red] No instance found.")
-            error_summary.append(
-                "No instance found. Please check if Byzer Storage is properly installed."
-            )
-            return
+            error_msg = "No instance found. Please check if Byzer Storage is properly installed."
+            console.print(f"[red]✗[/red] {error_msg}")
+            error_summary.append(error_msg)
+            return error_summary
 
-        env_vars, _ = StorageSubCommand.connect_cluster(args)
+        env_vars, _, connect_errors = StorageSubCommand.connect_cluster(args)
+        error_summary.extend(connect_errors)
+
+        if env_vars is None:
+            return error_summary
+
         console.print("[bold blue]Launching gateway...")
         try:
             retrieval = ByzerRetrieval()
             retrieval.launch_gateway()
             rprint("[green]✓[/green] Gateway launched")
         except Exception as e:
-            rprint(f"[red]✗[/red] Failed to launch gateway: {str(e)}")
+            error_msg = f"Failed to launch gateway: {str(e)}"
+            rprint(f"[red]✗[/red] {error_msg}")
             error_summary.append(
-                "Failed to launch gateway. Please check if Byzer Retrieval is properly installed."
+                f"{error_msg} Please check if Byzer Retrieval is properly installed."
             )
 
         console.print(f"[bold blue]Shutting down cluster {store_location.cluster}...")
@@ -471,15 +551,17 @@ class StorageSubCommand:
             retrieval.shutdown_cluster(cluster_name=store_location.cluster)
             rprint(f"[green]✓[/green] Cluster {store_location.cluster} shut down")
         except Exception as e:
-            rprint(
-                f"[red]✗[/red] Failed to shut down cluster {store_location.cluster}: {str(e)}"
+            error_msg = (
+                f"Failed to shut down cluster {store_location.cluster}: {str(e)}"
             )
-            error_summary.append(
-                f"Failed to shut down cluster {store_location.cluster}. You may need to manually stop it."
-            )
+            rprint(f"[red]✗[/red] {error_msg}")
+            error_summary.append(f"{error_msg} You may need to manually stop it.")
 
-        StorageSubCommand.emb_stop(args)
-        StorageSubCommand.model_memory_stop(args)
+        emb_stop_errors = StorageSubCommand.emb_stop(args)
+        error_summary.extend(emb_stop_errors)
+
+        model_memory_stop_errors = StorageSubCommand.model_memory_stop(args)
+        error_summary.extend(model_memory_stop_errors)
 
         if error_summary:
             console.print(
@@ -493,17 +575,18 @@ class StorageSubCommand:
         else:
             console.print(Panel("[green]Byzer Storage stopped successfully[/green]"))
 
+        return error_summary
+
     @staticmethod
     def export(args):
         import byzerllm
         from byzerllm.utils.retrieval import ByzerRetrieval
 
+        error_summary = []
         version = args.version
         cluster = args.cluster
         home = expanduser("~")
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
-
-        error_summary = []
 
         console.print("[bold blue]Exporting Byzer Storage...")
         libs_dir = os.path.join(
@@ -512,11 +595,10 @@ class StorageSubCommand:
         cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
 
         if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
-            console.print("[red]✗[/red] No instance found.")
-            error_summary.append(
-                "No instance found. Please check if Byzer Storage is properly installed."
-            )
-            return
+            error_msg = "No instance found. Please check if Byzer Storage is properly installed."
+            console.print(f"[red]✗[/red] {error_msg}")
+            error_summary.append(error_msg)
+            return error_summary
 
         code_search_path = [libs_dir]
 
@@ -527,21 +609,24 @@ class StorageSubCommand:
             )
             rprint("[green]✓[/green] Connected to cluster")
         except Exception as e:
-            rprint(f"[red]✗[/red] Failed to connect to cluster: {str(e)}")
+            error_msg = f"Failed to connect to cluster: {str(e)}"
+            rprint(f"[red]✗[/red] {error_msg}")
             error_summary.append(
-                "Failed to connect to cluster. Please check your network connection and Ray setup."
+                f"{error_msg} Please check your network connection and Ray setup."
             )
+            return error_summary
 
-        console.print("[bold blue]Launching gateway...")
         try:
             retrieval = ByzerRetrieval()
             retrieval.launch_gateway()
             rprint("[green]✓[/green] Gateway launched")
         except Exception as e:
-            rprint(f"[red]✗[/red] Failed to launch gateway: {str(e)}")
+            error_msg = f"Failed to launch gateway: {str(e)}"
+            rprint(f"[red]✗[/red] {error_msg}")
             error_summary.append(
-                "Failed to launch gateway. Please check if Byzer Retrieval is properly installed."
+                f"{error_msg} Please check if Byzer Retrieval is properly installed."
             )
+            return error_summary
 
         console.print(f"[bold blue]Exporting cluster {cluster} information...")
         try:
@@ -552,11 +637,10 @@ class StorageSubCommand:
                 f"[green]✓[/green] Cluster {cluster} information exported to {cluster_json}"
             )
         except Exception as e:
-            rprint(
-                f"[red]✗[/red] Failed to export cluster {cluster} information: {str(e)}"
-            )
+            error_msg = f"Failed to export cluster {cluster} information: {str(e)}"
+            rprint(f"[red]✗[/red] {error_msg}")
             error_summary.append(
-                f"Failed to export cluster {cluster} information. You may need to check the cluster status."
+                f"{error_msg} You may need to check the cluster status."
             )
 
         if error_summary:
@@ -571,17 +655,18 @@ class StorageSubCommand:
         else:
             console.print(Panel("[green]Byzer Storage exported successfully[/green]"))
 
+        return error_summary
+
     @staticmethod
     def restore(args):
         import byzerllm
         from byzerllm.utils.retrieval import ByzerRetrieval
 
+        error_summary = []
         version = args.version
         cluster = args.cluster
         home = expanduser("~")
         base_dir = args.base_dir or os.path.join(home, ".auto-coder")
-
-        error_summary = []
 
         console.print("[bold blue]Restoring Byzer Storage...")
         libs_dir = os.path.join(
@@ -590,11 +675,10 @@ class StorageSubCommand:
         cluster_json = os.path.join(base_dir, "storage", "data", f"{cluster}.json")
 
         if not os.path.exists(cluster_json) or not os.path.exists(libs_dir):
-            console.print("[red]✗[/red] No instance found.")
-            error_summary.append(
-                "No instance found. Please check if Byzer Storage is properly installed."
-            )
-            return
+            error_msg = "No instance found. Please check if Byzer Storage is properly installed."
+            console.print(f"[red]✗[/red] {error_msg}")
+            error_summary.append(error_msg)
+            return error_summary
 
         code_search_path = [libs_dir]
 
@@ -605,10 +689,12 @@ class StorageSubCommand:
             )
             rprint("[green]✓[/green] Connected to cluster")
         except Exception as e:
-            rprint(f"[red]✗[/red] Failed to connect to cluster: {str(e)}")
+            error_msg = f"Failed to connect to cluster: {str(e)}"
+            rprint(f"[red]✗[/red] {error_msg}")
             error_summary.append(
-                "Failed to connect to cluster. Please check your network connection and Ray setup."
+                f"{error_msg} Please check your network connection and Ray setup."
             )
+            return error_summary
 
         console.print("[bold blue]Launching gateway...")
         try:
@@ -616,10 +702,12 @@ class StorageSubCommand:
             retrieval.launch_gateway()
             rprint("[green]✓[/green] Gateway launched")
         except Exception as e:
-            rprint(f"[red]✗[/red] Failed to launch gateway: {str(e)}")
+            error_msg = f"Failed to launch gateway: {str(e)}"
+            rprint(f"[red]✗[/red] {error_msg}")
             error_summary.append(
-                "Failed to launch gateway. Please check if Byzer Retrieval is properly installed."
+                f"{error_msg} Please check if Byzer Retrieval is properly installed."
             )
+            return error_summary
 
         console.print(f"[bold blue]Restoring cluster {cluster}...")
         try:
@@ -629,14 +717,16 @@ class StorageSubCommand:
                 retrieval.restore_from_cluster_info(cluster_info)
                 rprint(f"[green]✓[/green] Cluster {cluster} restored successfully")
             else:
-                rprint(f"[yellow]![/yellow] Cluster {cluster} already exists")
-                error_summary.append(
+                warning_msg = (
                     f"Cluster {cluster} already exists. No restoration needed."
                 )
+                rprint(f"[yellow]![/yellow] {warning_msg}")
+                error_summary.append(warning_msg)
         except Exception as e:
-            rprint(f"[red]✗[/red] Failed to restore cluster {cluster}: {str(e)}")
+            error_msg = f"Failed to restore cluster {cluster}: {str(e)}"
+            rprint(f"[red]✗[/red] {error_msg}")
             error_summary.append(
-                f"Failed to restore cluster {cluster}. You may need to check the cluster status and configuration."
+                f"{error_msg} You may need to check the cluster status and configuration."
             )
 
         if error_summary:
@@ -650,5 +740,5 @@ class StorageSubCommand:
                 console.print(f"- {error}")
         else:
             console.print(Panel("[green]Byzer Storage restored successfully[/green]"))
-        
-        return error_summary     
+
+        return error_summary
