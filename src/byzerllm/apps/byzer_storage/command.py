@@ -17,6 +17,7 @@ from byzerllm.utils.client import InferBackend
 import huggingface_hub
 import byzerllm
 from pydantic import BaseModel
+from huggingface_hub import snapshot_download as hf_snapshot_download
 
 
 class StorageLocation(BaseModel):
@@ -51,6 +52,30 @@ def check_dependencies():
 class StorageSubCommand:
 
     @staticmethod
+    def download_model(model_id: str, cache_dir: str, local_files_only: bool = False) -> str:
+        console.print(f"[bold blue]Downloading model {model_id}...")
+        try:
+            if "meta-llama" in model_id:
+                model_path = hf_snapshot_download(
+                    repo_id=model_id,
+                    cache_dir=cache_dir,
+                    local_files_only=local_files_only
+                )
+            else:
+                model_path = snapshot_download(
+                    model_id=model_id,
+                    cache_dir=cache_dir,
+                    local_files_only=local_files_only
+                )
+            console.print(f"[green]✓[/green] Model downloaded: {model_path}")
+            return model_path
+        except Exception as e:
+            console.print(f"[red]✗[/red] Failed to download model: {str(e)}")
+            console.print(f"[yellow]![/yellow] Please manually download the model '{model_id}'")
+            console.print(f"[yellow]![/yellow] and place it in the directory: {cache_dir}")
+            return None
+
+    @staticmethod
     def emb_start(args):
         import byzerllm
         from byzerllm.utils.retrieval import ByzerRetrieval
@@ -63,9 +88,9 @@ class StorageSubCommand:
         console.print("[bold blue]Starting embedding model...")
 
         if not os.path.exists(bge_model):
-            console.print("[red]✗[/red] Embedding model not found.")
-            console.print(f"Please download the model to: {bge_model}")
-            return
+            bge_model = StorageSubCommand.download_model("AI-ModelScope/bge-large-zh", base_model_dir, local_files_only=huggingface_hub.constants.HF_HUB_OFFLINE)
+            if not bge_model:
+                return
 
         byzerllm.connect_cluster(address=args.ray_address)
         llm = byzerllm.ByzerLLM()
@@ -120,9 +145,9 @@ class StorageSubCommand:
         console.print("[bold blue]Starting long-term memory model...")
 
         if not os.path.exists(llama_model):
-            console.print("[red]✗[/red] Long-term memory model not found.")
-            console.print(f"Please download the model to: {llama_model}")
-            return
+            llama_model = StorageSubCommand.download_model("meta-llama/Meta-Llama-3-8B-Instruct-GPTQ", base_model_dir)
+            if not llama_model:
+                return
 
         if not torch.cuda.is_available():
             console.print(
