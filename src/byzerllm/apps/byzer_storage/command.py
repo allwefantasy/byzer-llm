@@ -52,10 +52,10 @@ def check_dependencies():
 class StorageSubCommand:
 
     @staticmethod
-    def download_model(model_id: str, cache_dir: str, local_files_only: bool = False) -> str:
+    def download_model(model_id: str, cache_dir: str, local_files_only: bool = False,use_huggingface:bool=False) -> str:
         console.print(f"[bold blue]Downloading model {model_id}...")
         try:
-            if "meta-llama" in model_id:
+            if use_huggingface:
                 model_path = hf_snapshot_download(
                     repo_id=model_id,
                     cache_dir=cache_dir,
@@ -253,9 +253,7 @@ class StorageSubCommand:
             download_with_progressbar(download_url, download_path)
 
             with tarfile.open(download_path, "r:gz") as tar:
-                tar.extractall(path=libs_dir)
-
-        print("Byzer Storage installed successfully")
+                tar.extractall(path=libs_dir)        
 
     def collection(args):
         from byzerllm.apps.llama_index.collection_manager import (
@@ -339,7 +337,6 @@ class StorageSubCommand:
 
         base_model_dir = os.path.join(store_location.base_dir, "storage", "models")
         os.makedirs(base_model_dir, exist_ok=True)
-        bge_model = os.path.join(base_model_dir, "AI-ModelScope", "bge-large-zh")
 
         console.print("[bold blue]Checking GPU availability...[/bold blue]")
         has_gpu = torch.cuda.is_available()
@@ -348,30 +345,7 @@ class StorageSubCommand:
         else:
             rprint("[yellow]![/yellow] No GPU detected, using CPU")
 
-        console.print("[bold blue]Checking embedding model...[/bold blue]")
-        downloaded = True
-        if not os.path.exists(bge_model):
-            downloaded = False
-            try:
-                model_path = snapshot_download(
-                    model_id="AI-ModelScope/bge-large-zh",
-                    cache_dir=base_model_dir,
-                    local_files_only=huggingface_hub.constants.HF_HUB_OFFLINE,
-                )
-                rprint(f"[green]✓[/green] Embedding model downloaded: {model_path}")
-                downloaded = True
-            except Exception as e:
-                rprint(f"[red]✗[/red] Failed to download embedding model: {str(e)}")
-                rprint(
-                    "[yellow]![/yellow] Please manually download the model 'AI-ModelScope/bge-large-zh'"
-                )
-                rprint(f"[yellow]![/yellow] and place it in the directory: {bge_model}")
-                rprint("[yellow]![/yellow] Then restart this process.")
-        else:
-            model_path = bge_model
-            rprint(f"[green]✓[/green] Embedding model found: {model_path}")
-
-        if args.enable_emb and downloaded:
+        if args.enable_emb:
             StorageSubCommand.emb_start(args)
 
         if args.enable_model_memory and has_gpu:
