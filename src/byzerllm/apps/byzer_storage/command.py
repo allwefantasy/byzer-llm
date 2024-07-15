@@ -181,7 +181,7 @@ class StorageSubCommand:
         check_dependencies()
 
         console.print("[bold blue]Deploying long-term memory model...")
-        llm.setup_gpus_per_worker(0.9).setup_cpus_per_worker(0.001).setup_num_workers(1)
+        llm.setup_gpus_per_worker(1).setup_cpus_per_worker(0.001).setup_num_workers(1)
         llm.setup_infer_backend(InferBackend.VLLM)
         try:
             llm.deploy(
