@@ -57,7 +57,8 @@ class StorageSubCommand:
         cache_dir: str,
         local_files_only: bool = False,
         use_huggingface: bool = False,
-    ) -> str:
+    ) -> Tuple[Optional[str], List[str]]:
+        error_summary = []
         console.print(f"[bold blue]Downloading model {model_id}...")
         try:
             if use_huggingface:
@@ -73,19 +74,22 @@ class StorageSubCommand:
                     local_files_only=local_files_only,
                 )
             console.print(f"[green]✓[/green] Model downloaded: {model_path}")
-            return model_path
+            return model_path, error_summary
         except Exception as e:
-            console.print(f"[red]✗[/red] Failed to download model: {str(e)}")
+            error_msg = f"Failed to download model: {str(e)}"
+            console.print(f"[red]✗[/red] {error_msg}")
             console.print(
                 f"[yellow]![/yellow] Please manually download the model '{model_id}'"
             )
             console.print(
                 f"[yellow]![/yellow] and place it in the directory: {cache_dir}"
             )
-            return None
+            error_summary.append(error_msg)
+            return None, error_summary
 
     @staticmethod
     def emb_start(args):
+        error_summary = []
         import byzerllm
         from byzerllm.utils.retrieval import ByzerRetrieval
 
@@ -97,54 +101,69 @@ class StorageSubCommand:
         console.print("[bold blue]Starting embedding model...")
 
         if not os.path.exists(bge_model):
-            bge_model = StorageSubCommand.download_model(
+            bge_model, download_errors = StorageSubCommand.download_model(
                 "AI-ModelScope/bge-large-zh",
                 base_model_dir,
                 local_files_only=huggingface_hub.constants.HF_HUB_OFFLINE,
             )
+            error_summary.extend(download_errors)
             if not bge_model:
-                return
+                error_summary.append("Failed to download embedding model")
+                return error_summary
 
-        byzerllm.connect_cluster(address=args.ray_address)
-        llm = byzerllm.ByzerLLM()
+        try:
+            byzerllm.connect_cluster(address=args.ray_address)
+            llm = byzerllm.ByzerLLM()
 
-        if llm.is_model_exist("emb"):
-            console.print("[yellow]![/yellow] Embedding model already deployed.")
-            return
+            if llm.is_model_exist("emb"):
+                console.print("[yellow]![/yellow] Embedding model already deployed.")
+                return error_summary
 
-        console.print("[bold blue]Deploying embedding model...")
-        llm.setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
+            console.print("[bold blue]Deploying embedding model...")
+            llm.setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
 
-        if torch.cuda.is_available():
-            llm.setup_gpus_per_worker(0.1)
-        else:
-            llm.setup_gpus_per_worker(0)
+            if torch.cuda.is_available():
+                llm.setup_gpus_per_worker(0.1)
+            else:
+                llm.setup_gpus_per_worker(0)
 
-        llm.setup_cpus_per_worker(0.01).setup_worker_concurrency(20)
-        llm.deploy(
-            model_path=bge_model,
-            pretrained_model_type="custom/bge",
-            udf_name="emb",
-            infer_params={},
-        )
-        console.print("[green]✓[/green] Embedding model deployed successfully")
+            llm.setup_cpus_per_worker(0.01).setup_worker_concurrency(20)
+            llm.deploy(
+                model_path=bge_model,
+                pretrained_model_type="custom/bge",
+                udf_name="emb",
+                infer_params={},
+            )
+            console.print("[green]✓[/green] Embedding model deployed successfully")
+        except Exception as e:
+            error_msg = f"Failed to deploy embedding model: {str(e)}"
+            console.print(f"[red]✗[/red] {error_msg}")
+            error_summary.append(error_msg)
+
+        return error_summary
 
     @staticmethod
     def emb_stop(args):
+        error_summary = []
         import byzerllm
 
         console.print("[bold blue]Stopping embedding model...")
-        byzerllm.connect_cluster(address=args.ray_address)
-        llm = byzerllm.ByzerLLM()
-
         try:
+            byzerllm.connect_cluster(address=args.ray_address)
+            llm = byzerllm.ByzerLLM()
+
             llm.undeploy("emb")
             console.print("[green]✓[/green] Embedding model stopped successfully")
         except Exception as e:
-            console.print(f"[red]✗[/red] Failed to stop embedding model: {str(e)}")
+            error_msg = f"Failed to stop embedding model: {str(e)}"
+            console.print(f"[red]✗[/red] {error_msg}")
+            error_summary.append(error_msg)
+
+        return error_summary
 
     @staticmethod
     def model_memory_start(args):
+        error_summary = []
         import byzerllm
         from byzerllm.utils.retrieval import ByzerRetrieval
 
@@ -158,32 +177,34 @@ class StorageSubCommand:
         console.print("[bold blue]Starting long-term memory model...")
 
         if not os.path.exists(llama_model):
-            llama_model = StorageSubCommand.download_model(
+            llama_model, download_errors = StorageSubCommand.download_model(
                 "meta-llama/Meta-Llama-3-8B-Instruct-GPTQ", base_model_dir
             )
+            error_summary.extend(download_errors)
             if not llama_model:
-                return
+                error_summary.append("Failed to download long-term memory model")
+                return error_summary
 
         if not torch.cuda.is_available():
-            console.print(
-                "[red]✗[/red] GPU not available. Long-term memory model requires GPU."
-            )
-            return
+            error_msg = "GPU not available. Long-term memory model requires GPU."
+            console.print(f"[red]✗[/red] {error_msg}")
+            error_summary.append(error_msg)
+            return error_summary
 
-        byzerllm.connect_cluster(address=args.ray_address)
-        llm = byzerllm.ByzerLLM()
-
-        if llm.is_model_exist("long_memory"):
-            console.print("[yellow]![/yellow] Long-term memory model already deployed.")
-            return
-
-        console.print("[bold blue]Checking dependencies...")
-        check_dependencies()
-
-        console.print("[bold blue]Deploying long-term memory model...")
-        llm.setup_gpus_per_worker(1).setup_cpus_per_worker(0.001).setup_num_workers(1)
-        llm.setup_infer_backend(InferBackend.VLLM)
         try:
+            byzerllm.connect_cluster(address=args.ray_address)
+            llm = byzerllm.ByzerLLM()
+
+            if llm.is_model_exist("long_memory"):
+                console.print("[yellow]![/yellow] Long-term memory model already deployed.")
+                return error_summary
+
+            console.print("[bold blue]Checking dependencies...")
+            check_dependencies()
+
+            console.print("[bold blue]Deploying long-term memory model...")
+            llm.setup_gpus_per_worker(1).setup_cpus_per_worker(0.001).setup_num_workers(1)
+            llm.setup_infer_backend(InferBackend.VLLM)
             llm.deploy(
                 model_path=llama_model,
                 pretrained_model_type="custom/auto",
@@ -197,9 +218,11 @@ class StorageSubCommand:
                 "[green]✓[/green] Long-term memory model deployed successfully"
             )
         except Exception as e:
-            console.print(
-                f"[red]✗[/red] Failed to deploy long-term memory model: {str(e)}"
-            )
+            error_msg = f"Failed to deploy long-term memory model: {str(e)}"
+            console.print(f"[red]✗[/red] {error_msg}")
+            error_summary.append(error_msg)
+
+        return error_summary
 
     @staticmethod
     def model_memory_stop(args):
