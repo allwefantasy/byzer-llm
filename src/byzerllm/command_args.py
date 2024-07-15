@@ -189,11 +189,7 @@ def get_command_args(input_args: Optional[List[str]] = None):
     storage_start_command.add_argument("--base_dir", default="", help="")
     storage_start_command.add_argument(
         "--enable_emb", action="store_true", help="Enable embedding model"
-    )
-    storage_start_command.add_argument(
-        "--enable_model_memory", action="store_true", help="Enable model memory"
-    )
-
+    )    
     storage_start_command.add_argument(
         "--enable_model_memory",
         action="store_true",
