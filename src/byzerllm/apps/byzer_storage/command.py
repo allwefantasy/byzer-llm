@@ -627,3 +627,5 @@ class StorageSubCommand:
                 console.print(f"- {error}")
         else:
             console.print(Panel("[green]Byzer Storage restored successfully[/green]"))
+        
+        return error_summary     
