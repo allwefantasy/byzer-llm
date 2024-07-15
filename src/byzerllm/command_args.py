@@ -194,6 +194,30 @@ def get_command_args(input_args: Optional[List[str]] = None):
         "--enable_model_memory", action="store_true", help="Enable model memory"
     )
 
+    storage_start_command.add_argument(
+        "--enable_model_memory",
+        action="store_true",
+        help="Enable model memory",
+    )
+    storage_start_command.add_argument(
+        "--num_nodes",
+        type=int,
+        default=1,
+        help="Number of nodes in the cluster",
+    )
+    storage_start_command.add_argument(
+        "--node_cpus",
+        type=int,
+        default=1,
+        help="Number of CPUs per node",
+    )
+    storage_start_command.add_argument(
+        "--node_memory",
+        type=int,
+        default=2,
+        help="Memory per node in GB",
+    )
+
     # stop 子命令
     storage_stop_command = storage_cmd_subparsers.add_parser(
         "stop", help="Stop Byzer Storage"
