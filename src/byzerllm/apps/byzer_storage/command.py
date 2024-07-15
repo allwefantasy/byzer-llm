@@ -366,7 +366,7 @@ class StorageSubCommand:
         builder = retrieval.cluster_builder()
         builder.set_name(store_location.cluster).set_location(
             store_location.data_dir
-        ).set_num_nodes(1).set_node_cpu(1).set_node_memory("2g")
+        ).set_num_nodes(args.num_nodes).set_node_cpu(args.node_cpus).set_node_memory(f"{args.node_memory}g")
         builder.set_java_home(env_vars["JAVA_HOME"]).set_path(
             env_vars["PATH"]
         ).set_enable_zgc()
