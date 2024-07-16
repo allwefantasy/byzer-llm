@@ -182,7 +182,7 @@ class MemoryManager:
                 data.append(item)
         elif stage == "sft":
             if memories:
-                with concurrent.futures.ThreadPoolExecutor() as executor:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
                     futures = []
                     for memory in memories:
                         llm = byzerllm.ByzerLLM().from_default_model(name)
