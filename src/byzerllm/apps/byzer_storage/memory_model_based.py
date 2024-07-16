@@ -201,6 +201,7 @@ class MemoryManager:
         elif stage == "sft":
             if memories:
                 for memory in memories:
+                    llm = byzerllm.ByzerLLM().from_default_model(name)                    
                     qa_pairs = self.to_qa_pairs(memory, llm)
                     for qa_pair in qa_pairs:
                         item = {
