@@ -531,13 +531,7 @@ class ByzerStorage:
 
     def template(self):
         def llama3():
-            def clean_func(v):            
-                if "<|im_end|>" in v:
-                    v = v.split("<|im_end|>")[0]
-                if "<|endoftext|>" in v:
-                    v = v.split("<|endoftext|>")[0] 
-                if "<|im_start|>" in v:             
-                    v = v.split("<|im_start|>")[0]   
+            def clean_func(v):                              
                 return v   
 
             def sys_format(t,v):
@@ -546,9 +540,11 @@ class ByzerStorage:
 
 
             return Template(role_mapping={
-                            "user_role":"<|im_start|>user\n",
-                            "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
-                            "system_msg":"<|im_start|>system\n{system_msg}<|im_end|>",
+                            "user_role":"<|start_header_id|>user<|end_header_id|>",
+                            "assistant_role": "<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+                            "system_msg":'''<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+{system_msg}<|eot_id|>''',
                             "system_msg_func":sys_format
                             },
                             generation_config={                            
