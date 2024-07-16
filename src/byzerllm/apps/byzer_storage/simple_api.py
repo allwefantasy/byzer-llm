@@ -566,6 +566,8 @@ class ByzerStorage:
                 "gen.adapter_name_or_path": f"{target_lora_dir}",
                 "gen.lora_name": "default",
                 "gen.lora_int_id": 1,
+                "gen.temperature": 0.0,
+                "gen.top_p": 1.0,
             },
         )
         return [v[0].output]
