@@ -43,17 +43,21 @@ class MemoryManager:
             cls._queue.task_done()
         cls._is_processing = False
 
-    async def memorize(self, name: str, memories: List[str],options: Dict[str, Any] = {}):
+    async def memorize(
+        self, name: str, memories: List[str], options: Dict[str, Any] = {}
+    ):
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(
-            self.thread_pool, self._memorize_with_logs, name, memories,options
+            self.thread_pool, self._memorize_with_logs, name, memories, options
         )
         print(f"Memorization for {name} completed.")
 
-    def _memorize_with_logs(self, name: str, memories: List[str],options: Dict[str, Any] = {}):
+    def _memorize_with_logs(
+        self, name: str, memories: List[str], options: Dict[str, Any] = {}
+    ):
 
         if self.remote:
-            self._memorize(name, memories,options=options)
+            self._memorize(name, memories, options=options)
             return
 
         logs_dir = os.path.join(self.base_dir, "storage", "logs", "memorize")
@@ -101,7 +105,7 @@ class MemoryManager:
                 except queue.Empty:
                     continue
 
-    def _memorize(self, name: str, memories: List[str],options: Dict[str, Any] = {}):
+    def _memorize(self, name: str, memories: List[str], options: Dict[str, Any] = {}):
         # target_length = 1024 * 10 * 10
         # original_memories = memories.copy()
         # while sum(len(memory) for memory in memories) < target_length:
@@ -170,12 +174,11 @@ class MemoryManager:
         )
         os.environ["WANDB_DISABLED"] = "true"
         from llamafactory.train import tuner
+
         try:
             tuner.run_exp({**args, **options})
         except Exception as e:
             print(f"Error: {e}")
+        finally:
             if self.remote:
                 ray.actor.exit_actor()
-            
-
-
