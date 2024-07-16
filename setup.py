@@ -37,7 +37,7 @@ setup(
     package_dir={"": "src"},
     packages=find_packages("src"),    
     package_data={
-        "byzerllm":['bark/assets/**/*']
+        "byzerllm":['bark/assets/**/*','apps/byzer_storage/alpaca_zh.json']        
     },
     install_requires=install_requires,
     classifiers=[        

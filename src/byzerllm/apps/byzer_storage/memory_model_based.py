@@ -13,7 +13,22 @@ from contextlib import redirect_stdout, redirect_stderr
 import queue
 import threading
 import ray
+import byzerllm
+from typing import List,Union,Dict
+from pydantic import BaseModel
+from byzerllm.apps.utils import TagExtractor, Tag
+import importlib
 
+
+class QAPair(BaseModel):
+    question: str
+    answer: str
+
+
+def read_alpaca_zh():
+    with importlib.resources.path('byzerllm.apps.byzer_storage', 'alpaca_zh.json') as json_path:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
 
 class MemoryManager:
     _queue = asyncio.Queue()
@@ -105,7 +120,47 @@ class MemoryManager:
                 except queue.Empty:
                     continue
 
-    def _memorize(self, name: str, memories: List[str], options: Dict[str, Any] = {}):
+    @byzerllm.prompt()
+    def _convert_pretrain_text_to_instruction(self, text: str):
+        """
+        根据提供的信息，生成多个相关的问题，这些问题的回答，最终要能覆盖里面所有的信息。
+
+        下面是一些信息：
+
+        {{text}}
+
+        现在请开始生成问题，每个问题使用<_question_>标签包裹，每个回答使用<_answer_>标签包裹，最后
+        每个一组问题和回答使用<_group_>标签包裹。
+        """
+
+    @byzerllm.prompt()
+    def _format(text: str) -> str:
+        """
+        下面是一些问答信息：
+
+        {{text}}
+
+
+        请将每个问题使用<_question_>标签包裹，每个回答使用<_answer_>标签包裹，最后
+        每个一组问题和回答使用<_group_>标签包裹。
+        """
+
+    def to_qa_pairs(self, text: str, llm) -> List[QAPair]:
+        v = self._convert_pretrain_text_to_instruction.with_llm(llm).run(text)
+        format_v = self._format.with_llm(llm).run(v)
+        root_tag = TagExtractor(format_v).extract()
+        qa_pairs = []
+        for item in root_tag.content:
+            for item1 in item.content:
+                qa_pairs.append(
+                    QAPair(
+                        question=item1.content[0].content,
+                        answer=item1.content[1].content,
+                    )
+                )
+        return qa_pairs
+
+    def _memorize(self, name: str, memories: List[Union[str,Dict[str,Any]]], options: Dict[str, Any] = {}):
         # target_length = 1024 * 10 * 10
         # original_memories = memories.copy()
         # while sum(len(memory) for memory in memories) < target_length:
@@ -113,12 +168,7 @@ class MemoryManager:
 
         # The rest of the _memorize method remains unchanged
         data = []
-        for memory in memories:
-            item = {
-                "text": memory,
-            }
-            data.append(item)
-
+        stage = options.get("stage","pt")        
         base_model_dir = os.path.join(self.base_dir, "storage", "models")
         llama_model = os.path.join(
             base_model_dir, "meta-llama", "Meta-Llama-3-8B-Instruct-GPTQ"
@@ -130,17 +180,50 @@ class MemoryManager:
         os.makedirs(loras_dir, exist_ok=True)
         os.makedirs(dataset_dir, exist_ok=True)
 
-        with open(f"{dataset_dir}/data.json", "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
 
-        with open(f"{dataset_dir}/dataset_info.json", "w", encoding="utf-8") as f:
-            f.write(
-                json.dumps(
-                    {"data": {"file_name": "data.json", "columns": {"prompt": "text"}}},
-                    indent=2,
-                    ensure_ascii=False,
+        if stage == "pt":
+            for memory in memories:
+                item = {
+                    "text": memory,
+                }
+                data.append(item)
+            with open(f"{dataset_dir}/data.json", "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+
+            with open(f"{dataset_dir}/dataset_info.json", "w", encoding="utf-8") as f:
+                f.write(
+                    json.dumps(
+                        {"data": {"file_name": "data.json", "columns": {"prompt": "text"}}},
+                        indent=2,
+                        ensure_ascii=False,
+                    )
                 )
-            )
+        elif stage == "sft":
+            if memories:
+                for memory in memories:
+                    qa_pairs = self.to_qa_pairs(memory, llm)
+                    for qa_pair in qa_pairs:
+                        item = {
+                            "instruction": qa_pair.question,
+                            "input": "",
+                            "output": qa_pair.answer,
+                        }
+                        data.append(item)                
+            else:
+                v = read_alpaca_zh()
+                data.extend(v)
+
+            with open(f"{dataset_dir}/data.json", "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+
+            with open(f"{dataset_dir}/dataset_info.json", "w", encoding="utf-8") as f:
+                f.write(
+                    json.dumps(
+                        {"data": {"file_name": "data.json"}},
+                        indent=2,
+                        ensure_ascii=False,
+                    )
+                )
 
         args = dict(
             stage="pt",

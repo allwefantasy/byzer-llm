@@ -282,6 +282,7 @@ class ModelWriteBuilder:
         self.memories = []
         self.options = {}
         self.cutoff_len = 1024
+        self.stage = "pt"
         self.max_samples = 1000000
         self.per_device_train_batch_size = 2
         self.gradient_accumulation_steps = 4
@@ -311,6 +312,10 @@ class ModelWriteBuilder:
     def set_max_samples(self, max_samples: int):
         self.max_samples = max_samples
         return self
+    
+    def set_stage(self, stage: str):
+        self.stage = stage
+        return self
 
     def set_per_device_train_batch_size(self, per_device_train_batch_size: int):
         self.per_device_train_batch_size = per_device_train_batch_size
@@ -335,6 +340,7 @@ class ModelWriteBuilder:
             "per_device_train_batch_size": self.per_device_train_batch_size,
             "gradient_accumulation_steps": self.gradient_accumulation_steps,
             "num_train_epochs": self.num_train_epochs,
+            "stage": self.stage,
             **self.options,
         }
         return self.storage.memorize(self.memories, remote=remote, options=config, num_gpus=self.num_gpus)
