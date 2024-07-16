@@ -161,12 +161,6 @@ class MemoryManager:
         return qa_pairs
 
     def _memorize(self, name: str, memories: List[Union[str,Dict[str,Any]]], options: Dict[str, Any] = {}):
-        # target_length = 1024 * 10 * 10
-        # original_memories = memories.copy()
-        # while sum(len(memory) for memory in memories) < target_length:
-        #     memories.extend(original_memories)
-
-        # The rest of the _memorize method remains unchanged
         data = []
         stage = options.get("stage","pt")        
         base_model_dir = os.path.join(self.base_dir, "storage", "models")
@@ -180,51 +174,44 @@ class MemoryManager:
         os.makedirs(loras_dir, exist_ok=True)
         os.makedirs(dataset_dir, exist_ok=True)
 
-
         if stage == "pt":
             for memory in memories:
                 item = {
                     "text": memory,
                 }
                 data.append(item)
-            with open(f"{dataset_dir}/data.json", "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-
-            with open(f"{dataset_dir}/dataset_info.json", "w", encoding="utf-8") as f:
-                f.write(
-                    json.dumps(
-                        {"data": {"file_name": "data.json", "columns": {"prompt": "text"}}},
-                        indent=2,
-                        ensure_ascii=False,
-                    )
-                )
         elif stage == "sft":
             if memories:
-                for memory in memories:
-                    llm = byzerllm.ByzerLLM().from_default_model(name)                    
-                    qa_pairs = self.to_qa_pairs(memory, llm)
-                    for qa_pair in qa_pairs:
-                        item = {
-                            "instruction": qa_pair.question,
-                            "input": "",
-                            "output": qa_pair.answer,
-                        }
-                        data.append(item)                
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    futures = []
+                    for memory in memories:
+                        llm = byzerllm.ByzerLLM().from_default_model(name)
+                        futures.append(executor.submit(self.to_qa_pairs, memory, llm))
+                    
+                    for future in concurrent.futures.as_completed(futures):
+                        qa_pairs = future.result()
+                        for qa_pair in qa_pairs:
+                            item = {
+                                "instruction": qa_pair.question,
+                                "input": "",
+                                "output": qa_pair.answer,
+                            }
+                            data.append(item)
             else:
                 v = read_alpaca_zh()
                 data.extend(v)
 
-            with open(f"{dataset_dir}/data.json", "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
+        with open(f"{dataset_dir}/data.json", "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
 
-            with open(f"{dataset_dir}/dataset_info.json", "w", encoding="utf-8") as f:
-                f.write(
-                    json.dumps(
-                        {"data": {"file_name": "data.json"}},
-                        indent=2,
-                        ensure_ascii=False,
-                    )
+        with open(f"{dataset_dir}/dataset_info.json", "w", encoding="utf-8") as f:
+            f.write(
+                json.dumps(
+                    {"data": {"file_name": "data.json", "columns": {"prompt": "text"} if stage == "pt" else None}},
+                    indent=2,
+                    ensure_ascii=False,
                 )
+            )
 
         args = dict(
             stage="pt",
