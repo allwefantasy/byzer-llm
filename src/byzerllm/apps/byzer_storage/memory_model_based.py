@@ -18,6 +18,7 @@ from typing import List,Union,Dict
 from pydantic import BaseModel
 from byzerllm.apps.utils import TagExtractor, Tag
 import importlib
+from loguru import logger
 
 
 class QAPair(BaseModel):
@@ -168,6 +169,7 @@ class MemoryManager:
                         answer=item1.content[1].content,
                     )
                 )
+        logger.info(f"Generated {len(qa_pairs)} QA pairs.")        
         return qa_pairs
 
     def _memorize(self, name: str, memories: List[Union[str,Dict[str,Any]]], options: Dict[str, Any] = {}):
