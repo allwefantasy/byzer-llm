@@ -66,10 +66,15 @@ class MemoryManager:
     async def memorize(
         self, name: str, memories: List[str], options: Dict[str, Any] = {}
     ):
-        loop = asyncio.get_running_loop()
-        await loop.run_in_executor(
-            self.thread_pool, self._memorize_with_logs, name, memories, options
-        )
+        try:
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(
+                self.thread_pool, self._memorize_with_logs, name, memories, options
+            )
+        finally:
+            if self.remote:
+                ray.actor.exit_actor()
+
         print(f"Memorization for {name} completed.")
 
     def _memorize_with_logs(
@@ -126,7 +131,7 @@ class MemoryManager:
                     continue
 
     @byzerllm.prompt()
-    def _convert_pretrain_text_to_instruction(self, text: str):
+    def _convert_pretrain_text_to_instruction(self, text: str)->str:
         """
         根据提供的信息，生成多个相关的问题，这些问题的回答，最终要能覆盖里面所有的信息。
 
@@ -250,11 +255,4 @@ class MemoryManager:
         )
         os.environ["WANDB_DISABLED"] = "true"
         from llamafactory.train import tuner
-
-        try:
-            tuner.run_exp({**args, **options})
-        except Exception as e:
-            print(f"Error: {e}")
-        finally:
-            if self.remote:
-                ray.actor.exit_actor()
+        tuner.run_exp({**args, **options})        
