@@ -34,13 +34,18 @@ class MemoryManager:
     _queue = asyncio.Queue()
     _is_processing = False
 
-    def __init__(self, storage: ByzerStorage, base_dir: str, remote: bool = True):
+    def __init__(self, 
+                 storage: ByzerStorage, 
+                 base_dir: str, 
+                 model_name: str = "deepseek_chat",
+                 remote: bool = True):
         self.storage = storage
         home = os.path.expanduser("~")
         self.base_dir = base_dir or os.path.join(home, ".auto-coder")
         self.thread_pool = concurrent.futures.ThreadPoolExecutor(max_workers=5)
         self.log_file = None
         self.remote = remote
+        self.model_name = model_name
 
     @classmethod
     async def add_to_queue(cls, name: str, memories: List[str]):
@@ -184,8 +189,8 @@ class MemoryManager:
             if memories:
                 with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
                     futures = []
-                    for memory in memories:
-                        llm = byzerllm.ByzerLLM().from_default_model(name)
+                    llm = byzerllm.ByzerLLM().from_default_model(self.model_name)
+                    for memory in memories:                        
                         futures.append(executor.submit(self.to_qa_pairs, memory, llm))
                     
                     for future in concurrent.futures.as_completed(futures):
