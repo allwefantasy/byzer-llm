@@ -50,5 +50,5 @@ def connect_cluster(address:str="auto",java_home:Optional[str]=None,
        logger.warning("code_search_path is ignored because JAVA_HOME is not set")         
 
     ray.init(address=address,namespace="default",ignore_reinit_error=True,
-                    job_config=job_config)
+                    job_config=job_config,log_to_driver=False)
     return env_vars 
