@@ -295,31 +295,57 @@ class CustomSaasAPI:
         response_format: str = "verbose_json",
         timestamp_granularities: List[str] = ["word"],
     ):
+        import tempfile
+        import base64
 
-        audio_file = open("/path/to/file/speech.mp3", "rb")
-        start_time = time.monotonic()
-        transcription = self.client.audio.transcriptions.create(
-            model=self.model or "whisper-1",
-            file=audio_file,
-            response_format=response_format,
-            timestamp_granularities=timestamp_granularities,
-        )
-        time_cost = time.monotonic() - start_time
-        return [
-            (
-                json.dumps(transcription.to_dict(), ensure_ascii=True),
-                {
-                    "metadata": {
-                        "request_id": "",
-                        "input_tokens_count": 0,
-                        "generated_tokens_count": 0,
-                        "time_cost": time_cost,
-                        "first_token_time": 0,
-                        "speed": 0,
-                    }
-                },
-            )
-        ]
+        # Extract audio format and base64 data
+        data_prefix = "data:audio/"
+        base64_prefix = ";base64,"
+        if not audio.startswith(data_prefix):
+            raise ValueError("Invalid audio data format")
+        
+        format_end = audio.index(base64_prefix)
+        audio_format = audio[len(data_prefix):format_end]
+        base64_data = audio[format_end + len(base64_prefix):]
+        
+        # Decode the base64 audio data
+        audio_data = base64.b64decode(base64_data)
+
+        # Create a temporary file with the correct extension
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{audio_format}') as temp_audio_file:
+            temp_audio_file.write(audio_data)
+            temp_audio_file_path = temp_audio_file.name
+
+        try:
+            start_time = time.monotonic()
+            with open(temp_audio_file_path, "rb") as audio_file:
+                transcription = self.client.audio.transcriptions.create(
+                    model=self.model or "whisper-1",
+                    file=audio_file,
+                    response_format=response_format,
+                    timestamp_granularities=timestamp_granularities,
+                )
+            time_cost = time.monotonic() - start_time
+
+            return [
+                (
+                    json.dumps(transcription.to_dict(), ensure_ascii=True),
+                    {
+                        "metadata": {
+                            "request_id": "",
+                            "input_tokens_count": 0,
+                            "generated_tokens_count": 0,
+                            "time_cost": time_cost,
+                            "first_token_time": 0,
+                            "speed": 0,
+                        }
+                    },
+                )
+            ]
+        finally:
+            # Clean up the temporary file
+            import os
+            os.unlink(temp_audio_file_path)
 
     def image_to_text(self, ins: str, **kwargs):
         pass
