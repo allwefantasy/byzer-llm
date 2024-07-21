@@ -159,8 +159,8 @@ class MemoryManager:
     def to_qa_pairs(self, text: str, llm) -> List[QAPair]:
         print(f"Generating QA pairs for {text}",flush=True)
         v = self._convert_pretrain_text_to_instruction.with_llm(llm).run(text)
-        format_v = self._format.with_llm(llm).run(v)
-        root_tag = TagExtractor(format_v).extract()
+        # format_v = self._format.with_llm(llm).run(v)
+        root_tag = TagExtractor(v).extract()
         qa_pairs = []
         for item in root_tag.content:
             for item1 in item.content:
