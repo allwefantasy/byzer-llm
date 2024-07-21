@@ -157,6 +157,7 @@ class MemoryManager:
         """
 
     def to_qa_pairs(self, text: str, llm) -> List[QAPair]:
+        print(f"Generating QA pairs for {text}",flush=True)
         v = self._convert_pretrain_text_to_instruction.with_llm(llm).run(text)
         format_v = self._format.with_llm(llm).run(v)
         root_tag = TagExtractor(format_v).extract()
@@ -169,7 +170,7 @@ class MemoryManager:
                         answer=item1.content[1].content,
                     )
                 )
-        print(f"Generated {len(qa_pairs)} QA pairs for {text}")
+        print(f"Generated {len(qa_pairs)} QA pairs.",flush=True)
         logger.info(f"Generated {len(qa_pairs)} QA pairs.")        
         return qa_pairs
 
