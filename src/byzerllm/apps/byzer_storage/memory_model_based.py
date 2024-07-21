@@ -14,7 +14,7 @@ import queue
 import threading
 import ray
 import byzerllm
-from typing import List,Union,Dict
+from typing import List, Union, Dict
 from pydantic import BaseModel
 from byzerllm.apps.utils import TagExtractor, Tag
 import importlib
@@ -27,19 +27,24 @@ class QAPair(BaseModel):
 
 
 def read_alpaca_zh():
-    with importlib.resources.path('byzerllm.apps.byzer_storage', 'alpaca_zh.json') as json_path:
-        with open(json_path, 'r', encoding='utf-8') as f:
+    with importlib.resources.path(
+        "byzerllm.apps.byzer_storage", "alpaca_zh.json"
+    ) as json_path:
+        with open(json_path, "r", encoding="utf-8") as f:
             return json.load(f)
+
 
 class MemoryManager:
     _queue = asyncio.Queue()
     _is_processing = False
 
-    def __init__(self, 
-                 storage: ByzerStorage, 
-                 base_dir: str, 
-                 model_name: str = "deepseek_chat",
-                 remote: bool = True):
+    def __init__(
+        self,
+        storage: ByzerStorage,
+        base_dir: str,
+        model_name: str = "deepseek_chat",
+        remote: bool = True,
+    ):
         self.storage = storage
         home = os.path.expanduser("~")
         self.base_dir = base_dir or os.path.join(home, ".auto-coder")
@@ -132,7 +137,7 @@ class MemoryManager:
                     continue
 
     @byzerllm.prompt()
-    def _convert_pretrain_text_to_instruction(self, text: str)->str:
+    def _convert_pretrain_text_to_instruction(self, text: str) -> str:
         """
         根据提供的信息，生成多个相关的问题，这些问题的回答，最终要能覆盖里面所有的信息,生成的问题越多越好。
 
@@ -145,7 +150,7 @@ class MemoryManager:
         """
 
     @byzerllm.prompt()
-    def _format(self,text: str) -> str:
+    def _format(self, text: str) -> str:
         """
         下面是一些问答信息：
 
@@ -157,26 +162,38 @@ class MemoryManager:
         """
 
     def to_qa_pairs(self, text: str, llm) -> List[QAPair]:
-        print(f"Generating QA pairs for {text}",flush=True)
+        print(f"Generating QA pairs for {text}", flush=True)
         v = self._convert_pretrain_text_to_instruction.with_llm(llm).run(text)
+        print(v)
         # format_v = self._format.with_llm(llm).run(v)
         root_tag = TagExtractor(v).extract()
         qa_pairs = []
+        # _group_
         for item in root_tag.content:
-            for item1 in item.content:
-                qa_pairs.append(
-                    QAPair(
-                        question=item1.content[0],
-                        answer=item1.content[1]
+            qas = item.content
+            if len(qas) == 2:
+                if (
+                    qas[0].start_tag == "<_question_>"
+                    and qas[0].end_tag == "</_question_>"
+                    and qas[1].start_tag == "<_answer_>"
+                    and qas[1].end_tag == "</_answer_>"
+                ):
+                    qa_pairs.append(
+                        QAPair(question=qas[0].content, answer=qas[1].content)
                     )
-                )
-        print(f"Generated {len(qa_pairs)} QA pairs.",flush=True)
-        logger.info(f"Generated {len(qa_pairs)} QA pairs.")        
+
+        print(f"Generated {len(qa_pairs)} QA pairs.", flush=True)
+        logger.info(f"Generated {len(qa_pairs)} QA pairs.")
         return qa_pairs
 
-    def _memorize(self, name: str, memories: List[Union[str,Dict[str,Any]]], options: Dict[str, Any] = {}):
+    def _memorize(
+        self,
+        name: str,
+        memories: List[Union[str, Dict[str, Any]]],
+        options: Dict[str, Any] = {},
+    ):
         data = []
-        stage = options.get("stage","pt")        
+        stage = options.get("stage", "pt")
         base_model_dir = os.path.join(self.base_dir, "storage", "models")
         llama_model = os.path.join(
             base_model_dir, "meta-llama", "Meta-Llama-3-8B-Instruct-GPTQ"
@@ -199,9 +216,9 @@ class MemoryManager:
                 with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
                     futures = []
                     llm = byzerllm.ByzerLLM().from_default_model(self.model_name)
-                    for memory in memories:                        
+                    for memory in memories:
                         futures.append(executor.submit(self.to_qa_pairs, memory, llm))
-                    
+
                     for future in concurrent.futures.as_completed(futures):
                         qa_pairs = future.result()
                         for qa_pair in qa_pairs:
@@ -221,7 +238,12 @@ class MemoryManager:
         with open(f"{dataset_dir}/dataset_info.json", "w", encoding="utf-8") as f:
             f.write(
                 json.dumps(
-                    {"data": {"file_name": "data.json", "columns": {"prompt": "text"} if stage == "pt" else None}},
+                    {
+                        "data": {
+                            "file_name": "data.json",
+                            "columns": {"prompt": "text"} if stage == "pt" else None,
+                        }
+                    },
                     indent=2,
                     ensure_ascii=False,
                 )
@@ -259,4 +281,5 @@ class MemoryManager:
         )
         os.environ["WANDB_DISABLED"] = "true"
         from llamafactory.train import tuner
-        tuner.run_exp({**args, **options})        
+
+        tuner.run_exp({**args, **options})

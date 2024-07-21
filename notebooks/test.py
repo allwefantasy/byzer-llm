@@ -8,6 +8,16 @@ sample_text = """<_group_> <_question_>祝海林的生日是哪一天？</_quest
 <_group_> <_question_>祝海林的生日是否在中国的春节期间？</_question_> <_answer_>这取决于具体年份的春节日期，但通常2月1号可能接近或就在春节期间。</_answer_> </_group_>
 <_group_> <_question_>祝海林的生日是否在公历的2月？</_question_> <_answer_>是的，祝海林的生日在公历的2月1号。</_answer_> </_group_>"""
 
+sample_text = """
+<_group_>
+  <_question_>祝海林的生日是哪一天？</_question_>
+  <_answer_>祝海林的生日是2月1号。</_answer_>
+</_group_>
+
+<_group_>
+  
+"""
+
 # Parse as list of dictionaries
 result_list = TagExtractor(sample_text).extract()
 print(result_list)

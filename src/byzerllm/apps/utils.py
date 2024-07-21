@@ -178,5 +178,6 @@ class TagExtractor:
                 else:
                     self.extract_str_content()
             elif self.is_not_in_tag_str():
-                self.extract_content_not_in_tag()            
+                self.extract_content_not_in_tag()
+                                                           
         return self.root_tag
