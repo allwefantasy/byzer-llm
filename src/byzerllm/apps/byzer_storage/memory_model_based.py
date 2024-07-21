@@ -163,7 +163,7 @@ class MemoryManager:
 
     def to_qa_pairs(self, text: str, llm) -> List[QAPair]:
         print(f"Generating QA pairs for {text}", flush=True)
-        v = self._convert_pretrain_text_to_instruction.with_llm(llm).run(text)        
+        v = self._convert_pretrain_text_to_instruction.with_llm(llm).run(text)
         # format_v = self._format.with_llm(llm).run(v)
         root_tag = TagExtractor(v).extract()
         qa_pairs = []
@@ -232,20 +232,18 @@ class MemoryManager:
                 data.extend(v)
 
         if len(data) < 1000:
-            data = data * (1000 // len(data) + 1)      
+            data = data * (1000 // len(data) + 1)
 
         with open(f"{dataset_dir}/data.json", "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
         with open(f"{dataset_dir}/dataset_info.json", "w", encoding="utf-8") as f:
+            r = {"data": {"file_name": "data.json"}}
+            if stage == "pt":
+                r["data"]["columns"] = {"prompt": "text"}
             f.write(
                 json.dumps(
-                    {
-                        "data": {
-                            "file_name": "data.json",
-                            "columns": {"prompt": "text"} if stage == "pt" else None,
-                        }
-                    },
+                    r,
                     indent=2,
                     ensure_ascii=False,
                 )
