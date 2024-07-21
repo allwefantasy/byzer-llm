@@ -134,7 +134,7 @@ class MemoryManager:
     @byzerllm.prompt()
     def _convert_pretrain_text_to_instruction(self, text: str)->str:
         """
-        根据提供的信息，生成多个相关的问题，这些问题的回答，最终要能覆盖里面所有的信息。
+        根据提供的信息，生成多个相关的问题，这些问题的回答，最终要能覆盖里面所有的信息,生成的问题越多越好。
 
         下面是一些信息：
 
@@ -169,6 +169,7 @@ class MemoryManager:
                         answer=item1.content[1].content,
                     )
                 )
+        print(f"Generated {len(qa_pairs)} QA pairs for {text}")
         logger.info(f"Generated {len(qa_pairs)} QA pairs.")        
         return qa_pairs
 
