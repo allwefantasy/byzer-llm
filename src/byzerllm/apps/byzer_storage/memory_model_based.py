@@ -145,7 +145,7 @@ class MemoryManager:
         """
 
     @byzerllm.prompt()
-    def _format(text: str) -> str:
+    def _format(self,text: str) -> str:
         """
         下面是一些问答信息：
 
