@@ -18,7 +18,7 @@ import threading
 import asyncio
 import traceback
 import uuid
-
+import tempfile        
 
 class CustomSaasAPI:
 
@@ -143,13 +143,7 @@ class CustomSaasAPI:
                         "image_url": {"url": image_data, **other_fields},
                         "type": "image_url",
                     }
-                )
-
-            if ("audio" in item) and "type" not in item:
-                audio_data = item.get("audio", "")
-                content.append({"audio": audio_data, "type": "audio"})
-                if not audio_data.startswith("data:"):
-                    audio_data = "data:audio/mpeg;base64," + audio_data
+                )            
 
             if "text" in item and "type" not in item:
                 text_data = item["text"]
@@ -293,11 +287,8 @@ class CustomSaasAPI:
         self,
         audio: str,
         response_format: str = "verbose_json",
-        timestamp_granularities: List[str] = ["word"],
-    ):
-        import tempfile
-        import base64
-
+        timestamp_granularities: List[str] = ["word","segment"],
+    ):               
         # Extract audio format and base64 data
         data_prefix = "data:audio/"
         base64_prefix = ";base64,"
@@ -318,7 +309,8 @@ class CustomSaasAPI:
 
         try:
             start_time = time.monotonic()
-            with open(temp_audio_file_path, "rb") as audio_file:
+                   
+            with open(temp_audio_file_path, "rb") as audio_file:                
                 transcription = self.client.audio.transcriptions.create(
                     model=self.model or "whisper-1",
                     file=audio_file,
@@ -437,9 +429,13 @@ class CustomSaasAPI:
                 stream=stream, input=input, size=size, quality=quality, n=n
             )
 
-        if isinstance(last_message, dict) and "audio" in last_message:
-            return await self.async_speech_to_text(last_message["audio"])
-
+        if isinstance(last_message, dict) and "audio" in last_message:            
+            audio_data = last_message.get("audio", "")            
+            tpe = last_message.get("type","wav")
+            if not audio_data.startswith("data:"):
+                audio_data = f"data:audio/${tpe};base64," + audio_data                
+            return await self.async_speech_to_text(audio=audio_data)
+        
         server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
         request_id = [None]
 
