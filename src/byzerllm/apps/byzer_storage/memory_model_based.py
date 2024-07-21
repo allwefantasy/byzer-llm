@@ -166,8 +166,8 @@ class MemoryManager:
             for item1 in item.content:
                 qa_pairs.append(
                     QAPair(
-                        question=item1.content[0].content,
-                        answer=item1.content[1].content,
+                        question=item1.content[0],
+                        answer=item1.content[1]
                     )
                 )
         print(f"Generated {len(qa_pairs)} QA pairs.",flush=True)
