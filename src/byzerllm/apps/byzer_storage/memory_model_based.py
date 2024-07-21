@@ -193,6 +193,7 @@ class MemoryManager:
     ):
         data = []
         stage = options.get("stage", "pt")
+        min_samples = options.pop("min_samples", 1000)
         base_model_dir = os.path.join(self.base_dir, "storage", "models")
         llama_model = os.path.join(
             base_model_dir, "meta-llama", "Meta-Llama-3-8B-Instruct-GPTQ"
@@ -231,8 +232,8 @@ class MemoryManager:
                 v = read_alpaca_zh()
                 data.extend(v)
 
-        if len(data) < 1000:
-            data = data * (1000 // len(data) + 1)
+        if len(data) < min_samples:
+            data = data * (min_samples // len(data) + 1)
         
         with open(f"{dataset_dir}/data.json", "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
