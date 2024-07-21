@@ -312,7 +312,7 @@ class ModelWriteBuilder:
     def set_max_samples(self, max_samples: int):
         self.max_samples = max_samples
         return self
-    
+
     def set_stage(self, stage: str):
         self.stage = stage
         return self
@@ -327,11 +327,11 @@ class ModelWriteBuilder:
 
     def set_num_train_epochs(self, num_train_epochs: float):
         self.num_train_epochs = num_train_epochs
-        return self 
+        return self
 
     def set_num_gpus(self, num_gpus: float):
         self.num_gpus = num_gpus
-        return self   
+        return self
 
     def execute(self, remote: bool = True):
         config = {
@@ -343,14 +343,16 @@ class ModelWriteBuilder:
             "stage": self.stage,
             **self.options,
         }
-        return self.storage.memorize(self.memories, remote=remote, options=config, num_gpus=self.num_gpus)
+        return self.storage.memorize(
+            self.memories, remote=remote, options=config, num_gpus=self.num_gpus
+        )
 
 
 class ByzerStorage:
     _is_connected = False
-    
+
     @classmethod
-    def get_base_dir(cls,base_dir:str=None):
+    def get_base_dir(cls, base_dir: str = None):
         home = os.path.expanduser("~")
         base_dir = base_dir or os.path.join(home, ".auto-coder")
         return base_dir
@@ -382,7 +384,11 @@ class ByzerStorage:
 
         import byzerllm
 
-        byzerllm.connect_cluster(address=ray_address, code_search_path=code_search_path)
+        byzerllm.connect_cluster(
+            address=ray_address,
+            code_search_path=code_search_path,
+            init_options={"log_to_driver": True},
+        )
         cls._is_connected = True
         return base_dir
 
@@ -405,7 +411,7 @@ class ByzerStorage:
         self.emb_model = emb_model
         self.database = database
         self.table = table
-        self.memory_manager = None        
+        self.memory_manager = None
         self.llm = ByzerLLM()
         self.llm.setup_default_emb_model_name(self.emb_model)
 
@@ -491,10 +497,11 @@ class ByzerStorage:
         self,
         memories: List[str],
         remote: bool = True,
-        options: Dict[str, Any] = {}, 
-        num_gpus: float = 1       
-    ):        
+        options: Dict[str, Any] = {},
+        num_gpus: float = 1,
+    ):
         if not remote:
+
             def run():
                 from byzerllm.apps.byzer_storage.memory_model_based import MemoryManager
 
@@ -531,29 +538,32 @@ class ByzerStorage:
 
     def template(self):
         def llama3():
-            def clean_func(v):                              
-                return v   
+            def clean_func(v):
+                return v
 
-            def sys_format(t,v):
+            def sys_format(t, v):
                 m = PromptTemplate.from_template(t)
                 return m.format(system_msg=v)
 
+            return Template(
+                role_mapping={
+                    "user_role": "<|start_header_id|>user<|end_header_id|>",
+                    "assistant_role": "<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
+                    "system_msg": """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
-            return Template(role_mapping={
-                            "user_role":"<|start_header_id|>user<|end_header_id|>",
-                            "assistant_role": "<|eot_id|><|start_header_id|>assistant<|end_header_id|>",
-                            "system_msg":'''<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+{system_msg}<|eot_id|>""",
+                    "system_msg_func": sys_format,
+                },
+                generation_config={
+                    "generation.repetition_penalty": 1.1,
+                    "generation.stop_token_ids": [128000, 128001],
+                },
+                clean_func=clean_func,
+            )
 
-{system_msg}<|eot_id|>''',
-                            "system_msg_func":sys_format
-                            },
-                            generation_config={                            
-                                "generation.repetition_penalty":1.1,
-                                "generation.stop_token_ids":[128000,128001]},                  
-                            clean_func=clean_func) 
-        return llama3()    
+        return llama3()
 
-    def remember(self, query: str):                      
+    def remember(self, query: str):
         llm = ByzerLLM()
         llm.setup_default_model_name("long_memory")
         llm.setup_template("long_memory", self.template())
