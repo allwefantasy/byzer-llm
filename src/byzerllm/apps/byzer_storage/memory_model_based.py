@@ -233,10 +233,10 @@ class MemoryManager:
 
         if len(data) < 1000:
             data = data * (1000 // len(data) + 1)
-
+        
         with open(f"{dataset_dir}/data.json", "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-
+        
         with open(f"{dataset_dir}/dataset_info.json", "w", encoding="utf-8") as f:
             r = {"data": {"file_name": "data.json"}}
             if stage == "pt":
