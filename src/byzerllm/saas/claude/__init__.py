@@ -63,18 +63,22 @@ class CustomSaasAPI:
                 if not image_data.startswith("data:"):
                     image_data = "data:image/jpeg;base64," + image_data
 
-                other_fields = {
-                    k: v
-                    for k, v in item.items()
-                    if k not in ["image", "text", "image_url"]
-                }
+                data_prefix = "data:image/"
+                base64_prefix = ";base64,"
+                if not image_data.startswith(data_prefix):
+                    raise ValueError("Invalid audio data format")
+                
+                format_end = audio.index(base64_prefix)
+                image_format = audio[len(data_prefix):format_end]
+                base64_data = audio[format_end + len(base64_prefix):]    
+                
                 content.append(
                     {
                         "type": "image",
                         "source": {
                             "type": "base64",
-                            "media_type": "image/jpeg",
-                            "data": image_data.split(",")[1],
+                            "media_type": f"image/{image_format}",
+                            "data": base64_data,
                         },
                     }
                 )            
@@ -89,44 +93,7 @@ class CustomSaasAPI:
         if not content:
             return ins
 
-        return content
-
-    async def image_to_text(self, ins: str, **kwargs):
-        processed_input = self.process_input(ins)
-        
-        try:
-            response = await asyncfy_with_semaphore(lambda: self.client.messages.create(
-                model=self.model,
-                max_tokens=kwargs.get("max_length", 1024),
-                temperature=kwargs.get("temperature", 0.1),
-                top_p=kwargs.get("top_p", 0.9),
-                messages=[
-                    {
-                        "role": "user",
-                        "content": processed_input
-                    }
-                ],
-            ))()
-
-            generated_text = response.content[0].text
-            generated_tokens_count = response.usage.output_tokens
-            input_tokens_count = response.usage.input_tokens
-            time_cost = response.usage.total_time
-
-            return [(generated_text, {
-                "metadata": {
-                    "request_id": response.id,
-                    "input_tokens_count": input_tokens_count,
-                    "generated_tokens_count": generated_tokens_count,
-                    "time_cost": time_cost,
-                    "first_token_time": 0,
-                    "speed": float(generated_tokens_count) / time_cost if time_cost > 0 else 0,
-                    "stop_reason": response.stop_reason
-                }
-            })]
-        except Exception as e:
-            traceback.print_exc()
-            raise e
+        return content    
 
     async def async_stream_chat(
             self,
