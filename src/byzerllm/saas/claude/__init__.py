@@ -43,6 +43,91 @@ class CustomSaasAPI:
     async def async_get_meta(self):
         return await asyncfy_with_semaphore(self.get_meta)()
 
+    def process_input(self, ins: Union[str, List[Dict[str, Any]], Dict[str, Any]]):
+        if isinstance(ins, list) or isinstance(ins, dict):
+            return ins
+
+        content = []
+        try:
+            ins_json = json.loads(ins)
+        except:
+            return ins
+
+        if isinstance(ins_json, dict):
+            return ins_json
+
+        content = []
+        for item in ins_json:
+            if ("image" in item or "image_url" in item) and "type" not in item:
+                image_data = item.get("image", item.get("image_url", ""))
+                if not image_data.startswith("data:"):
+                    image_data = "data:image/jpeg;base64," + image_data
+
+                other_fields = {
+                    k: v
+                    for k, v in item.items()
+                    if k not in ["image", "text", "image_url"]
+                }
+                content.append(
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/jpeg",
+                            "data": image_data.split(",")[1],
+                        },
+                    }
+                )            
+
+            if "text" in item and "type" not in item:
+                text_data = item["text"]
+                content.append({"type": "text", "text": text_data})
+
+            if "type" in item and item["type"] in ["text", "image"]:
+                content.append(item)
+
+        if not content:
+            return ins
+
+        return content
+
+    async def image_to_text(self, ins: str, **kwargs):
+        processed_input = self.process_input(ins)
+        
+        try:
+            response = await asyncfy_with_semaphore(lambda: self.client.messages.create(
+                model=self.model,
+                max_tokens=kwargs.get("max_length", 1024),
+                temperature=kwargs.get("temperature", 0.1),
+                top_p=kwargs.get("top_p", 0.9),
+                messages=[
+                    {
+                        "role": "user",
+                        "content": processed_input
+                    }
+                ],
+            ))()
+
+            generated_text = response.content[0].text
+            generated_tokens_count = response.usage.output_tokens
+            input_tokens_count = response.usage.input_tokens
+            time_cost = response.usage.total_time
+
+            return [(generated_text, {
+                "metadata": {
+                    "request_id": response.id,
+                    "input_tokens_count": input_tokens_count,
+                    "generated_tokens_count": generated_tokens_count,
+                    "time_cost": time_cost,
+                    "first_token_time": 0,
+                    "speed": float(generated_tokens_count) / time_cost if time_cost > 0 else 0,
+                    "stop_reason": response.stop_reason
+                }
+            })]
+        except Exception as e:
+            traceback.print_exc()
+            raise e
+
     async def async_stream_chat(
             self,
             tokenizer,
@@ -59,9 +144,9 @@ class CustomSaasAPI:
             if message["role"] == "system":
                 system_message = message["content"]
             else:
-                messages.append({"role": message["role"], "content": message["content"]})
+                messages.append({"role": message["role"], "content": self.process_input(message["content"])})
 
-        messages.append({"role": "user", "content": ins})
+        messages.append({"role": "user", "content": self.process_input(ins)})
 
         start_time = time.monotonic()
 
