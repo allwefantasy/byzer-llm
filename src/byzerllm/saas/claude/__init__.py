@@ -66,11 +66,11 @@ class CustomSaasAPI:
                 data_prefix = "data:image/"
                 base64_prefix = ";base64,"
                 if not image_data.startswith(data_prefix):
-                    raise ValueError("Invalid audio data format")
+                    raise ValueError("Invalid image data format")
                 
-                format_end = audio.index(base64_prefix)
-                image_format = audio[len(data_prefix):format_end]
-                base64_data = audio[format_end + len(base64_prefix):]    
+                format_end = image_data.index(base64_prefix)
+                image_format = image_data[len(data_prefix):format_end]
+                base64_data = image_data[format_end + len(base64_prefix):]    
                 
                 content.append(
                     {
