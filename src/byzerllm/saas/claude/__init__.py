@@ -66,7 +66,7 @@ class CustomSaasAPI:
 
         content = []
         for item in ins_json:
-            if "image" in item or "image_url" in item:
+            if "image" in item or "image_url" in item and "type" not in item:
                 image_data = item.get("image", item.get("image_url", ""))
                 if not image_data.startswith("data:"):
                     image_data = "data:image/jpeg;base64," + image_data
@@ -91,12 +91,33 @@ class CustomSaasAPI:
                     }
                 )
 
-            elif "text" in item and "type" not in item:
+            if "text" in item and "type" not in item:
                 text_data = item["text"]
                 content.append({"type": "text", "text": text_data})
 
-            elif "type" in item and item["type"] in ["text"]:
+            if "type" in item and item["type"] in ["text"]:
                 content.append(item)
+            # 兼容openai {"type": "image_url", "image_url": {"url":"","detail":"high"}}
+            if "type" in item and item["type"] == "image_url":
+                image_data = item["image_url"]["url"]
+                data_prefix = "data:image/"
+                base64_prefix = ";base64,"
+                if not image_data.startswith(data_prefix):
+                    raise ValueError("Invalid image data format")
+
+                format_end = image_data.index(base64_prefix)
+                image_format = image_data[len(data_prefix) : format_end]
+                base64_data = image_data[format_end + len(base64_prefix) :]
+                content.append(
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": f"image/{image_format}",
+                            "data": base64_data,
+                        },
+                    }
+                )
 
         if not content:
             return ins
@@ -153,6 +174,7 @@ class CustomSaasAPI:
             )()
         except Exception as e:
             traceback.print_exc()
+            print(messages)
             raise e
 
         if stream:
