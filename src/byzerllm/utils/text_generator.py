@@ -160,13 +160,13 @@ class ByzerLLMGenerator:
             if hasattr(self.model, "async_stream_chat"):
                 response = await self.model.async_stream_chat(self.tokenizer, 
                 ins, his, 
-                max_length=int(query.get("max_length",1024)), 
+                max_length=int(query.get("max_length",4000)), 
                 top_p=float(query.get("top_p",0.7)),
                 temperature=float(query.get("temperature",0.9)),**new_params)
             else:
                 response = await asyncfy_with_semaphore(lambda:self.model.stream_chat(self.tokenizer, 
                 ins, his, 
-                max_length=int(query.get("max_length",1024)), 
+                max_length=int(query.get("max_length",4000)), 
                 top_p=float(query.get("top_p",0.7)),
                 temperature=float(query.get("temperature",0.9)),**new_params))()
             

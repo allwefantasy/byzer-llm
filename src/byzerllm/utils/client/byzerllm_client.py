@@ -1178,6 +1178,10 @@ class ByzerLLM:
             history = []
 
         default_config = self.mapping_extra_generation_params.get(model, {})
+        
+        if self.get_max_output_length(model) > 0:
+            default_config["max_length"] = self.get_max_output_length(model)
+
         v = [
             {
                 "instruction": final_ins,
@@ -1793,40 +1797,7 @@ cost {time.monotonic() - start_time} seconds
         return self.mapping_max_input_length.get(model, None)
 
     def _query(self, model: str, input_value: List[Dict[str, Any]]):
-
-        if not self.force_skip_context_length_check:
-            for input in input_value:
-                # if this is a embedding/tokenizer query ,skip
-                if input.get("embedding", False) or input.get("tokenizer", False):
-                    continue
-
-                final_ins = input.get("instruction", "")
-
-                try:
-                    input_size = len(self.tokenize(None, final_ins, {})[0].output[0])
-                except Exception as inst:
-                    continue
-
-                if self.get_max_input_length(
-                    model
-                ) and input_size > self.get_max_input_length(model):
-                    raise Exception(
-                        f"input length {input_size} is larger than max_input_length {self.mapping_max_input_length[model]}"
-                    )
-
-                max_output_length = self.get_max_output_length(model)
-
-                if self.get_max_model_length(model):
-                    if input_size + max_output_length > self.get_max_model_length(
-                        model
-                    ):
-                        raise Exception(
-                            f"input_size ({input_size}) + max_output_length {max_output_length} is larget than model context length {self.mapping_max_model_length[model]}"
-                        )
-
-                # dynamically update the max_length
-                input["max_length"] = input_size + max_output_length
-
+        
         event_result = self._trigger_event(
             EventName.BEFORE_CALL_MODEL, self, model, input_value
         )
