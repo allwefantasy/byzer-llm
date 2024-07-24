@@ -103,7 +103,7 @@ class ByzerLLM:
         if "byzer_engine_url" in kwargs:
             self.byzer_engine_url = kwargs["byzer_engine_url"]
 
-        self.default_max_output_length = 1024
+        self.default_max_output_length = 4000
         if "default_max_output_length" in kwargs:
             self.default_max_output_length = kwargs["default_max_output_length"]
 
@@ -621,7 +621,7 @@ class ByzerLLM:
             return self.get_meta(model=udf_name)
 
         # we put in this place so it only take effect for private model
-        self.mapping_max_output_length[udf_name] = 1024
+        self.mapping_max_output_length[udf_name] = 4000
 
         if pretrained_model_type.startswith("custom/"):
             model_type = pretrained_model_type.split("/")[-1]

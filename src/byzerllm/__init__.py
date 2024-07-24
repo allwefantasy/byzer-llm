@@ -326,7 +326,7 @@ class _PrompRunner:
         conversations.append({"role": "user", "content": response.input["instruction"]})
         conversations.append({"role": "assistant", "content": response.output})
         turn = 1
-        end_marker = self.response_markers[1]
+        end_marker = self.response_markers[1]        
 
         while turn < self.max_turns and end_marker not in response.output:
             conversations.append({"role": "user", "content": "接着前面的内容继续"})
@@ -334,7 +334,7 @@ class _PrompRunner:
             response = v1[0]
             conversations.append({"role": "assistant", "content": response.output})
             s += response.output
-            turn += 1
+            turn += 1        
 
         if self.auto_remove_response_markers_from_output:
             output_content = self._remove_response_markers(output=s)
