@@ -188,10 +188,45 @@ class ImageExtractor(TagExtractor):
     @staticmethod
     def path_to_image(path: str) -> str:
         import base64
+        import os
+        
+        file_extension = os.path.splitext(path)[1][1:].lower()
+        image_type = file_extension if file_extension in ['jpeg', 'png', 'gif', 'bmp', 'webp'] else 'jpeg'
+        
         with open(path, "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-        return f"data:image/jpeg;base64,{encoded_string}"
+        return f"data:image/{image_type};base64,{encoded_string}"
+    
+    @staticmethod
+    def save_image_to_path(image_data: str, output_path: str, auto_fix_suffix: bool = False) -> str:
+        import base64
+        import os
         
+        # Extract image type and base64 data
+        data_prefix = "data:image/"
+        base64_prefix = ";base64,"
+        if not image_data.startswith(data_prefix):
+            raise ValueError("Invalid image data format")
+        
+        format_end = image_data.index(base64_prefix)
+        image_type = image_data[len(data_prefix):format_end]
+        base64_data = image_data[format_end + len(base64_prefix):]
+        
+        # Decode the base64 image data
+        image_data = base64.b64decode(base64_data)
+        
+        # Check and fix file extension if necessary
+        file_name, file_extension = os.path.splitext(output_path)
+        correct_extension = f".{image_type}"
+        
+        if auto_fix_suffix and file_extension.lower() != correct_extension.lower():
+            output_path = file_name + correct_extension
+        
+        # Write the image data to the file
+        with open(output_path, "wb") as image_file:
+            image_file.write(image_data)
+        
+        return output_path
     
     def to_content(self) -> List[Dict[str, str]]:
         self.extract()
