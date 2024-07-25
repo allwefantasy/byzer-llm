@@ -199,7 +199,7 @@ class Image(TagExtractor):
         return False
 
     @staticmethod
-    def load_image_form_path(path: str) -> str:
+    def load_image_from_path(path: str) -> str:
         '''
         Load image from path and return base64 image data
         '''
