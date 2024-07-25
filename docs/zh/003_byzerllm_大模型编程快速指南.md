@@ -468,10 +468,60 @@ t[0].values
 
 byerllm 也能很好的支持多模态的交互，而且统一了多模态大模型的接口，比如你可以用一样的方式使用 openai 或者 claude 的图片转文字能力， 或者一致的方式使用火山，azuer, openai的语音合成接口。
 
-### image2text
+### 读取图片
+
+```python
+import byzerllm
+from byzerllm.types import ImagePath
+
+vl_llm = byzerllm.ByzerLLM.from_default_model("gpt4o_mini_chat")
 
 
+@byzerllm.prompt()
+def what_in_image(image_path: ImagePath) -> str:
+    """
+    {{ image_path }}
+    这个图片里有什么？
+    """    
 
+
+v = what_in_image.with_llm(vl_llm).run(
+    ImagePath(value="/Users/allwefantasy/projects/byzer-llm/images/cat1.png")
+)
+v
+## OUTPUT: 这张图片展示了多只可爱的猫咪，采用了艺术风格的绘画。猫咪们有不同的颜色和花纹，背景是浅棕色，上面还点缀着一些红色的花朵。整体画面给人一种温馨和谐的感觉
+```
+
+可以看到，我们只需要把 prompt 函数的图片地址入参使用 byzerllm.types.ImagePath里进行包装，就可以直接在 prompt 函数体里
+带上图片。
+
+或者你可以这样：
+
+```python
+import byzerllm
+
+vl_llm = byzerllm.ByzerLLM.from_default_model("gpt4o_mini_chat")
+
+
+@byzerllm.prompt()
+def what_in_image(image_path: str) -> str:
+    """
+    {{ image }}
+    这个图片里有什么？
+    """
+    return {"image": byzerllm.Image.load_image_from_path(image_path)}
+
+
+v = what_in_image.with_llm(vl_llm).run(
+    "/Users/allwefantasy/projects/byzer-llm/images/cat1.png"
+)
+v
+```
+
+通过 `image_path` 参数，然后通过 `byzerllm.Image.load_image_from_path` 方法，转化为一个图片对象 image，最后在 prompt 函数体里
+使用 `{{ image }}` 引用这个图片对象。
+
+另外我们也是可以支持配置多张图片的。
 
 
 ## 注意事项
