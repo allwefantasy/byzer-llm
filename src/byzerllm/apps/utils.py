@@ -181,3 +181,28 @@ class TagExtractor:
                 self.extract_content_not_in_tag()
                                                            
         return self.root_tag
+
+
+class ImageExtractor(TagExtractor):
+    def to_content(self) -> List[Dict[str, str]]:
+        result = []
+        current_item = {}
+        
+        for item in self.root_tag.content:
+            if isinstance(item, Tag) and item.start_tag == "<_image_>":
+                if current_item:
+                    result.append(current_item)
+                    current_item = {}
+                current_item["image"] = item.content
+            elif isinstance(item, str):
+                text = item.strip()
+                if text:
+                    if "text" in current_item:
+                        current_item["text"] += " " + text
+                    else:
+                        current_item["text"] = text
+        
+        if current_item:
+            result.append(current_item)
+        
+        return result
