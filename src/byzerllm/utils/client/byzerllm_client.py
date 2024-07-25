@@ -140,9 +140,9 @@ class ByzerLLM:
             is_function_calling_model=True,
             model_name=meta.get("model_name", self.default_model_name),
         )
-    
+
     @staticmethod
-    def from_default_model(model: str,auto_connect_cluster:bool=True) -> "ByzerLLM":
+    def from_default_model(model: str, auto_connect_cluster: bool = True) -> "ByzerLLM":
         if auto_connect_cluster:
             byzerllm.connect_cluster()
         llm = ByzerLLM()
@@ -1178,7 +1178,7 @@ class ByzerLLM:
             history = []
 
         default_config = self.mapping_extra_generation_params.get(model, {})
-        
+
         if self.get_max_output_length(model) > 0:
             default_config["max_length"] = self.get_max_output_length(model)
 
@@ -1797,7 +1797,18 @@ cost {time.monotonic() - start_time} seconds
         return self.mapping_max_input_length.get(model, None)
 
     def _query(self, model: str, input_value: List[Dict[str, Any]]):
-        
+
+        try:
+            from byzerllm.utils.nontext import Image
+            for v in input_value:                
+                s = v["instruction"]
+                image = Image(s)
+                if image.has_image():
+                    c = image.to_content()
+                    v["instruction"] = json.dumps(c, ensure_ascii=False)
+        except Exception as inst:
+            pass       
+
         event_result = self._trigger_event(
             EventName.BEFORE_CALL_MODEL, self, model, input_value
         )

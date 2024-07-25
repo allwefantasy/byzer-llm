@@ -555,5 +555,6 @@ from byzerllm.utils.client import ByzerLLM
 from byzerllm.utils.retrieval import ByzerRetrieval
 from byzerllm.utils.connect_ray import connect_cluster
 from byzerllm.apps.agent.registry import reply as agent_reply
+from byzerllm.utils.nontext import Image
 
-__all__ = ["ByzerLLM", "ByzerRetrieval", "connect_cluster", "prompt", "agent_reply"]
+__all__ = ["ByzerLLM", "ByzerRetrieval", "connect_cluster", "prompt", "agent_reply","Image"]
