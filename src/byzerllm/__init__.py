@@ -247,6 +247,11 @@ class _PrompRunner:
         self.response_markers = None
         self.auto_remove_response_markers_from_output = True
         self.extractor = None
+        self.continue_prompt = "接着前面的内容继续"
+
+    def with_continue_prompt(self, prompt:str):
+        self.continue_prompt = prompt
+        return self    
 
     def __call__(self, *args, **kwargs) -> Any:
         if self.llm:
@@ -329,7 +334,7 @@ class _PrompRunner:
         end_marker = self.response_markers[1]        
 
         while turn < self.max_turns and end_marker not in response.output:
-            conversations.append({"role": "user", "content": "接着前面的内容继续"})
+            conversations.append({"role": "user", "content": self.continue_prompt})
             v1 = llm.chat_oai(conversations=conversations, **self._options)
             response = v1[0]
             conversations.append({"role": "assistant", "content": response.output})
@@ -484,6 +489,10 @@ class _DescriptorPrompt:
 
     def with_max_turns(self, max_turns: int):
         self.prompt_runner.max_turns = max_turns
+        return self
+    
+    def with_continue_prompt(self, prompt:str):
+        self.prompt_runner.continue_prompt = prompt
         return self
 
     def __call__(self, *args, **kwargs):

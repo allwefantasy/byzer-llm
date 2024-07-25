@@ -464,6 +464,16 @@ t[0].values
 
 模型正确的选择了 compute_date_range 方法。
 
+## 多模态
+
+byerllm 也能很好的支持多模态的交互，而且统一了多模态大模型的接口，比如你可以用一样的方式使用 openai 或者 claude 的图片转文字能力， 或者一致的方式使用火山，azuer, openai的语音合成接口。
+
+### image2text
+
+
+
+
+
 ## 注意事项
 
 1. prompt函数方法体返回只能是dict，实际的返回类型和方法签名可以不一样，但是方法体返回只能是dict。
