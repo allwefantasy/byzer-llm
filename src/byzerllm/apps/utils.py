@@ -131,18 +131,18 @@ class TagExtractor:
         temp_pos = self.pos
         self.consume_blank()
         if self.is_start_tag():
-            self.pos = temp_pos            
+            self.pos = temp_pos
             return True
         if self.is_end_tag():
             self.pos = temp_pos
-            return True                
+            return True
         return False
 
     def extract_str_content(self) -> str:
         content = ""
         while not self.is_start_tag() and not self.is_end_tag():
             content += self.next()
-         
+
         self.current_tag.content = content
         return content
 
@@ -179,30 +179,35 @@ class TagExtractor:
                     self.extract_str_content()
             elif self.is_not_in_tag_str():
                 self.extract_content_not_in_tag()
-                                                           
+
         return self.root_tag
 
 
 class ImageExtractor(TagExtractor):
+    
+    @staticmethod
+    def path_to_image(path: str) -> str:
+        return path
+    
     def to_content(self) -> List[Dict[str, str]]:
+        self.extract()
+
         result = []
         current_item = {}
-        
+
         for item in self.root_tag.content:
             if isinstance(item, Tag) and item.start_tag == "<_image_>":
                 if current_item:
                     result.append(current_item)
                     current_item = {}
                 current_item["image"] = item.content
-            elif isinstance(item, str):
-                text = item.strip()
-                if text:
-                    if "text" in current_item:
-                        current_item["text"] += " " + text
-                    else:
-                        current_item["text"] = text
-        
+
         if current_item:
             result.append(current_item)
-        
+
+        new_text = self.text
+        for res in result:
+            new_text = new_text.replace(f"<_image_>{res['image']}</_image_>", "")
+
+        result.append({"text": new_text.strip()})
         return result
