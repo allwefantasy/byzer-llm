@@ -187,7 +187,10 @@ class ImageExtractor(TagExtractor):
     
     @staticmethod
     def path_to_image(path: str) -> str:
-        return path
+        import base64
+        with open(path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+        return f"data:image/jpeg;base64,{encoded_string}"
     
     def to_content(self) -> List[Dict[str, str]]:
         self.extract()
