@@ -507,7 +507,7 @@ class _DescriptorPrompt:
     def with_llm(self, llm):
         self.llm = llm
         self.prompt_runner.with_llm(llm)
-        return self
+        return self        
     
     def with_extractor(self,func):
         self.prompt_runner.with_extractor(func)

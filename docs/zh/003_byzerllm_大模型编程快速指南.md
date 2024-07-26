@@ -523,6 +523,59 @@ v
 
 另外我们也是可以支持配置多张图片的。
 
+另外，我们也可以使用基础的 `llm.chat_oai` 方法来实现：
+
+```python
+import byzerllm
+import json
+
+vl_llm = byzerllm.ByzerLLM.from_default_model("gpt4o_mini_chat")
+image = byzerllm.Image.load_image_from_path(
+    "/Users/allwefantasy/projects/byzer-llm/images/cat1.png"
+)
+v = vl_llm.chat_oai(
+    conversations=[
+        {
+            "role": "user",
+            "content": json.dumps(
+                [{"image": image, "text": "这个图片里有什么？"}], ensure_ascii=False
+            ),
+        }
+    ]
+)
+v[0].output
+```
+
+还可以这么写：
+
+```python
+import byzerllm
+import json
+
+vl_llm = byzerllm.ByzerLLM.from_default_model("gpt4o_mini_chat")
+image = byzerllm.Image.load_image_from_path(
+    "/Users/allwefantasy/projects/byzer-llm/images/cat1.png"
+)
+v = vl_llm.chat_oai(
+    conversations=[
+        {
+            "role": "user",
+            "content": json.dumps(
+                [
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": image, "detail": "high"},
+                    },
+                    {"text": "这个图片里有什么？", "type": "text"},
+                ],
+                ensure_ascii=False,
+            ),
+        }
+    ]
+)
+v[0].output
+```
+
 
 ## 注意事项
 
