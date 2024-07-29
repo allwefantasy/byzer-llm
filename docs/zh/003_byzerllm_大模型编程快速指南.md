@@ -589,6 +589,8 @@ byzerllm deploy --pretrained_model_type saas/openai \
 --model openai_tts
 ```
 
+此外，byzerllm 支持 azure,火山引擎等 tts 语音合成引擎。
+
 接着你可以这么用：
 
 ```python
