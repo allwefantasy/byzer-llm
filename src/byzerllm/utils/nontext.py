@@ -1,5 +1,7 @@
 from typing import List, Dict, Any, Union, Optional
 import pydantic
+import base64
+import os
 
 
 class Tag(pydantic.BaseModel):
@@ -200,11 +202,9 @@ class Image(TagExtractor):
 
     @staticmethod
     def load_image_from_path(path: str) -> str:
-        '''
+        """
         Load image from path and return base64 image data
-        '''
-        import base64
-        import os
+        """
 
         file_extension = os.path.splitext(path)[1][1:].lower()
         image_type = file_extension
@@ -217,9 +217,9 @@ class Image(TagExtractor):
     def save_image_to_path(
         image_data: str, output_path: str, auto_fix_suffix: bool = False
     ) -> str:
-        '''
+        """
         Save base64 image data as image file
-        '''
+        """
         import base64
         import os
 
@@ -269,11 +269,82 @@ class Image(TagExtractor):
         for res in result:
             new_text = new_text.replace(f"<_image_>{res['image']}</_image_>", "")
 
-        result.append({"text": new_text.strip()}) 
-        
+        result.append({"text": new_text.strip()})
+
         # for item in result:
         #     if "image" in item:
         #         print(item["image"][0:100] + "...")
         #     else:
         #         print(item["text"][0:100] + "...")
         return result
+
+
+class Audio(TagExtractor):
+    def __init__(self, text: str):
+        super().__init__(text)
+        self.is_extracted = False
+
+    def has_audio(self) -> bool:
+        self.extract()
+        for item in self.root_tag.content:
+            if isinstance(item, Tag) and item.start_tag == "<_audio_>":
+                return True
+        return False
+
+    @staticmethod
+    def load_audio_from_path(path: str) -> str:
+        """
+        Load audio from path and return base64 audio data
+        """
+        file_extension = os.path.splitext(path)[1][1:].lower()
+        audio_type = file_extension
+
+        with open(path, "rb") as audio_file:
+            encoded_string = base64.b64encode(audio_file.read()).decode("utf-8")
+        return f"<_audio_>data:audio/{audio_type};base64,{encoded_string}</_audio_>"
+
+    @staticmethod
+    def save_audio_to_path(
+        audio_data: str, output_path: str, auto_fix_suffix: bool = False
+    ) -> str:
+        """
+        Save base64 audio data as audio file
+        """
+        # Extract audio type and base64 data
+        data_prefix = "data:audio/"
+        base64_prefix = ";base64,"
+        if not audio_data.startswith(data_prefix):
+            raise ValueError("Invalid audio data format")
+
+        format_end = audio_data.index(base64_prefix)
+        audio_type = audio_data[len(data_prefix) : format_end]
+        base64_data = audio_data[format_end + len(base64_prefix) :]
+
+        # Decode the base64 audio data
+        audio_data = base64.b64decode(base64_data)
+
+        # Check and fix file extension if necessary
+        file_name, file_extension = os.path.splitext(output_path)
+        correct_extension = f".{audio_type}"
+
+        if auto_fix_suffix and file_extension.lower() != correct_extension.lower():
+            output_path = file_name + correct_extension
+
+        # Write the audio data to the file
+        with open(output_path, "wb") as audio_file:
+            audio_file.write(audio_data)
+
+        return output_path
+
+    def to_content(self) -> Dict[str, Any]:
+        self.extract()
+        current_item = {}
+        counter = 0
+        for item in self.root_tag.content:
+            if isinstance(item, Tag) and item.start_tag == "<_audio_>":
+                if counter > 0:
+                    raise ValueError("Only one audio file is allowed")
+                counter += 1
+                current_item["audio"] = item.content
+
+        return current_item

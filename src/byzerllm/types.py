@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from byzerllm.utils.nontext import Image
+from byzerllm.utils.nontext import Image,Audio
 
 
 class Bool(BaseModel):
@@ -21,5 +21,8 @@ class ImagePath(BaseModel):
         return Image.load_image_from_path(self.value)
 
 
-# class AudioPath(BaseModel):
-#     value: str
+class AudioPath(BaseModel):
+    value: str
+
+    def __str__(self):
+        return Audio.load_audio_from_path(self.value)

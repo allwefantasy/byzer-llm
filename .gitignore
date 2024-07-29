@@ -9,3 +9,6 @@ vllm/
 output.txt
 .auto-coder
 actions
+
+.auto-coder/
+actions/

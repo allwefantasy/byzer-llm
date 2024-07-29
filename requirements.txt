@@ -28,7 +28,7 @@ tiktoken
 tabulate
 jupyter_client
 prompt-toolkit
-llama_index
+llama_index==0.10.52
 # selenium
 # dependencies only for sparkdesk
 # websockets

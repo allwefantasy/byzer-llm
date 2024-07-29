@@ -468,7 +468,7 @@ t[0].values
 
 byerllm 也能很好的支持多模态的交互，而且统一了多模态大模型的接口，比如你可以用一样的方式使用 openai 或者 claude 的图片转文字能力， 或者一致的方式使用火山，azuer, openai的语音合成接口。
 
-### 读取图片
+### 图生文
 
 ```python
 import byzerllm
@@ -574,6 +574,198 @@ v = vl_llm.chat_oai(
     ]
 )
 v[0].output
+```
+
+### 语音合成
+
+这里以 openai 的 tts 为例：
+
+```bash
+byzerllm deploy --pretrained_model_type saas/openai \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 1 \
+--infer_params saas.api_key=${MODEL_OPENAI_TOKEN} saas.model=tts-1 \
+--model openai_tts
+```
+
+接着你可以这么用：
+
+```python
+import byzerllm
+import base64
+import json
+
+llm = byzerllm.ByzerLLM.from_default_model("openai_tts")
+
+
+t = llm.chat_oai(conversations=[{
+    "role":"user",
+    "content": json.dumps({
+        "input":"hello, open_tts",
+        "voice": "alloy",
+        "response_format": "mp3"
+    },ensure_ascii=False)
+}])
+
+with open("voice.mp3","wb") as f:
+    f.write(base64.b64decode(t[0].output))
+```
+
+tts 模型生成没有prompt函数可以用，你需要直接使用 chat_oai。
+
+
+### 语音识别
+
+这里以 openai 的 whisper-1 为例：
+
+```bash
+byzerllm deploy --pretrained_model_type saas/openai \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 1 \
+--worker_concurrency 10 \
+--infer_params saas.model=whisper-1 saas.api_key=${MODEL_OPENAI_TOKEN} \
+--model speech_to_text
+```
+
+语音识别的使用方式和图生文类似，我们可以直接在 prompt 函数体里带上音频文件。
+
+```python
+import byzerllm
+import json
+import base64
+from byzerllm.types import AudioPath
+
+llm = byzerllm.ByzerLLM.from_default_model("speech_to_text")
+
+audio_file = "/Users/allwefantasy/videos/output_audio.mp3"
+
+@byzerllm.prompt(llm=llm)
+def audio_to_text(audio_file: AudioPath):
+    """
+    {{ audio_file }}
+    """
+
+v = audio_to_text(AudioPath(value=audio_file))
+json.loads(v)
+```
+输出的数据格式略微复杂：
+
+```
+{'text': 'In the last chapter, you and I started to step through the internal workings of a transformer. This is one of the key pieces of technology inside large language models, and a lot of other tools in the modern wave of AI.',
+ 'task': 'transcribe',
+ 'language': 'english',
+ 'duration': 10.0,
+ 'segments': [{'id': 0,
+   'seek': 0,
+   'start': 0.0,
+   'end': 4.78000020980835,
+   'text': ' In the last chapter, you and I started to step through the internal workings of a transformer.',
+   'tokens': [50364,
+    682,
+    264,
+    1036,
+    7187,
+    11,
+    291,
+    293,
+    286,
+    1409,
+    281,
+    1823,
+    807,
+    264,
+    6920,
+    589,
+    1109,
+    295,
+    257,
+    31782,
+    13,
+    50586],
+   'temperature': 0.0,
+   'avg_logprob': -0.28872039914131165,
+   'compression_ratio': 1.4220778942108154,
+   'no_speech_prob': 0.016033057123422623},
+  ....
+  {'id': 2,
+   'seek': 0,
+   'start': 8.579999923706055,
+   'end': 9.979999542236328,
+   'text': ' and a lot of other tools in the modern wave of AI.',
+   'tokens': [50759,
+    293,
+    257,
+    688,
+    295,
+    661,
+    3873,
+    294,
+    264,
+    4363,
+    5772,
+    295,
+    7318,
+    13,
+    50867],
+   'temperature': 0.0,
+   'avg_logprob': -0.28872039914131165,
+   'compression_ratio': 1.4220778942108154,
+   'no_speech_prob': 0.016033057123422623}],
+ 'words': [{'word': 'In', 'start': 0.0, 'end': 0.18000000715255737},
+  {'word': 'the', 'start': 0.18000000715255737, 'end': 0.23999999463558197},
+  {'word': 'last', 'start': 0.23999999463558197, 'end': 0.5400000214576721},
+  {'word': 'chapter', 'start': 0.5400000214576721, 'end': 0.800000011920929},
+  ....
+  {'word': 'AI', 'start': 9.920000076293945, 'end': 9.979999542236328}]}
+```
+
+会输出每一句话以及每一个字所在的起始时间和截止时间。你可以根据需要来使用。
+
+### 文生图
+
+文生图和语音合成类似，首先要启动合适的模型,以openai 的 dall-e-3 为例：
+
+```bash
+byzerllm deploy --pretrained_model_type saas/openai \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 1 \
+--infer_params saas.api_key=${MODEL_OPENAI_TOKEN} saas.model=dall-e-3 \
+--model openai_image_gen
+```
+
+启动模型后，只需要记住几个模板参数即可使用，这里直接使用 chat_oai 方法来使用：
+
+```python
+
+import byzerllm
+import json
+import base64
+
+llm = byzerllm.ByzerLLM.from_default_model("openai_image_gen")
+t = llm.chat_oai(conversations=[{
+    "role":"user",
+    "content": json.dumps({
+        "input":"a white siamese cat",
+        "size": "1024x1024",
+        "quality": "standard"
+    },ensure_ascii=False)
+}])
+
+with open("output1.jpg","wb") as f:
+    f.write(base64.b64decode(t[0].output))
+
+
+import matplotlib.pyplot as plt
+
+image_path = "output1.jpg"
+image = plt.imread(image_path)
+
+plt.imshow(image)
+plt.axis('off')
+plt.show()
 ```
 
 
