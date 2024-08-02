@@ -65,9 +65,9 @@ class MemoryManager:
             )
         finally:
             if self.remote:
+                logger.info(f"Memorization for {name} completed. existing actor")
                 ray.actor.exit_actor()
-
-        print(f"Memorization for {name} completed.")
+        
 
     def _memorize_with_logs(
         self, name: str, memories: List[str], options: Dict[str, Any] = {}
