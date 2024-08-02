@@ -6,7 +6,8 @@ import concurrent.futures
 from byzerllm.apps.byzer_storage.generate_sft_data import to_qa_pairs
 from loguru import logger
 
-def train_dpo(    
+
+def train_dpo(
     name: str,
     memories: List[str],
     options: Dict[str, Any],
@@ -17,7 +18,7 @@ def train_dpo(
 ):
     logger.info(f"Starting DPO training for {name}")
     logger.info(f"Using data model: {data_model_name} and target model: {model_name}")
-    
+
     data = []
     min_samples = options.pop("min_samples", 1000)
     logger.info(f"Minimum samples required: {min_samples}")
@@ -26,8 +27,8 @@ def train_dpo(
         logger.info(f"Processing {len(memories)} memories")
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
             futures = []
-            data_llm = byzerllm.ByzerLLM().from_default_model(data_model_name)
-            current_llm = byzerllm.ByzerLLM().from_default_model(model_name)
+            data_llm = byzerllm.ByzerLLM.from_default_model(data_model_name)
+            current_llm = byzerllm.ByzerLLM.from_default_model(model_name)
             for memory in memories:
                 futures.append(executor.submit(to_qa_pairs, memory, data_llm))
 
@@ -40,6 +41,8 @@ def train_dpo(
                         conversations=[{"role": "user", "content": qa_pair.question}]
                     )
                     v = response[0].output
+
+                    logger.debug(f"Response from llm: {v[:50]}...")
                     item = (
                         {
                             "conversations": [
@@ -58,6 +61,7 @@ def train_dpo(
                             },
                         },
                     )
+
                     data.append(item)
 
     logger.info(f"Total data points generated: {len(data)}")
