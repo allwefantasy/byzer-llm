@@ -4,7 +4,7 @@ from typing import List, Dict, Any
 import byzerllm
 import concurrent.futures
 from byzerllm.apps.byzer_storage.generate_sft_data import to_qa_pairs
-
+from loguru import logger
 
 def train_dpo(    
     name: str,
@@ -15,10 +15,15 @@ def train_dpo(
     model_name: str,
     data_model_name: str,
 ):
+    logger.info(f"Starting DPO training for {name}")
+    logger.info(f"Using data model: {data_model_name} and target model: {model_name}")
+    
     data = []
     min_samples = options.pop("min_samples", 1000)
+    logger.info(f"Minimum samples required: {min_samples}")
 
     if memories:
+        logger.info(f"Processing {len(memories)} memories")
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
             futures = []
             data_llm = byzerllm.ByzerLLM().from_default_model(data_model_name)
@@ -28,7 +33,9 @@ def train_dpo(
 
             for future in concurrent.futures.as_completed(futures):
                 qa_pairs = future.result()
+                logger.info(f"Generated {len(qa_pairs)} QA pairs")
                 for qa_pair in qa_pairs:
+                    logger.debug(f"Processing QA pair: {qa_pair.question[:50]}...")
                     response = current_llm.chat_oai(
                         conversations=[{"role": "user", "content": qa_pair.question}]
                     )
@@ -53,12 +60,17 @@ def train_dpo(
                     )
                     data.append(item)
 
+    logger.info(f"Total data points generated: {len(data)}")
     if len(data) < min_samples:
+        logger.warning(f"Not enough samples. Duplicating data to reach {min_samples}")
         data = data * (min_samples // len(data) + 1)
+    logger.info(f"Final number of data points: {len(data)}")
 
+    logger.info(f"Saving data to {dataset_dir}/data.json")
     with open(f"{dataset_dir}/data.json", "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
+    logger.info(f"Saving dataset info to {dataset_dir}/dataset_info.json")
     with open(f"{dataset_dir}/dataset_info.json", "w", encoding="utf-8") as f:
         r = {
             "data": {
@@ -104,7 +116,13 @@ def train_dpo(
         fp16=True,
         ddp_timeout=180000000,
     )
+    logger.info("Setting up training arguments")
+    for key, value in args.items():
+        logger.debug(f"{key}: {value}")
+
     os.environ["WANDB_DISABLED"] = "true"
+    logger.info("Starting DPO training")
     from llamafactory.train import tuner
 
     tuner.run_exp({**args, **options})
+    logger.info("DPO training completed")
