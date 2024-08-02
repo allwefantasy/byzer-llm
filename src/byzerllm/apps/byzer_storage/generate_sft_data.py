@@ -58,7 +58,7 @@ def generate_cache_key(text: str) -> str:
 
 def get_cache_path() -> Path:
     home = Path.home()
-    cache_dir = home / ".byzerllm" / "cache"
+    cache_dir = home / ".byzerllm" / "cache" / "llm_generated_data"
     cache_dir.mkdir(parents=True, exist_ok=True)
     return cache_dir
 

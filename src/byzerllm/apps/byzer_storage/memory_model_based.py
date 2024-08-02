@@ -19,6 +19,7 @@ from pydantic import BaseModel
 import importlib
 from loguru import logger
 
+
 class MemoryManager:
     _queue = asyncio.Queue()
     _is_processing = False
@@ -119,7 +120,7 @@ class MemoryManager:
                     f.write(msg)
                     f.flush()
                 except queue.Empty:
-                    continue    
+                    continue
 
     def _memorize(
         self,
@@ -127,9 +128,8 @@ class MemoryManager:
         memories: List[Union[str, Dict[str, Any]]],
         options: Dict[str, Any] = {},
     ):
-        data = []
+
         stage = options.get("stage", "pt")
-        min_samples = options.pop("min_samples", 1000)
         base_model_dir = os.path.join(self.base_dir, "storage", "models")
         llama_model = os.path.join(
             base_model_dir, "meta-llama", "Meta-Llama-3-8B-Instruct-GPTQ"
@@ -142,13 +142,40 @@ class MemoryManager:
         os.makedirs(dataset_dir, exist_ok=True)
 
         if stage == "pt":
-            from .train_pt import train_pt
-            train_pt(self, name, memories, options, dataset_dir, loras_dir, llama_model)
+            from byzerllm.apps.byzer_storage.train_pt import train_pt
+
+            train_pt(
+                name,
+                memories,
+                options,
+                dataset_dir,
+                loras_dir,
+                model_name=llama_model,
+                data_model_name=self.model_name,
+            )
         elif stage == "sft":
-            from .train_sft import train_sft
-            train_sft(self, name, memories, options, dataset_dir, loras_dir, llama_model)
+            from byzerllm.apps.byzer_storage.train_sft import train_sft
+
+            train_sft(
+                name,
+                memories,
+                options,
+                dataset_dir,
+                loras_dir,
+                model_name=llama_model,
+                data_model_name=self.model_name,
+            )
         elif stage == "dpo":
-            from .train_dpo import train_dpo
-            train_dpo(self, name, memories, options, dataset_dir, loras_dir, llama_model)
+            from byzerllm.apps.byzer_storage.train_dpo import train_dpo
+
+            train_dpo(
+                name,
+                memories,
+                options,
+                dataset_dir,
+                loras_dir,
+                model_name=llama_model,
+                data_model_name=self.model_name,
+            )
         else:
             raise ValueError(f"Unsupported stage: {stage}")

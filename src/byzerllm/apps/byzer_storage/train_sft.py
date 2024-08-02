@@ -3,9 +3,6 @@ import os
 import concurrent.futures
 from typing import List, Dict, Any
 import byzerllm
-from loguru import logger
-from pydantic import BaseModel
-from byzerllm.apps.utils import TagExtractor, Tag
 from byzerllm.apps.byzer_storage.generate_sft_data import to_qa_pairs, read_alpaca_zh
 
 
@@ -15,6 +12,7 @@ def train_sft(
     options: Dict[str, Any],
     dataset_dir: str,
     loras_dir: str,
+    data_model_name: str,
     model_name: str,
 ):
     data = []
@@ -23,7 +21,7 @@ def train_sft(
     if memories:
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
             futures = []
-            llm = byzerllm.ByzerLLM().from_default_model(model_name)
+            llm = byzerllm.ByzerLLM().from_default_model(data_model_name)
             for memory in memories:
                 futures.append(executor.submit(to_qa_pairs, memory, llm))
 

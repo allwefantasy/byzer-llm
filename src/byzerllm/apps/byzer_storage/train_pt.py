@@ -1,16 +1,16 @@
 import json
 import os
 from typing import List, Dict, Any
-import byzerllm
+
 
 def train_pt(
-    self,
     name: str,
     memories: List[str],
     options: Dict[str, Any],
     dataset_dir: str,
     loras_dir: str,
-    llama_model: str,
+    data_model_name: str,
+    model_name: str,
 ):
     data = []
     min_samples = options.pop("min_samples", 1000)
@@ -34,7 +34,7 @@ def train_pt(
     args = dict(
         stage="pt",
         do_train=True,
-        model_name_or_path=llama_model,
+        model_name_or_path=model_name,
         dataset="data",
         dataset_dir=dataset_dir,
         cutoff_len=1024,

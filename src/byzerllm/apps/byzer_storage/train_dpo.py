@@ -2,43 +2,56 @@ import json
 import os
 from typing import List, Dict, Any
 import byzerllm
+import concurrent.futures
+from byzerllm.apps.byzer_storage.generate_sft_data import to_qa_pairs
 
 
-@byzerllm.prompt()
-def generate_dpo_data(memory: str) -> str:
-    """
-    根据以下内容，生成一个DPO（Direct Preference Optimization）训练数据样本。
-    每个样本应包含一个提示（prompt），一个首选回答（preferred_output）和一个拒绝回答（rejected_output）。
-    首选回答应该是高质量、有帮助的回答，而拒绝回答应该是质量较差或不太有帮助的回答。
-
-    内容：
-    {{memory}}
-
-    请生成DPO训练数据，并以JSON格式返回，格式如下：
-    {
-        "prompt": "用户提问或指令",
-        "preferred_output": "高质量、有帮助的回答",
-        "rejected_output": "质量较差或不太有帮助的回答"
-    }
-    """
-
-
-def train_dpo(
-    self,
+def train_dpo(    
     name: str,
     memories: List[str],
     options: Dict[str, Any],
     dataset_dir: str,
     loras_dir: str,
-    llama_model: str,
+    model_name: str,
+    data_model_name: str,
 ):
     data = []
     min_samples = options.pop("min_samples", 1000)
 
-    llm = byzerllm.ByzerLLM().from_default_model(self.model_name)
-    for memory in memories:
-        dpo_sample = generate_dpo_data.with_llm(llm).run(memory)
-        data.append(json.loads(dpo_sample))
+    if memories:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+            futures = []
+            data_llm = byzerllm.ByzerLLM().from_default_model(data_model_name)
+            current_llm = byzerllm.ByzerLLM().from_default_model(model_name)
+            for memory in memories:
+                futures.append(executor.submit(to_qa_pairs, memory, data_llm))
+
+            for future in concurrent.futures.as_completed(futures):
+                qa_pairs = future.result()
+                for qa_pair in qa_pairs:
+                    response = current_llm.chat_oai(
+                        conversations=[{"role": "user", "content": qa_pair.question}]
+                    )
+                    v = response[0].output
+                    item = (
+                        {
+                            "conversations": [
+                                {
+                                    "from": "human",
+                                    "value": qa_pair.question,
+                                }
+                            ],
+                            "chosen": {
+                                "from": "gpt",
+                                "value": qa_pair.answer,
+                            },
+                            "rejected": {
+                                "from": "gpt",
+                                "value": v,
+                            },
+                        },
+                    )
+                    data.append(item)
 
     if len(data) < min_samples:
         data = data * (min_samples // len(data) + 1)
@@ -47,13 +60,24 @@ def train_dpo(
         json.dump(data, f, indent=2, ensure_ascii=False)
 
     with open(f"{dataset_dir}/dataset_info.json", "w", encoding="utf-8") as f:
-        r = {"data": {"file_name": "data.json"}}
+        r = {
+            "data": {
+                "file_name": "data.json",
+                "ranking": True,
+                "columns": {
+                    "prompt": "instruction",
+                    "query": "input",
+                    "chosen": "chosen",
+                    "rejected": "rejected",
+                },
+            }
+        }
         f.write(json.dumps(r, indent=2, ensure_ascii=False))
 
     args = dict(
         stage="dpo",
         do_train=True,
-        model_name_or_path=llama_model,
+        model_name_or_path=model_name,
         dataset="data",
         dataset_dir=dataset_dir,
         cutoff_len=1024,
