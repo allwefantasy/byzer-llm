@@ -3,6 +3,7 @@ import os
 from typing import List, Dict, Any
 import byzerllm
 
+
 @byzerllm.prompt()
 def generate_dpo_data(memory: str) -> str:
     """
@@ -21,7 +22,16 @@ def generate_dpo_data(memory: str) -> str:
     }
     """
 
-def train_dpo(self, name: str, memories: List[str], options: Dict[str, Any], dataset_dir: str, loras_dir: str, llama_model: str):
+
+def train_dpo(
+    self,
+    name: str,
+    memories: List[str],
+    options: Dict[str, Any],
+    dataset_dir: str,
+    loras_dir: str,
+    llama_model: str,
+):
     data = []
     min_samples = options.pop("min_samples", 1000)
 

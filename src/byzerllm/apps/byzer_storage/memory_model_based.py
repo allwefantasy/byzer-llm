@@ -16,14 +16,8 @@ import ray
 import byzerllm
 from typing import List, Union, Dict
 from pydantic import BaseModel
-from byzerllm.apps.utils import TagExtractor, Tag
 import importlib
 from loguru import logger
-
-
-class QAPair(BaseModel):
-    question: str
-    answer: str
 
 
 def read_alpaca_zh():
@@ -134,56 +128,7 @@ class MemoryManager:
                     f.write(msg)
                     f.flush()
                 except queue.Empty:
-                    continue
-
-    @byzerllm.prompt()
-    def _convert_pretrain_text_to_instruction(self, text: str) -> str:
-        """
-        根据提供的信息，生成多个相关的问题，这些问题的回答，最终要能覆盖里面所有的信息,生成的问题越多越好。
-
-        下面是一些信息：
-
-        {{text}}
-
-        现在请开始生成问题，每个问题使用<_question_>标签包裹，每个回答使用<_answer_>标签包裹，最后
-        每个一组问题和回答使用<_group_>标签包裹。
-        """
-
-    @byzerllm.prompt()
-    def _format(self, text: str) -> str:
-        """
-        下面是一些问答信息：
-
-        {{text}}
-
-
-        请将每个问题使用<_question_>标签包裹，每个回答使用<_answer_>标签包裹，最后
-        每个一组问题和回答使用<_group_>标签包裹。
-        """
-
-    def to_qa_pairs(self, text: str, llm) -> List[QAPair]:
-        print(f"Generating QA pairs for {text}", flush=True)
-        v = self._convert_pretrain_text_to_instruction.with_llm(llm).run(text)
-        # format_v = self._format.with_llm(llm).run(v)
-        root_tag = TagExtractor(v).extract()
-        qa_pairs = []
-        # _group_
-        for item in root_tag.content:
-            qas = item.content
-            if len(qas) == 2:
-                if (
-                    qas[0].start_tag == "<_question_>"
-                    and qas[0].end_tag == "</_question_>"
-                    and qas[1].start_tag == "<_answer_>"
-                    and qas[1].end_tag == "</_answer_>"
-                ):
-                    qa_pairs.append(
-                        QAPair(question=qas[0].content, answer=qas[1].content)
-                    )
-
-        print(f"Generated {len(qa_pairs)} QA pairs.", flush=True)
-        logger.info(f"Generated {len(qa_pairs)} QA pairs.")
-        return qa_pairs
+                    continue    
 
     def _memorize(
         self,
@@ -205,14 +150,14 @@ class MemoryManager:
         os.makedirs(loras_dir, exist_ok=True)
         os.makedirs(dataset_dir, exist_ok=True)
 
-if stage == "pt":
-    from .train_pt import train_pt
-    train_pt(self, name, memories, options, dataset_dir, loras_dir, llama_model)
-elif stage == "sft":
-    from .train_sft import train_sft
-    train_sft(self, name, memories, options, dataset_dir, loras_dir, llama_model)
-elif stage == "dpo":
-    from .train_dpo import train_dpo
-    train_dpo(self, name, memories, options, dataset_dir, loras_dir, llama_model)
-else:
-    raise ValueError(f"Unsupported stage: {stage}")
+        if stage == "pt":
+            from .train_pt import train_pt
+            train_pt(self, name, memories, options, dataset_dir, loras_dir, llama_model)
+        elif stage == "sft":
+            from .train_sft import train_sft
+            train_sft(self, name, memories, options, dataset_dir, loras_dir, llama_model)
+        elif stage == "dpo":
+            from .train_dpo import train_dpo
+            train_dpo(self, name, memories, options, dataset_dir, loras_dir, llama_model)
+        else:
+            raise ValueError(f"Unsupported stage: {stage}")

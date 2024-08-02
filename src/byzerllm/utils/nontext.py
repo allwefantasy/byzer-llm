@@ -18,6 +18,7 @@ class TagExtractor:
         self.len = len(text)
         self.root_tag = Tag(start_tag="<_ROOT_>", end_tag="</_ROOT_>", content=[])
         self.current_tag = None
+        self.is_extracted = False
 
     def peek(self) -> str:
         if self.pos + 1 < self.len:
@@ -208,6 +209,24 @@ class Image(TagExtractor):
         return False
 
     @staticmethod
+    def extract_image_paths(text: str, to_base64: bool = False) -> List[str]:
+        v = Image(text)
+        v.extract()
+        result = []
+        for item in v.root_tag.content:
+            if (
+                isinstance(item, Tag)
+                and item.start_tag in ["<_image_>", "<_img_>"]
+                and item.end_tag in ["</_image_>", "</_img_>"]
+                and not item.content.startswith("data:image/")
+            ):
+                if to_base64:
+                    result.append(Image.load_image_from_path(item.content.strip()))
+                else:
+                    result.append(item.content.strip())
+        return result
+
+    @staticmethod
     def load_image_from_path(path: str) -> str:
         """
         Load image from path and return base64 image data
@@ -302,6 +321,24 @@ class Audio(TagExtractor):
             ):
                 return True
         return False
+    
+    @staticmethod
+    def extract_audio_paths(text: str, to_base64: bool = False) -> List[str]:
+        v = Image(text)
+        v.extract()
+        result = []
+        for item in v.root_tag.content:
+            if (
+                isinstance(item, Tag)
+                and item.start_tag in ["<_audio_>"]
+                and item.end_tag in ["</_audio_>"]
+                and not item.content.startswith("data:audio/")
+            ):
+                if to_base64:
+                    result.append(Audio.load_audio_from_path(item.content.strip()))
+                else:
+                    result.append(item.content.strip())
+        return result
 
     @staticmethod
     def load_audio_from_path(path: str) -> str:
