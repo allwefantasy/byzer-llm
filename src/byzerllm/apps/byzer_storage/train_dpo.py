@@ -28,7 +28,7 @@ def train_dpo(
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
             futures = []
             data_llm = byzerllm.ByzerLLM.from_default_model(data_model_name)
-            current_llm = byzerllm.ByzerLLM.from_default_model(model_name)
+            current_llm = byzerllm.ByzerLLM.from_default_model(model_name,False)
             for memory in memories:
                 futures.append(executor.submit(to_qa_pairs, memory, data_llm))
 
