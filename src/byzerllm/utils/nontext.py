@@ -22,24 +22,24 @@ class TagExtractor:
     def peek(self) -> str:
         if self.pos + 1 < self.len:
             return self.text[self.pos + 1]
-        return ""
+        return None
 
     def peek2(self) -> str:
         if self.pos + 1 < self.len:
             return self.text[self.pos + 2]
-        return ""
+        return None
 
     def peek3(self) -> str:
         if self.pos + 1 < self.len:
             return self.text[self.pos + 3]
-        return ""
+        return None
 
     def next(self) -> str:
         if self.pos < self.len - 1:
             self.pos += 1
             char = self.text[self.pos]
             return char
-        return ""
+        return None
 
     def is_full_tag(self) -> bool:
         return self.current_tag.start_tag and self.current_tag.end_tag
@@ -143,6 +143,8 @@ class TagExtractor:
     def extract_str_content(self) -> str:
         content = ""
         while not self.is_start_tag() and not self.is_end_tag():
+            if self.peek() is None:
+                break
             content += self.next()
 
         self.current_tag.content = content
@@ -196,7 +198,12 @@ class Image(TagExtractor):
     def has_image(self) -> bool:
         self.extract()
         for item in self.root_tag.content:
-            if isinstance(item, Tag) and item.start_tag == "<_image_>":
+            if (
+                isinstance(item, Tag)
+                and item.start_tag == "<_image_>"
+                and item.end_tag == "</_image_>"
+                and item.content.startswith("data:image/")
+            ):
                 return True
         return False
 
@@ -287,7 +294,12 @@ class Audio(TagExtractor):
     def has_audio(self) -> bool:
         self.extract()
         for item in self.root_tag.content:
-            if isinstance(item, Tag) and item.start_tag == "<_audio_>":
+            if (
+                isinstance(item, Tag)
+                and item.start_tag == "<_audio_>"
+                and item.end_tag == "</_audio_>"
+                and item.content.startswith("data:audio/")
+            ):
                 return True
         return False
 

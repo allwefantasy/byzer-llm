@@ -770,6 +770,47 @@ plt.axis('off')
 plt.show()
 ```
 
+## Prompt 函数的流式输出
+
+byzerllm 底层支持流式输出，非 prompt 函数的用法是这样的：
+
+```python
+import byzerllm
+
+llm = byzerllm.ByzerLLM.from_default_model("deepseek_chat")
+
+v = llm.stream_chat_oai(conversations=[{
+    "role":"user",
+    "content":"讲一个100字的故事"
+}])
+
+for s  in v:
+    print(s[0], end="")
+```
+
+如果你像用 prompt 函数，可以这么用：
+
+
+```python
+import byzerllm
+import json
+import base64
+from typing import Generator
+
+llm = byzerllm.ByzerLLM.from_default_model("deepseek_chat")
+
+@byzerllm.prompt()
+def tell_story() -> Generator[str, None, None]:
+    '''
+    给我讲一个一百多字的故事
+    '''
+
+v = tell_story.with_llm(llm).run()    
+for i in v:
+    print(i, end="")
+```
+
+可以看到，和普通的 prompt 函数的区别在于，返回值是一个生成器，然后你可以通过 for 循环来获取结果。
 
 ## 注意事项
 

@@ -1439,6 +1439,15 @@ class ByzerLLM:
             else:
                 model = self.default_model_name
 
+        def is_instance_of_generator(v):
+            from typing import Generator, get_origin, get_args
+            import collections                        
+            if get_origin(v) is collections.abc.Generator:
+                args = get_args(v)
+                if args == (str, type(None), type(None)):
+                    return True
+            return False
+
         def _impl(func):
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
@@ -1474,6 +1483,17 @@ class ByzerLLM:
 
                 if marker:
                     prompt_str = f"{prompt_str}\n\n{marker}"
+                                
+                if is_instance_of_generator(signature.return_annotation):
+                    temp_options = {**{"delta_mode":True}, **options}
+                    t = self.stream_chat_oai(
+                        conversations=[{"role": "user", "content": prompt_str}],
+                        model=model,                        
+                        **temp_options,
+                    )
+                    if return_origin_response:
+                        return t
+                    return (item[0] for item in t)
 
                 if issubclass(signature.return_annotation, pydantic.BaseModel):
                     response_class = signature.return_annotation
@@ -1799,8 +1819,9 @@ cost {time.monotonic() - start_time} seconds
     def _query(self, model: str, input_value: List[Dict[str, Any]]):
 
         try:
-            from byzerllm.utils.nontext import Image,Audio
-            for v in input_value:                
+            from byzerllm.utils.nontext import Image, Audio
+
+            for v in input_value:
                 s = v["instruction"]
                 image = Image(s)
                 if image.has_image():
@@ -1810,9 +1831,9 @@ cost {time.monotonic() - start_time} seconds
                 audio = Audio(s)
                 if audio.has_audio():
                     c = audio.to_content()
-                    v["instruction"] = json.dumps(c, ensure_ascii=False)  
+                    v["instruction"] = json.dumps(c, ensure_ascii=False)
         except Exception as inst:
-            pass       
+            pass
 
         event_result = self._trigger_event(
             EventName.BEFORE_CALL_MODEL, self, model, input_value

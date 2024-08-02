@@ -869,6 +869,11 @@ def format_prompt_jinja2(func,**kargs):
     tpl = Template(prompt)
     return tpl.render(kargs)
 
+def format_str_jinja2(s,**kargs):
+    from jinja2 import Template
+    tpl = Template(s)
+    return tpl.render(kargs)
+
 def random_uuid() -> str:
     return str(uuid.uuid4().hex)
 

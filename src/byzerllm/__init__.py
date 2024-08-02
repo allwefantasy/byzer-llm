@@ -8,7 +8,12 @@ import functools
 
 from typing import Dict, Generator, Optional
 from dataclasses import dataclass
-from byzerllm.utils import print_flush, format_prompt, format_prompt_jinja2
+from byzerllm.utils import (
+    print_flush,
+    format_prompt,
+    format_prompt_jinja2,
+    format_str_jinja2,
+)
 from .store import transfer_from_ob
 
 
@@ -248,10 +253,11 @@ class _PrompRunner:
         self.auto_remove_response_markers_from_output = True
         self.extractor = None
         self.continue_prompt = "接着前面的内容继续"
+        self.response_markers_template = """你的输出可能会被切分成多轮对话完成。请确保第一次输出以{{ RESPONSE_START }}开始，输出完毕后，请使用{{ RESPONSE_END }}标记。中间的回复不需要使用这两个标记。"""
 
-    def with_continue_prompt(self, prompt:str):
+    def with_continue_prompt(self, prompt: str):
         self.continue_prompt = prompt
-        return self    
+        return self
 
     def __call__(self, *args, **kwargs) -> Any:
         if self.llm:
@@ -262,15 +268,21 @@ class _PrompRunner:
         self._options = {**self._options, **options}
         return self
 
-    def with_response_markers(self, response_markers: Optional[List[str]] = None):
+    def with_response_markers(
+        self,
+        response_markers: Optional[List[str]] = None,
+        response_markers_template: Optional[str] = None,
+    ):
         if response_markers is not None and len(response_markers) != 2:
             raise ValueError("response_markers should be a list of two elements")
         if response_markers is None:
             response_markers = ["<RESPONSE>", "</RESPONSE>"]
         self.response_markers = response_markers
+        if response_markers_template:
+            self.response_markers_template = response_markers_template
         return self
-    
-    def with_extractor(self,func):
+
+    def with_extractor(self, func):
         self.extractor = func
         return self
 
@@ -318,7 +330,49 @@ class _PrompRunner:
         end_index = output.find(end)
         return output[start_index + len(start) : end_index]
 
-    def _multi_turn_wrapper(self, llm, v: List[Any], signature: inspect.Signature):
+    def _multi_turn_wrapper_with_generator(
+        self,
+        llm,
+        v: List[Any],
+        signature: inspect.Signature,
+        origin_input: Optional[str] = None,
+    ):
+        conversations = []
+        s = ""
+        for item in v:
+            s += item[0]
+            yield item
+        if origin_input is None:
+            raise ValueError(
+                "origin_input should be set when return value is a generator"
+            )
+
+        conversations = []
+        conversations.append({"role": "user", "content": origin_input})
+        conversations.append({"role": "assistant", "content": s})
+        turn = 1
+        end_marker = self.response_markers[1]
+        while turn < self.max_turns and end_marker not in s:
+            conversations.append({"role": "user", "content": self.continue_prompt})
+            temp_options = {**{"delta_mode": True}, **self._options}
+            v1 = llm.stream_chat_oai(conversations=conversations, **temp_options)
+            temp = ""
+            for item in v1:
+                temp += item[0]
+                yield item
+            conversations.append({"role": "assistant", "content": temp})
+            s += temp
+            turn += 1
+        return
+
+    def _multi_turn_wrapper(
+        self,
+        llm,
+        v: List[Any],
+        signature: inspect.Signature,
+        origin_input: Optional[str] = None,
+    ):
+
         if not issubclass(signature.return_annotation, str):
             raise ValueError(
                 "Return value of function should be a string when response_markers is set"
@@ -331,7 +385,7 @@ class _PrompRunner:
         conversations.append({"role": "user", "content": response.input["instruction"]})
         conversations.append({"role": "assistant", "content": response.output})
         turn = 1
-        end_marker = self.response_markers[1]        
+        end_marker = self.response_markers[1]
 
         while turn < self.max_turns and end_marker not in response.output:
             conversations.append({"role": "user", "content": self.continue_prompt})
@@ -339,7 +393,7 @@ class _PrompRunner:
             response = v1[0]
             conversations.append({"role": "assistant", "content": response.output})
             s += response.output
-            turn += 1        
+            turn += 1
 
         if self.auto_remove_response_markers_from_output:
             output_content = self._remove_response_markers(output=s)
@@ -350,6 +404,16 @@ class _PrompRunner:
             else:
                 return self.extractor(response.output)
         return response.output
+
+    def is_instance_of_generator(self, v):
+        from typing import Generator, get_origin, get_args
+        import collections
+
+        if get_origin(v) is collections.abc.Generator:
+            args = get_args(v)
+            if args == (str, type(None), type(None)):
+                return True
+        return False
 
     def run(self, *args, **kwargs):
         func = self.func
@@ -372,9 +436,17 @@ class _PrompRunner:
         if is_lambda:
             return_origin_response = True if self.response_markers else False
             marker = None
-            
+
             if self.response_markers:
-                marker = f"""输出的内容请以 {self.response_markers[0]}{self.response_markers[1]} 标签对包裹。"""
+                marker = format_str_jinja2(
+                    self.response_markers_template,
+                    RESPONSE_START=self.response_markers[0],
+                    RESPONSE_END=self.response_markers[1],
+                )
+
+            origin_input = self.prompt(*args, **kwargs)
+            if self.response_markers:
+                origin_input = f"{origin_input}\n\n{marker}"
 
             v = llm(self.instance).prompt(
                 render=render,
@@ -387,13 +459,29 @@ class _PrompRunner:
                 if self.extractor:
                     return self.extractor(v)
                 return v
-            return self._multi_turn_wrapper(llm(self.instance), v, signature)
+
+            if self.is_instance_of_generator(signature.return_annotation):
+                return self._multi_turn_wrapper_with_generator(
+                    llm(self.instance), v, signature, origin_input=origin_input
+                )
+
+            return self._multi_turn_wrapper(
+                llm(self.instance), v, signature, origin_input=origin_input
+            )
 
         if isinstance(llm, ByzerLLM):
             return_origin_response = True if self.response_markers else False
             marker = None
             if self.response_markers:
-                marker = f"""输出的内容请以 {self.response_markers[0]}{self.response_markers[1]} 标签对包裹。"""
+                marker = format_str_jinja2(
+                    self.response_markers_template,
+                    RESPONSE_START=self.response_markers[0],
+                    RESPONSE_END=self.response_markers[1],
+                )
+
+            origin_input = self.prompt(*args, **kwargs)
+            if self.response_markers:
+                origin_input = f"{origin_input}\n\n{marker}"
 
             v = llm.prompt(
                 render=render,
@@ -406,7 +494,15 @@ class _PrompRunner:
                 if self.extractor:
                     return self.extractor(v)
                 return v
-            return self._multi_turn_wrapper(llm, v, signature)
+
+            if self.is_instance_of_generator(signature.return_annotation):
+                return self._multi_turn_wrapper_with_generator(
+                    llm, v, signature, origin_input=origin_input
+                )
+
+            return self._multi_turn_wrapper(
+                llm, v, signature, origin_input=origin_input
+            )
 
         if isinstance(llm, str):
             _llm = ByzerLLM()
@@ -414,9 +510,17 @@ class _PrompRunner:
             _llm.setup_template(llm, "auto")
             return_origin_response = True if self.response_markers else False
             marker = None
-            
+
             if self.response_markers:
-                marker = f"""输出的内容请以 {self.response_markers[0]}{self.response_markers[1]} 标签对包裹。"""
+                marker = format_str_jinja2(
+                    self.response_markers_template,
+                    RESPONSE_START=self.response_markers[0],
+                    RESPONSE_END=self.response_markers[1],
+                )
+
+            origin_input = self.prompt(*args, **kwargs)
+            if self.response_markers:
+                origin_input = f"{origin_input}\n\n{marker}"
 
             v = _llm.prompt(
                 render=render,
@@ -429,7 +533,15 @@ class _PrompRunner:
                 if self.extractor:
                     return self.extractor(v)
                 return v
-            return self._multi_turn_wrapper(llm, v, signature)
+
+            if self.is_instance_of_generator(signature.return_annotation):
+                return self._multi_turn_wrapper_with_generator(
+                    llm, v, signature, origin_input=origin_input
+                )
+
+            return self._multi_turn_wrapper(
+                llm, v, signature, origin_input=origin_input
+            )
 
         else:
             raise ValueError(
@@ -475,24 +587,27 @@ class _DescriptorPrompt:
                 options=self._options,
             )
 
-    def with_response_markers(self, response_markers: Optional[List[str]] = None):
-        if response_markers is not None and len(response_markers) != 2:
-            raise ValueError("response_markers should be a list of two elements")
-        if response_markers is None:
-            response_markers = ["<RESPONSE>", "</RESPONSE>"]
-        self.prompt_runner.response_markers = response_markers
+    def with_response_markers(
+        self,
+        response_markers: Optional[List[str]] = None,
+        response_markers_template: Optional[str] = None,
+    ):
+        self.prompt_runner.with_response_markers(
+            response_markers=response_markers,
+            response_markers_template=response_markers_template,
+        )
         return self
 
     def with_auto_remove_response_markers(self, flag: bool):
-        self.prompt_runner.auto_remove_response_markers_from_output = flag
+        self.prompt_runner.with_auto_remove_response_markers(flag)
         return self
 
     def with_max_turns(self, max_turns: int):
-        self.prompt_runner.max_turns = max_turns
+        self.prompt_runner.with_max_turns(max_turns)
         return self
-    
-    def with_continue_prompt(self, prompt:str):
-        self.prompt_runner.continue_prompt = prompt
+
+    def with_continue_prompt(self, prompt: str):
+        self.prompt_runner.with_continue_prompt(prompt)
         return self
 
     def __call__(self, *args, **kwargs):
@@ -507,9 +622,9 @@ class _DescriptorPrompt:
     def with_llm(self, llm):
         self.llm = llm
         self.prompt_runner.with_llm(llm)
-        return self        
-    
-    def with_extractor(self,func):
+        return self
+
+    def with_extractor(self, func):
         self.prompt_runner.with_extractor(func)
         return self
 
@@ -557,4 +672,11 @@ from byzerllm.utils.connect_ray import connect_cluster
 from byzerllm.apps.agent.registry import reply as agent_reply
 from byzerllm.utils.nontext import Image
 
-__all__ = ["ByzerLLM", "ByzerRetrieval", "connect_cluster", "prompt", "agent_reply","Image"]
+__all__ = [
+    "ByzerLLM",
+    "ByzerRetrieval",
+    "connect_cluster",
+    "prompt",
+    "agent_reply",
+    "Image",
+]
