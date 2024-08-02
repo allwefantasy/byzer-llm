@@ -45,23 +45,31 @@ def get_more(text: str, questions_and_answers: str, num: int = 10) -> str:
 
 
 def to_qa_pairs(text: str, llm, num: int = 30) -> List[QAPair]:
-    print(f"Generating QA pairs for {text}", flush=True)
+    logger.info(f"Starting to generate QA pairs for text: {text[:100]}...")
+    print(f"Starting to generate QA pairs for text: {text[:100]}...", flush=True)
+
+    logger.info("Generating initial QA pairs...")
     v = _convert_pretrain_text_to_instruction.with_llm(llm).run(text)
+    logger.info(f"Initial QA pairs generated. Length: {len(v)}")
 
     max_turns = int(num / 10)
     if max_turns < 1:
         max_turns = 1
+    logger.info(f"Will generate additional QA pairs for {max_turns} turns")
 
+    turn = 0
     while max_turns > 0:
+        turn += 1
+        logger.info(f"Generating additional QA pairs (turn {turn}/{max_turns})...")
         t = get_more.with_llm(llm).run(text, v)
         v += t
+        logger.info(f"Additional QA pairs generated. New total length: {len(v)}")
         max_turns -= 1
 
-    # format_v = self._format.with_llm(llm).run(v)
+    logger.info("Extracting QA pairs from generated text...")
     root_tag = TagExtractor(v).extract()
     qa_pairs = []
-    # _group_
-    for item in root_tag.content:
+    for i, item in enumerate(root_tag.content):
         qas = item.content
         if len(qas) == 2:
             if (
@@ -71,9 +79,14 @@ def to_qa_pairs(text: str, llm, num: int = 30) -> List[QAPair]:
                 and qas[1].end_tag == "</_answer_>"
             ):
                 qa_pairs.append(QAPair(question=qas[0].content, answer=qas[1].content))
+                logger.debug(f"Extracted QA pair {i+1}: Q: {qas[0].content[:50]}... A: {qas[1].content[:50]}...")
+            else:
+                logger.warning(f"Skipping item {i+1} due to incorrect tags: {qas[0].start_tag}, {qas[0].end_tag}, {qas[1].start_tag}, {qas[1].end_tag}")
+        else:
+            logger.warning(f"Skipping item {i+1} due to incorrect number of elements: {len(qas)}")
 
-    print(f"Generated {len(qa_pairs)} QA pairs.", flush=True)
-    logger.info(f"Generated {len(qa_pairs)} QA pairs.")
+    logger.info(f"Extracted {len(qa_pairs)} valid QA pairs.")
+    print(f"Extracted {len(qa_pairs)} valid QA pairs.", flush=True)
     return qa_pairs
 
 
