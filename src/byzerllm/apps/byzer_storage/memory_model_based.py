@@ -63,6 +63,9 @@ class MemoryManager:
             await loop.run_in_executor(
                 self.thread_pool, self._memorize_with_logs, name, memories, options
             )
+        except Exception as e:
+            logger.error(f"Error in memorize: {e}")
+            raise e    
         finally:
             if self.remote:
                 logger.info(f"Memorization for {name} completed. existing actor")
