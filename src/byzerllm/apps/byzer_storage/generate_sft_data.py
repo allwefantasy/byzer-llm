@@ -56,16 +56,19 @@ def get_more(text: str, questions_and_answers: str, num: int = 10) -> str:
 def generate_cache_key(text: str) -> str:
     return hashlib.md5(text.encode()).hexdigest()
 
+
 def get_cache_path() -> Path:
     home = Path.home()
     cache_dir = home / ".byzerllm" / "cache" / "llm_generated_data"
     cache_dir.mkdir(parents=True, exist_ok=True)
     return cache_dir
 
+
 def save_to_cache(key: str, data: List[QAPair]):
     cache_path = get_cache_path() / f"{key}.json"
     with cache_path.open("w", encoding="utf-8") as f:
         json.dump([qa.dict() for qa in data], f, ensure_ascii=False, indent=2)
+
 
 def load_from_cache(key: str) -> List[QAPair]:
     cache_path = get_cache_path() / f"{key}.json"
@@ -75,10 +78,11 @@ def load_from_cache(key: str) -> List[QAPair]:
         return [QAPair(**item) for item in data]
     return None
 
-def to_qa_pairs(text: str, llm, num: int = 30) -> List[QAPair]:
+
+def to_qa_pairs(text: str, llm, num: int = 20) -> List[QAPair]:
     cache_key = generate_cache_key(text)
     cached_result = load_from_cache(cache_key)
-    
+
     if cached_result:
         logger.info(f"Using cached result for text: {text[:100]}...")
         return cached_result
@@ -99,8 +103,9 @@ def to_qa_pairs(text: str, llm, num: int = 30) -> List[QAPair]:
         turn += 1
         logger.info(f"Generating additional QA pairs (turn {turn}/{max_turns})...")
         t = get_more.with_llm(llm).run(text, v)
-        v += t
-        logger.info(f"Additional QA pairs generated. New total length: {len(v)}")
+        if t:
+            v += t
+            logger.info(f"Additional QA pairs generated. New total length: {len(v)}")
 
     logger.info(f"Extracting QA pairs from generated text...{v}")
     root_tag = TagExtractor(v).extract()
@@ -128,8 +133,8 @@ def to_qa_pairs(text: str, llm, num: int = 30) -> List[QAPair]:
             )
 
     logger.info(f"Extracted {len(qa_pairs)} valid QA pairs.")
-    
+
     # Save the result to cache
     save_to_cache(cache_key, qa_pairs)
-    
+
     return qa_pairs

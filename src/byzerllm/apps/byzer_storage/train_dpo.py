@@ -28,7 +28,7 @@ def train_dpo(
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
             futures = []
             data_llm = byzerllm.ByzerLLM.from_default_model(data_model_name)
-            current_llm = byzerllm.ByzerLLM.from_default_model(model_name,False)
+            current_llm = byzerllm.ByzerLLM.from_default_model(model_name)
             for memory in memories:
                 futures.append(executor.submit(to_qa_pairs, memory, data_llm))
 
@@ -43,24 +43,22 @@ def train_dpo(
                     v = response[0].output
 
                     logger.debug(f"Response from llm: {v[:50]}...")
-                    item = (
-                        {
-                            "conversations": [
-                                {
-                                    "from": "human",
-                                    "value": qa_pair.question,
-                                }
-                            ],
-                            "chosen": {
-                                "from": "gpt",
-                                "value": qa_pair.answer,
-                            },
-                            "rejected": {
-                                "from": "gpt",
-                                "value": v,
-                            },
+                    item = {
+                        "conversations": [
+                            {
+                                "from": "human",
+                                "value": qa_pair.question,
+                            }
+                        ],
+                        "chosen": {
+                            "from": "gpt",
+                            "value": qa_pair.answer,
                         },
-                    )
+                        "rejected": {
+                            "from": "gpt",
+                            "value": v,
+                        },
+                    }
 
                     data.append(item)
 
@@ -71,11 +69,13 @@ def train_dpo(
     logger.info(f"Final number of data points: {len(data)}")
 
     logger.info(f"Saving data to {dataset_dir}/data.json")
-    with open(f"{dataset_dir}/data.json", "w", encoding="utf-8") as f:
+    with open(os.path.join(dataset_dir, "data.json"), "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
     logger.info(f"Saving dataset info to {dataset_dir}/dataset_info.json")
-    with open(f"{dataset_dir}/dataset_info.json", "w", encoding="utf-8") as f:
+    with open(
+        os.path.join(dataset_dir, "dataset_info.json"), "w", encoding="utf-8"
+    ) as f:
         r = {
             "data": {
                 "file_name": "data.json",
