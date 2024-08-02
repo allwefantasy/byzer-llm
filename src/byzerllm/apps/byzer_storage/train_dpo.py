@@ -81,10 +81,11 @@ def train_dpo(
             "data": {
                 "file_name": "data.json",
                 "formatting": "sharegpt",
+                "ranking": True,
                 "columns": {
                     "messages": "conversations",
-                    "system": "system",
-                    "tools": "tools",
+                    "chosen": "chosen",
+                    "rejected": "rejected",
                 },
             }
         }
