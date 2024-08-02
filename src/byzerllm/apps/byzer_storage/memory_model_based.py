@@ -18,7 +18,6 @@ from typing import List, Union, Dict
 from pydantic import BaseModel
 import importlib
 from loguru import logger
-import logging
 
 
 class MemoryManager:
@@ -129,28 +128,28 @@ class MemoryManager:
         memories: List[Union[str, Dict[str, Any]]],
         options: Dict[str, Any] = {},
     ):
-        logging.info(f"Starting _memorize for {name}")
-        logging.info(f"Memories count: {len(memories)}")
-        logging.info(f"Options: {options}")
+        logger.info(f"Starting _memorize for {name}")
+        logger.info(f"Memories count: {len(memories)}")
+        logger.info(f"Options: {options}")
 
         stage = options.get("stage", "pt")
-        logging.info(f"Selected stage: {stage}")
+        logger.info(f"Selected stage: {stage}")
 
         base_model_dir = os.path.join(self.base_dir, "storage", "models")
         llama_model = os.path.join(
             base_model_dir, "meta-llama", "Meta-Llama-3-8B-Instruct-GPTQ"
         )
-        logging.info(f"Using model: {llama_model}")
+        logger.info(f"Using model: {llama_model}")
 
         loras_dir = os.path.join(self.base_dir, "storage", "loras")
         dataset_dir = os.path.join(self.base_dir, "storage", "datasets", name)
 
-        logging.info(f"Creating directories: {loras_dir} and {dataset_dir}")
+        logger.info(f"Creating directories: {loras_dir} and {dataset_dir}")
         os.makedirs(loras_dir, exist_ok=True)
         os.makedirs(dataset_dir, exist_ok=True)
 
         if stage == "pt":
-            logging.info("Starting pre-training stage")
+            logger.info("Starting pre-training stage")
             from byzerllm.apps.byzer_storage.train_pt import train_pt
 
             train_pt(
@@ -163,7 +162,7 @@ class MemoryManager:
                 data_model_name=self.model_name,
             )
         elif stage == "sft":
-            logging.info("Starting SFT stage")
+            logger.info("Starting SFT stage")
             from byzerllm.apps.byzer_storage.train_sft import train_sft
 
             train_sft(
@@ -176,7 +175,7 @@ class MemoryManager:
                 data_model_name=self.model_name,
             )
         elif stage == "dpo":
-            logging.info("Starting DPO stage")
+            logger.info("Starting DPO stage")
             from byzerllm.apps.byzer_storage.train_dpo import train_dpo
 
             train_dpo(
@@ -189,7 +188,7 @@ class MemoryManager:
                 data_model_name=self.model_name,
             )
         else:
-            logging.error(f"Unsupported stage: {stage}")
+            logger.error(f"Unsupported stage: {stage}")
             raise ValueError(f"Unsupported stage: {stage}")
 
-        logging.info(f"_memorize completed for {name}")
+        logger.info(f"_memorize completed for {name}")
