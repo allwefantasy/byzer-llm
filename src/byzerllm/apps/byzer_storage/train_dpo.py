@@ -15,8 +15,7 @@ def train_dpo(
     loras_dir: str,
     target_model_path: str,
     model_name: str,
-    data_model_name: str
-    
+    data_model_name: str,
 ):
     logger.info(f"Starting DPO training for {name}")
     logger.info(f"Using data model: {data_model_name} and target model: {model_name}")
@@ -81,12 +80,11 @@ def train_dpo(
         r = {
             "data": {
                 "file_name": "data.json",
-                "ranking": True,
+                "formatting": "sharegpt",
                 "columns": {
-                    "prompt": "instruction",
-                    "query": "input",
-                    "chosen": "chosen",
-                    "rejected": "rejected",
+                    "messages": "conversations",
+                    "system": "system",
+                    "tools": "tools",
                 },
             }
         }
