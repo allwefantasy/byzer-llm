@@ -12,6 +12,7 @@ def train_sft(
     options: Dict[str, Any],
     dataset_dir: str,
     loras_dir: str,
+    target_model_path: str,
     data_model_name: str,
     model_name: str,
 ):
@@ -51,7 +52,7 @@ def train_sft(
     args = dict(
         stage="sft",
         do_train=True,
-        model_name_or_path=model_name,
+        model_name_or_path=target_model_path,
         dataset="data",
         dataset_dir=dataset_dir,
         cutoff_len=1024,

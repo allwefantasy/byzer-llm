@@ -29,6 +29,7 @@ class MemoryManager:
         storage: ByzerStorage,
         base_dir: str,
         model_name: str = "deepseek_chat",
+        data_model_name: str = "deepseek_chat",
         remote: bool = True,
     ):
         self.storage = storage
@@ -38,6 +39,7 @@ class MemoryManager:
         self.log_file = None
         self.remote = remote
         self.model_name = model_name
+        self.data_model_name = data_model_name
 
     @classmethod
     async def add_to_queue(cls, name: str, memories: List[str]):
@@ -161,8 +163,9 @@ class MemoryManager:
                 options,
                 dataset_dir,
                 loras_dir,
-                model_name=llama_model,
-                data_model_name=self.model_name,
+                target_model_path=llama_model,
+                model_name=self.model_name,
+                data_model_name=self.data_model_name,
             )
         elif stage == "sft":
             logger.info("Starting SFT stage")
@@ -174,8 +177,9 @@ class MemoryManager:
                 options,
                 dataset_dir,
                 loras_dir,
-                model_name=llama_model,
-                data_model_name=self.model_name,
+                target_model_path=llama_model,
+                model_name=self.model_name,
+                data_model_name=self.data_model_name,
             )
         elif stage == "dpo":
             logger.info("Starting DPO stage")
@@ -187,8 +191,9 @@ class MemoryManager:
                 options,
                 dataset_dir,
                 loras_dir,
-                model_name=llama_model,
-                data_model_name=self.model_name,
+                target_model_path=llama_model,
+                model_name=self.model_name,
+                data_model_name=self.data_model_name,
             )
         else:
             logger.error(f"Unsupported stage: {stage}")

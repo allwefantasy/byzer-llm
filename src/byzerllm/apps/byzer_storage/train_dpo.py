@@ -13,8 +13,10 @@ def train_dpo(
     options: Dict[str, Any],
     dataset_dir: str,
     loras_dir: str,
+    target_model_path: str,
     model_name: str,
-    data_model_name: str,
+    data_model_name: str
+    
 ):
     logger.info(f"Starting DPO training for {name}")
     logger.info(f"Using data model: {data_model_name} and target model: {model_name}")
@@ -93,7 +95,7 @@ def train_dpo(
     args = dict(
         stage="dpo",
         do_train=True,
-        model_name_or_path=model_name,
+        model_name_or_path=target_model_path,
         dataset="data",
         dataset_dir=dataset_dir,
         cutoff_len=1024,

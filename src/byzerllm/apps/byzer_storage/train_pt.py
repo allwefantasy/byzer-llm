@@ -34,7 +34,7 @@ def train_pt(
     args = dict(
         stage="pt",
         do_train=True,
-        model_name_or_path=model_name,
+        model_name_or_path=target_model_path,
         dataset="data",
         dataset_dir=dataset_dir,
         cutoff_len=1024,
