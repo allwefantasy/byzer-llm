@@ -487,7 +487,7 @@ class CustomSaasAPI:
         if stream:
             threading.Thread(target=writer, daemon=True).start()
 
-            time_count = 10 * 100
+            time_count = 60 * 100
             while request_id[0] is None and time_count > 0:
                 time.sleep(0.01)
                 time_count -= 1
