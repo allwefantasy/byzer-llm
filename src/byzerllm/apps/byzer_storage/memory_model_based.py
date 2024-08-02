@@ -19,15 +19,6 @@ from pydantic import BaseModel
 import importlib
 from loguru import logger
 
-
-def read_alpaca_zh():
-    with importlib.resources.path(
-        "byzerllm.apps.byzer_storage", "alpaca_zh.json"
-    ) as json_path:
-        with open(json_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-
-
 class MemoryManager:
     _queue = asyncio.Queue()
     _is_processing = False
