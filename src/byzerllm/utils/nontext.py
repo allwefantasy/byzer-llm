@@ -208,8 +208,19 @@ class Image(TagExtractor):
                 return True
         return False
     
-    def convert_image_paths_from(text:str,start_tag:str="<img>",end_tag:str="</img>"):
-        pass
+    @staticmethod
+    def convert_image_paths_from(text: str, start_tag: str = "<img>", end_tag: str = "</img>") -> str:
+        import re
+        pattern = re.escape(start_tag) + r"(.*?)" + re.escape(end_tag)
+        
+        def replace_func(match):
+            content = match.group(1).strip()
+            if content.startswith("data:image/"):
+                return f"<_image_>{content}</_image_>"
+            else:
+                return f"<_image_>{Image.load_image_from_path(content)}</_image_>"
+        
+        return re.sub(pattern, replace_func, text, flags=re.DOTALL)
 
     @staticmethod
     def extract_image_paths(text: str, to_base64: bool = False) -> List[str]:
