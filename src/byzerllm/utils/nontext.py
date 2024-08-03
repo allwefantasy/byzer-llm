@@ -203,23 +203,22 @@ class Image(TagExtractor):
                 isinstance(item, Tag)
                 and item.start_tag == "<_image_>"
                 and item.end_tag == "</_image_>"
-                and item.content.startswith("data:image/")
             ):
                 return True
         return False
-    
+
     @staticmethod
-    def convert_image_paths_from(text: str, start_tag: str = "<img>", end_tag: str = "</img>") -> str:
+    def convert_image_paths_from(
+        text: str, start_tag: str = "<img>", end_tag: str = "</img>"
+    ) -> str:
         import re
+
         pattern = re.escape(start_tag) + r"(.*?)" + re.escape(end_tag)
-        
+
         def replace_func(match):
             content = match.group(1).strip()
-            if content.startswith("data:image/"):
-                return f"<_image_>{content}</_image_>"
-            else:
-                return f"<_image_>{Image.load_image_from_path(content)}</_image_>"
-        
+            return f"<_image_>{content}</_image_>"
+
         return re.sub(pattern, replace_func, text, flags=re.DOTALL)
 
     @staticmethod
@@ -241,7 +240,7 @@ class Image(TagExtractor):
         return result
 
     @staticmethod
-    def load_image_from_path(path: str) -> str:
+    def load_image_from_path(path: str, only_content: bool = False) -> str:
         """
         Load image from path and return base64 image data
         """
@@ -251,6 +250,8 @@ class Image(TagExtractor):
 
         with open(path, "rb") as image_file:
             encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+        if only_content:
+            return f"data:image/{image_type};base64,{encoded_string}"
         return f"<_image_>data:image/{image_type};base64,{encoded_string}</_image_>"
 
     @staticmethod
@@ -307,9 +308,15 @@ class Image(TagExtractor):
 
         new_text = self.text
         for res in result:
-            new_text = new_text.replace(f"<_image_>{res['image']}</_image_>", "")
+            new_text = new_text.replace(f"<_image_>{res['image']}</_image_>", "")        
 
         result.append({"text": new_text.strip()})
+
+        for res in result:
+            if "image" in res and not res["image"].startswith("data:image/"):
+                res["image"] = Image.load_image_from_path(
+                    res["image"], only_content=True
+                )
 
         # for item in result:
         #     if "image" in item:
@@ -331,11 +338,10 @@ class Audio(TagExtractor):
                 isinstance(item, Tag)
                 and item.start_tag == "<_audio_>"
                 and item.end_tag == "</_audio_>"
-                and item.content.startswith("data:audio/")
             ):
                 return True
         return False
-    
+
     @staticmethod
     def extract_audio_paths(text: str, to_base64: bool = False) -> List[str]:
         v = Image(text)
@@ -355,7 +361,7 @@ class Audio(TagExtractor):
         return result
 
     @staticmethod
-    def load_audio_from_path(path: str) -> str:
+    def load_audio_from_path(path: str, only_content=False) -> str:
         """
         Load audio from path and return base64 audio data
         """
@@ -364,6 +370,10 @@ class Audio(TagExtractor):
 
         with open(path, "rb") as audio_file:
             encoded_string = base64.b64encode(audio_file.read()).decode("utf-8")
+
+        if only_content:
+            return f"data:audio/{audio_type};base64,{encoded_string}"
+
         return f"<_audio_>data:audio/{audio_type};base64,{encoded_string}</_audio_>"
 
     @staticmethod
@@ -408,6 +418,11 @@ class Audio(TagExtractor):
                 if counter > 0:
                     raise ValueError("Only one audio file is allowed")
                 counter += 1
-                current_item["audio"] = item.content
+                if item.content.startswith("data:audio/"):
+                    current_item["audio"] = item.content
+                else:
+                    current_item["audio"] = Audio.load_audio_from_path(
+                        item.content, only_content=True
+                    )
 
         return current_item

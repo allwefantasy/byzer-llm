@@ -1833,7 +1833,7 @@ cost {time.monotonic() - start_time} seconds
                     c = audio.to_content()
                     v["instruction"] = json.dumps(c, ensure_ascii=False)
         except Exception as inst:
-            pass
+            pass        
 
         event_result = self._trigger_event(
             EventName.BEFORE_CALL_MODEL, self, model, input_value
