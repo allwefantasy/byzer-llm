@@ -9,6 +9,7 @@ def train_pt(
     options: Dict[str, Any],
     dataset_dir: str,
     loras_dir: str,
+    target_model_path: str,
     data_model_name: str,
     model_name: str,
 ):
