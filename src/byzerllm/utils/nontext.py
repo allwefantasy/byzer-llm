@@ -207,6 +207,9 @@ class Image(TagExtractor):
             ):
                 return True
         return False
+    
+    def convert_image_paths_from(text:str,start_tag:str="<img>",end_tag:str="</img>"):
+        pass
 
     @staticmethod
     def extract_image_paths(text: str, to_base64: bool = False) -> List[str]:
