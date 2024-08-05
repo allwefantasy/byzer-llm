@@ -812,6 +812,75 @@ for i in v:
 
 可以看到，和普通的 prompt 函数的区别在于，返回值是一个生成器，然后你可以通过 for 循环来获取结果。
 
+## 向量化模型
+
+byzerllm 支持向量化模型,你可以这样启动一个本地的模型：
+
+```bash
+!byzerllm deploy --pretrained_model_type custom/bge \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--worker_concurrency 10 \
+--model_path /home/winubuntu/.auto-coder/storage/models/AI-ModelScope/bge-large-zh \
+--infer_backend transformers \
+--num_workers 1 \
+--model emb
+```
+
+注意两个参数:
+
+1. --infer_backend transformers: 表示使用 transformers 作为推理后端。
+2. --model_path: 表示模型的路径。
+
+也可以启动一个 SaaS 的emb模型,比如 qwen 的 emb 模型：
+
+```bash
+byzerllm deploy --pretrained_model_type saas/qianwen \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 2 \
+--infer_params saas.api_key=${MODEL_QIANWEN_TOKEN}  saas.model=text-embedding-v2 \
+--model qianwen_emb
+```
+
+或者 openai 的 emb 模型：
+
+```bash
+byzerllm deploy --pretrained_model_type saas/openai \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 0 \
+--num_workers 1 \
+--worker_concurrency 10 \
+--infer_params saas.api_key=${MODEL_OPENAI_TOKEN} saas.model=text-embedding-3-small \
+--model gpt_emb
+```
+SaaS 模型无需配置 `--infer_backend` 参数。
+
+无论是本地模型还是 SaaS 模型，我们都可以这样使用：
+
+```python
+import byzerllm
+llm = byzerllm.ByzerLLM.from_default_model("deepseek_chat")
+llm.setup_default_emb_model_name("emb")
+llm.emb_query("你好")
+```
+
+如果你配置 byzerllm 中的 Storage 使用，比如你这样启动了存储：
+
+```bash
+byzerllm storage start --enable_emb
+```
+
+那么需要这么使用：
+
+```python
+from byzerllm.apps.byzer_storage.simple_api import ByzerStorage, DataType, FieldOption,SortOption
+storage = ByzerStorage("byzerai_store", "memory", "memory")
+storage.emb("你好")
+```
+
+
+
 ## 注意事项
 
 1. prompt函数方法体返回只能是dict，实际的返回类型和方法签名可以不一样，但是方法体返回只能是dict。
