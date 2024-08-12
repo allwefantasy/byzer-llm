@@ -879,6 +879,23 @@ storage = ByzerStorage("byzerai_store", "memory", "memory")
 storage.emb("你好")
 ```
 
+## 一些辅助工具
+
+当调用 prompt 函数返回字符串的时候，如果想从里面抽取代码，可以使用如下方式：
+
+```python
+from byzerllm.utils.client import code_utils
+text_with_markdown = '''
+```shell
+ls -l
+```
+'''
+code_blocks = code_utils.extract_code(text_with_markdown)
+for code_block in code_blocks:
+    if code_block[0] == "shell":
+        print(code_block[1])
+##output: ls -l        
+```
 
 
 ## 注意事项

@@ -10,14 +10,11 @@ import tempfile
 import time
 
 
-def get_meta(self):
-    config = self.config
+def get_meta(self):    
     return [
         {
             "model_deploy_type": "proprietary",
-            "backend": "transformers",
-            "max_model_len": getattr(config, "model_max_length", -1),
-            "architectures": getattr(config, "architectures", []),
+            "backend": "transformers",            
         }
     ]
 
@@ -89,7 +86,7 @@ def stream_chat(
 def init_model(
     model_dir, infer_params: Dict[str, str] = {}, sys_conf: Dict[str, str] = {}
 ):
-    model = whisper.load_model("large", model_dir)
+    model = whisper.load_model("large", download_root=model_dir)
     import types
 
     model.stream_chat = types.MethodType(stream_chat, model)
