@@ -2,7 +2,7 @@ import whisper
 from typing import Dict, List, Tuple
 from byzerllm.utils.types import StopSequencesCriteria
 
-from typing import Dict, Any, List, Generator
+from typing import Dict, Any, List, Union
 from pyjava.storage import streaming_tar as STar
 import json
 import base64
@@ -10,13 +10,79 @@ import tempfile
 import time
 
 
-def get_meta(self):    
+def get_meta(self):
     return [
         {
             "model_deploy_type": "proprietary",
-            "backend": "transformers",            
+            "backend": "transformers",
+            "message_format": True
         }
     ]
+
+
+def process_input(ins: Union[str, List[Dict[str, Any]], Dict[str, Any]]):
+    # print(ins) 
+    if isinstance(ins, list) or isinstance(ins, dict):
+        return ins
+
+    content = []
+    try:
+        ins_json = json.loads(ins)
+    except:
+        return ins
+
+    ## speech
+    if isinstance(ins_json, dict):
+        return ins_json
+
+    content = []
+    #     [
+    #     {"type": "text", "text": "What’s in this image?"},
+    #     {
+    #       "type": "image_url",
+    #       "image_url": {
+    #         "url": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Gfp-wisconsin-madison-the-nature-boardwalk.jpg/2560px-Gfp-wisconsin-madison-the-nature-boardwalk.jpg",
+    #         "detail": "high"
+    #       },
+    #     },
+    #   ],
+    for item in ins_json:
+        # for format like this: {"image": "xxxxxx", "text": "What’s in this image?","detail":"high"}
+        # or {"image": "xxxxxx"}, {"text": "What’s in this image?"}
+        if ("image" in item or "image_url" in item) and "type" not in item:
+            image_data = item.get("image", item.get("image_url", ""))
+            ## "data:image/jpeg;base64,"
+            if not image_data.startswith("data:"):
+                image_data = "data:image/jpeg;base64," + image_data
+
+            ## get the other fields except image/text/image_url
+            other_fields = {
+                k: v for k, v in item.items() if k not in ["image", "text", "image_url"]
+            }
+            content.append(
+                {
+                    "image_url": {"url": image_data, **other_fields},
+                    "type": "image_url",
+                }
+            )
+
+        if "text" in item and "type" not in item:
+            text_data = item["text"]
+            content.append({"text": text_data, "type": "text"})
+
+        ## for format like this: {"type": "text", "text": "What’s in this image?"},
+        ## {"type": "image_url", "image_url": {"url":"","detail":"high"}}
+        ## this is the standard format, just return it
+        if "type" in item and item["type"] == "text":
+            content.append(item)
+
+        if "type" in item and item["type"] == "image_url":
+            content.append(item)
+
+    if not content:
+        return ins
+
+    return content
 
 
 def stream_chat(
@@ -29,7 +95,14 @@ def stream_chat(
     temperature: float = 0.1,
     **kwargs,
 ):
-    audio_input = json.loads(ins)
+    messages = [
+        {"role": message["role"], "content": process_input(message["content"])}
+        for message in his
+    ] + [{"role": "user", "content": process_input(ins)}]
+
+    audio_input = messages[-1]["content"]
+
+    audio_data = audio_input.get("audio", "")
     audio = audio_input["audio"]
     response_format = audio_input.get("response_format", "json")
     timestamp_granularities = audio_input.get(
@@ -57,9 +130,9 @@ def stream_chat(
     try:
         start_time = time.monotonic()
         word_timestamps = "word" in timestamp_granularities
-
-        with open(temp_audio_file_path, "rb") as audio_file:
-            result = self.transcribe(audio_file, word_timestamps=word_timestamps)
+        
+        result = self.transcribe(temp_audio_file_path, word_timestamps=word_timestamps)        
+            
         time_cost = time.monotonic() - start_time
         return [
             (
@@ -80,7 +153,7 @@ def stream_chat(
         # Clean up the temporary file
         import os
 
-        os.unlink(temp_audio_file_path)        
+        os.unlink(temp_audio_file_path)
 
 
 def init_model(
