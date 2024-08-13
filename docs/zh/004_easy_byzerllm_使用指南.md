@@ -21,7 +21,7 @@ Easy ByzerLLM 提供了三个主要命令:
 使用 `deploy` 命令可以快速部署一个模型。基本用法如下:
 
 ```bash
-easy_byzerllm deploy <model_name> --token <your_token>
+easy-byzerllm deploy <model_name> --token <your_token>
 ```
 
 其中,`<model_name>` 是要部署的模型名称,`<your_token>` 是模型的访问令牌。
@@ -46,19 +46,19 @@ easy_byzerllm deploy <model_name> --token <your_token>
 例如,要部署 `gpt-3.5-turbo-0125` 模型,可以运行:
 
 ```bash  
-easy_byzerllm deploy gpt-3.5-turbo-0125 --token your_openai_api_key
+easy-byzerllm deploy gpt-3.5-turbo-0125 --token your_openai_api_key
 ```
 
 如果你使用了代理，可以这样：
 
 ```bash
-easy_byzerllm deploy gpt-3.5-turbo-0125 --base_url <你的代理地址> --token your_openai_api_key
+easy-byzerllm deploy gpt-3.5-turbo-0125 --base_url <你的代理地址> --token your_openai_api_key
 ```
 
 默认模型名字和模型一致。你也可以通过 alias 参数指定模型的别名：
 
 ```bash
-easy_byzerllm deploy gpt-3.5-turbo-0125 --alias my_model --token your_openai_api_key
+easy-byzerllm deploy gpt-3.5-turbo-0125 --alias my_model --token your_openai_api_key
 ```
 
 
@@ -69,13 +69,13 @@ easy_byzerllm deploy gpt-3.5-turbo-0125 --alias my_model --token your_openai_api
 如果不再需要使用某个模型,可以使用 `undeploy` 命令将其取消部署,释放资源。用法如下:
 
 ```bash
-easy_byzerllm undeploy <model_name>
+easy-byzerllm undeploy <model_name>
 ```
 
 其中,`<model_name>` 是要取消部署的模型名称。例如:
 
 ```bash  
-easy_byzerllm undeploy gpt-3.5-turbo-0125
+easy-byzerllm undeploy gpt-3.5-turbo-0125
 ```
 
 ### 聊天
@@ -83,13 +83,13 @@ easy_byzerllm undeploy gpt-3.5-turbo-0125
 使用 `chat` 命令可以与已部署的模型进行聊天。用法如下:
 
 ```bash
-easy_byzerllm chat <model_name> <your_query>
+easy-byzerllm chat <model_name> <your_query>
 ```
 
 其中,`<model_name>` 是要聊天的模型名称,`<your_query>` 是你的问题或输入。例如:
 
 ```bash
-easy_byzerllm chat gpt-3.5-turbo-0125 "Hello, how are you?"  
+easy-byzerllm chat gpt-3.5-turbo-0125 "Hello, how are you?"  
 ```
 
 模型会给出相应的回复。
@@ -102,7 +102,7 @@ easy_byzerllm chat gpt-3.5-turbo-0125 "Hello, how are you?"
 - `--infer_params`: 设置推理参数
 - `--force`: 强制取消部署模型
 
-你可以运行 `easy_byzerllm --help` 查看所有可用的选项和说明。
+你可以运行 `easy-byzerllm --help` 查看所有可用的选项和说明。
 
 ## 总结
 
