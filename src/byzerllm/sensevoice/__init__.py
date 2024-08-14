@@ -221,12 +221,16 @@ def stream_chat(
 def init_model(
     model_dir, infer_params: Dict[str, str] = {}, sys_conf: Dict[str, str] = {}
 ):
-    model = AutoModel(
-        model=model_dir,
-        vad_model="iic/speech_fsmn_vad_zh-cn-16k-common-pytorch",
-        vad_kwargs={"max_single_segment_time": 30000},
-        trust_remote_code=True,
-    )
+    model_kwargs = {
+        "model": model_dir,
+        "trust_remote_code": True,
+    }
+
+    if "vad_model" in infer_params:
+        model_kwargs["vad_model"] = infer_params["vad_model"]
+        model_kwargs["vad_kwargs"] = {"max_single_segment_time": 30000}
+
+    model = AutoModel(**model_kwargs)
 
     import types
 
