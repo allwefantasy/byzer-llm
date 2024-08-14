@@ -75,7 +75,7 @@ def stream_chat(
         if isinstance(message["content"], list):
             for ele in message["content"]:
                 if ele["type"] == "audio":
-                    audio_data = ele["audio_url"]["url"].split(",")[1]
+                    audio_data = ele["audio_url"].split(",")[1]
                     audio_bytes = base64.b64decode(audio_data)
                     audio, _ = librosa.load(io.BytesIO(audio_bytes), sr=self.processor.feature_extractor.sampling_rate)
                     audios.append(audio)
@@ -110,7 +110,7 @@ def init_model(model_dir, infer_params: Dict[str, str] = {}, sys_conf: Dict[str,
     processor = AutoProcessor.from_pretrained(model_dir)
     model = Qwen2AudioForConditionalGeneration.from_pretrained(model_dir, device_map="auto")
     model.processor = processor
-import types
-model.stream_chat = types.MethodType(stream_chat, model)
-model.get_meta = types.MethodType(get_meta, model)
+    import types
+    model.stream_chat = types.MethodType(stream_chat, model)
+    model.get_meta = types.MethodType(get_meta, model)    
     return (model, None)
