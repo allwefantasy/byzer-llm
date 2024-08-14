@@ -81,7 +81,10 @@ def stream_chat(
                     audios.append(audio)
 
     inputs = self.processor(text=text, audios=audios, return_tensors="pt", padding=True)
+    try:
     inputs.input_ids = inputs.input_ids.to("cuda")
+except Exception as e:
+    print(f"Warning: unable to move input_ids to CUDA - {e}")
 
     start_time = time.monotonic()
     generate_ids = self.generate(**inputs, max_length=max_length)
