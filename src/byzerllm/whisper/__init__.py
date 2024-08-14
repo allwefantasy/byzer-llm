@@ -136,7 +136,7 @@ def stream_chat(
         time_cost = time.monotonic() - start_time
         return [
             (
-                json.dumps(result, ensure_ascii=True),
+                json.dumps(result, ensure_ascii=False),
                 {
                     "metadata": {
                         "request_id": "",

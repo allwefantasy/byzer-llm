@@ -67,3 +67,6 @@ protobuf
 azure-cognitiveservices-speech
 uvicorn
 fastapi
+
+#funasr
+#torchaudio

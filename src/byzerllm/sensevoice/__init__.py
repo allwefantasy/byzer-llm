@@ -192,6 +192,7 @@ def stream_chat(
         start_time = time.monotonic()
 
         result = self.generate(input=temp_audio_file_path, cache={})
+        print(result)
 
         time_cost = time.monotonic() - start_time
 
