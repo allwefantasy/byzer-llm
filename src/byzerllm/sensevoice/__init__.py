@@ -227,9 +227,27 @@ def init_model(
         "trust_remote_code": True,
     }
 
+    if "remote_code" in infer_params:
+        model_kwargs["remote_code"] = infer_params["remote_code"]
+
     if "vad_model" in infer_params:
         model_kwargs["vad_model"] = infer_params["vad_model"]
-        model_kwargs["vad_kwargs"] = {"max_single_segment_time": 30000}
+        vad_kwargs = {}
+        for key, value in infer_params.items():
+            if key.startswith("vad_kwargs."):
+                param_name = key.split(".", 1)[1]
+                # Attempt to convert the value to int or float if possible
+                try:
+                    vad_kwargs[param_name] = int(value)
+                except ValueError:
+                    try:
+                        vad_kwargs[param_name] = float(value)
+                    except ValueError:
+                        vad_kwargs[param_name] = value  # Keep as string if not a number
+        model_kwargs["vad_kwargs"] = vad_kwargs
+
+    if "device" in infer_params:
+        model_kwargs["device"] = infer_params["device"]
 
     model = AutoModel(**model_kwargs)
 
