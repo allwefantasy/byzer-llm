@@ -17,10 +17,10 @@ def main():
     # Prepare test audio
     with open(
         "/Users/allwefantasy/models/SenseVoiceSmall/example/zh.mp3", "rb"
-    ) as audio_file:
-        audio_data = audio_file.read()
-        base64_audio = base64.b64encode(audio_data).decode("utf-8")
-        model_dir = "/Users/allwefantasy/models/SenseVoiceSmall"
+with open("/Users/allwefantasy/models/SenseVoiceSmall/example/zh.mp3", "rb") as audio_file:
+    audio_data = audio_file.read()
+    base64_audio = base64.b64encode(audio_data).decode("utf-8")
+    model_dir = "/Users/allwefantasy/models/SenseVoiceSmall"
         # Prepare input in the expected format
         test_input = json.dumps(
             [
