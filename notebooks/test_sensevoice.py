@@ -14,10 +14,10 @@ def main():
     model, _ = init_model(model_dir)
 
     # Prepare test audio
-    with open("path/to/test/audio.wav", "rb") as audio_file:  # Replace with actual path
-        audio_data = audio_file.read()
-        base64_audio = base64.b64encode(audio_data).decode('utf-8')
-
+with open("/Users/allwefantasy/models/SenseVoiceSmall/example/zh.mp3", "rb") as audio_file:
+    audio_data = audio_file.read()
+    base64_audio = base64.b64encode(audio_data).decode('utf-8')
+model_dir = "/Users/allwefantasy/models/SenseVoiceSmall"
     # Prepare input in the expected format
     test_input = json.dumps([{
         "role": "user",
