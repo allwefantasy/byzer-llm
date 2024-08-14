@@ -5,14 +5,124 @@ import time
 from typing import Dict, List, Union, Any
 from funasr import AutoModel
 
+emo_dict = {
+    "<|HAPPY|>": "😊",
+    "<|SAD|>": "😔",
+    "<|ANGRY|>": "😡",
+    "<|NEUTRAL|>": "",
+    "<|FEARFUL|>": "😰",
+    "<|DISGUSTED|>": "🤢",
+    "<|SURPRISED|>": "😮",
+}
+
+event_dict = {
+    "<|BGM|>": "🎼",
+    "<|Speech|>": "",
+    "<|Applause|>": "👏",
+    "<|Laughter|>": "��",
+    "<|Cry|>": "😭",
+    "<|Sneeze|>": "🤧",
+    "<|Breath|>": "",
+    "<|Cough|>": "🤧",
+}
+
+emoji_dict = {
+    "<|nospeech|><|Event_UNK|>": "❓",
+    "<|zh|>": "",
+    "<|en|>": "",
+    "<|yue|>": "",
+    "<|ja|>": "",
+    "<|ko|>": "",
+    "<|nospeech|>": "",
+    "<|HAPPY|>": "😊",
+    "<|SAD|>": "😔",
+    "<|ANGRY|>": "😡",
+    "<|NEUTRAL|>": "",
+    "<|BGM|>": "🎼",
+    "<|Speech|>": "",
+    "<|Applause|>": "👏",
+    "<|Laughter|>": "😀",
+    "<|FEARFUL|>": "😰",
+    "<|DISGUSTED|>": "🤢",
+    "<|SURPRISED|>": "😮",
+    "<|Cry|>": "😭",
+    "<|EMO_UNKNOWN|>": "",
+    "<|Sneeze|>": "🤧",
+    "<|Breath|>": "",
+    "<|Cough|>": "😷",
+    "<|Sing|>": "",
+    "<|Speech_Noise|>": "",
+    "<|withitn|>": "",
+    "<|woitn|>": "",
+    "<|GBG|>": "",
+    "<|Event_UNK|>": "",
+}
+
+lang_dict = {
+    "<|zh|>": "<|lang|>",
+    "<|en|>": "<|lang|>",
+    "<|yue|>": "<|lang|>",
+    "<|ja|>": "<|lang|>",
+    "<|ko|>": "<|lang|>",
+    "<|nospeech|>": "<|lang|>",
+}
+
+emo_set = {"😊", "😔", "😡", "😰", "🤢", "😮"}
+event_set = {"🎼", "👏", "😀", "😭", "🤧", "😷"}
+
+
+def format_str(s):
+    for sptk in emoji_dict:
+        s = s.replace(sptk, emoji_dict[sptk])
+    return s
+
+
+def format_str_v2(s):
+    sptk_dict = {sptk: s.count(sptk) for sptk in emoji_dict}
+    s = "".join(c for c in s if c not in emoji_dict.values())
+    emo = max(emo_dict, key=lambda e: sptk_dict[e])
+    event = "".join(event_dict[e] for e in event_dict if sptk_dict[e] > 0)
+    s = event + s + emo_dict[emo]
+    for emoji in emo_set.union(event_set):
+        s = s.replace(" " + emoji, emoji).replace(emoji + " ", emoji)
+    return s.strip()
+
+
+def format_str_v3(s):
+    def get_emo(s):
+        return s[-1] if s[-1] in emo_set else None
+
+    def get_event(s):
+        return s[0] if s[0] in event_set else None
+
+    s = s.replace("<|nospeech|><|Event_UNK|>", "❓")
+    for lang in lang_dict:
+        s = s.replace(lang, "<|lang|>")
+    s_list = [format_str_v2(s_i).strip() for s_i in s.split("<|lang|>")]
+    new_s = " " + s_list[0]
+    cur_ent_event = get_event(new_s)
+    for i in range(1, len(s_list)):
+        if len(s_list[i]) == 0:
+            continue
+        if get_event(s_list[i]) == cur_ent_event and get_event(s_list[i]) is not None:
+            s_list[i] = s_list[i][1:]
+        cur_ent_event = get_event(s_list[i])
+        if get_emo(s_list[i]) is not None and get_emo(s_list[i]) == get_emo(new_s):
+            new_s = new_s[:-1]
+        new_s += s_list[i].strip()
+    new_s = new_s.replace("The.", " ")
+    return new_s.strip()
+
+
 def get_meta(self):
     return [
         {
             "model_deploy_type": "proprietary",
             "backend": "funasr",
-            "message_format": True
+            "message_format": True,
         }
     ]
+
 
 def process_input(ins: Union[str, List[Dict[str, Any]], Dict[str, Any]]):
     if isinstance(ins, list) or isinstance(ins, dict):
@@ -42,6 +152,7 @@ def process_input(ins: Union[str, List[Dict[str, Any]], Dict[str, Any]]):
 
     return content if content else ins
 
+
 def stream_chat(
     self,
     tokenizer,
@@ -66,24 +177,26 @@ def stream_chat(
         raise ValueError("Invalid audio data format")
 
     format_end = audio.index(base64_prefix)
-    audio_format = audio[len(data_prefix):format_end]
-    base64_data = audio[format_end + len(base64_prefix):]
+    audio_format = audio[len(data_prefix) : format_end]
+    base64_data = audio[format_end + len(base64_prefix) :]
 
     audio_data = base64.b64decode(base64_data)
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=f".{audio_format}") as temp_audio_file:
+    with tempfile.NamedTemporaryFile(
+        delete=False, suffix=f".{audio_format}"
+    ) as temp_audio_file:
         temp_audio_file.write(audio_data)
         temp_audio_file_path = temp_audio_file.name
 
     try:
         start_time = time.monotonic()
-        
+
         result = self.generate(input=temp_audio_file_path, cache={})
-        
+
         time_cost = time.monotonic() - start_time
-        
+
         formatted_result = format_str_v3(result[0]["text"])
-        
+
         return [
             (
                 json.dumps({"text": formatted_result}, ensure_ascii=False),
@@ -101,89 +214,26 @@ def stream_chat(
         ]
     finally:
         import os
+
         os.unlink(temp_audio_file_path)
+
 
 def init_model(
     model_dir, infer_params: Dict[str, str] = {}, sys_conf: Dict[str, str] = {}
 ):
     model = AutoModel(
-        model="iic/SenseVoiceSmall",
+        model=model_dir,
         vad_model="iic/speech_fsmn_vad_zh-cn-16k-common-pytorch",
         vad_kwargs={"max_single_segment_time": 30000},
         trust_remote_code=True,
     )
-    
+
     import types
 
     model.stream_chat = types.MethodType(stream_chat, model)
     model.get_meta = types.MethodType(get_meta, model)
-    
+
     return (model, None)
 
+
 # Helper functions from web_ui.py
-emo_dict = {
-    "<|HAPPY|>": "😊", "<|SAD|>": "😔", "<|ANGRY|>": "😡", "<|NEUTRAL|>": "",
-    "<|FEARFUL|>": "😰", "<|DISGUSTED|>": "🤢", "<|SURPRISED|>": "😮",
-}
-
-event_dict = {
-    "<|BGM|>": "🎼", "<|Speech|>": "", "<|Applause|>": "👏", "<|Laughter|>": "��",
-    "<|Cry|>": "😭", "<|Sneeze|>": "🤧", "<|Breath|>": "", "<|Cough|>": "🤧",
-}
-
-emoji_dict = {
-    "<|nospeech|><|Event_UNK|>": "❓", "<|zh|>": "", "<|en|>": "", "<|yue|>": "",
-    "<|ja|>": "", "<|ko|>": "", "<|nospeech|>": "", "<|HAPPY|>": "😊", "<|SAD|>": "😔",
-    "<|ANGRY|>": "😡", "<|NEUTRAL|>": "", "<|BGM|>": "🎼", "<|Speech|>": "",
-    "<|Applause|>": "👏", "<|Laughter|>": "😀", "<|FEARFUL|>": "😰", "<|DISGUSTED|>": "🤢",
-    "<|SURPRISED|>": "😮", "<|Cry|>": "😭", "<|EMO_UNKNOWN|>": "", "<|Sneeze|>": "🤧",
-    "<|Breath|>": "", "<|Cough|>": "😷", "<|Sing|>": "", "<|Speech_Noise|>": "",
-    "<|withitn|>": "", "<|woitn|>": "", "<|GBG|>": "", "<|Event_UNK|>": "",
-}
-
-lang_dict = {
-    "<|zh|>": "<|lang|>", "<|en|>": "<|lang|>", "<|yue|>": "<|lang|>",
-    "<|ja|>": "<|lang|>", "<|ko|>": "<|lang|>", "<|nospeech|>": "<|lang|>",
-}
-
-emo_set = {"😊", "😔", "😡", "😰", "🤢", "😮"}
-event_set = {"🎼", "👏", "😀", "😭", "🤧", "😷"}
-
-def format_str(s):
-    for sptk in emoji_dict:
-        s = s.replace(sptk, emoji_dict[sptk])
-    return s
-
-def format_str_v2(s):
-    sptk_dict = {sptk: s.count(sptk) for sptk in emoji_dict}
-    s = ''.join(c for c in s if c not in emoji_dict.values())
-    emo = max(emo_dict, key=lambda e: sptk_dict[e])
-    event = ''.join(event_dict[e] for e in event_dict if sptk_dict[e] > 0)
-    s = event + s + emo_dict[emo]
-    for emoji in emo_set.union(event_set):
-        s = s.replace(" " + emoji, emoji).replace(emoji + " ", emoji)
-    return s.strip()
-
-def format_str_v3(s):
-    def get_emo(s):
-        return s[-1] if s[-1] in emo_set else None
-    def get_event(s):
-        return s[0] if s[0] in event_set else None
-
-    s = s.replace("<|nospeech|><|Event_UNK|>", "❓")
-    for lang in lang_dict:
-        s = s.replace(lang, "<|lang|>")
-    s_list = [format_str_v2(s_i).strip() for s_i in s.split("<|lang|>")]
-    new_s = " " + s_list[0]
-    cur_ent_event = get_event(new_s)
-    for i in range(1, len(s_list)):
-        if len(s_list[i]) == 0:
-            continue
-        if get_event(s_list[i]) == cur_ent_event and get_event(s_list[i]) is not None:
-            s_list[i] = s_list[i][1:]
-        cur_ent_event = get_event(s_list[i])
-        if get_emo(s_list[i]) is not None and get_emo(s_list[i]) == get_emo(new_s):
-            new_s = new_s[:-1]
-        new_s += s_list[i].strip()
-    new_s = new_s.replace("The.", " ")
-    return new_s.strip()
