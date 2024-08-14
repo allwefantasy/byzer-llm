@@ -110,6 +110,7 @@ def init_model(model_dir, infer_params: Dict[str, str] = {}, sys_conf: Dict[str,
     processor = AutoProcessor.from_pretrained(model_dir)
     model = Qwen2AudioForConditionalGeneration.from_pretrained(model_dir, device_map="auto")
     model.processor = processor
-    model.stream_chat = stream_chat.__get__(model)
-    model.get_meta = get_meta.__get__(model)
+import types
+model.stream_chat = types.MethodType(stream_chat, model)
+model.get_meta = types.MethodType(get_meta, model)
     return (model, None)
