@@ -34,10 +34,10 @@ def process_input(ins: Union[str, List[Dict[str, Any]], Dict[str, Any]]):
             if not audio_data.startswith("data:"):
                 audio_data = "data:audio/wav;base64," + audio_data
 
-            other_fields = {k: v for k, v in item.items() if k not in ["audio", "text", "audio_url"]}
+            # other_fields = {k: v for k, v in item.items() if k not in ["audio", "text", "audio_url"]}
             content.append(
                 {
-                    "audio_url": {"url": audio_data, **other_fields},
+                    "audio_url": audio_data,
                     "type": "audio",
                 }
             )
@@ -77,9 +77,9 @@ def stream_chat(
                 if ele["type"] == "audio":
                     audio_data = ele["audio_url"].split(",")[1]
                     audio_bytes = base64.b64decode(audio_data)
-                    audio, _ = librosa.load(io.BytesIO(audio_bytes), sr=self.processor.feature_extractor.sampling_rate)
+                    audio = librosa.load(io.BytesIO(audio_bytes), sr=self.processor.feature_extractor.sampling_rate)[0]
                     audios.append(audio)
-
+        
     inputs = self.processor(text=text, audios=audios, return_tensors="pt", padding=True)
     inputs.input_ids = inputs.input_ids.to(self.device)
 

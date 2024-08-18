@@ -1819,7 +1819,7 @@ cost {time.monotonic() - start_time} seconds
     def _query(self, model: str, input_value: List[Dict[str, Any]]):
 
         try:
-            from byzerllm.utils.nontext import Image, Audio,AudioChat
+            from byzerllm.utils.nontext import Image, Audio
 
             for v in input_value:
                 s = v["instruction"]

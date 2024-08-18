@@ -670,22 +670,37 @@ json.loads(v)
 
 ```python
 import byzerllm
-import base64
+from byzerllm.types import AudioPath,Audio
 import json
 
+# Initialize the ByzerLLM with the Qwen Voice model
 llm = byzerllm.ByzerLLM.from_default_model("qwen_voice")
-audio_file = "/Users/allwefantasy/videos/output_audio.mp3"
 
-t = llm.chat_oai(conversations=[{
-    "role":"user",
-    "content": json.dumps([{        
-        "audio": "alloy",
-        "text":"这段话主要讲了什么"
-    },ensure_ascii=False)
+
+
+# Path to your audio file
+audio_file_path = "/home/winubuntu/projects/jupyter-workspace/data/zh.mp3"
+
+# print(Audio.load_audio_from_path(audio_file_path,only_content=True))
+# Define the audio-to-text function using the @byzerllm.prompt decorator
+v = llm.chat_oai(conversations=[{
+    "role": "user",
+    "content": json.dumps([{
+        "audio": Audio.load_audio_from_path(audio_file_path,only_content=True),        
+    },{
+        "text":"这个音频讲了什么？"
+    }
+    ],ensure_ascii=False)
 }])
 
-with open("voice.mp3","wb") as f:
-    f.write(base64.b64decode(t[0].output))
+
+
+
+# Print the transcribed text
+print("Transcribed Text:")
+print(v[0].output)
+
+
 
 ```
 
