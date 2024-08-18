@@ -22,6 +22,7 @@ except ImportError:
 try:
     import jieba
 except ImportError:
+    print("Warning: jieba module is not installed. Some functionalities may be limited.")
     jieba = None
 
 
