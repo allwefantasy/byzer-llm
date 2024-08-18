@@ -616,6 +616,78 @@ with open("voice.mp3","wb") as f:
 
 tts 模型生成没有prompt函数可以用，你需要直接使用 chat_oai。
 
+### 语音聊天/分析
+
+所以可以看出该模型作用和语音换文字是不一样的：
+
+1. 语音聊天：用户可以自由地与模型进行语音互动，而无需文本输入；
+2. 音频分析：用户可以在互动过程中提供音频和文本指令对音频进行分析；
+
+
+这里以 qwen-voice 为例：
+
+```bash
+byzerllm deploy --pretrained_model_type custom/qwen_voice \
+--cpus_per_worker 0.001 \
+--gpus_per_worker 1 \
+--worker_concurrency 10 \
+--model_path /home/winubuntu/models/Qwen2-Audio-7B-Instruct \
+--infer_backend transformers \
+--num_workers 1 \
+--model qwen_voice
+```
+
+注意，你可能需要额外安装：
+
+```
+pip install librosa
+```
+
+接着可以这么用：
+
+
+```python
+import byzerllm
+import json
+import base64
+from byzerllm.types import AudioPath
+
+llm = byzerllm.ByzerLLM.from_default_model("qwen_voice")
+
+audio_file = "/Users/allwefantasy/videos/output_audio.mp3"
+
+@byzerllm.prompt(llm=llm)
+def audio_to_text(audio_file: AudioPath):
+    """
+    {{ audio_file }}
+    """
+
+v = audio_to_text(AudioPath(value=audio_file))
+json.loads(v)
+```
+
+或者不用 prompt 函数，直接使用底层的 chat_oai 方法：
+
+```python
+import byzerllm
+import base64
+import json
+
+llm = byzerllm.ByzerLLM.from_default_model("qwen_voice")
+audio_file = "/Users/allwefantasy/videos/output_audio.mp3"
+
+t = llm.chat_oai(conversations=[{
+    "role":"user",
+    "content": json.dumps([{        
+        "audio": "alloy",
+        "text":"这段话主要讲了什么"
+    },ensure_ascii=False)
+}])
+
+with open("voice.mp3","wb") as f:
+    f.write(base64.b64decode(t[0].output))
+
+```
 
 ### 语音识别
 
