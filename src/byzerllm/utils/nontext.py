@@ -308,7 +308,7 @@ class Image(TagExtractor):
 
         new_text = self.text
         for res in result:
-            new_text = new_text.replace(f"<_image_>{res['image']}</_image_>", "")        
+            new_text = new_text.replace(f"<_image_>{res['image']}</_image_>", "")
 
         result.append({"text": new_text.strip()})
 
@@ -324,6 +324,108 @@ class Image(TagExtractor):
         #     else:
         #         print(item["text"][0:100] + "...")
         return result
+
+
+# class Audio(TagExtractor):
+#     def __init__(self, text: str):
+#         super().__init__(text)
+#         self.is_extracted = False
+
+#     def has_audio(self) -> bool:
+#         self.extract()
+#         for item in self.root_tag.content:
+#             if (
+#                 isinstance(item, Tag)
+#                 and item.start_tag == "<_audio_>"
+#                 and item.end_tag == "</_audio_>"
+#             ):
+#                 return True
+#         return False
+
+#     @staticmethod
+#     def extract_audio_paths(text: str, to_base64: bool = False) -> List[str]:
+#         v = Image(text)
+#         v.extract()
+#         result = []
+#         for item in v.root_tag.content:
+#             if (
+#                 isinstance(item, Tag)
+#                 and item.start_tag in ["<_audio_>"]
+#                 and item.end_tag in ["</_audio_>"]
+#                 and not item.content.startswith("data:audio/")
+#             ):
+#                 if to_base64:
+#                     result.append(Audio.load_audio_from_path(item.content.strip()))
+#                 else:
+#                     result.append(item.content.strip())
+#         return result
+
+#     @staticmethod
+#     def load_audio_from_path(path: str, only_content=False) -> str:
+#         """
+#         Load audio from path and return base64 audio data
+#         """
+#         file_extension = os.path.splitext(path)[1][1:].lower()
+#         audio_type = file_extension
+
+#         with open(path, "rb") as audio_file:
+#             encoded_string = base64.b64encode(audio_file.read()).decode("utf-8")
+
+#         if only_content:
+#             return f"data:audio/{audio_type};base64,{encoded_string}"
+
+#         return f"<_audio_>data:audio/{audio_type};base64,{encoded_string}</_audio_>"
+
+#     @staticmethod
+#     def save_audio_to_path(
+#         audio_data: str, output_path: str, auto_fix_suffix: bool = False
+#     ) -> str:
+#         """
+#         Save base64 audio data as audio file
+#         """
+#         # Extract audio type and base64 data
+#         data_prefix = "data:audio/"
+#         base64_prefix = ";base64,"
+#         if not audio_data.startswith(data_prefix):
+#             raise ValueError("Invalid audio data format")
+
+#         format_end = audio_data.index(base64_prefix)
+#         audio_type = audio_data[len(data_prefix) : format_end]
+#         base64_data = audio_data[format_end + len(base64_prefix) :]
+
+#         # Decode the base64 audio data
+#         audio_data = base64.b64decode(base64_data)
+
+#         # Check and fix file extension if necessary
+#         file_name, file_extension = os.path.splitext(output_path)
+#         correct_extension = f".{audio_type}"
+
+#         if auto_fix_suffix and file_extension.lower() != correct_extension.lower():
+#             output_path = file_name + correct_extension
+
+#         # Write the audio data to the file
+#         with open(output_path, "wb") as audio_file:
+#             audio_file.write(audio_data)
+
+#         return output_path
+
+#     def to_content(self) -> Dict[str, Any]:
+#         self.extract()
+#         current_item = {}
+#         counter = 0
+#         for item in self.root_tag.content:
+#             if isinstance(item, Tag) and item.start_tag == "<_audio_>":
+#                 if counter > 0:
+#                     raise ValueError("Only one audio file is allowed")
+#                 counter += 1
+#                 if item.content.startswith("data:audio/"):
+#                     current_item["audio"] = item.content
+#                 else:
+#                     current_item["audio"] = Audio.load_audio_from_path(
+#                         item.content, only_content=True
+#                     )
+
+#         return current_item
 
 
 class Audio(TagExtractor):
@@ -409,20 +511,38 @@ class Audio(TagExtractor):
 
         return output_path
 
-    def to_content(self) -> Dict[str, Any]:
+    def to_content(self) -> List[Dict[str, str]]:
         self.extract()
+
+        result = []
         current_item = {}
-        counter = 0
+
         for item in self.root_tag.content:
             if isinstance(item, Tag) and item.start_tag == "<_audio_>":
-                if counter > 0:
-                    raise ValueError("Only one audio file is allowed")
-                counter += 1
-                if item.content.startswith("data:audio/"):
-                    current_item["audio"] = item.content
-                else:
-                    current_item["audio"] = Audio.load_audio_from_path(
-                        item.content, only_content=True
-                    )
+                if current_item:
+                    result.append(current_item)
+                    current_item = {}
+                current_item["audio"] = item.content
 
-        return current_item
+        if current_item:
+            result.append(current_item)
+
+        new_text = self.text
+        for res in result:
+            new_text = new_text.replace(f"<_audio_>{res['audio']}</_audio_>", "")
+
+        if new_text.strip(): 
+            result.append({"text": new_text.strip()})
+
+        for res in result:
+            if "audio" in res and not res["audio"].startswith("data:audio/"):
+                res["audio"] = Audio.load_audio_from_path(
+                    res["audio"], only_content=True
+                )
+
+        # for item in result:
+        #     if "image" in item:
+        #         print(item["image"][0:100] + "...")
+        #     else:
+        #         print(item["text"][0:100] + "...")
+        return result

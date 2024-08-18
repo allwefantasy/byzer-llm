@@ -18,7 +18,8 @@ import threading
 import asyncio
 import traceback
 import uuid
-import tempfile        
+import tempfile
+
 
 class CustomSaasAPI:
 
@@ -108,9 +109,16 @@ class CustomSaasAPI:
         except:
             return ins
 
-        ## speech
+        ## 如果是字典，应该是非chat格式需求，比如语音转文字等
         if isinstance(ins_json, dict):
             return ins_json
+
+        if isinstance(ins_json, list):
+            if ins_json and isinstance(ins_json[0], dict):
+                # 根据key值判断是什么类型的输入，比如语音转文字，语音合成等
+                for temp in ["input", "voice", "audio", "audio_url"]:
+                    if temp in ins_json[0]:
+                        return ins_json[0]
 
         content = []
         #     [
@@ -143,7 +151,7 @@ class CustomSaasAPI:
                         "image_url": {"url": image_data, **other_fields},
                         "type": "image_url",
                     }
-                )            
+                )
 
             if "text" in item and "type" not in item:
                 text_data = item["text"]
@@ -287,30 +295,32 @@ class CustomSaasAPI:
         self,
         audio: str,
         response_format: str = "verbose_json",
-        timestamp_granularities: List[str] = ["word","segment"],
-    ):               
+        timestamp_granularities: List[str] = ["word", "segment"],
+    ):
         # Extract audio format and base64 data
         data_prefix = "data:audio/"
         base64_prefix = ";base64,"
         if not audio.startswith(data_prefix):
             raise ValueError("Invalid audio data format")
-        
+
         format_end = audio.index(base64_prefix)
-        audio_format = audio[len(data_prefix):format_end]
-        base64_data = audio[format_end + len(base64_prefix):]
-        
+        audio_format = audio[len(data_prefix) : format_end]
+        base64_data = audio[format_end + len(base64_prefix) :]
+
         # Decode the base64 audio data
         audio_data = base64.b64decode(base64_data)
 
         # Create a temporary file with the correct extension
-        with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{audio_format}') as temp_audio_file:
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=f".{audio_format}"
+        ) as temp_audio_file:
             temp_audio_file.write(audio_data)
             temp_audio_file_path = temp_audio_file.name
 
         try:
             start_time = time.monotonic()
-                   
-            with open(temp_audio_file_path, "rb") as audio_file:                
+
+            with open(temp_audio_file_path, "rb") as audio_file:
                 transcription = self.client.audio.transcriptions.create(
                     model=self.model or "whisper-1",
                     file=audio_file,
@@ -337,6 +347,7 @@ class CustomSaasAPI:
         finally:
             # Clean up the temporary file
             import os
+
             os.unlink(temp_audio_file_path)
 
     def image_to_text(self, ins: str, **kwargs):
@@ -429,13 +440,13 @@ class CustomSaasAPI:
                 stream=stream, input=input, size=size, quality=quality, n=n
             )
 
-        if isinstance(last_message, dict) and "audio" in last_message:            
-            audio_data = last_message.get("audio", "")            
-            tpe = last_message.get("type","wav")
+        if isinstance(last_message, dict) and "audio" in last_message:
+            audio_data = last_message.get("audio", "")
+            tpe = last_message.get("type", "wav")
             if not audio_data.startswith("data:"):
-                audio_data = f"data:audio/${tpe};base64," + audio_data                
+                audio_data = f"data:audio/${tpe};base64," + audio_data
             return await self.async_speech_to_text(audio=audio_data)
-        
+
         server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
         request_id = [None]
 

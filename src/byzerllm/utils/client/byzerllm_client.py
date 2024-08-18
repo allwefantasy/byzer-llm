@@ -1819,7 +1819,7 @@ cost {time.monotonic() - start_time} seconds
     def _query(self, model: str, input_value: List[Dict[str, Any]]):
 
         try:
-            from byzerllm.utils.nontext import Image, Audio
+            from byzerllm.utils.nontext import Image, Audio,AudioChat
 
             for v in input_value:
                 s = v["instruction"]
@@ -1831,7 +1831,8 @@ cost {time.monotonic() - start_time} seconds
                 audio = Audio(s)
                 if audio.has_audio():
                     c = audio.to_content()
-                    v["instruction"] = json.dumps(c, ensure_ascii=False)
+                    v["instruction"] = json.dumps(c, ensure_ascii=False)                
+
         except Exception as inst:
             pass        
 
