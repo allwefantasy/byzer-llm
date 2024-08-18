@@ -18,7 +18,10 @@ except ImportError:
     def colored(x, *args, **kwargs):
         return x
 
-import jieba  
+try:
+    import jieba
+except ImportError:
+    jieba = None
 
 class SimpleRetrieval:
     def __init__(self,llm:ByzerLLM, retrieval: ByzerRetrieval,
