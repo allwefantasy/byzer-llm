@@ -676,8 +676,6 @@ import json
 # Initialize the ByzerLLM with the Qwen Voice model
 llm = byzerllm.ByzerLLM.from_default_model("qwen_voice")
 
-
-
 # Path to your audio file
 audio_file_path = "/home/winubuntu/projects/jupyter-workspace/data/zh.mp3"
 
