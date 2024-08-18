@@ -22,7 +22,9 @@ except ImportError:
 try:
     import jieba
 except ImportError:
-    print("Warning: jieba module is not installed. Some functionalities may be limited.")
+    colored(
+        "Warning: jieba module is not installed. You may need to install it by running `pip install jieba`"
+    )
     jieba = None
 
 
