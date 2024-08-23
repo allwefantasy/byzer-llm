@@ -254,6 +254,11 @@ class Image(TagExtractor):
             return f"data:image/{image_type};base64,{encoded_string}"
         return f"<_image_>data:image/{image_type};base64,{encoded_string}</_image_>"
 
+        # Additional code to handle the image content
+        if only_content:
+            return f"data:image/{image_type};base64,{encoded_string}"
+        return f"<_image_>data:image/{image_type};base64,{encoded_string}</_image_>"
+
     @staticmethod
     def save_image_to_path(
         image_data: str, output_path: str, auto_fix_suffix: bool = False
