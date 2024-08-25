@@ -1,14 +1,20 @@
 contextlib2
 ninja
 # netifaces
+
 accelerate
 bitsandbytes>=0.39.0
 transformers>=4.35.0
 torch>=2.1.2
-ray[default]>=2.9.1
-sentencepiece
-pyarrow
 sentence-transformers
+transformers_stream_generator
+optimum
+sentencepiece
+
+llama_index==0.10.52
+
+ray[default]>=2.9.1
+pyarrow
 datasets
 langchain
 paramiko
@@ -17,8 +23,6 @@ tqdm
 loguru
 pyjava>=0.6.21
 tiktoken
-transformers_stream_generator
-optimum
 fastapi
 uvicorn
 retrying
@@ -28,7 +32,6 @@ tiktoken
 tabulate
 jupyter_client
 prompt-toolkit
-llama_index==0.10.52
 # selenium
 # dependencies only for sparkdesk
 # websockets
