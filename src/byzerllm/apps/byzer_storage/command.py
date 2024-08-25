@@ -11,7 +11,6 @@ from rich import print as rprint
 
 from byzerllm.apps.byzer_storage.env import get_latest_byzer_retrieval_lib
 from byzerllm.apps.byzer_storage import env
-import torch
 from modelscope.hub.snapshot_download import snapshot_download
 from byzerllm.utils.client import InferBackend
 import huggingface_hub
@@ -19,6 +18,11 @@ import byzerllm
 from pydantic import BaseModel
 from huggingface_hub import snapshot_download as hf_snapshot_download
 from typing import List, Optional, Tuple
+
+try:
+    import torch
+except ImportError:
+    torch = None
 
 
 class StorageLocation(BaseModel):
@@ -123,7 +127,7 @@ class StorageSubCommand:
             console.print("[bold blue]Deploying embedding model...")
             llm.setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
 
-            if torch.cuda.is_available():
+            if torch and torch.cuda.is_available():
                 llm.setup_gpus_per_worker(0.1)
             else:
                 llm.setup_gpus_per_worker(0)
@@ -186,7 +190,7 @@ class StorageSubCommand:
                 error_summary.append("Failed to download long-term memory model")
                 return error_summary
 
-        if not torch.cuda.is_available():
+        if not torch or not torch.cuda.is_available():
             error_msg = "GPU not available. Long-term memory model requires GPU."
             console.print(f"[red]✗[/red] {error_msg}")
             error_summary.append(error_msg)
@@ -427,7 +431,7 @@ class StorageSubCommand:
             os.makedirs(base_model_dir, exist_ok=True)
 
             console.print("[bold blue]Checking GPU availability...[/bold blue]")
-            has_gpu = torch.cuda.is_available()
+            has_gpu = torch and torch.cuda.is_available()
             if has_gpu:
                 rprint("[green]✓[/green] GPU detected")
             else:

@@ -27,8 +27,9 @@ local_requires = [
 ]
 
 extras_require = {
-    "default": install_requires,
+    "default": install_requires + local_requires,
     "local": install_requires + local_requires,
+    "saas": install_requires
 }
 
 readme_path = os.path.join(folder, "README.md")
