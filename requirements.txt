@@ -2,14 +2,14 @@ contextlib2
 ninja
 # netifaces
 
-accelerate
-bitsandbytes>=0.39.0
-transformers>=4.35.0
-torch>=2.1.2
-sentence-transformers
-transformers_stream_generator
-optimum
-sentencepiece
+# accelerate
+# bitsandbytes>=0.39.0
+# transformers>=4.35.0
+# torch>=2.1.2
+# sentence-transformers
+# transformers_stream_generator
+# optimum
+# sentencepiece
 
 llama_index==0.10.52
 
