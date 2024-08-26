@@ -1,5 +1,7 @@
 contextlib2
 ninja
+jinja2
+rich
 # netifaces
 
 # accelerate
