@@ -13,6 +13,7 @@ from byzerllm.lang import locales, lang
 from byzerllm.command_args import StoreNestedDict, get_command_args
 from rich.console import Console
 from rich.panel import Panel
+import time
 
 console = Console()
 
@@ -158,9 +159,21 @@ def main(input_args: Optional[List[str]] = None):
 
         byzerllm.connect_cluster(address=args.ray_address)
         model = ray.get_actor(args.model)
-        v = ray.get(model.stat.remote())
-        o = json.dumps(v, indent=4, ensure_ascii=False)
-        print(o)
+
+        def print_stat():
+            v = ray.get(model.stat.remote())
+            o = json.dumps(v, indent=4, ensure_ascii=False)
+            print(o)
+
+        if args.interval > 0:
+            try:
+                while True:
+                    print_stat()
+                    time.sleep(args.interval)
+            except KeyboardInterrupt:
+                print("\nStat printing stopped.")
+        else:
+            print_stat()
 
     elif args.command == "storage":
         if args.storage_command == "install":
