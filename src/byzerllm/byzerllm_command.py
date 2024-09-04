@@ -13,25 +13,40 @@ from byzerllm.lang import locales, lang
 from byzerllm.command_args import StoreNestedDict, get_command_args
 from rich.console import Console
 from rich.panel import Panel
+from rich.json import JSON
 import time
+import json
 
 console = Console()
 
+
 def check_ray_status():
     try:
-        subprocess.run(["ray", "status"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(
+            ["ray", "status"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
         return True
     except subprocess.CalledProcessError:
         return False
+
 
 def start_ray():
     try:
-        subprocess.run(["ray", "start", "--head"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(
+            ["ray", "start", "--head"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
         return True
     except subprocess.CalledProcessError:
         return False
 
-def main(input_args: Optional[List[str]] = None):    
+
+def main(input_args: Optional[List[str]] = None):
     args = get_command_args(input_args=input_args)
 
     if args.file:
@@ -71,7 +86,9 @@ def main(input_args: Optional[List[str]] = None):
                 if start_ray():
                     console.print("[green]✓[/green] Ray started successfully")
                 else:
-                    console.print("[red]✗[/red] Failed to start Ray. Please start Ray manually.")
+                    console.print(
+                        "[red]✗[/red] Failed to start Ray. Please start Ray manually."
+                    )
                     return
 
     if args.command == "deploy":
@@ -155,15 +172,15 @@ def main(input_args: Optional[List[str]] = None):
         print(locales["undeploy_success"][lang].format(args.model))
 
     elif args.command == "stat":
-        import json
-
         byzerllm.connect_cluster(address=args.ray_address)
         model = ray.get_actor(args.model)
+        counter = 0
 
-        def print_stat():
+        def print_stat():            
+            counter += 1
             v = ray.get(model.stat.remote())
-            o = json.dumps(v, indent=4, ensure_ascii=False)
-            print(o)
+            o = JSON(json.dumps(v, ensure_ascii=False))
+            console.print(Panel(o, title=f"Model Stat ({counter})"))
 
         if args.interval > 0:
             try:
@@ -195,7 +212,7 @@ def main(input_args: Optional[List[str]] = None):
             if args.model_memory_command == "start":
                 StorageSubCommand.model_memory_start(args)
             elif args.model_memory_command == "stop":
-                StorageSubCommand.model_memory_stop(args)    
+                StorageSubCommand.model_memory_stop(args)
 
     elif args.command == "serve":
         byzerllm.connect_cluster(address=args.ray_address)
