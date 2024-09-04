@@ -153,27 +153,25 @@ def main(input_args: Optional[List[str]] = None):
         llm.undeploy(args.model, force=args.force)
 
         print(locales["undeploy_success"][lang].format(args.model))
-import json
-from rich import print
-from rich.json import JSON
 
-byzerllm.connect_cluster(address=args.ray_address)
-model = ray.get_actor(args.model)
+    elif args.command == "stat":
+        import json
 
-def print_stat():
-    v = ray.get(model.stat.remote())
-    o = JSON(v)
-    print(o)
+        byzerllm.connect_cluster(address=args.ray_address)
+        model = ray.get_actor(args.model)
 
-if args.interval > 0:
-    try:
-        while True:
-            print_stat()
-            time.sleep(args.interval)
-    except KeyboardInterrupt:
-        print("[bold red]\nStat printing stopped.[/bold red]")
-else:
-    print_stat()
+        def print_stat():
+            v = ray.get(model.stat.remote())
+            o = json.dumps(v, indent=4, ensure_ascii=False)
+            print(o)
+
+        if args.interval > 0:
+            try:
+                while True:
+                    print_stat()
+                    time.sleep(args.interval)
+            except KeyboardInterrupt:
+                print("\nStat printing stopped.")
         else:
             print_stat()
 
