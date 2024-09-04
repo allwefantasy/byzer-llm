@@ -109,6 +109,10 @@ def get_command_args(input_args: Optional[List[str]] = None):
         "--model", required=True, help=locales["help_query_model"][lang]
     )
     status_cmd.add_argument("--file", default=None, required=False, help="")
+    status_cmd.add_argument(
+        "--interval", type=int, default=0, help="Interval in seconds for continuous stat printing"
+    )
+    
 
     # Storage 子命令
     storage_cmd = subparsers.add_parser("storage", help="Manage Byzer Storage")
