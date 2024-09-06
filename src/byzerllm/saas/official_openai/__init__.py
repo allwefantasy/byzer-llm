@@ -402,7 +402,7 @@ class CustomSaasAPI:
         temperature: float = 0.9,
         **kwargs,
     ):
-
+        logger.info(f"[{model}] request accepted: {ins[0:50]}....")
         model = self.model
 
         if "model" in kwargs:
