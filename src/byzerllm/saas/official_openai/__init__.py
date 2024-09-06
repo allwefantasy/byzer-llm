@@ -240,18 +240,16 @@ class CustomSaasAPI:
 
             threading.Thread(target=writer, daemon=True).start()
 
-            time_count = 10 * 100
-            while request_id[0] is None and time_count > 0:
-                time.sleep(0.01)
-                time_count -= 1
-
-            if request_id[0] is None:
+            async def wait_for_request_id():
+                for _ in range(1000):  # 10 seconds timeout
+                    if request_id[0] is not None:
+                        return
+                    await asyncio.sleep(0.01)
                 raise Exception("Failed to get request id")
 
-            def write_running():
-                return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
+            await wait_for_request_id()
 
-            await asyncio.to_thread(write_running)
+            await server.add_item.remote(request_id[0], "RUNNING")
             return [
                 (
                     "",
