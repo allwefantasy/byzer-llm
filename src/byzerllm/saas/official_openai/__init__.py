@@ -401,12 +401,13 @@ class CustomSaasAPI:
         top_p: float = 0.7,
         temperature: float = 0.9,
         **kwargs,
-    ):
-        logger.info(f"[{model}] request accepted: {ins[0:50]}....")
+    ):        
         model = self.model
 
         if "model" in kwargs:
             model = kwargs["model"]
+
+        logger.info(f"[{model}] request accepted: {ins[0:50]}....")    
 
         messages = [
             {"role": message["role"], "content": self.process_input(message["content"])}
