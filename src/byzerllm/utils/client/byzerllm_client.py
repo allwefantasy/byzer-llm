@@ -129,6 +129,7 @@ class ByzerLLM:
 
         self.event_callbacks: Dict[EventName, List[EventCallback]] = {}
         self.sub_clients = {}
+        self.skip_nontext_check = False
 
     @property
     def metadata(self) -> LLMMetadata:
@@ -1441,7 +1442,8 @@ class ByzerLLM:
 
         def is_instance_of_generator(v):
             from typing import Generator, get_origin, get_args
-            import collections                        
+            import collections
+
             if get_origin(v) is collections.abc.Generator:
                 args = get_args(v)
                 if args == (str, type(None), type(None)):
@@ -1483,12 +1485,12 @@ class ByzerLLM:
 
                 if marker:
                     prompt_str = f"{prompt_str}\n\n{marker}"
-                                
+
                 if is_instance_of_generator(signature.return_annotation):
-                    temp_options = {**{"delta_mode":True}, **options}
+                    temp_options = {**{"delta_mode": True}, **options}
                     t = self.stream_chat_oai(
                         conversations=[{"role": "user", "content": prompt_str}],
-                        model=model,                        
+                        model=model,
                         **temp_options,
                     )
                     if return_origin_response:
@@ -1817,24 +1819,25 @@ cost {time.monotonic() - start_time} seconds
         return self.mapping_max_input_length.get(model, None)
 
     def _query(self, model: str, input_value: List[Dict[str, Any]]):
+        
+        if not self.skip_nontext_check:
+            try:
+                from byzerllm.utils.nontext import Image, Audio
 
-        try:
-            from byzerllm.utils.nontext import Image, Audio
+                for v in input_value:
+                    s = v["instruction"]
+                    image = Image(s)
+                    if image.has_image():
+                        c = image.to_content()
+                        v["instruction"] = json.dumps(c, ensure_ascii=False)
 
-            for v in input_value:
-                s = v["instruction"]
-                image = Image(s)
-                if image.has_image():
-                    c = image.to_content()
-                    v["instruction"] = json.dumps(c, ensure_ascii=False)
+                    audio = Audio(s)
+                    if audio.has_audio():
+                        c = audio.to_content()
+                        v["instruction"] = json.dumps(c, ensure_ascii=False)
 
-                audio = Audio(s)
-                if audio.has_audio():
-                    c = audio.to_content()
-                    v["instruction"] = json.dumps(c, ensure_ascii=False)                
-
-        except Exception as inst:
-            pass        
+            except Exception as inst:
+                pass
 
         event_result = self._trigger_event(
             EventName.BEFORE_CALL_MODEL, self, model, input_value
@@ -1853,6 +1856,7 @@ cost {time.monotonic() - start_time} seconds
 
         if self.verbose:
             print(f"Send to model[{model}]:{new_input_value}")
+
         index = -1
         try:
             worker_id = -1
@@ -1866,7 +1870,7 @@ cost {time.monotonic() - start_time} seconds
                         "apply_chat_template", -1
                     )
                 elif input_value[0].get("meta", False):
-                    worker_id = self.pin_model_worker_mapping.get("meta", -1)
+                    worker_id = self.pin_model_worker_mapping.get("meta", -1)            
 
             [index, worker] = ray.get(udf_master.get.remote(worker_id))
             res = ray.get(worker.async_apply.remote(new_input_value))

@@ -173,14 +173,11 @@ def main(input_args: Optional[List[str]] = None):
 
     elif args.command == "stat":
         byzerllm.connect_cluster(address=args.ray_address)
-        model = ray.get_actor(args.model)
-        counter = 0
-
-        def print_stat():            
-            counter += 1
+        model = ray.get_actor(args.model)    
+        def print_stat():                                    
             v = ray.get(model.stat.remote())
             o = JSON(json.dumps(v, ensure_ascii=False))
-            console.print(Panel(o, title=f"Model Stat ({counter})"))
+            console.print(Panel(o, title=f"Model Stat"))
 
         if args.interval > 0:
             try:
