@@ -32,6 +32,7 @@ import copy
 import traceback
 from enum import Enum
 from loguru import logger
+import asyncio
 
 from byzerllm.utils.client.types import (
     Templates,
@@ -1368,7 +1369,7 @@ class ByzerLLM:
         while True:
             final_output = await server.get_item.remote(request_id)
             if isinstance(final_output, str):
-                time.sleep(0.01)
+                await asyncio.sleep(0.01)
                 continue
 
             if final_output is None:
