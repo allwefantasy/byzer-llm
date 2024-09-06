@@ -407,7 +407,7 @@ class CustomSaasAPI:
         if "model" in kwargs:
             model = kwargs["model"]
 
-        logger.info(f"[{model}] request accepted: {ins[0:50]}....")    
+        logger.info(f"[{model}] request accepted: {ins[-50:]}....")    
 
         messages = [
             {"role": message["role"], "content": self.process_input(message["content"])}
