@@ -257,7 +257,7 @@ class _PrompRunner:
         self.continue_prompt = "接着前面的内容继续"
         self.response_markers_template = """你的输出可能会被切分成多轮对话完成。请确保第一次输出以{{ RESPONSE_START }}开始，输出完毕后，请使用{{ RESPONSE_END }}标记。中间的回复不需要使用这两个标记。"""
         self.model_class = None
-    
+
     def with_return_type(self, model_class: Type[Any]):
         self.model_class = model_class
         return self
@@ -422,6 +422,28 @@ class _PrompRunner:
                 return True
         return False
 
+    def to_model(self,result: str, is_tag_block: bool = False):
+        from byzerllm.utils.client import code_utils
+        from byzerllm.utils.nontext import TagExtractor
+
+        if not isinstance(result, str):
+            raise ValueError("The decorated function must return a string")
+        try:
+            if is_tag_block:
+                tag_extractor = TagExtractor(result)
+                result = tag_extractor.extract()
+                json_data = json.loads(result.content)
+            else:
+                json_str = code_utils.extract_code(result)[0][1]
+                json_data = json.loads(json_str)
+            if isinstance(json_data, list):
+                return [self.model_class(**item) for item in json_data]    
+            return self.model_class(**json_data)
+        except json.JSONDecodeError:
+            raise ValueError("The returned string is not a valid JSON")
+        except TypeError:
+            raise TypeError("Unable to create model instance from the JSON data")
+
     def run(self, *args, **kwargs):
         func = self.func
         llm = self.llm
@@ -466,7 +488,7 @@ class _PrompRunner:
                 if self.extractor:
                     v = self.extractor(v)
                 if self.model_class:
-                    return to_model(self.model_class)(lambda: v)()
+                    return self.to_model(v)
                 return v
 
             if self.is_instance_of_generator(signature.return_annotation):
@@ -478,7 +500,7 @@ class _PrompRunner:
                 llm(self.instance), v, signature, origin_input=origin_input
             )
             if self.model_class:
-                return to_model(self.model_class)(lambda: v)()
+                return self.to_model(v)
             return v
 
         if isinstance(llm, ByzerLLM):
@@ -506,7 +528,7 @@ class _PrompRunner:
                 if self.extractor:
                     v = self.extractor(v)
                 if self.model_class:
-                    return to_model(self.model_class)(lambda: v)()
+                    return self.to_model(v)
                 return v
 
             if self.is_instance_of_generator(signature.return_annotation):
@@ -514,11 +536,7 @@ class _PrompRunner:
                     llm, v, signature, origin_input=origin_input
                 )
 
-            v = self._multi_turn_wrapper(
-                llm, v, signature, origin_input=origin_input
-            )
-            if self.model_class:
-                return to_model(self.model_class)(lambda: v)()
+            v = self._multi_turn_wrapper(llm, v, signature, origin_input=origin_input)            
             return v
 
         if isinstance(llm, str):
@@ -558,9 +576,7 @@ class _PrompRunner:
                     llm, v, signature, origin_input=origin_input
                 )
 
-            v = self._multi_turn_wrapper(
-                llm, v, signature, origin_input=origin_input
-            )
+            v = self._multi_turn_wrapper(llm, v, signature, origin_input=origin_input)
             if self.model_class:
                 return to_model(self.model_class)(lambda: v)()
             return v
@@ -632,6 +648,10 @@ class _DescriptorPrompt:
         self.prompt_runner.with_continue_prompt(prompt)
         return self
 
+    def with_return_type(self, model_class: Type[Any]):
+        self.prompt_runner.with_return_type(model_class)
+        return self
+
     def __call__(self, *args, **kwargs):
         return self.prompt_runner(*args, **kwargs)
 
@@ -687,32 +707,6 @@ class prompt:
             options=self.options,
         )
 
-class to_model:
-    def __init__(self, model_class: Type[Any],tag_block:bool=False):
-        self.model_class = model_class
-        self.tag_block = tag_block
-    def __call__(self, func):
-        from byzerllm.utils.client import code_utils
-        from byzerllm.utils.nontext import TagExtractor
-        def wrapper(*args, **kwargs):
-            result = func(*args, **kwargs)
-            if not isinstance(result, str):
-                raise ValueError("The decorated function must return a string")
-            try:
-                if self.tag_block:
-                    tag_extractor = TagExtractor(result)
-                    result = tag_extractor.extract()
-                    json_data = json.loads(result.content) 
-                else:
-                    json_str = code_utils.extract_code(result)[0][1]
-                    json_data = json.loads(json_str)
-                return self.model_class(**json_data)
-            except json.JSONDecodeError:
-                raise ValueError("The returned string is not a valid JSON")
-            except TypeError:
-                raise TypeError("Unable to create model instance from the JSON data")
-        return wrapper
-
 
 from byzerllm.utils.client import ByzerLLM
 from byzerllm.utils.retrieval import ByzerRetrieval
@@ -727,5 +721,4 @@ __all__ = [
     "prompt",
     "agent_reply",
     "Image",
-    "to_model",
 ]
