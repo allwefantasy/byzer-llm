@@ -5,6 +5,8 @@ from pyjava.storage import streaming_tar
 import os
 import inspect
 import functools
+import json
+from typing import Type, Any
 
 from typing import Dict, Generator, Optional
 from dataclasses import dataclass
@@ -254,6 +256,7 @@ class _PrompRunner:
         self.extractor = None
         self.continue_prompt = "接着前面的内容继续"
         self.response_markers_template = """你的输出可能会被切分成多轮对话完成。请确保第一次输出以{{ RESPONSE_START }}开始，输出完毕后，请使用{{ RESPONSE_END }}标记。中间的回复不需要使用这两个标记。"""
+        self.model_class = None
 
     def with_continue_prompt(self, prompt: str):
         self.continue_prompt = prompt
@@ -665,6 +668,32 @@ class prompt:
             options=self.options,
         )
 
+class to_model:
+    def __init__(self, model_class: Type[Any],tag_block:bool=False):
+        self.model_class = model_class
+        self.tag_block = tag_block
+    def __call__(self, func):
+        from byzerllm.utils.client import code_utils
+        from byzerllm.utils.nontext import TagExtractor
+        def wrapper(*args, **kwargs):
+            result = func(*args, **kwargs)
+            if not isinstance(result, str):
+                raise ValueError("The decorated function must return a string")
+            try:
+                if self.tag_block:
+                    tag_extractor = TagExtractor(result)
+                    result = tag_extractor.extract()
+                    json_data = json.loads(result.content) 
+                else:
+                    json_str = code_utils.extract_code(result)[0][1]
+                    json_data = json.loads(json_str)
+                return self.model_class(**json_data)
+            except json.JSONDecodeError:
+                raise ValueError("The returned string is not a valid JSON")
+            except TypeError:
+                raise TypeError("Unable to create model instance from the JSON data")
+        return wrapper
+
 
 from byzerllm.utils.client import ByzerLLM
 from byzerllm.utils.retrieval import ByzerRetrieval
@@ -679,4 +708,5 @@ __all__ = [
     "prompt",
     "agent_reply",
     "Image",
+    "to_model",
 ]
