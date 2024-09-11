@@ -19,6 +19,7 @@ import asyncio
 import traceback
 import uuid
 import tempfile
+from loguru import logger
 
 
 class CustomSaasAPI:
@@ -241,7 +242,7 @@ class CustomSaasAPI:
 
             time_count = 10 * 100
             while request_id[0] is None and time_count > 0:
-                time.sleep(0.01)
+                await asyncio.sleep(0.01)
                 time_count -= 1
 
             if request_id[0] is None:
@@ -400,12 +401,13 @@ class CustomSaasAPI:
         top_p: float = 0.7,
         temperature: float = 0.9,
         **kwargs,
-    ):
-
+    ):        
         model = self.model
 
         if "model" in kwargs:
             model = kwargs["model"]
+
+        logger.info(f"[{model}] request accepted: {ins[-50:]}....")    
 
         messages = [
             {"role": message["role"], "content": self.process_input(message["content"])}
@@ -500,7 +502,7 @@ class CustomSaasAPI:
 
             time_count = 60 * 100
             while request_id[0] is None and time_count > 0:
-                time.sleep(0.01)
+                await asyncio.sleep(0.01)
                 time_count -= 1
 
             if request_id[0] is None:
@@ -538,21 +540,24 @@ class CustomSaasAPI:
                 generated_tokens_count = response.usage.completion_tokens
                 input_tokens_count = response.usage.prompt_tokens
                 time_cost = time.monotonic() - start_time
+                gen_meta = {
+                    "metadata": {
+                        "request_id": response.id,
+                        "input_tokens_count": input_tokens_count,
+                        "generated_tokens_count": generated_tokens_count,
+                        "time_cost": time_cost,
+                        "first_token_time": 0,
+                        "speed": float(generated_tokens_count) / time_cost,
+                    }
+                }
+                logger.info(gen_meta)
                 return [
                     (
                         generated_text,
-                        {
-                            "metadata": {
-                                "request_id": response.id,
-                                "input_tokens_count": input_tokens_count,
-                                "generated_tokens_count": generated_tokens_count,
-                                "time_cost": time_cost,
-                                "first_token_time": 0,
-                                "speed": float(generated_tokens_count) / time_cost,
-                            }
-                        },
+                        gen_meta,
                     )
                 ]
-            except Exception as e:
-                print(f"Error: {e}")
+            except Exception as e:                
+                logger.error(f"Error: {e}")
+                traceback.print_exc()
                 raise e

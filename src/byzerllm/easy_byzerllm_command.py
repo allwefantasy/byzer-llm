@@ -119,7 +119,7 @@ def main():
                 "--num_workers",
                 "1",
                 "--worker_concurrency",
-                "10",
+                "1000",
             ]
         )
     elif args.command == "undeploy":

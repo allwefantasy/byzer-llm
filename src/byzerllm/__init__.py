@@ -5,6 +5,8 @@ from pyjava.storage import streaming_tar
 import os
 import inspect
 import functools
+import json
+from typing import Type, Any
 
 from typing import Dict, Generator, Optional
 from dataclasses import dataclass
@@ -254,6 +256,11 @@ class _PrompRunner:
         self.extractor = None
         self.continue_prompt = "接着前面的内容继续"
         self.response_markers_template = """你的输出可能会被切分成多轮对话完成。请确保第一次输出以{{ RESPONSE_START }}开始，输出完毕后，请使用{{ RESPONSE_END }}标记。中间的回复不需要使用这两个标记。"""
+        self.model_class = None
+
+    def with_return_type(self, model_class: Type[Any]):
+        self.model_class = model_class
+        return self
 
     def with_continue_prompt(self, prompt: str):
         self.continue_prompt = prompt
@@ -415,6 +422,28 @@ class _PrompRunner:
                 return True
         return False
 
+    def to_model(self,result: str, is_tag_block: bool = False):
+        from byzerllm.utils.client import code_utils
+        from byzerllm.utils.nontext import TagExtractor
+
+        if not isinstance(result, str):
+            raise ValueError("The decorated function must return a string")
+        try:
+            if is_tag_block:
+                tag_extractor = TagExtractor(result)
+                result = tag_extractor.extract()
+                json_data = json.loads(result.content)
+            else:
+                json_str = code_utils.extract_code(result)[0][1]
+                json_data = json.loads(json_str)
+            if isinstance(json_data, list):
+                return [self.model_class(**item) for item in json_data]    
+            return self.model_class(**json_data)
+        except json.JSONDecodeError:
+            raise ValueError("The returned string is not a valid JSON")
+        except TypeError:
+            raise TypeError("Unable to create model instance from the JSON data")
+
     def run(self, *args, **kwargs):
         func = self.func
         llm = self.llm
@@ -457,7 +486,9 @@ class _PrompRunner:
             )(func)(**input_dict)
             if not return_origin_response:
                 if self.extractor:
-                    return self.extractor(v)
+                    v = self.extractor(v)
+                if self.model_class:
+                    return self.to_model(v)
                 return v
 
             if self.is_instance_of_generator(signature.return_annotation):
@@ -465,9 +496,12 @@ class _PrompRunner:
                     llm(self.instance), v, signature, origin_input=origin_input
                 )
 
-            return self._multi_turn_wrapper(
+            v = self._multi_turn_wrapper(
                 llm(self.instance), v, signature, origin_input=origin_input
             )
+            if self.model_class:
+                return self.to_model(v)
+            return v
 
         if isinstance(llm, ByzerLLM):
             return_origin_response = True if self.response_markers else False
@@ -492,7 +526,9 @@ class _PrompRunner:
             )(func)(**input_dict)
             if not return_origin_response:
                 if self.extractor:
-                    return self.extractor(v)
+                    v = self.extractor(v)
+                if self.model_class:
+                    return self.to_model(v)
                 return v
 
             if self.is_instance_of_generator(signature.return_annotation):
@@ -500,9 +536,8 @@ class _PrompRunner:
                     llm, v, signature, origin_input=origin_input
                 )
 
-            return self._multi_turn_wrapper(
-                llm, v, signature, origin_input=origin_input
-            )
+            v = self._multi_turn_wrapper(llm, v, signature, origin_input=origin_input)            
+            return v
 
         if isinstance(llm, str):
             _llm = ByzerLLM()
@@ -531,7 +566,9 @@ class _PrompRunner:
             )(func)(**input_dict)
             if not return_origin_response:
                 if self.extractor:
-                    return self.extractor(v)
+                    v = self.extractor(v)
+                if self.model_class:
+                    return to_model(self.model_class)(lambda: v)()
                 return v
 
             if self.is_instance_of_generator(signature.return_annotation):
@@ -539,9 +576,10 @@ class _PrompRunner:
                     llm, v, signature, origin_input=origin_input
                 )
 
-            return self._multi_turn_wrapper(
-                llm, v, signature, origin_input=origin_input
-            )
+            v = self._multi_turn_wrapper(llm, v, signature, origin_input=origin_input)
+            if self.model_class:
+                return to_model(self.model_class)(lambda: v)()
+            return v
 
         else:
             raise ValueError(
@@ -608,6 +646,10 @@ class _DescriptorPrompt:
 
     def with_continue_prompt(self, prompt: str):
         self.prompt_runner.with_continue_prompt(prompt)
+        return self
+
+    def with_return_type(self, model_class: Type[Any]):
+        self.prompt_runner.with_return_type(model_class)
         return self
 
     def __call__(self, *args, **kwargs):
