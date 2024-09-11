@@ -46,6 +46,21 @@ def start_ray():
         return False
 
 
+def get_llm_template(tpl: str):
+    if tpl == "default":
+        return Templates.default()
+    elif tpl == "llama":
+        return Templates.llama()
+    elif tpl == "qwen":
+        return Templates.qwen()
+    elif tpl == "yi":
+        return Templates.yi()
+    elif tpl == "empty":
+        return Templates.empty()
+    else:
+        return tpl
+
+
 def main(input_args: Optional[List[str]] = None):
     args = get_command_args(input_args=input_args)
 
@@ -127,18 +142,7 @@ def main(input_args: Optional[List[str]] = None):
         byzerllm.connect_cluster(address=args.ray_address)
 
         llm_client = ByzerLLM()
-        if args.template == "default":
-            llm_client.setup_template(args.model, template=Templates.default())
-        elif args.template == "llama":
-            llm_client.setup_template(args.model, template=Templates.llama())
-        elif args.template == "qwen":
-            llm_client.setup_template(args.model, template=Templates.qwen())
-        elif args.template == "yi":
-            llm_client.setup_template(args.model, template=Templates.yi())
-        elif args.template == "empty":
-            llm_client.setup_template(args.model, template=Templates.empty())
-        else:
-            llm_client.setup_template(args.model, args.template)
+        llm_client.setup_template(args.model, template=get_llm_template(args.template))
 
         resp = llm_client.chat_oai(
             model=args.model,
@@ -215,7 +219,7 @@ def main(input_args: Optional[List[str]] = None):
         byzerllm.connect_cluster(address=args.ray_address)
         llm_client = ByzerLLM()
         if args.served_model_name:
-            llm_client.setup_template(args.served_model_name, args.template)
+            llm_client.setup_template(args.served_model_name, get_llm_template(args.template))
         server_args = ServerArgs(
             **{arg: getattr(args, arg) for arg in vars(ServerArgs())}
         )
