@@ -4,9 +4,9 @@ import base64
 import uuid
 import tempfile
 
-from transformers import Qwen2VLForConditionalGeneration, GenerationConfig
+from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor, GenerationConfig
 from qwen_vl_utils import process_vision_info
-from typing import Dict
+from typing import Dict, List
 
 
 def get_meta(self):
@@ -21,6 +21,7 @@ def get_meta(self):
 
 
 def stream_chat(self, tokenizer, ins: str,
+                his: List[Dict[str, str]] = [],
                 max_length: int = 4096,
                 top_p: float = 0.95,
                 temperature: float = 0.1, **kwargs):
@@ -91,9 +92,10 @@ def init_model(model_dir, infer_params: Dict[str, str] = {}, sys_conf: Dict[str,
         pretrained_model_dir = model_dir
 
     tokenizer = AutoProcessor.from_pretrained(pretrained_model_dir)
+
     model = Qwen2VLForConditionalGeneration.from_pretrained(
         pretrained_model_dir,
-        attn_implementation="flash_attention_2",
+        # attn_implementation="flash_attention_2",
         torch_dtype="auto",
         device_map="auto"
     )
