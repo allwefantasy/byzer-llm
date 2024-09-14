@@ -21,6 +21,7 @@ from byzerllm.utils.client.entrypoints.openai.protocol import (
 
 from byzerllm.utils import random_uuid
 from byzerllm.utils.client import ByzerLLM, LLMResponse
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 from byzerllm.utils.client.entrypoints.openai.serving_engine import OpenAIServing
 
 logger = init_logger(__name__)
@@ -87,7 +88,7 @@ class OpenAIServingChat(OpenAIServing):
         created_time = int(time.time())
         chunk_object_type = "chat.completion.chunk"
 
-        result_generator = self.llm_client.async_stream_chat_oai(
+        result_generator =  self.llm_client.async_stream_chat_oai(
             model=model_name,
             conversations=body.messages,
             delta_mode=True,
@@ -180,25 +181,25 @@ class OpenAIServingChat(OpenAIServing):
         model_name = self.server_model_name or body.model        
 
         async def wrapper_chat_generator():
-            r = self.llm_client.chat_oai(
+            r = await asyncfy_with_semaphore(lambda: self.llm_client.chat_oai(
                 model=model_name,
                 conversations=body.messages,
                 llm_config={
                     "gen.request_id": request_id,
                     **body.to_llm_config()
                 }
-            )
+            ))()
             for _ in r:
                 yield _
 
-        result_generator = await asyncio.to_thread(wrapper_chat_generator)        
+        result_generator = wrapper_chat_generator()
         created_time = int(time.time())
         final_res = None
 
         async for res in result_generator:
             if await request.is_disconnected():
                 # Abort the request if the client disconnects.
-                await self.llm_client.abort(request_id, model=model_name)
+                await asyncfy_with_semaphore(lambda: self.llm_client.abort(request_id, model=model_name))()
                 return self.create_error_response("Client disconnected")
             final_res = res
         assert final_res is not None
