@@ -5,6 +5,7 @@ import requests
 import base64
 import io
 import json
+import requests
 import ray
 from byzerllm.utils.types import (
     BlockVLLMStreamServer,
@@ -95,7 +96,10 @@ class CustomSaasAPI:
         response_data = response.json()
         
         time_cost = time.monotonic() - start_time
-        base64_image = response_data["images"][0]["url"]
+        image_url = response_data["images"][0]["url"]
+        image_response = requests.get(image_url)
+        image_binary = image_response.content
+        base64_image = f"data:image/jpeg;base64,{base64.b64encode(image_binary).decode('utf-8')}"
         
         return [
             (
