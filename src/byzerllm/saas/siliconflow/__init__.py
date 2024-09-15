@@ -140,6 +140,9 @@ class CustomSaasAPI:
             
             #MARK
             
+            # Get other parameters excluding input, size, quality, and n
+            other_params = {k: v for k, v in last_message.items() if k not in ['input', 'size', 'quality', 'n']}
+            
             return await self.async_text_to_image(
-                stream=False, input=input, size=size, quality=quality, n=n
+                stream=False, input=input, size=size, quality=quality, n=n, **other_params
             )
