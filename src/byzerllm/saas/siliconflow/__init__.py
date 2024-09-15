@@ -136,13 +136,11 @@ class CustomSaasAPI:
             input = last_message["input"]
             size = last_message.get("size", "1024x1024")
             quality = last_message.get("quality", "standard")
-            n = last_message.get("n", 1)
-            
-            #MARK
-            
+            n = last_message.get("n", 1)            
             # Get other parameters excluding input, size, quality, and n
             other_params = {k: v for k, v in last_message.items() if k not in ['input', 'size', 'quality', 'n']}
             
             return await self.async_text_to_image(
                 stream=False, input=input, size=size, quality=quality, n=n, **other_params
             )
+        raise Exception("Invalid input")
