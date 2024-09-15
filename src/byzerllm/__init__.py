@@ -422,25 +422,25 @@ class _PrompRunner:
                 return True
         return False
 
-    def to_model(self,result: str, is_tag_block: bool = False):
+    def to_model(self,result: str):
         from byzerllm.utils.client import code_utils
         from byzerllm.utils.nontext import TagExtractor
-
+                
         if not isinstance(result, str):
             raise ValueError("The decorated function must return a string")
+        try:            
+            json_str = code_utils.extract_code(result)[0][1]
+            json_data = json.loads(json_str)            
+        except json.JSONDecodeError:
+            # logger.info("The returned string is not a valid JSON, try to extract it using tag extractor")            
+            tag_extractor = TagExtractor(result)
+            result = tag_extractor.extract()
+            json_data = json.loads(result.content)    
+        
         try:
-            if is_tag_block:
-                tag_extractor = TagExtractor(result)
-                result = tag_extractor.extract()
-                json_data = json.loads(result.content)
-            else:
-                json_str = code_utils.extract_code(result)[0][1]
-                json_data = json.loads(json_str)
             if isinstance(json_data, list):
                 return [self.model_class(**item) for item in json_data]    
             return self.model_class(**json_data)
-        except json.JSONDecodeError:
-            raise ValueError("The returned string is not a valid JSON")
         except TypeError:
             raise TypeError("Unable to create model instance from the JSON data")
 
