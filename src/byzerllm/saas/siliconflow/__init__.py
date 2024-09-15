@@ -112,3 +112,128 @@ class CustomSaasAPI:
                 },
             )
         ]
+
+    async def async_stream_chat(
+        self,
+        tokenizer,
+        ins: str,
+        his: List[Dict[str, Any]] = [],
+        max_length: int = 4096,
+        top_p: float = 0.7,
+        temperature: float = 0.9,
+        **kwargs,
+    ):
+        logger.info(f"[{self.model}] request accepted: {ins[-50:]}....")
+
+        messages = [
+            {"role": message["role"], "content": self.process_input(message["content"])}
+            for message in his
+        ] + [{"role": "user", "content": self.process_input(ins)}]
+
+        stream = kwargs.get("stream", False)
+
+        if not stream:
+            start_time = time.monotonic()
+            url = "https://api.siliconflow.cn/v1/chat/completions"
+            
+            payload = {
+                "model": self.model,
+                "messages": messages,
+                "max_tokens": max_length,
+                "temperature": temperature,
+                "top_p": top_p,
+            }
+            headers = {
+                "accept": "application/json",
+                "content-type": "application/json",
+                "Authorization": f"Bearer {self.api_key}"
+            }
+
+            response = requests.post(url, json=payload, headers=headers)
+            response_data = response.json()
+            
+            generated_text = response_data["choices"][0]["message"]["content"]
+            generated_tokens_count = response_data["usage"]["completion_tokens"]
+            input_tokens_count = response_data["usage"]["prompt_tokens"]
+            time_cost = time.monotonic() - start_time
+            
+            gen_meta = {
+                "metadata": {
+                    "request_id": response_data["id"],
+                    "input_tokens_count": input_tokens_count,
+                    "generated_tokens_count": generated_tokens_count,
+                    "time_cost": time_cost,
+                    "first_token_time": 0,
+                    "speed": float(generated_tokens_count) / time_cost,
+                }
+            }
+            logger.info(gen_meta)
+            return [(generated_text, gen_meta)]
+
+        server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+        request_id = str(uuid.uuid4())
+
+        async def writer():
+            try:
+                url = "https://api.siliconflow.cn/v1/chat/completions"
+                payload = {
+                    "model": self.model,
+                    "messages": messages,
+                    "max_tokens": max_length,
+                    "temperature": temperature,
+                    "top_p": top_p,
+                    "stream": True,
+                }
+                headers = {
+                    "accept": "application/json",
+                    "content-type": "application/json",
+                    "Authorization": f"Bearer {self.api_key}"
+                }
+
+                async with httpx.AsyncClient() as client:
+                    async with client.stream("POST", url, json=payload, headers=headers) as response:
+                        r = ""
+                        input_tokens_count = 0
+                        generated_tokens_count = 0
+                        async for line in response.aiter_lines():
+                            if line.startswith("data:"):
+                                data = json.loads(line[5:])
+                                if data["choices"][0]["finish_reason"] is not None:
+                                    break
+                                content = data["choices"][0]["delta"].get("content", "")
+                                r += content
+                                generated_tokens_count += 1
+                                await server.add_item.remote(
+                                    request_id,
+                                    StreamOutputs(
+                                        outputs=[
+                                            SingleOutput(
+                                                text=r,
+                                                metadata=SingleOutputMeta(
+                                                    input_tokens_count=input_tokens_count,
+                                                    generated_tokens_count=generated_tokens_count,
+                                                ),
+                                            )
+                                        ]
+                                    ),
+                                )
+            except Exception as e:
+                logger.error(f"Error in stream writing: {e}")
+                traceback.print_exc()
+            finally:
+                await server.mark_done.remote(request_id)
+
+        asyncio.create_task(writer())
+
+        await server.add_item.remote(request_id, "RUNNING")
+        return [
+            (
+                "",
+                {
+                    "metadata": {
+                        "request_id": request_id,
+                        "stream_server": "BLOCK_VLLM_STREAM_SERVER",
+                    }
+                },
+            )
+        ]
