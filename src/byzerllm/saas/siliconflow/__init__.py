@@ -76,31 +76,39 @@ class CustomSaasAPI:
     ):
         if stream:
             raise Exception("Stream not supported for text to image")
-        
+
         start_time = time.monotonic()
         url = "https://api.siliconflow.cn/v1/image/generations"
-        
+
         payload = {
             "model": self.model,
             "prompt": input,
             "image_size": size,
-            "num_inference_steps": kwargs.get("num_inference_steps", 20)
+            "num_inference_steps": kwargs.get("num_inference_steps", 20),
         }
         headers = {
             "accept": "application/json",
             "content-type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
+            "Authorization": f"Bearer {self.api_key}",
         }
 
-        response = requests.post(url, json=payload, headers=headers)
+        response = await asyncfy_with_semaphore(
+            lambda: requests.post(url, json=payload, headers=headers)
+        )()
         response_data = response.json()
-        
+
         time_cost = time.monotonic() - start_time
-        image_url = response_data["images"][0]["url"]
-        image_response = requests.get(image_url)
-        image_binary = image_response.content
-        base64_image = f"data:image/jpeg;base64,{base64.b64encode(image_binary).decode('utf-8')}"
         
+        if "images" not in response_data:
+            print(response_data)
+            raise Exception(response_data)
+        
+        image_url = response_data["images"][0]["url"]
+        image_response = await asyncfy_with_semaphore(lambda: requests.get(image_url))()
+        image_binary = image_response.content
+        # base64_image = f"data:image/png;base64,{base64.b64encode(image_binary).decode('utf-8')}"
+        base64_image = base64.b64encode(image_binary).decode("utf-8")
+
         return [
             (
                 base64_image,
@@ -133,18 +141,27 @@ class CustomSaasAPI:
             {"role": message["role"], "content": self.process_input(message["content"])}
             for message in his
         ] + [{"role": "user", "content": self.process_input(ins)}]
-        
+
         last_message = messages[-1]["content"]
 
         if isinstance(last_message, dict) and "input" in last_message:
             input = last_message["input"]
             size = last_message.get("size", "1024x1024")
             quality = last_message.get("quality", "standard")
-            n = last_message.get("n", 1)            
+            n = last_message.get("n", 1)
             # Get other parameters excluding input, size, quality, and n
-            other_params = {k: v for k, v in last_message.items() if k not in ['input', 'size', 'quality', 'n']}
-            
+            other_params = {
+                k: v
+                for k, v in last_message.items()
+                if k not in ["input", "size", "quality", "n"]
+            }
+
             return await self.async_text_to_image(
-                stream=False, input=input, size=size, quality=quality, n=n, **other_params
+                stream=False,
+                input=input,
+                size=size,
+                quality=quality,
+                n=n,
+                **other_params,
             )
         raise Exception("Invalid input")
