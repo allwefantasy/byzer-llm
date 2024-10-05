@@ -401,18 +401,28 @@ class CustomSaasAPI:
         top_p: float = 0.7,
         temperature: float = 0.9,
         **kwargs,
-    ):        
+    ):
         model = self.model
 
         if "model" in kwargs:
             model = kwargs["model"]
 
-        logger.info(f"[{model}] request accepted: {ins[-50:]}....")    
+        logger.info(f"[{model}] request accepted: {ins[-50:]}....")
 
         messages = [
             {"role": message["role"], "content": self.process_input(message["content"])}
             for message in his
-        ] + [{"role": "user", "content": self.process_input(ins)}]
+        ]
+
+        if kwargs.get("response_prefix", "true") not in ["true", "True", True]:
+            temp_message = {
+                "role": messages[-1]["role"],
+                "content": messages[-1]["content"],
+                "prefix": True,
+            }
+            messages = messages + [temp_message]
+        else:
+            messages = messages + [{"role": "user", "content": self.process_input(ins)}]
 
         stream = kwargs.get("stream", False)
 
@@ -557,7 +567,7 @@ class CustomSaasAPI:
                         gen_meta,
                     )
                 ]
-            except Exception as e:                
+            except Exception as e:
                 logger.error(f"Error: {e}")
                 traceback.print_exc()
                 raise e
