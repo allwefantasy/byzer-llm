@@ -412,19 +412,30 @@ class CustomSaasAPI:
         messages = [
             {"role": message["role"], "content": self.process_input(message["content"])}
             for message in his
-        ]
+        ] + [{"role": "user", "content": self.process_input(ins)}]
 
-        if kwargs.get("response_prefix", "true") not in ["true", "True", True]:
+        if kwargs.get("response_prefix", "false") in ["true", "True", True]:
             temp_message = {
-                "role": messages[-1]["role"],
+                "role": "assistant",
                 "content": messages[-1]["content"],
                 "prefix": True,
             }
-            messages = messages + [temp_message]
+            logger.info(
+                f"response_prefix is True, add prefix to the last message {temp_message['role']} {temp_message['content'][0:100]}"
+            )
+            messages = messages[:-1] + [temp_message]
         else:
             messages = messages + [{"role": "user", "content": self.process_input(ins)}]
 
         stream = kwargs.get("stream", False)
+
+        extra_params = {}
+        if "stop" in kwargs:
+            extra_params["stop"] = (
+                kwargs["stop"]
+                if isinstance(kwargs["stop"], list)
+                else json.loads(kwargs["stop"])
+            )
 
         ## content = [
         ##    "voice": "alloy","input": "Hello, World!",response_format: "mp3"]
@@ -471,7 +482,7 @@ class CustomSaasAPI:
                     stream=True,
                     max_tokens=max_length,
                     temperature=temperature,
-                    top_p=top_p,
+                    top_p=top_p, **extra_params
                 )
                 # input_tokens_count = 0
                 # generated_tokens_count = 0
@@ -542,7 +553,7 @@ class CustomSaasAPI:
                         model=model,
                         max_tokens=max_length,
                         temperature=temperature,
-                        top_p=top_p,
+                        top_p=top_p, **extra_params
                     )
                 )()
 
