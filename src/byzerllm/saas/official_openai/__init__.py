@@ -436,6 +436,7 @@ class CustomSaasAPI:
                 if isinstance(kwargs["stop"], list)
                 else json.loads(kwargs["stop"])
             )
+        logger.info(f"extra_params:  {extra_params}")
 
         ## content = [
         ##    "voice": "alloy","input": "Hello, World!",response_format: "mp3"]

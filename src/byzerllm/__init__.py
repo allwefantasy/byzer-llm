@@ -428,11 +428,15 @@ class _PrompRunner:
                 
         if not isinstance(result, str):
             raise ValueError("The decorated function must return a string")
-        try:            
-            json_str = code_utils.extract_code(result)[0][1]
+        try:  
+            # quick path for json string  
+            if result.startswith("```json") and result.endswith("```"):
+                json_str = result[len("```json"):-len("```")]
+            else:
+                json_str = code_utils.extract_code(result)[0][1]
             json_data = json.loads(json_str)            
-        except json.JSONDecodeError:
-            # logger.info("The returned string is not a valid JSON, try to extract it using tag extractor")            
+        except json.JSONDecodeError as e:
+            print(f"The returned string is not a valid JSON, e: {str(e)} string: {result}")            
             tag_extractor = TagExtractor(result)
             result = tag_extractor.extract()
             json_data = json.loads(result.content)    
