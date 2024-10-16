@@ -53,6 +53,7 @@ class CustomSaasAPI:
             "backend": "saas",
             "support_stream": True,
             "model_name": self.model,
+            "support_assistant_prefix": True,
         }
 
         self.meta["embedding_mode"] = "embedding" in self.model.lower()
