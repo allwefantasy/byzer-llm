@@ -414,7 +414,15 @@ class CustomSaasAPI:
             for message in his
         ] + [{"role": "user", "content": self.process_input(ins)}]
 
-        if kwargs.get("response_prefix", "false") in ["true", "True", True]:
+        def is_deepseek_chat_prefix():
+            if len(messages) > 1 and messages[-1]["role"] == "user" and messages[-2]["role"] == "user":
+                if  "deepseek" in model.lower():
+                    return True
+            if kwargs.get("response_prefix", "false") in ["true", "True", True]:    
+                return True            
+            return False
+
+        if is_deepseek_chat_prefix():
             temp_message = {
                 "role": "assistant",
                 "content": messages[-1]["content"],
@@ -424,9 +432,10 @@ class CustomSaasAPI:
                 f"response_prefix is True, add prefix to the last message {temp_message['role']} {temp_message['content'][0:100]}"
             )
             messages = messages[:-1] + [temp_message]
-        else:
-            messages = messages + [{"role": "user", "content": self.process_input(ins)}]
-
+                 
+        if len(messages) > 1 and messages[-1]["role"] == "user" and messages[-2]["role"] == "user":
+            messages[-1]["role"] = "assistant"
+                    
         stream = kwargs.get("stream", False)
 
         extra_params = {}

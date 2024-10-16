@@ -257,6 +257,7 @@ class _PrompRunner:
         self.continue_prompt = "接着前面的内容继续"
         self.response_markers_template = """你的输出可能会被切分成多轮对话完成。请确保第一次输出以{{ RESPONSE_START }}开始，输出完毕后，请使用{{ RESPONSE_END }}标记。中间的回复不需要使用这两个标记。"""
         self.model_class = None
+        self.return_prefix = None
 
     def with_return_type(self, model_class: Type[Any]):
         self.model_class = model_class
@@ -264,6 +265,10 @@ class _PrompRunner:
 
     def with_continue_prompt(self, prompt: str):
         self.continue_prompt = prompt
+        return self
+
+    def with_return_prefix(self, prefix: str):
+        self.return_prefix = prefix
         return self
 
     def __call__(self, *args, **kwargs) -> Any:
@@ -487,6 +492,7 @@ class _PrompRunner:
                 options=self._options,
                 return_origin_response=return_origin_response,
                 marker=marker,
+                assistant_prefix=self.return_prefix,
             )(func)(**input_dict)
             if not return_origin_response:
                 if self.extractor:
@@ -527,6 +533,7 @@ class _PrompRunner:
                 options=self._options,
                 return_origin_response=return_origin_response,
                 marker=marker,
+                assistant_prefix=self.return_prefix
             )(func)(**input_dict)
             if not return_origin_response:
                 if self.extractor:
@@ -567,12 +574,13 @@ class _PrompRunner:
                 options=self._options,
                 return_origin_response=return_origin_response,
                 marker=marker,
+                assistant_prefix=self.return_prefix,
             )(func)(**input_dict)
             if not return_origin_response:
                 if self.extractor:
                     v = self.extractor(v)
                 if self.model_class:
-                    return to_model(self.model_class)(lambda: v)()
+                    return self.to_model(self.model_class)(lambda: v)()
                 return v
 
             if self.is_instance_of_generator(signature.return_annotation):
@@ -582,7 +590,7 @@ class _PrompRunner:
 
             v = self._multi_turn_wrapper(llm, v, signature, origin_input=origin_input)
             if self.model_class:
-                return to_model(self.model_class)(lambda: v)()
+                return self.to_model(self.model_class)(lambda: v)()
             return v
 
         else:
@@ -654,6 +662,10 @@ class _DescriptorPrompt:
 
     def with_return_type(self, model_class: Type[Any]):
         self.prompt_runner.with_return_type(model_class)
+        return self
+    
+    def with_return_prefix(self, prefix: str):
+        self.prompt_runner.with_return_prefix(prefix)
         return self
 
     def __call__(self, *args, **kwargs):

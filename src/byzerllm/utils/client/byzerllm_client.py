@@ -1434,6 +1434,7 @@ class ByzerLLM:
         options: Dict[str, Any] = {},
         return_origin_response: bool = False,
         marker: Optional[str] = None,
+        assistant_prefix: Optional[str] = None,
     ):
         if model is None:
             if "model" in options:
@@ -1489,8 +1490,12 @@ class ByzerLLM:
 
                 if is_instance_of_generator(signature.return_annotation):
                     temp_options = {**{"delta_mode": True}, **options}
+                    conversations = [{"role": "user", "content": prompt_str}]
+                    if assistant_prefix:
+                        conversations = conversations + [{"role": "assistant", "content": assistant_prefix}]
+
                     t = self.stream_chat_oai(
-                        conversations=[{"role": "user", "content": prompt_str}],
+                        conversations=conversations,
                         model=model,
                         **temp_options,
                     )
@@ -1500,9 +1505,12 @@ class ByzerLLM:
 
                 if issubclass(signature.return_annotation, pydantic.BaseModel):
                     response_class = signature.return_annotation
+                    conversations = [{"role": "user", "content": prompt_str}]
+                    if assistant_prefix:
+                        conversations = conversations + [{"role": "assistant", "content": assistant_prefix}]
                     t = self.chat_oai(
                         model=model,
-                        conversations=[{"role": "user", "content": prompt_str}],
+                        conversations=conversations,
                         response_class=response_class,
                         impl_func_params=input_dict,
                         **options,
@@ -1522,9 +1530,12 @@ class ByzerLLM:
                         )
                     return r.value
                 elif issubclass(signature.return_annotation, str):
+                    conversations = [{"role": "user", "content": prompt_str}]
+                    if assistant_prefix:
+                        conversations = conversations + [{"role": "assistant", "content": assistant_prefix}]
                     t = self.chat_oai(
                         model=model,
-                        conversations=[{"role": "user", "content": prompt_str}],
+                        conversations=conversations,
                         **options,
                     )
                     if return_origin_response:

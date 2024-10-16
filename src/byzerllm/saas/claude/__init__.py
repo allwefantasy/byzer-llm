@@ -148,6 +148,9 @@ class CustomSaasAPI:
                 )
 
         messages.append({"role": "user", "content": self.process_input(ins)})
+        
+        if len(messages) > 1 and messages[-1]["role"] == "user" and messages[-2]["role"] == "user":
+            messages[-1]["role"] = "assistant"
 
         start_time = time.monotonic()
 
