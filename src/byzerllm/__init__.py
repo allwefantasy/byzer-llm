@@ -258,9 +258,18 @@ class _PrompRunner:
         self.response_markers_template = """你的输出可能会被切分成多轮对话完成。请确保第一次输出以{{ RESPONSE_START }}开始，输出完毕后，请使用{{ RESPONSE_END }}标记。中间的回复不需要使用这两个标记。"""
         self.model_class = None
         self.return_prefix = None
+        self.stop_suffix_list = None
 
     def with_return_type(self, model_class: Type[Any]):
         self.model_class = model_class
+        return self
+    
+    def with_stop_suffix_list(self, suffix_list: List[str]):
+        self.stop_suffix_list = suffix_list
+        if "llm_config" in self._options:
+            self._options["llm_config"]["gen.stop"] = suffix_list
+        else:
+            self._options["llm_config"] = {"gen.stop": suffix_list}
         return self
 
     def with_continue_prompt(self, prompt: str):
@@ -672,6 +681,10 @@ class _DescriptorPrompt:
 
     def with_continue_prompt(self, prompt: str):
         self.prompt_runner.with_continue_prompt(prompt)
+        return self
+    
+    def with_stop_suffix_list(self, suffix_list: List[str]):
+        self.prompt_runner.with_stop_suffix_list(suffix_list)
         return self
 
     def with_return_type(self, model_class: Type[Any]):
