@@ -415,12 +415,14 @@ class CustomSaasAPI:
             for message in his
         ] + [{"role": "user", "content": self.process_input(ins)}]
 
-        def is_deepseek_chat_prefix():
+        def is_deepseek_chat_prefix():            
+            
+            if kwargs.get("response_prefix", "false") in ["true", "True", True]:    
+                return True            
+            
             if len(messages) > 1 and messages[-1]["role"] == "user" and messages[-2]["role"] == "user":
                 if  "deepseek" in model.lower():
                     return True
-            if kwargs.get("response_prefix", "false") in ["true", "True", True]:    
-                return True            
             return False
 
         if is_deepseek_chat_prefix():

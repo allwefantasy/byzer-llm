@@ -265,7 +265,7 @@ class _PrompRunner:
 
     def with_continue_prompt(self, prompt: str):
         self.continue_prompt = prompt
-        return self
+        return self      
 
     def with_return_prefix(self, prefix: str):
         self.return_prefix = prefix
@@ -494,11 +494,12 @@ class _PrompRunner:
                 marker=marker,
                 assistant_prefix=self.return_prefix,
             )(func)(**input_dict)
-            if not return_origin_response:
+            prefix = self.return_prefix if self.return_prefix else ""
+            if not return_origin_response:                
                 if self.extractor:
-                    v = self.extractor(v)
+                    v = self.extractor(f"{prefix}{v}")
                 if self.model_class:
-                    return self.to_model(v)
+                    return self.to_model(f"{prefix}{v}")
                 return v
 
             if self.is_instance_of_generator(signature.return_annotation):
@@ -510,7 +511,7 @@ class _PrompRunner:
                 llm(self.instance), v, signature, origin_input=origin_input
             )
             if self.model_class:
-                return self.to_model(v)
+                return self.to_model(f"{prefix}{v}")
             return v
 
         if isinstance(llm, ByzerLLM):
@@ -535,11 +536,12 @@ class _PrompRunner:
                 marker=marker,
                 assistant_prefix=self.return_prefix
             )(func)(**input_dict)
-            if not return_origin_response:
+            prefix = self.return_prefix if self.return_prefix else ""
+            if not return_origin_response:                
                 if self.extractor:
-                    v = self.extractor(v)
+                    v = self.extractor(f"{prefix}{v}")
                 if self.model_class:
-                    return self.to_model(v)
+                    return self.to_model(f"{prefix}{v}")
                 return v
 
             if self.is_instance_of_generator(signature.return_annotation):
@@ -576,11 +578,12 @@ class _PrompRunner:
                 marker=marker,
                 assistant_prefix=self.return_prefix,
             )(func)(**input_dict)
+            prefix = self.return_prefix if self.return_prefix else ""
             if not return_origin_response:
                 if self.extractor:
-                    v = self.extractor(v)
+                    v = self.extractor(f"{prefix}{v}")
                 if self.model_class:
-                    return self.to_model(self.model_class)(lambda: v)()
+                    return self.to_model(self.model_class)(lambda: f"{prefix}{v}")()
                 return v
 
             if self.is_instance_of_generator(signature.return_annotation):
@@ -590,7 +593,7 @@ class _PrompRunner:
 
             v = self._multi_turn_wrapper(llm, v, signature, origin_input=origin_input)
             if self.model_class:
-                return self.to_model(self.model_class)(lambda: v)()
+                return self.to_model(self.model_class)(lambda: f"{prefix}{v}")()
             return v
 
         else:
@@ -636,6 +639,17 @@ class _DescriptorPrompt:
                 self.check_result,
                 options=self._options,
             )
+
+    def reset(self):
+        self.prompt_runner = _PrompRunner(
+            self.wrapper,
+            None,
+            self.llm,
+            self.render,
+            self.check_result,
+            options=self._options,
+        )
+        return self
 
     def with_response_markers(
         self,
@@ -705,11 +719,7 @@ class prompt:
         self.check_result = check_result
         self.options = options
 
-    def __call__(self, func):
-        # if 'self' in func.__code__.co_varnames:
-        #     wrapper = func
-        #     return self._make_wrapper(func, wrapper)
-        # return _PrompRunner(func,None,self.llm,self.render,self.check_result)
+    def __call__(self, func):        
         wrapper = func
         return self._make_wrapper(func, wrapper)
 

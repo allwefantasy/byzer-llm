@@ -1532,7 +1532,7 @@ class ByzerLLM:
                 elif issubclass(signature.return_annotation, str):
                     conversations = [{"role": "user", "content": prompt_str}]
                     if assistant_prefix:
-                        conversations = conversations + [{"role": "assistant", "content": assistant_prefix}]
+                        conversations = conversations + [{"role": "assistant", "content": assistant_prefix}]                        
                     t = self.chat_oai(
                         model=model,
                         conversations=conversations,
