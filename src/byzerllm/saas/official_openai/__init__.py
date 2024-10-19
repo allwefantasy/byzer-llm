@@ -421,7 +421,13 @@ class CustomSaasAPI:
                 return True            
             
             if len(messages) > 1 and messages[-1]["role"] == "user" and messages[-2]["role"] == "user":
-                if  "deepseek" in model.lower():
+                if  "deepseek" in self.base_url:
+                    return True
+            return False
+        
+        def is_siliconflow_chat_prefix():                                 
+            if len(messages) > 1 and messages[-1]["role"] == "user" and messages[-2]["role"] == "user":
+                if  "siliconflow" in self.base_url:
                     return True
             return False
 
@@ -449,6 +455,12 @@ class CustomSaasAPI:
                 else json.loads(kwargs["stop"])
             )
         logger.info(f"extra_params:  {extra_params}")
+
+        extra_body={}
+        if is_siliconflow_chat_prefix():
+            extra_body["prefix"] = messages[-1]["content"]
+            extra_params["extra_body"] = extra_body
+            messages = messages[:-1]
 
         ## content = [
         ##    "voice": "alloy","input": "Hello, World!",response_format: "mp3"]
@@ -495,7 +507,7 @@ class CustomSaasAPI:
                     stream=True,
                     max_tokens=max_length,
                     temperature=temperature,
-                    top_p=top_p, **extra_params
+                    top_p=top_p, **extra_params,
                 )
                 # input_tokens_count = 0
                 # generated_tokens_count = 0
