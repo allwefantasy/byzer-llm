@@ -53,6 +53,7 @@ class CustomSaasAPI:
             "backend": "saas",
             "support_stream": True,
             "model_name": self.model,
+            "support_assistant_prefix": True,
         }
 
         self.meta["embedding_mode"] = "embedding" in self.model.lower()
@@ -414,7 +415,23 @@ class CustomSaasAPI:
             for message in his
         ] + [{"role": "user", "content": self.process_input(ins)}]
 
-        if kwargs.get("response_prefix", "false") in ["true", "True", True]:
+        def is_deepseek_chat_prefix():            
+            
+            if kwargs.get("response_prefix", "false") in ["true", "True", True]:    
+                return True            
+            
+            if len(messages) > 1 and messages[-1]["role"] == "user" and messages[-2]["role"] == "user":
+                if  "deepseek" in self.base_url:
+                    return True
+            return False
+        
+        def is_siliconflow_chat_prefix():                                 
+            if len(messages) > 1 and messages[-1]["role"] == "user" and messages[-2]["role"] == "user":
+                if  "siliconflow" in self.base_url:
+                    return True
+            return False
+
+        if is_deepseek_chat_prefix():
             temp_message = {
                 "role": "assistant",
                 "content": messages[-1]["content"],
@@ -424,9 +441,10 @@ class CustomSaasAPI:
                 f"response_prefix is True, add prefix to the last message {temp_message['role']} {temp_message['content'][0:100]}"
             )
             messages = messages[:-1] + [temp_message]
-        else:
-            messages = messages + [{"role": "user", "content": self.process_input(ins)}]
-
+                 
+        if len(messages) > 1 and messages[-1]["role"] == "user" and messages[-2]["role"] == "user":
+            messages[-1]["role"] = "assistant"
+                    
         stream = kwargs.get("stream", False)
 
         extra_params = {}
@@ -436,6 +454,13 @@ class CustomSaasAPI:
                 if isinstance(kwargs["stop"], list)
                 else json.loads(kwargs["stop"])
             )
+        logger.info(f"extra_params:  {extra_params}")
+
+        extra_body={}
+        if is_siliconflow_chat_prefix():
+            extra_body["prefix"] = messages[-1]["content"]
+            extra_params["extra_body"] = extra_body
+            messages = messages[:-1]
 
         ## content = [
         ##    "voice": "alloy","input": "Hello, World!",response_format: "mp3"]
@@ -482,7 +507,7 @@ class CustomSaasAPI:
                     stream=True,
                     max_tokens=max_length,
                     temperature=temperature,
-                    top_p=top_p, **extra_params
+                    top_p=top_p, **extra_params,
                 )
                 # input_tokens_count = 0
                 # generated_tokens_count = 0

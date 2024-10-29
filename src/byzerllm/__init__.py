@@ -257,13 +257,27 @@ class _PrompRunner:
         self.continue_prompt = "接着前面的内容继续"
         self.response_markers_template = """你的输出可能会被切分成多轮对话完成。请确保第一次输出以{{ RESPONSE_START }}开始，输出完毕后，请使用{{ RESPONSE_END }}标记。中间的回复不需要使用这两个标记。"""
         self.model_class = None
+        self.return_prefix = None
+        self.stop_suffix_list = None
 
     def with_return_type(self, model_class: Type[Any]):
         self.model_class = model_class
         return self
+    
+    def with_stop_suffix_list(self, suffix_list: List[str]):
+        self.stop_suffix_list = suffix_list
+        if "llm_config" in self._options:
+            self._options["llm_config"]["gen.stop"] = suffix_list
+        else:
+            self._options["llm_config"] = {"gen.stop": suffix_list}
+        return self
 
     def with_continue_prompt(self, prompt: str):
         self.continue_prompt = prompt
+        return self      
+
+    def with_return_prefix(self, prefix: str):
+        self.return_prefix = prefix
         return self
 
     def __call__(self, *args, **kwargs) -> Any:
@@ -428,11 +442,15 @@ class _PrompRunner:
                 
         if not isinstance(result, str):
             raise ValueError("The decorated function must return a string")
-        try:            
-            json_str = code_utils.extract_code(result)[0][1]
+        try:  
+            # quick path for json string  
+            if result.startswith("```json") and result.endswith("```"):
+                json_str = result[len("```json"):-len("```")]
+            else:
+                json_str = code_utils.extract_code(result)[0][1]
             json_data = json.loads(json_str)            
-        except json.JSONDecodeError:
-            # logger.info("The returned string is not a valid JSON, try to extract it using tag extractor")            
+        except json.JSONDecodeError as e:
+            print(f"The returned string is not a valid JSON, e: {str(e)} string: {result}")            
             tag_extractor = TagExtractor(result)
             result = tag_extractor.extract()
             json_data = json.loads(result.content)    
@@ -483,12 +501,14 @@ class _PrompRunner:
                 options=self._options,
                 return_origin_response=return_origin_response,
                 marker=marker,
+                assistant_prefix=self.return_prefix,
             )(func)(**input_dict)
-            if not return_origin_response:
+            prefix = self.return_prefix if self.return_prefix else ""
+            if not return_origin_response:                
                 if self.extractor:
-                    v = self.extractor(v)
+                    v = self.extractor(f"{prefix}{v}")
                 if self.model_class:
-                    return self.to_model(v)
+                    return self.to_model(f"{prefix}{v}")
                 return v
 
             if self.is_instance_of_generator(signature.return_annotation):
@@ -500,7 +520,7 @@ class _PrompRunner:
                 llm(self.instance), v, signature, origin_input=origin_input
             )
             if self.model_class:
-                return self.to_model(v)
+                return self.to_model(f"{prefix}{v}")
             return v
 
         if isinstance(llm, ByzerLLM):
@@ -523,12 +543,14 @@ class _PrompRunner:
                 options=self._options,
                 return_origin_response=return_origin_response,
                 marker=marker,
+                assistant_prefix=self.return_prefix
             )(func)(**input_dict)
-            if not return_origin_response:
+            prefix = self.return_prefix if self.return_prefix else ""
+            if not return_origin_response:                
                 if self.extractor:
-                    v = self.extractor(v)
+                    v = self.extractor(f"{prefix}{v}")
                 if self.model_class:
-                    return self.to_model(v)
+                    return self.to_model(f"{prefix}{v}")
                 return v
 
             if self.is_instance_of_generator(signature.return_annotation):
@@ -563,12 +585,14 @@ class _PrompRunner:
                 options=self._options,
                 return_origin_response=return_origin_response,
                 marker=marker,
+                assistant_prefix=self.return_prefix,
             )(func)(**input_dict)
+            prefix = self.return_prefix if self.return_prefix else ""
             if not return_origin_response:
                 if self.extractor:
-                    v = self.extractor(v)
+                    v = self.extractor(f"{prefix}{v}")
                 if self.model_class:
-                    return to_model(self.model_class)(lambda: v)()
+                    return self.to_model(self.model_class)(lambda: f"{prefix}{v}")()
                 return v
 
             if self.is_instance_of_generator(signature.return_annotation):
@@ -578,7 +602,7 @@ class _PrompRunner:
 
             v = self._multi_turn_wrapper(llm, v, signature, origin_input=origin_input)
             if self.model_class:
-                return to_model(self.model_class)(lambda: v)()
+                return self.to_model(self.model_class)(lambda: f"{prefix}{v}")()
             return v
 
         else:
@@ -625,6 +649,17 @@ class _DescriptorPrompt:
                 options=self._options,
             )
 
+    def reset(self):
+        self.prompt_runner = _PrompRunner(
+            self.wrapper,
+            None,
+            self.llm,
+            self.render,
+            self.check_result,
+            options=self._options,
+        )
+        return self
+
     def with_response_markers(
         self,
         response_markers: Optional[List[str]] = None,
@@ -647,9 +682,17 @@ class _DescriptorPrompt:
     def with_continue_prompt(self, prompt: str):
         self.prompt_runner.with_continue_prompt(prompt)
         return self
+    
+    def with_stop_suffix_list(self, suffix_list: List[str]):
+        self.prompt_runner.with_stop_suffix_list(suffix_list)
+        return self
 
     def with_return_type(self, model_class: Type[Any]):
         self.prompt_runner.with_return_type(model_class)
+        return self
+    
+    def with_return_prefix(self, prefix: str):
+        self.prompt_runner.with_return_prefix(prefix)
         return self
 
     def __call__(self, *args, **kwargs):
@@ -689,11 +732,7 @@ class prompt:
         self.check_result = check_result
         self.options = options
 
-    def __call__(self, func):
-        # if 'self' in func.__code__.co_varnames:
-        #     wrapper = func
-        #     return self._make_wrapper(func, wrapper)
-        # return _PrompRunner(func,None,self.llm,self.render,self.check_result)
+    def __call__(self, func):        
         wrapper = func
         return self._make_wrapper(func, wrapper)
 

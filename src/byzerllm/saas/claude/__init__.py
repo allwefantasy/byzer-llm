@@ -24,6 +24,7 @@ class CustomSaasAPI:
             "model_deploy_type": "saas",
             "backend": "saas",
             "support_stream": True,
+            "support_assistant_prefix": True,
         }
         other_params = {}
 
@@ -148,6 +149,10 @@ class CustomSaasAPI:
                 )
 
         messages.append({"role": "user", "content": self.process_input(ins)})
+        
+        # 支持assistant prefix
+        if len(messages) > 1 and messages[-1]["role"] == "user" and messages[-2]["role"] == "user":
+            messages[-1]["role"] = "assistant"
 
         start_time = time.monotonic()
 
