@@ -2,11 +2,16 @@ import logging
 import requests
 import json
 import traceback
+import time
+import asyncio
+import threading
+import ray
 from enum import Enum
 from dataclasses import dataclass
 from byzerllm.utils.langutil import asyncfy_with_semaphore
+from byzerllm.utils.types import StreamOutputs, SingleOutput, SingleOutputMeta, BlockVLLMStreamServer
 
-from typing import Optional, List, Dict, Union, Any,str,Any
+from typing import Optional, List, Dict, Union, Any, Any
 
 import tenacity
 from tenacity import (
@@ -50,16 +55,6 @@ class MiniMaxError(Exception):
         self.headers = headers or {}
         self.status_code = status_code
         self.request_id = self.headers.get("request-id", request_id)
-
-     # saas/proprietary
-    def get_meta(self):
-        return [{
-            "model_deploy_type": "saas",
-            "backend":"saas"
-        }] 
-
-    async def async_get_meta(self):
-        return await asyncfy_with_semaphore(self.get_meta)()   
 
     def __str__(self):
         msg = self._status_msg or "<empty message>"
@@ -110,17 +105,18 @@ class CustomSaasAPI:
         self.model = infer_params.get("saas.model", "abab5.5-chat")
         self.api_url = infer_params.get("saas.api_url", "https://api.minimax.chat/v1/text/chatcompletion_pro")
 
-    def stream_chat(
-            self,
-            tokenizer,
-            ins: str,
-            his: List[Dict[str,Any]],
-            max_length: int = 4096,
-            top_p: float = 0.7,
-            temperature: float = 0.9,
-            **kwargs
-    ):
-        glyph = kwargs.get('glyph', None)
+        try:
+            ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+        except ValueError:
+            try:
+                ray.remote(BlockVLLMStreamServer).options(name="BLOCK_VLLM_STREAM_SERVER", lifetime="detached",
+                                                          max_concurrency=1000).remote()
+            except Exception:
+                pass
+
+    def _build_payload(self, ins: str, his: List[Dict[str, Any]], max_length: int,
+                       top_p: float, temperature: float, glyph: Optional[str] = None,
+                       stream: bool = False) -> Dict[str, Any]:
         bot_settings = MiniMaxBotSettings()
         messages = MiniMaxMessages()
 
@@ -152,9 +148,36 @@ class CustomSaasAPI:
             }
         }
 
+        if stream:
+            payload["stream"] = stream
+
         if glyph:
             payload['reply_constraints']['glyph'] = glyph
 
+        return payload
+
+    def get_meta(self):
+        return [{
+            "model_deploy_type": "saas",
+            "backend": "saas",
+            "support_stream": True
+        }]
+
+    async def async_get_meta(self):
+        return await asyncfy_with_semaphore(self.get_meta)()
+
+    def stream_chat(
+            self,
+            tokenizer,
+            ins: str,
+            his: List[Dict[str, Any]],
+            max_length: int = 4096,
+            top_p: float = 0.7,
+            temperature: float = 0.9,
+            **kwargs
+    ):
+        glyph = kwargs.get('glyph', None)
+        payload = self._build_payload(ins, his, max_length, top_p, temperature, glyph)
         print(f"【Byzer --> MiniMax({self.model})】: {payload}")
 
         content = None
@@ -165,18 +188,92 @@ class CustomSaasAPI:
             if content == "" or content is None:
                 content = f"request minimax api failed: {e}"
         return [(content, "")]
-    
+
     async def async_stream_chat(
             self,
             tokenizer,
             ins: str,
-            his: List[Dict[str,Any]],
+            his: List[Dict[str, Any]],
             max_length: int = 4096,
             top_p: float = 0.7,
             temperature: float = 0.9,
             **kwargs
     ):
-        return await asyncfy_with_semaphore(self.stream_chat)(tokenizer, ins, his, max_length, top_p, temperature, **kwargs)
+        stream = kwargs.get("stream", False)
+        if not stream:
+            return await asyncfy_with_semaphore(self.stream_chat)(
+                tokenizer, ins, his, max_length, top_p, temperature, **kwargs)
+
+        start_time = time.monotonic()
+        glyph = kwargs.get('glyph', None)
+        payload = self._build_payload(ins, his, max_length, top_p, temperature, glyph, stream=True)
+
+        print(f"【Byzer --> MiniMax Stream({self.model})】: {payload}")
+
+        api_url = f"{self.api_url.removesuffix('/')}?GroupId={self.group_id}"
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(api_url, json=payload, headers=headers, stream=True)
+        print(f"request:{payload} response: {response.status_code}")
+        if response.status_code != 200:
+            raise MiniMaxError(headers=headers, http_status=response.status_code, http_body=response.text)
+
+        server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
+        request_id = [None]
+
+        def writer():
+            r = ""
+            for line in response.iter_lines():
+                try:
+                    if line:
+                        line_str = line.decode('utf-8')
+                        if line_str.startswith('data: '):
+                            line_str = line_str[6:]
+                        response_data = json.loads(line_str.strip())
+                        if "choices" in response_data and response_data["choices"][0].get("finish_reason") == "stop":
+                            r = ""
+                        else:
+                            r += response_data["choices"][0]["messages"][0]["text"]
+
+                        input_tokens = -1
+                        generated_tokens = -1
+                        if "usage" in response_data:
+                            input_tokens = response_data["usage"].get("prompt_tokens", -1)
+                            generated_tokens = response_data["usage"].get("completion_tokens", -1)
+
+                        if "request_id" in response_data:
+                            request_id[0] = response_data["request_id"]
+                        print(f"request_id: {request_id[0]}")
+                        ray.get(server.add_item.remote(request_id[0],
+                                                       StreamOutputs(
+                                                           outputs=[SingleOutput(text=r, metadata=SingleOutputMeta(
+                                                               input_tokens_count=input_tokens,
+                                                               generated_tokens_count=generated_tokens,
+                                                           ))])
+                                                       ))
+                except Exception as e:
+                    print(f"error {e.__str__()}")
+
+            ray.get(server.mark_done.remote(request_id[0]))
+
+        threading.Thread(target=writer, daemon=True).start()
+
+        time_count = 10 * 100
+        while request_id[0] is None and time_count > 0:
+            await asyncio.sleep(0.01)
+            time_count -= 1
+
+        if request_id[0] is None:
+            raise Exception("Failed to get request id")
+
+        def write_running():
+            return ray.get(server.add_item.remote(request_id[0], "RUNNING"))
+
+        await asyncio.to_thread(write_running)
+        return [("", {"metadata": {"request_id": request_id[0], "stream_server": "BLOCK_VLLM_STREAM_SERVER"}})]
 
     @tenacity.retry(
         reraise=True,
