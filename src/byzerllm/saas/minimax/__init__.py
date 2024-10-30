@@ -234,7 +234,7 @@ class CustomSaasAPI:
                             line_str = line_str[6:]
                         response_data = json.loads(line_str.strip())
                         if "choices" in response_data and response_data["choices"][0].get("finish_reason") == "stop":
-                            r = ""
+                            r = response_data["choices"][0]["messages"][0]["text"]
                         else:
                             r += response_data["choices"][0]["messages"][0]["text"]
 
@@ -246,7 +246,6 @@ class CustomSaasAPI:
 
                         if "request_id" in response_data:
                             request_id[0] = response_data["request_id"]
-                        print(f"request_id: {request_id[0]}")
                         ray.get(server.add_item.remote(request_id[0],
                                                        StreamOutputs(
                                                            outputs=[SingleOutput(text=r, metadata=SingleOutputMeta(
