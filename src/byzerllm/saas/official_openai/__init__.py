@@ -60,6 +60,7 @@ class CustomSaasAPI:
 
         self.proxies = infer_params.get("saas.proxies", None)
         self.local_address = infer_params.get("saas.local_address", "0.0.0.0")
+        self.other_params = other_params
 
         if not self.proxies:
             self.client = OpenAI(**other_params, api_key=self.api_key)
@@ -415,19 +416,34 @@ class CustomSaasAPI:
             for message in his
         ] + [{"role": "user", "content": self.process_input(ins)}]
 
-        def is_deepseek_chat_prefix():            
-            
-            if kwargs.get("response_prefix", "false") in ["true", "True", True]:    
-                return True            
-            
-            if len(messages) > 1 and messages[-1]["role"] == "user" and messages[-2]["role"] == "user":
-                if  "deepseek" in self.base_url:
+        if (
+            len(messages) > 1
+            and messages[-1]["role"] == "user"
+            and messages[-2]["role"] == "user"
+        ):
+            messages[-1]["role"] = "assistant"
+
+        def is_deepseek_chat_prefix():
+
+            if kwargs.get("response_prefix", "false") in ["true", "True", True]:
+                return True
+
+            if (
+                len(messages) > 1
+                and messages[-1]["role"] == "user"
+                and messages[-2]["role"] == "user"
+            ):
+                if "deepseek" in self.other_params.get("base_url", ""):
                     return True
             return False
-        
-        def is_siliconflow_chat_prefix():                                 
-            if len(messages) > 1 and messages[-1]["role"] == "user" and messages[-2]["role"] == "user":
-                if  "siliconflow" in self.base_url:
+
+        def is_siliconflow_chat_prefix():
+            if (
+                len(messages) > 1
+                and messages[-1]["role"] == "user"
+                and messages[-2]["role"] == "user"
+            ):
+                if "siliconflow" in self.other_params.get("base_url", ""):
                     return True
             return False
 
@@ -441,27 +457,24 @@ class CustomSaasAPI:
                 f"response_prefix is True, add prefix to the last message {temp_message['role']} {temp_message['content'][0:100]}"
             )
             messages = messages[:-1] + [temp_message]
-                 
-        if len(messages) > 1 and messages[-1]["role"] == "user" and messages[-2]["role"] == "user":
-            messages[-1]["role"] = "assistant"
-                    
+
+        if is_siliconflow_chat_prefix():
+            extra_body["prefix"] = messages[-1]["content"]
+            extra_params["extra_body"] = extra_body
+            messages = messages[:-1]            
+
         stream = kwargs.get("stream", False)
 
         extra_params = {}
+        extra_body = {}
+
         if "stop" in kwargs:
             extra_params["stop"] = (
                 kwargs["stop"]
                 if isinstance(kwargs["stop"], list)
                 else json.loads(kwargs["stop"])
             )
-        logger.info(f"extra_params:  {extra_params}")
-
-        extra_body={}
-        if is_siliconflow_chat_prefix():
-            extra_body["prefix"] = messages[-1]["content"]
-            extra_params["extra_body"] = extra_body
-            messages = messages[:-1]
-
+                
         ## content = [
         ##    "voice": "alloy","input": "Hello, World!",response_format: "mp3"]
         last_message = messages[-1]["content"]
@@ -507,7 +520,8 @@ class CustomSaasAPI:
                     stream=True,
                     max_tokens=max_length,
                     temperature=temperature,
-                    top_p=top_p, **extra_params,
+                    top_p=top_p,
+                    **extra_params,
                 )
                 # input_tokens_count = 0
                 # generated_tokens_count = 0
@@ -543,6 +557,12 @@ class CustomSaasAPI:
                 traceback.print_exc()
             ray.get(server.mark_done.remote(request_id[0]))
 
+        logger.info(json.dumps(messages, ensure_ascii=False, indent=2))
+        base_url = self.other_params.get("base_url", "")
+        logger.info(
+            f"params: model={model}, max_length={max_length}, top_p={top_p}, base_url={base_url}, temperature={temperature}, stream={stream}"
+        )
+        logger.info(f"kwargs: {kwargs} extra_params: {extra_params}")
         if stream:
             threading.Thread(target=writer, daemon=True).start()
 
@@ -578,7 +598,8 @@ class CustomSaasAPI:
                         model=model,
                         max_tokens=max_length,
                         temperature=temperature,
-                        top_p=top_p, **extra_params
+                        top_p=top_p,
+                        **extra_params,
                     )
                 )()
 
