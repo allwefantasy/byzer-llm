@@ -19,10 +19,10 @@ from byzerllm.utils.client.entrypoints.openai.protocol import (
     ChatCompletionRequest,
     ErrorResponse,
     CompletionRequest,
-    Embeddings,
-    EmbeddingsOutput,
-    EmbeddingsData,
-    EmbeddingsUsage,
+    EmbeddingCompletionRequest,
+    EmbeddingResponseData,
+    EmbeddingResponse,
+    UsageInfo
 )
 from pydantic import BaseModel
 from typing import List
