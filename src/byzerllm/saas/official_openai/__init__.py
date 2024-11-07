@@ -411,6 +411,8 @@ class CustomSaasAPI:
 
         logger.info(f"[{model}] request accepted: {ins[-50:]}....")
 
+        extra_params = {}
+        extra_body = {}
         messages = [
             {"role": message["role"], "content": self.process_input(message["content"])}
             for message in his
@@ -428,21 +430,13 @@ class CustomSaasAPI:
             if kwargs.get("response_prefix", "false") in ["true", "True", True]:
                 return True
 
-            if (
-                len(messages) > 1
-                and messages[-1]["role"] == "user"
-                and messages[-2]["role"] == "user"
-            ):
+            if messages[-1]["role"] == "assistant":
                 if "deepseek" in self.other_params.get("base_url", ""):
                     return True
             return False
 
         def is_siliconflow_chat_prefix():
-            if (
-                len(messages) > 1
-                and messages[-1]["role"] == "user"
-                and messages[-2]["role"] == "user"
-            ):
+            if messages[-1]["role"] == "assistant":
                 if "siliconflow" in self.other_params.get("base_url", ""):
                     return True
             return False
@@ -461,12 +455,9 @@ class CustomSaasAPI:
         if is_siliconflow_chat_prefix():
             extra_body["prefix"] = messages[-1]["content"]
             extra_params["extra_body"] = extra_body
-            messages = messages[:-1]            
+            messages = messages[:-1]
 
-        stream = kwargs.get("stream", False)
-
-        extra_params = {}
-        extra_body = {}
+        stream = kwargs.get("stream", False)        
 
         if "stop" in kwargs:
             extra_params["stop"] = (
@@ -474,7 +465,7 @@ class CustomSaasAPI:
                 if isinstance(kwargs["stop"], list)
                 else json.loads(kwargs["stop"])
             )
-                
+
         ## content = [
         ##    "voice": "alloy","input": "Hello, World!",response_format: "mp3"]
         last_message = messages[-1]["content"]

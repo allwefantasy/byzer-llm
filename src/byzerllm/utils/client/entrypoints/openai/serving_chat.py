@@ -58,7 +58,7 @@ class OpenAIServingChat(OpenAIServing):
         if body.prompt_template:
             self.llm_client.setup_template(body.model, self._detect_prompt_template(body.prompt_template))
 
-        request_id = f"cmpl-{random_uuid()}"
+        request_id = body.request_id or f"cmpl-{random_uuid()}"
 
         error_check_ret = await self._check_model(body)
         if error_check_ret is not None:
