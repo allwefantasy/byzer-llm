@@ -61,7 +61,7 @@ class StreamOptions(BaseModel):
 
 class ChatCompletionRequest(BaseModel):
     model: str
-    prompt: Union[List[int], List[List[int]], str, List[str]]
+    messages: List[Dict[str, str]]
     best_of: Optional[int] = None
     echo: Optional[bool] = False
     frequency_penalty: Optional[float] = 0.0
@@ -80,6 +80,7 @@ class ChatCompletionRequest(BaseModel):
     user: Optional[str] = None
 
     # doc: begin-completion-sampling-params
+    prompt_template: Optional[str] = None
     use_beam_search: bool = False
     top_k: int = -1
     min_p: float = 0.0
@@ -210,8 +211,7 @@ class ChatCompletionRequest(BaseModel):
             # "gen.best_of": self.best_of,
             "gen.repetition_penalty": self.repetition_penalty,
             "gen.min_p": self.min_p,
-            "gen.seed": self.seed,
-            "gen.early_stopping": self.early_stopping,
+            "gen.seed": self.seed,            
             "gen.prompt_logprobs": self.logprobs if self.echo else None,
             "gen.skip_special_tokens": self.skip_special_tokens,
             "gen.spaces_between_special_tokens": self.spaces_between_special_tokens,
@@ -250,7 +250,7 @@ class CompletionRequest(BaseModel):
     frequency_penalty: Optional[float] = 0.0
     logit_bias: Optional[Dict[str, float]] = None
     logprobs: Optional[int] = None
-    max_tokens: Optional[int] = 254
+    max_tokens: Optional[int] = 4096
     n: Optional[int] = 1
     presence_penalty: Optional[float] = 0.0
     seed: Optional[int] = None
@@ -402,7 +402,7 @@ class EmbeddingCompletionRequest(BaseModel):
 
 class EmbeddingChatRequest(BaseModel):
     model: str
-    input: Union[List[int], List[List[int]], str, List[str]]
+    messages: List[Dict[str, str]]
 
     encoding_format: Literal["float", "base64"] = "float"
     dimensions: Optional[int] = None
