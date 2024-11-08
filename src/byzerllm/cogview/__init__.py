@@ -22,7 +22,13 @@ def stream_chat(self,
                 seed: int = 66,
                 **kwargs):
     # Parse size string into height and width
-    width,height = map(int, size.split('x'))
+    try:
+        if not size:
+            size = "1024x1024"
+        width, height = map(int, size.split('x'))
+    except (ValueError, AttributeError, TypeError):
+        # Default to 1024x1024 if size parsing fails
+        width, height = 1024, 1024
 
     # Validate dimensions are multiples of 8
     if height % 8 != 0 or width % 8 != 0:
