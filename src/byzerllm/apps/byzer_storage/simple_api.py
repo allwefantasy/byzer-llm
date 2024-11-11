@@ -605,6 +605,12 @@ class ByzerStorage:
         self.retrieval.delete_by_ids(self.cluster_name, self.database, self.table, ids)
         self.retrieval.commit(self.cluster_name, self.database, self.table)
 
+    def truncate_table(self):        
+        self.retrieval.truncate(
+            self.cluster_name, self.database, self.table
+        )        
+        self.retrieval.commit(self.cluster_name, self.database, self.table) 
+
     def drop(self):
         self.retrieval.closeAndDeleteFile(self.cluster_name, self.database, self.table)
         self.retrieval.commit(self.cluster_name, self.database, self.table)

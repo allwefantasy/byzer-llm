@@ -1,12 +1,11 @@
 # Adapted from
 # https://github.com/lm-sys/FastChat/blob/168ccc29d3f7edc50823016105c024fe2282732a/fastchat/protocol/openai_api_protocol.py
 import time
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, Union, Annotated, Any
 
 from pydantic import BaseModel, Field, model_validator, conlist
 
 from byzerllm.utils import random_uuid
-
 
 class ErrorResponse(BaseModel):
     object: str = "error"
@@ -56,61 +55,101 @@ class ResponseFormat(BaseModel):
     # type must be "json_object" or "text"
     type: str = Literal["text", "json_object"]
 
+class StreamOptions(BaseModel):
+    include_usage: Optional[bool] = True
+    continuous_usage_stats: Optional[bool] = False
 
 class ChatCompletionRequest(BaseModel):
-    # Ordered by official OpenAI API documentation
-    # https://platform.openai.com/docs/api-reference/chat/create
-    messages: List[Dict[str, str]]
     model: str
+    messages: List[Dict[str, str]]
+    best_of: Optional[int] = None
+    echo: Optional[bool] = False
     frequency_penalty: Optional[float] = 0.0
     logit_bias: Optional[Dict[str, float]] = None
-    logprobs: Optional[bool] = False
-    top_logprobs: Optional[int] = None
-    max_tokens: Optional[int] = 254
-    n: Optional[int] = 1
+    logprobs: Optional[int] = None
+    max_tokens: Optional[int] = 16
+    n: int = 1
     presence_penalty: Optional[float] = 0.0
-    response_format: Optional[ResponseFormat] = None
-    seed: Optional[int] = None
+    seed: Optional[int] = Field(None, ge=-9223372036854775808, le=9223372036854775807)
     stop: Optional[Union[str, List[str]]] = Field(default_factory=list)
     stream: Optional[bool] = False
-    temperature: Optional[float] = 0.7
+    stream_options: Optional[StreamOptions] = None
+    suffix: Optional[str] = None
+    temperature: Optional[float] = 1.0
     top_p: Optional[float] = 1.0
     user: Optional[str] = None
 
-    # doc: begin-chat-completion-sampling-params
+    # doc: begin-completion-sampling-params
     prompt_template: Optional[str] = None
-    best_of: Optional[int] = None
-    use_beam_search: Optional[bool] = False
-    top_k: Optional[int] = -1
-    min_p: Optional[float] = 0.0
-    repetition_penalty: Optional[float] = 1.0
-    length_penalty: Optional[float] = 1.0
-    early_stopping: Optional[bool] = False
-    ignore_eos: Optional[bool] = False
-    stop_token_ids: Optional[List[int]] = None
-    skip_special_tokens: Optional[bool] = True
-    spaces_between_special_tokens: Optional[bool] = True
-    # doc: end-chat-completion-sampling-params
+    use_beam_search: bool = False
+    top_k: int = -1
+    min_p: float = 0.0
+    repetition_penalty: float = 1.0
+    length_penalty: float = 1.0
+    stop_token_ids: Optional[List[int]] = Field(default_factory=list)
+    include_stop_str_in_output: bool = False
+    ignore_eos: bool = False
+    min_tokens: int = 0
+    skip_special_tokens: bool = True
+    spaces_between_special_tokens: bool = True
+    truncate_prompt_tokens: Optional[Annotated[int, Field(ge=1)]] = None
+    allowed_token_ids: Optional[List[int]] = None
+    prompt_logprobs: Optional[int] = None
+    # doc: end-completion-sampling-params
 
     # doc: begin-chat-completion-extra-params
-    echo: Optional[bool] = Field(
+    echo: bool = Field(
         default=False,
         description=(
             "If true, the new message will be prepended with the last message "
             "if they belong to the same role."),
     )
-    add_generation_prompt: Optional[bool] = Field(
+    add_generation_prompt: bool = Field(
         default=True,
         description=
         ("If true, the generation prompt will be added to the chat template. "
          "This is a parameter used by chat template in tokenizer config of the "
          "model."),
     )
-    include_stop_str_in_output: Optional[bool] = Field(
+    continue_final_message: bool = Field(
+        default=False,
+        description=
+        ("If this is set, the chat will be formatted so that the final "
+         "message in the chat is open-ended, without any EOS tokens. The "
+         "model will continue this message rather than starting a new one. "
+         "This allows you to \"prefill\" part of the model's response for it. "
+         "Cannot be used at the same time as `add_generation_prompt`."),
+    )
+    add_special_tokens: bool = Field(
         default=False,
         description=(
-            "Whether to include the stop string in the output. "
-            "This is only applied when the stop or stop_token_ids is set."),
+            "If true, special tokens (e.g. BOS) will be added to the prompt "
+            "on top of what is added by the chat template. "
+            "For most models, the chat template takes care of adding the "
+            "special tokens so this should be set to false (as is the "
+            "default)."),
+    )
+    documents: Optional[List[Dict[str, str]]] = Field(
+        default=None,
+        description=
+        ("A list of dicts representing documents that will be accessible to "
+         "the model if it is performing RAG (retrieval-augmented generation)."
+         " If the template does not support RAG, this argument will have no "
+         "effect. We recommend that each document should be a dict containing "
+         "\"title\" and \"text\" keys."),
+    )
+    chat_template: Optional[str] = Field(
+        default=None,
+        description=(
+            "A Jinja template to use for this conversion. "
+            "As of transformers v4.44, default chat template is no longer "
+            "allowed, so you must provide a chat template if the tokenizer "
+            "does not define one."),
+    )
+    chat_template_kwargs: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description=("Additional kwargs to pass to the template renderer. "
+                     "Will be accessible by the chat template."),
     )
     guided_json: Optional[Union[str, dict, BaseModel]] = Field(
         default=None,
@@ -131,6 +170,29 @@ class ChatCompletionRequest(BaseModel):
         description=(
             "If specified, the output will follow the context free grammar."),
     )
+    guided_decoding_backend: Optional[str] = Field(
+        default=None,
+        description=(
+            "If specified, will override the default guided decoding backend "
+            "of the server for this specific request. If set, must be either "
+            "'outlines' / 'lm-format-enforcer'"))
+    guided_whitespace_pattern: Optional[str] = Field(
+        default=None,
+        description=(
+            "If specified, will override the default whitespace pattern "
+            "for guided json decoding."))
+    priority: int = Field(
+        default=0,
+        description=(
+            "The priority of the request (lower means earlier handling; "
+            "default: 0). Any priority other than 0 will raise an error "
+            "if the served model does not use priority scheduling."))
+    request_id: str = Field(
+        default_factory=lambda: f"{random_uuid()}",
+        description=(
+            "The request_id related to this request. If the caller does "
+            "not set it, a random_uuid will be generated. This id is used "
+            "through out the inference process and return in response."))
 
     # doc: end-chat-completion-extra-params
 
@@ -149,8 +211,7 @@ class ChatCompletionRequest(BaseModel):
             # "gen.best_of": self.best_of,
             "gen.repetition_penalty": self.repetition_penalty,
             "gen.min_p": self.min_p,
-            "gen.seed": self.seed,
-            "gen.early_stopping": self.early_stopping,
+            "gen.seed": self.seed,            
             "gen.prompt_logprobs": self.logprobs if self.echo else None,
             "gen.skip_special_tokens": self.skip_special_tokens,
             "gen.spaces_between_special_tokens": self.spaces_between_special_tokens,
@@ -189,7 +250,7 @@ class CompletionRequest(BaseModel):
     frequency_penalty: Optional[float] = 0.0
     logit_bias: Optional[Dict[str, float]] = None
     logprobs: Optional[int] = None
-    max_tokens: Optional[int] = 254
+    max_tokens: Optional[int] = 4096
     n: Optional[int] = 1
     presence_penalty: Optional[float] = 0.0
     seed: Optional[int] = None
@@ -309,6 +370,107 @@ class LogProbs(BaseModel):
     tokens: List[str] = Field(default_factory=list)
     top_logprobs: Optional[List[Optional[Dict[int, float]]]] = None
 
+class EmbeddingCompletionRequest(BaseModel):
+    # Ordered by official OpenAI API documentation
+    # https://platform.openai.com/docs/api-reference/embeddings
+    model: str
+    input: Union[List[int], List[List[int]], str, List[str]]
+    encoding_format: Literal["float", "base64"] = "float"
+    dimensions: Optional[int] = None
+    user: Optional[str] = None
+    truncate_prompt_tokens: Optional[Annotated[int, Field(ge=1)]] = None
+
+    # doc: begin-embedding-pooling-params
+    additional_data: Optional[Any] = None
+    # doc: end-embedding-pooling-params
+
+    # doc: begin-embedding-extra-params
+    add_special_tokens: bool = Field(
+        default=True,
+        description=(
+            "If true (the default), special tokens (e.g. BOS) will be added to "
+            "the prompt."),
+    )
+    priority: int = Field(
+        default=0,
+        description=(
+            "The priority of the request (lower means earlier handling; "
+            "default: 0). Any priority other than 0 will raise an error "
+            "if the served model does not use priority scheduling."))
+
+    # doc: end-embedding-extra-params   
+
+class EmbeddingChatRequest(BaseModel):
+    model: str
+    messages: List[Dict[str, str]]
+
+    encoding_format: Literal["float", "base64"] = "float"
+    dimensions: Optional[int] = None
+    user: Optional[str] = None
+    truncate_prompt_tokens: Optional[Annotated[int, Field(ge=1)]] = None
+
+    # doc: begin-chat-embedding-pooling-params
+    additional_data: Optional[Any] = None
+    # doc: end-chat-embedding-pooling-params
+
+    # doc: begin-chat-embedding-extra-params
+    add_generation_prompt: bool = Field(
+        default=True,
+        description=
+        ("If true, the generation prompt will be added to the chat template. "
+         "This is a parameter used by chat template in tokenizer config of the "
+         "model."),
+    )
+    continue_final_message: bool = Field(
+        default=False,
+        description=
+        ("If this is set, the chat will be formatted so that the final "
+         "message in the chat is open-ended, without any EOS tokens. The "
+         "model will continue this message rather than starting a new one. "
+         "This allows you to \"prefill\" part of the model's response for it. "
+         "Cannot be used at the same time as `add_generation_prompt`."),
+    )
+    add_special_tokens: bool = Field(
+        default=False,
+        description=(
+            "If true, special tokens (e.g. BOS) will be added to the prompt "
+            "on top of what is added by the chat template. "
+            "For most models, the chat template takes care of adding the "
+            "special tokens so this should be set to false (as is the "
+            "default)."),
+    )
+    chat_template: Optional[str] = Field(
+        default=None,
+        description=(
+            "A Jinja template to use for this conversion. "
+            "As of transformers v4.44, default chat template is no longer "
+            "allowed, so you must provide a chat template if the tokenizer "
+            "does not define one."),
+    )
+    chat_template_kwargs: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description=("Additional kwargs to pass to the template renderer. "
+                     "Will be accessible by the chat template."),
+    )
+    priority: int = Field(
+        default=0,
+        description=(
+            "The priority of the request (lower means earlier handling; "
+            "default: 0). Any priority other than 0 will raise an error "
+            "if the served model does not use priority scheduling."))
+    # doc: end-chat-embedding-extra-params
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_generation_prompt(cls, data):
+        if data.get("continue_final_message") and data.get(
+                "add_generation_prompt"):
+            raise ValueError("Cannot set both `continue_final_message` and "
+                             "`add_generation_prompt` to True.")
+        return data
+    
+
+EmbeddingRequest = Union[EmbeddingCompletionRequest, EmbeddingChatRequest]
 
 class CompletionResponseChoice(BaseModel):
     index: int
@@ -384,34 +546,16 @@ class ChatCompletionStreamResponse(BaseModel):
     usage: Optional[UsageInfo] = Field(default=None)
 
 
-class EmbeddingsUsage(BaseModel):
-    prompt_tokens: int
-    total_tokens: int
-
-
-class Embeddings(BaseModel):
-    """
-    Args:
-        model: the mode to query.
-        input: the input to generate embeddings for, encoded as a string.
-        user: A unique identifier representing the end-user, which helps monitoring and abuse detection.
-    """
-
-    model: str
-    input: Union[str, conlist(str, min_length=1)]
-    user: Optional[str] = None
-
-
-class EmbeddingsData(BaseModel):
-    embedding: List[float]
+class EmbeddingResponseData(BaseModel):
     index: int
-    object: str
+    object: str = "embedding"
+    embedding: Union[List[float], str]
 
 
-class EmbeddingsOutput(BaseModel):
-    data: List[EmbeddingsData]
-    id: str
-    object: str
-    created: int
+class EmbeddingResponse(BaseModel):
+    id: str = Field(default_factory=lambda: f"embd-{random_uuid()}")
+    object: str = "list"
+    created: int = Field(default_factory=lambda: int(time.time()))
     model: str
-    usage: Optional[EmbeddingsUsage]
+    data: List[EmbeddingResponseData]
+    usage: UsageInfo
