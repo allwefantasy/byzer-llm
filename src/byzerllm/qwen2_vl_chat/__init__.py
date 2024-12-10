@@ -2,11 +2,10 @@ import json
 import os
 import base64
 import uuid
-import tempfile
 
 from transformers import Qwen2VLForConditionalGeneration, AutoTokenizer, AutoProcessor, GenerationConfig
 from qwen_vl_utils import process_vision_info
-from typing import Dict, List
+from typing import Dict, List, Union, Any
 
 
 def get_meta(self):
@@ -25,34 +24,8 @@ def stream_chat(self, tokenizer, ins: str,
                 max_length: int = 4096,
                 top_p: float = 0.95,
                 temperature: float = 0.1, **kwargs):
-    image = kwargs["image"]
-    image_b = base64.b64decode(image)
-
-    temp_image_dir = kwargs["temp_image_dir"] if "temp_image_dir" in kwargs else os.path.join(tempfile.gettempdir(),
-                                                                                              "byzerllm", "visualglm",
-                                                                                              "images")
-
-    if not os.path.exists(temp_image_dir):
-        os.makedirs(temp_image_dir)
-
-    image_file = kwargs["input_image_path"] if "input_image_path" in kwargs else os.path.join(temp_image_dir,
-                                                                                              f"{str(uuid.uuid4())}.jpg")
-
-    with open(image_file, "wb") as f:
-        f.write(image_b)
-
-    messages = [
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "image",
-                    "image": image_file,
-                },
-                {"type": "text", "text": ins},
-            ],
-        }
-    ]
+    messages = [{"role": message["role"], "content": process_input(message["content"])} for message in his] + [
+        {"role": "user", "content": process_input(ins)}]
 
     text = tokenizer.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True
@@ -79,8 +52,45 @@ def stream_chat(self, tokenizer, ins: str,
         generated_ids_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False
     )
 
-    output = json.dumps({"response": output_text}, ensure_ascii=False)
-    return [(output, {"metadata": {}})]
+    return [(output_text, {"metadata": {}})]
+
+
+def process_input(ins: Union[str, List[Dict[str, Any]]]):
+    if isinstance(ins, list):
+        return ins
+
+    try:
+        ins_json = json.loads(ins)
+    except:
+        return ins
+
+    content = []
+    for item in ins_json:
+        if "image" in item:
+            image_data = item["image"]
+            ## "data:image/jpeg;base64,"
+            if image_data.startswith("data:"):
+                [data_type, image] = image_data.split(";")
+                [_, image_data] = image.split(",")
+                [_, image_and_type] = data_type.split(":")
+                image_type = image_and_type.split("/")[1]
+
+            else:
+                image_type = "jpg"
+                image_data = image_data
+
+            image_b = base64.b64decode(image_data)
+            image_file = os.path.join("/tmp", f"{str(uuid.uuid4())}.{image_type}")
+            with open(image_file, "wb") as f:
+                f.write(image_b)
+            content.append({"type": "image", "image": f"file://{image_file}"})
+        if "text" in item:
+            text_data = item["text"]
+            content.append({"type": "text", "text": text_data})
+
+    if not content:
+        return ins
+    return content
 
 
 def init_model(model_dir, infer_params: Dict[str, str] = {}, sys_conf: Dict[str, str] = {}):
