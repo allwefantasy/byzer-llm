@@ -10,14 +10,9 @@ from byzerllm.utils import (function_calling_format,
                             )
 
 
-def format_prompt_jinja2(func,**kargs):    
-    doc = func.__doc__       
-    lines = doc.splitlines()
-    # get the first line to get the whitespace prefix
-    first_non_empty_line = next(line for line in lines if line.strip())
-    prefix_whitespace_length = len(first_non_empty_line) - len(first_non_empty_line.lstrip())    
-    prompt = "\n".join([line[prefix_whitespace_length:] for line in lines])
-    tpl = Template(prompt)
+def format_str_jinja2(s,**kargs):
+    from jinja2 import Template
+    tpl = Template(s)
     return tpl.render(kargs)
 class Role:
     User = "user"
@@ -128,7 +123,7 @@ class Templates:
             return v   
 
         def sys_format(t,v):
-            return format_prompt_jinja2(sys_format,system_msg=v)
+            return format_str_jinja2(t,system_msg=v)
 
 
         return Template(role_mapping={
@@ -145,7 +140,7 @@ class Templates:
     @staticmethod
     def llama():
         def sys_format(t,v):
-            return format_prompt_jinja2(sys_format,system_msg=v)
+            return format_str_jinja2(t,system_msg=v)
         
         def user_format(t,v):
             return f"<s>[INST] {{v}} [/INST]"
@@ -184,7 +179,7 @@ class Templates:
 
         def sys_format(t:Annotated[str,"the field system_msg in role_mapping "],
                        v:Annotated[str,"the system message in chat"]):
-            return format_prompt_jinja2(sys_format,system_msg=v)
+            return format_str_jinja2(t,system_msg=v)
         
         def user_format(t:Annotated[str,"the field user_role in role_mapping"],
                         v:Annotated[str,"the user message in chat"]):
@@ -221,7 +216,7 @@ class Templates:
             if "<｜fim▁hole｜>" not in v:
                 raise Exception("the system message should contains <｜fim▁hole｜>")
             
-            return format_prompt_jinja2(sys_format,system_msg=v)
+            return format_str_jinja2(t,system_msg=v)
         
         def user_format(t,v):            
             return ""
@@ -245,7 +240,7 @@ class Templates:
     @staticmethod
     def deepseek_code_completion():        
         def sys_format(t,v):            
-            return format_prompt_jinja2(sys_format,system_msg=v)
+            return format_str_jinja2(t,system_msg=v)
         
         def user_format(t,v):            
             return ""
@@ -271,7 +266,7 @@ class Templates:
             return v   
 
         def sys_format(t,v):
-            return format_prompt_jinja2(sys_format,system_msg=v)
+            return format_str_jinja2(t,system_msg=v)
 
 
         return Template(role_mapping={
