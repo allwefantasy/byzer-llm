@@ -284,8 +284,11 @@ class StorageSubCommand:
                     error_msg = f"Error downloading and installing JDK 21: {str(e)}. You may need to install JDK 21 manually."
                     logger.error(error_msg)
                     error_summary.append(error_msg)
-
-            download_url = f"https://download.byzer.org/byzer-retrieval/byzer-retrieval-lib-{version}.tar.gz"
+            
+            download_url = os.environ.get(
+                "BYZER_STORAGE_DOWNLOAD_URL",
+                f"https://github.com/allwefantasy/BYZER-RETRIEVAL/releases/download/{version}/byzer-retrieval-lib-{version}.tar.gz",
+            )
             libs_dir = os.path.join(base_dir, "storage", "libs")
 
             os.makedirs(libs_dir, exist_ok=True)
@@ -293,7 +296,7 @@ class StorageSubCommand:
                 libs_dir, f"byzer-retrieval-lib-{version}.tar.gz"
             )
             if os.path.exists(download_path):
-                logger.info(f"Byzer Storage version {version} already downloaded.")
+                logger.info(f"Byzer Storage version {version} already downloaded ({download_path}).")
             else:
 
                 def download_with_progressbar(url, filename):
@@ -301,13 +304,29 @@ class StorageSubCommand:
                         percent = int(count * block_size * 100 / total_size)
                         print(f"\rDownload progress: {percent}%", end="")
 
-                    urllib.request.urlretrieve(url, filename, reporthook=progress)
+                    try:
+                        urllib.request.urlretrieve(url, filename, reporthook=progress)
+                        print()  # New line after progress bar
+                        return True
+                    except Exception as e:
+                        print()  # New line after progress bar
+                        logger.error(f"Failed to download from {url}: {str(e)}")
+                        logger.info(f"Please manually download from {url} and place it at {filename}")
+                        return False
+                
+                logger.info(f"Downloading Byzer Storage version {version} from: {download_url}")
+                if not download_with_progressbar(download_url, download_path):
+                    error_summary.append(f"Failed to download Byzer Storage. Please manually download from {download_url} and place it at {download_path}")
+                    return error_summary
 
-                logger.info(f"Download Byzer Storage version {version}: {download_url}")
-                download_with_progressbar(download_url, download_path)
-
-                with tarfile.open(download_path, "r:gz") as tar:
-                    tar.extractall(path=libs_dir)
+                if os.path.exists(download_path):
+                    try:
+                        with tarfile.open(download_path, "r:gz") as tar:
+                            tar.extractall(path=libs_dir)
+                    except Exception as e:
+                        error_msg = f"Failed to extract Byzer Storage: {str(e)}"
+                        logger.error(error_msg)
+                        error_summary.append(error_msg)
 
         except Exception as e:
             error_msg = f"Failed to install Byzer Storage: {str(e)}"
@@ -559,7 +578,9 @@ class StorageSubCommand:
                 f"Failed to shut down cluster {store_location.cluster}: {str(e)}"
             )
             rprint(f"[red]✗[/red] {error_msg}")
-            error_summary.append(f"{error_msg} You may need to manually stop it.")
+            error_summary.append(
+                f"{error_msg} You may need to manually stop it."
+            )
 
         emb_stop_errors = StorageSubCommand.emb_stop(args)
         error_summary.extend(emb_stop_errors)

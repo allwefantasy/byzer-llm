@@ -15,8 +15,7 @@ from byzerllm.utils import (
     sys_response_class_format,
     sys_function_calling_format,
     sys_function_impl_format,
-    exec_capture_output,
-    format_prompt,
+    exec_capture_output,    
     format_prompt_jinja2,
 )
 from byzerllm.utils.ray_utils import cancel_placement_group, get_actor_info
@@ -152,12 +151,15 @@ class ByzerLLM:
         return llm
 
     def setup_sub_client(
-        self, client_name: str, client: Optional["ByzerLLM"] = None
+        self, client_name: str, client: Union[List["ByzerLLM"], "ByzerLLM"] = None
     ) -> "ByzerLLM":
-        self.sub_clients[client_name] = client
+        if isinstance(client, list):
+            self.sub_clients[client_name] = client
+        else:
+            self.sub_clients[client_name] = client
         return self
 
-    def get_sub_client(self, client_name: str) -> Optional["ByzerLLM"]:
+    def get_sub_client(self, client_name: str) -> Union[List["ByzerLLM"], Optional["ByzerLLM"]]:
         return self.sub_clients.get(client_name, None)
 
     def remove_sub_client(self, client_name: str) -> "ByzerLLM":
@@ -1480,10 +1482,7 @@ class ByzerLLM:
                     if new_input_dic:
                         input_dict = {**input_dict, **new_input_dic}
 
-                if render == "jinja2" or render == "jinja":
-                    prompt_str = format_prompt_jinja2(func, **input_dict)
-                else:
-                    prompt_str = format_prompt(func, **input_dict)
+                prompt_str = format_prompt_jinja2(func, **input_dict)
 
                 if marker:
                     prompt_str = f"{prompt_str}\n\n{marker}"

@@ -1,4 +1,4 @@
-from langchain.prompts import PromptTemplate
+from jinja2 import Template
 import dataclasses
 import pydantic
 from enum import Enum
@@ -9,6 +9,11 @@ from byzerllm.utils import (function_calling_format,
                             response_class_format_after_chat                            
                             )
 
+
+def format_str_jinja2(s,**kargs):
+    from jinja2 import Template
+    tpl = Template(s)
+    return tpl.render(kargs)
 class Role:
     User = "user"
     Assistant = "assistant"
@@ -103,7 +108,7 @@ class Template:
 class Templates:
 
     def default_format(t,v):
-        return f"{t}{v}"
+        return f"{{t}}{{v}}"
 
 
     @staticmethod
@@ -118,14 +123,13 @@ class Templates:
             return v   
 
         def sys_format(t,v):
-            m = PromptTemplate.from_template(t)
-            return m.format(system_msg=v)
+            return format_str_jinja2(t,system_msg=v)
 
 
         return Template(role_mapping={
                         "user_role":"<|im_start|>user\n",
                         "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
-                        "system_msg":"<|im_start|>system\n{system_msg}<|im_end|>",
+                        "system_msg":"<|im_start|>system\n{{system_msg}}<|im_end|>",
                         "system_msg_func":sys_format
                         },
                         generation_config={                            
@@ -136,20 +140,19 @@ class Templates:
     @staticmethod
     def llama():
         def sys_format(t,v):
-            m = PromptTemplate.from_template(t)
-            return m.format(system_msg=v)
+            return format_str_jinja2(t,system_msg=v)
         
         def user_format(t,v):
-            return f"<s>[INST] {v} [/INST]"
+            return f"<s>[INST] {{v}} [/INST]"
         
         def assistant_format(t,v):
-            return f" {v} </s>"
+            return f"{{v}} </s>"
         
         return Template(
             role_mapping={
                "user_role":"",
                "assistant_role": "",
-               "system_msg":"<s>[INST] <<SYS>>\n{system_msg}\n<</SYS>>\n[/INST]</s>",
+               "system_msg":"<s>[INST] <<SYS>>\n{{system_msg}}\n<</SYS>>\n[/INST]</s>",
                "system_msg_func":sys_format,
                "user_role_func": user_format,
                "assistant_role_func": assistant_format
@@ -176,15 +179,14 @@ class Templates:
 
         def sys_format(t:Annotated[str,"the field system_msg in role_mapping "],
                        v:Annotated[str,"the system message in chat"]):
-            m = PromptTemplate.from_template(t)
-            return m.format(system_msg=v)
+            return format_str_jinja2(t,system_msg=v)
         
         def user_format(t:Annotated[str,"the field user_role in role_mapping"],
                         v:Annotated[str,"the user message in chat"]):
             '''
             format single user message
             '''
-            return f"### Instruction:\n{v}"
+            return f"### Instruction:\n{{v}}"
         
         def assistant_format(t:Annotated[str,"the field assistant_role in role_mapping"],
                              v:Annotated[str,"the assistant message in chat"]):
@@ -194,13 +196,13 @@ class Templates:
             Notice that here we do not use `t` , because we will
             use the `t` as the final suffix.
             '''
-            return f"### Response:\n{v}\n<|EOT|>"
+            return f"### Response:\n{{v}}\n"
         
         return Template(
             role_mapping={
                "user_role":"",
                "assistant_role": "### Response:\n",
-               "system_msg":"{system_msg}",
+               "system_msg":"{{system_msg}}",
                "system_msg_func":sys_format,
                "user_role_func": user_format,
                "assistant_role_func": assistant_format
@@ -213,8 +215,8 @@ class Templates:
         def sys_format(t,v):
             if "<｜fim▁hole｜>" not in v:
                 raise Exception("the system message should contains <｜fim▁hole｜>")
-            m = PromptTemplate.from_template(t)
-            return m.format(system_msg=v)
+            
+            return format_str_jinja2(t,system_msg=v)
         
         def user_format(t,v):            
             return ""
@@ -226,7 +228,7 @@ class Templates:
             role_mapping={
                "user_role":"",
                "assistant_role": "",
-               "system_msg":"<｜fim▁begin｜>{system_msg}<｜fim▁end｜>",
+               "system_msg":"<｜fim▁begin｜>{{system_msg}}<｜fim▁end｜>",
                "system_msg_func":sys_format,
                "user_role_func": user_format,
                "assistant_role_func": assistant_format
@@ -238,8 +240,7 @@ class Templates:
     @staticmethod
     def deepseek_code_completion():        
         def sys_format(t,v):            
-            m = PromptTemplate.from_template(t)
-            return m.format(system_msg=v)
+            return format_str_jinja2(t,system_msg=v)
         
         def user_format(t,v):            
             return ""
@@ -251,7 +252,7 @@ class Templates:
             role_mapping={
                "user_role":"",
                "assistant_role": "",
-               "system_msg":"{system_msg}",
+               "system_msg":"{{system_msg}}",
                "system_msg_func":sys_format,
                "user_role_func": user_format,
                "assistant_role_func": assistant_format
@@ -265,14 +266,13 @@ class Templates:
             return v   
 
         def sys_format(t,v):
-            m = PromptTemplate.from_template(t)
-            return m.format(system_msg=v)
+            return format_str_jinja2(t,system_msg=v)
 
 
         return Template(role_mapping={
                         "user_role":"<|im_start|>user\n",
                         "assistant_role": "<|im_end|>\n<|im_start|>assistant\n",
-                        "system_msg":"<|im_start|>system\n{system_msg}<|im_end|>",
+                        "system_msg":"<|im_start|>system\n{{system_msg}}<|im_end|>",
                         "system_msg_func":sys_format
                         },
                         generation_config={"generation.stop_token_ids":[7]},                  

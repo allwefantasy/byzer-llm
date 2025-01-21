@@ -12,7 +12,6 @@ from typing import Dict, Generator, Optional
 from dataclasses import dataclass
 from byzerllm.utils import (
     print_flush,
-    format_prompt,
     format_prompt_jinja2,
     format_str_jinja2,
 )
@@ -156,11 +155,8 @@ class _PromptWraper:
         if new_input_dic:
             input_dict = {**input_dict, **new_input_dic}
 
-        if render == "jinja2" or render == "jinja":
-            return format_prompt_jinja2(func, **input_dict)
-
-        return format_prompt(func, **input_dict)
-
+        return format_prompt_jinja2(func, **input_dict)
+    
     def run(self):
         func = self.func
         llm = self.llm
@@ -331,11 +327,8 @@ class _PrompRunner:
 
         if "self" in input_dict:
             input_dict.pop("self")
-
-        if self.render == "jinja2" or self.render == "jinja":
-            return format_prompt_jinja2(self.func, **input_dict)
-
-        return format_prompt(self.func, **input_dict)
+        
+        return format_prompt_jinja2(self.func, **input_dict)        
 
     def with_llm(self, llm):
         self.llm = llm
