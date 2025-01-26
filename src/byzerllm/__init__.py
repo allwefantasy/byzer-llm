@@ -740,7 +740,7 @@ class prompt:
         )
 
 
-from byzerllm.utils.client import ByzerLLM
+from byzerllm.utils.client import ByzerLLM,SimpleByzerLLM
 from byzerllm.utils.retrieval import ByzerRetrieval
 from byzerllm.utils.connect_ray import connect_cluster
 from byzerllm.apps.agent.registry import reply as agent_reply
@@ -748,6 +748,7 @@ from byzerllm.utils.nontext import Image
 
 __all__ = [
     "ByzerLLM",
+    "SimpleByzerLLM",
     "ByzerRetrieval",
     "connect_cluster",
     "prompt",

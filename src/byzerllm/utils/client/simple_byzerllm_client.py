@@ -37,6 +37,15 @@ from byzerllm.utils.client.types import (
     LLMMetadata,
 )
 
+from byzerllm.utils import (    
+    format_prompt_jinja2,
+    format_str_jinja2
+)
+
+import pydantic
+from pydantic import BaseModel
+from loguru import logger
+
 
 class SimpleByzerLLM:
     """
@@ -50,6 +59,8 @@ class SimpleByzerLLM:
         self.default_model_name = default_model_name
         # Keep track of "requests" or "deploy" info in a dict if needed
         self.deployments = {}
+        self.sub_clients = {}
+        self.event_callbacks: Dict[EventName, List[EventCallback]] = {}
 
     def undeploy(self, udf_name: str, force: bool = False):
         """
@@ -80,7 +91,10 @@ class SimpleByzerLLM:
         if pretrained_model_type.startswith("saas/"):
             base_url = infer_params.get(
                 "saas.base_url", "https://api.deepseek.com/v1")
-            api_key = infer_params.get("saas.api_key", self.api_key)
+            if not "saas.api_key" in infer_params:
+                raise ValueError("saas.api_key is required for SaaS models")
+            
+            api_key = infer_params["saas.api_key"]
             model = infer_params.get("saas.model", "deepseek-chat")
 
             is_reasoning = infer_params.get("is_reasoning", False)
@@ -111,15 +125,61 @@ class SimpleByzerLLM:
 
         return {"model": udf_name, "status": "deployed"}
     
-    def process_messages(self, messages: List[Dict[str, Any]]):
-        extra_params = {}
-        extra_body = {}
-        messages = [
-            {"role": message["role"],
-                "content": self.process_input(message["content"])}
-            for message in his
-        ] + [{"role": "user", "content": self.process_input(ins)}]
 
+    @property
+    def metadata(self) -> LLMMetadata:
+        meta = self.get_meta(model=self.default_model_name)
+        return LLMMetadata(
+            context_window=meta.get("max_model_len", 8192),
+            num_output=meta.get("num_output", 256),
+            is_chat_model=not meta.get("embedding_mode", False),
+            is_function_calling_model=True,
+            model_name=meta.get("model_name", self.default_model_name),
+        )
+    
+    def setup_default_model_name(self, model: str):
+        self.default_model_name = model
+
+    @staticmethod
+    def from_default_model(model: str, auto_connect_cluster: bool = True) -> "SimpleByzerLLM":        
+        llm = SimpleByzerLLM()
+        llm.setup_default_model_name(model)
+        return llm
+
+    def setup_sub_client(
+        self, client_name: str, client: Union[List["SimpleByzerLLM"], "SimpleByzerLLM"] = None
+    ) -> "SimpleByzerLLM":
+        if isinstance(client, list):
+            self.sub_clients[client_name] = client
+        else:
+            self.sub_clients[client_name] = client
+        return self
+
+    def get_sub_client(self, client_name: str) -> Union[List["SimpleByzerLLM"], Optional["SimpleByzerLLM"]]:
+        return self.sub_clients.get(client_name, None)
+    
+
+    def remove_sub_client(self, client_name: str) -> "SimpleByzerLLM":
+        if client_name in self.sub_clients:
+            del self.sub_clients[client_name]
+        return self
+    
+    def add_event_callback(
+        self, event_name: EventName, callback: EventCallback
+    ) -> None:
+        self.event_callbacks.setdefault(event_name, []).append(callback)
+
+    def _trigger_event(self, event_name: EventName, *args, **kwargs) -> Optional[Any]:
+        if event_name in self.event_callbacks:
+            for callback in self.event_callbacks[event_name]:
+                continue_flag, value = callback(*args, **kwargs)
+                if not continue_flag:
+                    return value
+        return None
+    
+    def process_messages(self, messages: List[Dict[str, Any]], **kwargs):
+        extra_params = {}
+        extra_body = {}        
         if (
             len(messages) > 1
             and messages[-1]["role"] == "user"
@@ -241,12 +301,24 @@ class SimpleByzerLLM:
         deploy_info = self.deployments.get(model, {})
         client = deploy_info["sync_client"]
         
-        messages, extra_params = self.process_messages(conversations)
+        messages, extra_params = self.process_messages(conversations, **llm_config)
 
         start_time = time.monotonic()
+        
+        history = messages[:-1]
+        instruction = messages[-1]["content"]
+        v = [{"instruction": instruction,"history": history, **llm_config}]
+
+        event_result = self._trigger_event(
+            EventName.BEFORE_CALL_MODEL, self, model, v
+        )
+        
+        if event_result is not None:
+            return event_result
+        
         response = client.chat.completions.create(
             messages=messages,
-            model=model,
+            model=deploy_info["model"],
             temperature=llm_config.get("temperature", 0.7),
             max_tokens=llm_config.get("max_tokens", 4096),
             top_p=llm_config.get("top_p", 1.0),
@@ -290,19 +362,19 @@ class SimpleByzerLLM:
         client = deploy_info["sync_client"]
         is_reasoning = deploy_info["is_reasoning"]
 
-        messages, extra_params = self.process_messages(conversations)
+        messages, extra_params = self.process_messages(conversations, **llm_config)
 
         if is_reasoning:
             response = client.chat.completions.create(
                 messages=messages,
-                model=model,
+                model=deploy_info["model"],
                 stream=True,
                 **extra_params,
             )
         else:
             response = client.chat.completions.create(
                 messages=messages,
-                model=model,
+                model=deploy_info["model"],
                 temperature=llm_config.get("temperature", 0.7),
                 max_tokens=llm_config.get("max_tokens", 4096),
                 top_p=llm_config.get("top_p", 1.0),
@@ -349,19 +421,19 @@ class SimpleByzerLLM:
         deploy_info = self.deployments.get(model, {})
         client = deploy_info["async_client"]
         is_reasoning = deploy_info["is_reasoning"]
-        messages, extra_params = self.process_messages(conversations)
+        messages, extra_params = self.process_messages(conversations, **llm_config)
 
         if is_reasoning:
             response = await client.chat.completions.create(
                 messages=messages,
-                model=model,
+                model=deploy_info["model"],
                 stream=True,
                 **extra_params,
             )
         else:
             response = await client.chat.completions.create(
                 messages=messages,
-                model=model,
+                model=deploy_info["model"],
                 temperature=llm_config.get("temperature", 0.7),
                 max_tokens=llm_config.get("max_tokens", 4096),
                 top_p=llm_config.get("top_p", 1.0),
@@ -383,7 +455,7 @@ class SimpleByzerLLM:
                 yield (content, SingleOutputMeta(input_tokens_count=input_tokens_count, generated_tokens_count=generated_tokens_count, finish_reason=chunk.choices[0].finish_reason))
         else:
             s = ""
-            asyncfor chunk in response:
+            async for chunk in response:
                 content = chunk.choices[0].delta.content or ""
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
