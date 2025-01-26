@@ -14,8 +14,30 @@ from typing import (
 from enum import Enum
 import time
 import traceback
-from byzerllm.utils.types import LLMResponse,SingleOutputMeta,SingleOutput,StreamOutputs
+from byzerllm.utils.types import SingleOutputMeta, SingleOutput, StreamOutputs
 from openai import OpenAI, AsyncOpenAI
+import inspect
+import functools
+from byzerllm.utils.client.types import (
+    Templates,
+    Template,
+    Role,
+    LLMHistoryItem,
+    LLMRequest,
+    LLMFunctionCallResponse,
+    LLMClassResponse,
+    InferBackend,
+    EventName,
+    EventCallbackResult,
+    EventCallback,
+    LLMResponse,
+    FintuneRequestExtra,
+    FintuneRequest,
+    ExecuteCodeResponse,
+    LLMMetadata,
+)
+
+
 class SimpleByzerLLM:
     """
     A simplified version of ByzerLLM that uses the OpenAI Python SDK
@@ -23,15 +45,9 @@ class SimpleByzerLLM:
     signatures but internally rely on openai.* calls.
     """
 
-    def __init__(self, api_key: Optional[str] = None, **kwargs):
-        """
-        :param api_key: your openai api key. If None, tries environment variable.
-        :param kwargs: any extra config if needed
-        """
-        self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
-        openai.api_key = self.api_key
+    def __init__(self, default_model_name: str = "deepseek_chat"):
         # You can store model names, placeholders, etc. in these variables:
-        self.default_model_name = kwargs.get("default_model_name", "deepseek_chat")
+        self.default_model_name = default_model_name
         # Keep track of "requests" or "deploy" info in a dict if needed
         self.deployments = {}
 
@@ -62,21 +78,24 @@ class SimpleByzerLLM:
         """
         # Initialize OpenAI clients if this is a SaaS model
         if pretrained_model_type.startswith("saas/"):
-            base_url = infer_params.get("saas.base_url", "https://api.deepseek.com/v1")
+            base_url = infer_params.get(
+                "saas.base_url", "https://api.deepseek.com/v1")
             api_key = infer_params.get("saas.api_key", self.api_key)
             model = infer_params.get("saas.model", "deepseek-chat")
-            
+
+            is_reasoning = infer_params.get("is_reasoning", False)
+
             # Create both sync and async clients
             sync_client = OpenAI(
                 base_url=base_url,
                 api_key=api_key,
             )
-            
+
             async_client = AsyncOpenAI(
                 base_url=base_url,
                 api_key=api_key,
             )
-            
+
             self.deployments[udf_name] = {
                 "model_path": model_path,
                 "pretrained_model_type": pretrained_model_type,
@@ -84,11 +103,70 @@ class SimpleByzerLLM:
                 "sync_client": sync_client,
                 "async_client": async_client,
                 "model": model,
+                "is_reasoning": is_reasoning,
             }
         else:
-            raise ValueError(f"Unsupported pretrained_model_type: {pretrained_model_type}")
-            
-        return {"model": udf_name,"status": "deployed"}
+            raise ValueError(
+                f"Unsupported pretrained_model_type: {pretrained_model_type}")
+
+        return {"model": udf_name, "status": "deployed"}
+    
+    def process_messages(self, messages: List[Dict[str, Any]]):
+        extra_params = {}
+        extra_body = {}
+        messages = [
+            {"role": message["role"],
+                "content": self.process_input(message["content"])}
+            for message in his
+        ] + [{"role": "user", "content": self.process_input(ins)}]
+
+        if (
+            len(messages) > 1
+            and messages[-1]["role"] == "user"
+            and messages[-2]["role"] == "user"
+        ):
+            messages[-1]["role"] = "assistant"
+
+        def is_deepseek_chat_prefix():
+
+            if kwargs.get("response_prefix", "false") in ["true", "True", True]:
+                return True
+
+            if messages[-1]["role"] == "assistant":
+                if "deepseek" in self.other_params.get("base_url", ""):
+                    return True
+            return False
+
+        def is_siliconflow_chat_prefix():
+            if messages[-1]["role"] == "assistant":
+                if "siliconflow" in self.other_params.get("base_url", ""):
+                    return True
+            return False
+
+        if is_deepseek_chat_prefix():
+            temp_message = {
+                "role": "assistant",
+                "content": messages[-1]["content"],
+                "prefix": True,
+            }
+            logger.info(
+                f"response_prefix is True, add prefix to the last message {temp_message['role']} {temp_message['content'][0:100]}"
+            )
+            messages = messages[:-1] + [temp_message]
+
+        if is_siliconflow_chat_prefix():
+            extra_body["prefix"] = messages[-1]["content"]
+            extra_params["extra_body"] = extra_body
+            messages = messages[:-1]        
+
+        if "stop" in kwargs:
+            extra_params["stop"] = (
+                kwargs["stop"]
+                if isinstance(kwargs["stop"], list)
+                else json.loads(kwargs["stop"])
+            )
+
+        return messages, extra_params
 
     def get_meta(self, model: str, llm_config: Dict[str, Any] = {}):
         """
@@ -96,27 +174,29 @@ class SimpleByzerLLM:
         We don't have direct metadata from OpenAI in real usage
         (some data can be gleaned from Model endpoint).
         """
-        deploy_info = self.deployments.get(model, {})
-        
+
+        if model not in self.deployments:
+            raise ValueError(f"Model {model} not deployed")
+
+        deploy_info = self.deployments[model]
+
         # For SaaS models, get model name from deployment info
-        model_name = deploy_info.get("model", model)
-        
+        model_name = deploy_info["model"]
+
         meta_result = {
             "model_name": model_name,
             "backend": "openai",
-            "max_model_len": 4097,  
+            "max_model_len": 4097,
             "support_stream": True,
             "deploy_info": deploy_info,
         }
-        
-        # Add SaaS specific metadata if available
-        if deploy_info.get("pretrained_model_type", "").startswith("saas/"):
-            meta_result.update({
-                "model_deploy_type": "saas",
-                "message_format": True,
-                "support_chat_template": True,
-            })
-            
+
+        meta_result.update({
+            "model_deploy_type": "saas",
+            "message_format": True,
+            "support_chat_template": True,
+        })
+
         return meta_result
 
     def abort(self, request_id: str, model: Optional[str] = None):
@@ -154,39 +234,42 @@ class SimpleByzerLLM:
         if not model:
             model = self.default_model_name
 
-        # Convert the 'conversations' into the OpenAI Chat style messages
-        # e.g. [ { "role": "user", "content": "..."} ]
-        # For simplicity, let's assume 'conversations' is a list of dict: role, content.
-        # Possibly user wants "system" or "user" or "assistant" roles.
-        openai_messages = []
-        for item in conversations:
-            openai_messages.append({
-                "role": item.get("role", "user"),
-                "content": item.get("content", ""),
-            })
-
         # If only_return_prompt is True, we won't call openai, just return the prompt
         if only_return_prompt:
-            return [LLMResponse(output="(prompt only)", metadata={}, input=str(openai_messages))]
+            return [LLMResponse(output="", metadata={}, input=conversations[-1]["content"])]
 
-        # Merge any extra config from llm_config
-        # Typically can handle temperature, top_p, max_tokens, etc.
-        openai_params = {
-            "model": model,
-            "messages": openai_messages,
-            "temperature": llm_config.get("temperature", 0.7),
-            "max_tokens": llm_config.get("max_tokens", 4096),
-            "top_p": llm_config.get("top_p", 1.0),
+        deploy_info = self.deployments.get(model, {})
+        client = deploy_info["sync_client"]
+        
+        messages, extra_params = self.process_messages(conversations)
+
+        start_time = time.monotonic()
+        response = client.chat.completions.create(
+            messages=messages,
+            model=model,
+            temperature=llm_config.get("temperature", 0.7),
+            max_tokens=llm_config.get("max_tokens", 4096),
+            top_p=llm_config.get("top_p", 1.0),
+            **extra_params,
+        )
+        generated_text = response.choices[0].message.content
+        generated_tokens_count = response.usage.completion_tokens
+        input_tokens_count = response.usage.prompt_tokens
+        time_cost = time.monotonic() - start_time
+        gen_meta = {
+            "metadata": {
+                "request_id": response.id,
+                "input_tokens_count": input_tokens_count,
+                "generated_tokens_count": generated_tokens_count,
+                "time_cost": time_cost,
+                "first_token_time": 0,
+                "speed": float(generated_tokens_count) / time_cost,
+                # Available options: stop, eos, length, tool_calls
+                "finish_reason": response.choices[0].finish_reason,
+                **extra_params,
+            }
         }
-        try:
-            deploy_info = self.deployments.get(model, {})
-            client = deploy_info.get("sync_client", openai)
-            completion = client.chat.completions.create(**openai_params)
-            content = completion.choices[0].message["content"]
-            return [LLMResponse(output=content, metadata={"usage": completion.usage}, input=str(openai_messages))]
-        except Exception as e:
-            traceback_str = traceback.format_exc()
-            return [LLMResponse(output=str(e), metadata={"traceback": traceback_str}, input=str(openai_messages))]
+        return [LLMResponse(output=generated_text, metadata=gen_meta["metadata"], input="")]
 
     def stream_chat_oai(
         self,
@@ -203,39 +286,54 @@ class SimpleByzerLLM:
         if not model:
             model = self.default_model_name
 
-        openai_messages = []
-        for item in conversations:
-            openai_messages.append({
-                "role": item.get("role", "user"),
-                "content": item.get("content", ""),
-            })
+        deploy_info = self.deployments.get(model, {})
+        client = deploy_info["sync_client"]
+        is_reasoning = deploy_info["is_reasoning"]
 
-        openai_params = {
-            "model": model,
-            "messages": openai_messages,
-            "temperature": llm_config.get("temperature", 0.7),
-            "max_tokens": llm_config.get("max_tokens", 256),
-            "top_p": llm_config.get("top_p", 1.0),
-            "stream": True,  # Turn on streaming
-        }
+        messages, extra_params = self.process_messages(conversations)
 
-        try:
-            deploy_info = self.deployments.get(model, {})
-            client = deploy_info.get("sync_client", openai)
-            deploy_info = self.deployments.get(model, {})
-            client = deploy_info.get("async_client", openai)
-            stream = await client.chat.completions.create(**openai_params)
-            collected_text = ""
-            for chunk in stream:
-                delta = chunk.choices[0]["delta"].get("content", "")
-                if not delta:
-                    continue
-                collected_text += delta
-                # For Byzer style: yield (text, metadata)
-                yield (delta, {"all_text": collected_text})
-        except Exception as e:
-            # On error, we yield a final chunk with error message
-            yield ("", {"error": str(e)})
+        if is_reasoning:
+            response = client.chat.completions.create(
+                messages=messages,
+                model=model,
+                stream=True,
+                **extra_params,
+            )
+        else:
+            response = client.chat.completions.create(
+                messages=messages,
+                model=model,
+                temperature=llm_config.get("temperature", 0.7),
+                max_tokens=llm_config.get("max_tokens", 4096),
+                top_p=llm_config.get("top_p", 1.0),
+                stream=True,
+                **extra_params,
+            )
+        input_tokens_count = 0
+        generated_tokens_count = 0
+        if delta_mode:
+            for chunk in response:
+                content = chunk.choices[0].delta.content or ""
+                if hasattr(chunk, "usage") and chunk.usage:
+                    input_tokens_count = chunk.usage.prompt_tokens
+                    generated_tokens_count = chunk.usage.completion_tokens
+                else:
+                    input_tokens_count = 0
+                    generated_tokens_count = 0
+
+                yield (content, SingleOutputMeta(input_tokens_count=input_tokens_count, generated_tokens_count=generated_tokens_count, finish_reason=chunk.choices[0].finish_reason))
+        else:
+            s = ""
+            for chunk in response:
+                content = chunk.choices[0].delta.content or ""
+                if hasattr(chunk, "usage") and chunk.usage:
+                    input_tokens_count = chunk.usage.prompt_tokens
+                    generated_tokens_count = chunk.usage.completion_tokens
+                else:
+                    input_tokens_count = 0
+                    generated_tokens_count = 0
+                s += content
+                yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count, generated_tokens_count=generated_tokens_count, finish_reason=chunk.choices[0].finish_reason))
 
     async def async_stream_chat_oai(
         self,
@@ -245,25 +343,175 @@ class SimpleByzerLLM:
         delta_mode: bool = False,
         llm_config: Dict[str, Any] = {},
     ):
-        """
-        Asynchronous generator version of stream_chat_oai.
-        OpenAI's official streaming doesn't provide direct async interface in old sdk.
-        If using a brand new openai python library that supports async, do so. Otherwise
-        we'd need an httpx-based approach or wrap sync in thread.
-        """
-        # Fallback: wrap the sync method in a thread. Not truly async but signature is preserved.
-        loop = asyncio.get_running_loop()
+        if not model:
+            model = self.default_model_name
 
-        def sync_generator():
-            return self.stream_chat_oai(
-                conversations=conversations,
+        deploy_info = self.deployments.get(model, {})
+        client = deploy_info["async_client"]
+        is_reasoning = deploy_info["is_reasoning"]
+        messages, extra_params = self.process_messages(conversations)
+
+        if is_reasoning:
+            response = await client.chat.completions.create(
+                messages=messages,
                 model=model,
-                role_mapping=role_mapping,
-                delta_mode=delta_mode,
-                llm_config=llm_config,
+                stream=True,
+                **extra_params,
             )
+        else:
+            response = await client.chat.completions.create(
+                messages=messages,
+                model=model,
+                temperature=llm_config.get("temperature", 0.7),
+                max_tokens=llm_config.get("max_tokens", 4096),
+                top_p=llm_config.get("top_p", 1.0),
+                stream=True,
+                **extra_params,
+            )
+        input_tokens_count = 0
+        generated_tokens_count = 0
+        if delta_mode:
+            async for chunk in response:
+                content = chunk.choices[0].delta.content or ""
+                if hasattr(chunk, "usage") and chunk.usage:
+                    input_tokens_count = chunk.usage.prompt_tokens
+                    generated_tokens_count = chunk.usage.completion_tokens
+                else:
+                    input_tokens_count = 0
+                    generated_tokens_count = 0
 
-        # We'll iterate in a thread pool, yield from it
-        it = await loop.run_in_executor(None, lambda: list(sync_generator()))
-        for chunk, meta in it:
-            yield (chunk, meta)
+                yield (content, SingleOutputMeta(input_tokens_count=input_tokens_count, generated_tokens_count=generated_tokens_count, finish_reason=chunk.choices[0].finish_reason))
+        else:
+            s = ""
+            asyncfor chunk in response:
+                content = chunk.choices[0].delta.content or ""
+                if hasattr(chunk, "usage") and chunk.usage:
+                    input_tokens_count = chunk.usage.prompt_tokens
+                    generated_tokens_count = chunk.usage.completion_tokens
+                else:
+                    input_tokens_count = 0
+                    generated_tokens_count = 0
+                s += content
+                yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count, generated_tokens_count=generated_tokens_count, finish_reason=chunk.choices[0].finish_reason))
+
+
+    def prompt(
+        self,
+        model: Optional[str] = None,
+        render: Optional[str] = "jinja2",
+        check_result: bool = False,
+        options: Dict[str, Any] = {},
+        return_origin_response: bool = False,
+        marker: Optional[str] = None,
+        assistant_prefix: Optional[str] = None,
+    ):
+        if model is None:
+            if "model" in options:
+                model = options.pop("model")
+            else:
+                model = self.default_model_name
+
+        def is_instance_of_generator(v):
+            from typing import Generator, get_origin, get_args
+            import collections
+
+            if get_origin(v) is collections.abc.Generator:
+                args = get_args(v)
+                if args == (str, type(None), type(None)):
+                    return True
+            return False
+
+        def _impl(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                signature = inspect.signature(func)
+                arguments = signature.bind(*args, **kwargs)
+                arguments.apply_defaults()
+                input_dict = {}
+                for param in signature.parameters:
+                    input_dict.update({param: arguments.arguments[param]})
+
+                if "self" in input_dict:
+                    instance = input_dict.pop("self")
+                    new_input_dic = func(instance, **input_dict)
+                    if new_input_dic and not isinstance(new_input_dic, dict):
+                        raise TypeError(
+                            f"Return value of {func.__name__} should be a dict"
+                        )
+                    if new_input_dic:
+                        input_dict = {**input_dict, **new_input_dic}
+                else:
+                    new_input_dic = func(**input_dict)
+                    if new_input_dic and not isinstance(new_input_dic, dict):
+                        raise TypeError(
+                            f"Return value of {func.__name__} should be a dict"
+                        )
+                    if new_input_dic:
+                        input_dict = {**input_dict, **new_input_dic}
+
+                prompt_str = format_prompt_jinja2(func, **input_dict)
+
+                if marker:
+                    prompt_str = f"{prompt_str}\n\n{marker}"
+
+                if is_instance_of_generator(signature.return_annotation):
+                    temp_options = {**{"delta_mode": True}, **options}
+                    conversations = [{"role": "user", "content": prompt_str}]
+                    if assistant_prefix:
+                        conversations = conversations + [{"role": "assistant", "content": assistant_prefix}]
+
+                    t = self.stream_chat_oai(
+                        conversations=conversations,
+                        model=model,
+                        **temp_options,
+                    )
+                    if return_origin_response:
+                        return t
+                    return (item[0] for item in t)
+
+                if issubclass(signature.return_annotation, pydantic.BaseModel):
+                    response_class = signature.return_annotation
+                    conversations = [{"role": "user", "content": prompt_str}]
+                    if assistant_prefix:
+                        conversations = conversations + [{"role": "assistant", "content": assistant_prefix}]
+                    t = self.chat_oai(
+                        model=model,
+                        conversations=conversations,
+                        response_class=response_class,
+                        impl_func_params=input_dict,
+                        **options,
+                    )
+                    if return_origin_response:
+                        return t
+                    r: LLMClassResponse = t[0]
+                    if r.value is None and check_result:
+                        logger.warning(
+                            f"""
+                                {func.__name__} return None.
+                                metadata:
+                                {r.metadata}
+                                response:
+                                {r.response}
+                            """
+                        )
+                    return r.value
+                elif issubclass(signature.return_annotation, str):
+                    conversations = [{"role": "user", "content": prompt_str}]
+                    if assistant_prefix:
+                        conversations = conversations + [{"role": "assistant", "content": assistant_prefix}]                        
+                    t = self.chat_oai(
+                        model=model,
+                        conversations=conversations,
+                        **options,
+                    )
+                    if return_origin_response:
+                        return t
+                    return t[0].output
+                else:
+                    raise Exception(
+                        f"{func.__name__} should return a pydantic model or string"
+                    )
+
+            return wrapper
+
+        return _impl             
