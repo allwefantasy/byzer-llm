@@ -4,19 +4,22 @@ import json
 from byzerllm.utils.client.types import LLMResponse, LLMMetadata
 from byzerllm.saas.official_openai import CustomSaasAPI
 
+# 全局 meta 缓存
+_global_meta_cache = {}
+
 class SimpleByzerLLM:
     def __init__(self, url: Optional[str] = None, **kwargs):
         self.url = url
         self.model = kwargs.get("model", "deepseek-chat")
         self.api_key = kwargs.get("api_key")
         self.client = None
-        self.meta_cache = {}
+        self.meta_cache = _global_meta_cache
 
     def undeploy(self, udf_name: str, force: bool = False):
         """Undeploy model"""
         self.client = None
-        if udf_name in self.meta_cache:
-            del self.meta_cache[udf_name]
+        if udf_name in _global_meta_cache:
+            del _global_meta_cache[udf_name]
 
     def deploy(self, model_path: str, pretrained_model_type: str, udf_name: str, infer_params: Dict[str, Any]):
         """Deploy model"""
@@ -29,14 +32,14 @@ class SimpleByzerLLM:
 
     def get_meta(self, model: str, llm_config: Dict[str, Any] = {}) -> Dict[str, Any]:
         """Get model metadata"""
-        if model in self.meta_cache:
-            return self.meta_cache[model]
+        if model in _global_meta_cache:
+            return _global_meta_cache[model]
         
         if not self.client:
             raise ValueError("Model not deployed")
             
         meta = self.client.get_meta()[0]
-        self.meta_cache[model] = meta
+        _global_meta_cache[model] = meta
         return meta
 
     def abort(self, request_id: str, model: Optional[str] = None):
