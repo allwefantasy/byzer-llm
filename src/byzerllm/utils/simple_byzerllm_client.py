@@ -7,7 +7,7 @@ from byzerllm.saas.official_openai import CustomSaasAPI
 class SimpleByzerLLM:
     def __init__(self, url: Optional[str] = None, **kwargs):
         self.url = url
-        self.model = kwargs.get("model", "gpt-3.5-turbo")
+        self.model = kwargs.get("model", "deepseek-chat")
         self.api_key = kwargs.get("api_key")
         self.client = None
         self.meta_cache = {}
