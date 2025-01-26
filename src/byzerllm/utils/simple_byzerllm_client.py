@@ -15,7 +15,7 @@ from enum import Enum
 import time
 import traceback
 from byzerllm.utils.types import LLMResponse,SingleOutputMeta,SingleOutput,StreamOutputs
-
+from openai import OpenAI, AsyncOpenAI
 class SimpleByzerLLM:
     """
     A simplified version of ByzerLLM that uses the OpenAI Python SDK
@@ -31,7 +31,7 @@ class SimpleByzerLLM:
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY", "")
         openai.api_key = self.api_key
         # You can store model names, placeholders, etc. in these variables:
-        self.default_model_name = kwargs.get("default_model_name", "gpt-3.5-turbo")
+        self.default_model_name = kwargs.get("default_model_name", "deepseek_chat")
         # Keep track of "requests" or "deploy" info in a dict if needed
         self.deployments = {}
 
@@ -62,9 +62,9 @@ class SimpleByzerLLM:
         """
         # Initialize OpenAI clients if this is a SaaS model
         if pretrained_model_type.startswith("saas/"):
-            base_url = infer_params.get("saas.base_url", "https://api.openai.com/v1")
+            base_url = infer_params.get("saas.base_url", "https://api.deepseek.com/v1")
             api_key = infer_params.get("saas.api_key", self.api_key)
-            model = infer_params.get("saas.model", "gpt-3.5-turbo")
+            model = infer_params.get("saas.model", "deepseek-chat")
             
             # Create both sync and async clients
             sync_client = OpenAI(
@@ -86,14 +86,9 @@ class SimpleByzerLLM:
                 "model": model,
             }
         else:
-            # For non-SaaS models, store basic info
-            self.deployments[udf_name] = {
-                "model_path": model_path,
-                "pretrained_model_type": pretrained_model_type,
-                "infer_params": infer_params,
-            }
+            raise ValueError(f"Unsupported pretrained_model_type: {pretrained_model_type}")
             
-        return {"model": udf_name, "path": model_path, "status": "deployed"}
+        return {"model": udf_name,"status": "deployed"}
 
     def get_meta(self, model: str, llm_config: Dict[str, Any] = {}):
         """
@@ -109,7 +104,7 @@ class SimpleByzerLLM:
         meta_result = {
             "model_name": model_name,
             "backend": "openai",
-            "max_model_len": 4097,  # typical for GPT-3.5
+            "max_model_len": 4097,  
             "support_stream": True,
             "deploy_info": deploy_info,
         }
@@ -180,7 +175,7 @@ class SimpleByzerLLM:
             "model": model,
             "messages": openai_messages,
             "temperature": llm_config.get("temperature", 0.7),
-            "max_tokens": llm_config.get("max_tokens", 256),
+            "max_tokens": llm_config.get("max_tokens", 4096),
             "top_p": llm_config.get("top_p", 1.0),
         }
         try:
