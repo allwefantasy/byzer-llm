@@ -179,7 +179,9 @@ class SimpleByzerLLM:
             "top_p": llm_config.get("top_p", 1.0),
         }
         try:
-            completion = openai.ChatCompletion.create(**openai_params)
+            deploy_info = self.deployments.get(model, {})
+            client = deploy_info.get("sync_client", openai)
+            completion = client.chat.completions.create(**openai_params)
             content = completion.choices[0].message["content"]
             return [LLMResponse(output=content, metadata={"usage": completion.usage}, input=str(openai_messages))]
         except Exception as e:
@@ -218,7 +220,11 @@ class SimpleByzerLLM:
         }
 
         try:
-            stream = openai.ChatCompletion.create(**openai_params)
+            deploy_info = self.deployments.get(model, {})
+            client = deploy_info.get("sync_client", openai)
+            deploy_info = self.deployments.get(model, {})
+            client = deploy_info.get("async_client", openai)
+            stream = await client.chat.completions.create(**openai_params)
             collected_text = ""
             for chunk in stream:
                 delta = chunk.choices[0]["delta"].get("content", "")
