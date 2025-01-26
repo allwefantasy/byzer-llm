@@ -70,8 +70,7 @@ class CustomSaasAPI:
                 api_key=self.api_key,
                 http_client=httpx.Client(
                     proxies=self.proxies,
-                    transport=httpx.HTTPTransport(
-                        local_address=self.local_address),
+                    transport=httpx.HTTPTransport(local_address=self.local_address),
                 ),
             )
 
@@ -113,7 +112,7 @@ class CustomSaasAPI:
         except:
             return ins
 
-        # 如果是字典，应该是非chat格式需求，比如语音转文字等
+        ## 如果是字典，应该是非chat格式需求，比如语音转文字等
         if isinstance(ins_json, dict):
             return ins_json
 
@@ -140,11 +139,11 @@ class CustomSaasAPI:
             # or {"image": "xxxxxx"}, {"text": "What’s in this image?"}
             if ("image" in item or "image_url" in item) and "type" not in item:
                 image_data = item.get("image", item.get("image_url", ""))
-                # "data:image/jpeg;base64,"
+                ## "data:image/jpeg;base64,"
                 if not image_data.startswith("data:"):
                     image_data = "data:image/jpeg;base64," + image_data
 
-                # get the other fields except image/text/image_url
+                ## get the other fields except image/text/image_url
                 other_fields = {
                     k: v
                     for k, v in item.items()
@@ -161,9 +160,9 @@ class CustomSaasAPI:
                 text_data = item["text"]
                 content.append({"text": text_data, "type": "text"})
 
-            # for format like this: {"type": "text", "text": "What’s in this image?"},
-            # {"type": "image_url", "image_url": {"url":"","detail":"high"}}
-            # this is the standard format, just return it
+            ## for format like this: {"type": "text", "text": "What’s in this image?"},
+            ## {"type": "image_url", "image_url": {"url":"","detail":"high"}}
+            ## this is the standard format, just return it
             if "type" in item and item["type"] == "text":
                 content.append(item)
 
@@ -177,8 +176,7 @@ class CustomSaasAPI:
 
     async def async_embed_query(self, ins: str, **kwargs):
         resp = await asyncfy_with_semaphore(
-            lambda: self.client.embeddings.create(
-                input=[ins], model=self.model)
+            lambda: self.client.embeddings.create(input=[ins], model=self.model)
         )()
         embedding = resp.data[0].embedding
         usage = resp.usage
@@ -309,8 +307,8 @@ class CustomSaasAPI:
             raise ValueError("Invalid audio data format")
 
         format_end = audio.index(base64_prefix)
-        audio_format = audio[len(data_prefix): format_end]
-        base64_data = audio[format_end + len(base64_prefix):]
+        audio_format = audio[len(data_prefix) : format_end]
+        base64_data = audio[format_end + len(base64_prefix) :]
 
         # Decode the base64 audio data
         audio_data = base64.b64decode(base64_data)
@@ -416,8 +414,7 @@ class CustomSaasAPI:
         extra_params = {}
         extra_body = {}
         messages = [
-            {"role": message["role"],
-                "content": self.process_input(message["content"])}
+            {"role": message["role"], "content": self.process_input(message["content"])}
             for message in his
         ] + [{"role": "user", "content": self.process_input(ins)}]
 
@@ -460,7 +457,7 @@ class CustomSaasAPI:
             extra_params["extra_body"] = extra_body
             messages = messages[:-1]
 
-        stream = kwargs.get("stream", False)
+        stream = kwargs.get("stream", False)        
 
         if "stop" in kwargs:
             extra_params["stop"] = (
@@ -469,8 +466,8 @@ class CustomSaasAPI:
                 else json.loads(kwargs["stop"])
             )
 
-        # content = [
-        # "voice": "alloy","input": "Hello, World!",response_format: "mp3"]
+        ## content = [
+        ##    "voice": "alloy","input": "Hello, World!",response_format: "mp3"]
         last_message = messages[-1]["content"]
 
         if isinstance(last_message, dict) and "voice" in last_message:
@@ -508,13 +505,12 @@ class CustomSaasAPI:
         def writer():
             try:
                 r = ""
+                reasoning_r = ""
                 response = self.client.chat.completions.create(
                     messages=messages,
                     model=model,
                     stream=True,
-                    max_tokens=max_length,
-                    temperature=temperature,
-                    top_p=top_p,
+                    max_tokens=max_length,                    
                     **extra_params,
                 )
                 # input_tokens_count = 0
@@ -524,7 +520,9 @@ class CustomSaasAPI:
 
                 for chunk in response:
                     content = chunk.choices[0].delta.content or ""
+                    reasoning_content =  chunk.choices[0].delta.reasoning_content or ""
                     r += content
+                    reasoning_r += reasoning_content
                     if hasattr(chunk, "usage") and chunk.usage:
                         input_tokens_count = chunk.usage.prompt_tokens
                         generated_tokens_count = chunk.usage.completion_tokens
@@ -541,6 +539,7 @@ class CustomSaasAPI:
                                         metadata=SingleOutputMeta(
                                             input_tokens_count=input_tokens_count,
                                             generated_tokens_count=generated_tokens_count,
+                                            reasoning_content=reasoning_r,
                                             finish_reason=chunk.choices[0].finish_reason,
                                         ),
                                     )
@@ -555,7 +554,7 @@ class CustomSaasAPI:
         logger.info(json.dumps(messages, ensure_ascii=False, indent=2))
         base_url = self.other_params.get("base_url", "")
         logger.info(
-            f"params: model={model}, max_length={max_length}, top_p={top_p}, base_url={base_url}, temperature={temperature}, stream={stream}"
+            f"params: model={model}, max_length={max_length}, base_url={base_url},  stream={stream}"
         )
         logger.info(f"kwargs: {kwargs} extra_params: {extra_params}")
         if stream:
@@ -591,9 +590,7 @@ class CustomSaasAPI:
                     lambda: self.client.chat.completions.create(
                         messages=messages,
                         model=model,
-                        max_tokens=max_length,
-                        temperature=temperature,
-                        top_p=top_p,
+                        max_tokens=max_length,                        
                         **extra_params,
                     )
                 )()
@@ -610,7 +607,7 @@ class CustomSaasAPI:
                         "time_cost": time_cost,
                         "first_token_time": 0,
                         "speed": float(generated_tokens_count) / time_cost,
-                        # Available options: stop, eos, length, tool_calls
+                        "reasoning_content": response.choices[0].message.reasoning_content,
                         "finish_reason": response.choices[0].finish_reason,
                     }
                 }

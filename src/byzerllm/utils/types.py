@@ -35,9 +35,13 @@ except ImportError:
             pass
 
 class SingleOutputMeta:
-    def __init__(self, input_tokens_count:int=0, generated_tokens_count:int=0):        
+    def __init__(self, input_tokens_count:int=0, 
+                 generated_tokens_count:int=0,
+                 reasoning_content:str="",finish_reason:str=""):        
         self.input_tokens_count = input_tokens_count
-        self.generated_tokens_count = generated_tokens_count    
+        self.generated_tokens_count = generated_tokens_count  
+        self.reasoning_content = reasoning_content  
+        self.finish_reason = finish_reason
 
 class SingleOutput:
     def __init__(self, text:str,metadata:SingleOutputMeta=SingleOutputMeta()):
