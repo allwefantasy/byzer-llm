@@ -41,6 +41,12 @@ class SimpleByzerLLM:
         from local dictionary of 'deployed' models if any.
         """
         if udf_name in self.deployments:
+            # Clean up OpenAI clients if they exist
+            deploy_info = self.deployments[udf_name]
+            if "sync_client" in deploy_info:
+                deploy_info["sync_client"].close()
+            if "async_client" in deploy_info:
+                asyncio.run(deploy_info["async_client"].close())
             del self.deployments[udf_name]
 
     def deploy(
@@ -54,12 +60,39 @@ class SimpleByzerLLM:
         For local/hosted model we had path. For OpenAI usage,
         we might store a mapping from udf_name -> model_name.
         """
-        # We'll store the info so get_meta can read it
-        self.deployments[udf_name] = {
-            "model_path": model_path,
-            "pretrained_model_type": pretrained_model_type,
-            "infer_params": infer_params,
-        }
+        # Initialize OpenAI clients if this is a SaaS model
+        if pretrained_model_type.startswith("saas/"):
+            base_url = infer_params.get("saas.base_url", "https://api.openai.com/v1")
+            api_key = infer_params.get("saas.api_key", self.api_key)
+            model = infer_params.get("saas.model", "gpt-3.5-turbo")
+            
+            # Create both sync and async clients
+            sync_client = OpenAI(
+                base_url=base_url,
+                api_key=api_key,
+            )
+            
+            async_client = AsyncOpenAI(
+                base_url=base_url,
+                api_key=api_key,
+            )
+            
+            self.deployments[udf_name] = {
+                "model_path": model_path,
+                "pretrained_model_type": pretrained_model_type,
+                "infer_params": infer_params,
+                "sync_client": sync_client,
+                "async_client": async_client,
+                "model": model,
+            }
+        else:
+            # For non-SaaS models, store basic info
+            self.deployments[udf_name] = {
+                "model_path": model_path,
+                "pretrained_model_type": pretrained_model_type,
+                "infer_params": infer_params,
+            }
+            
         return {"model": udf_name, "path": model_path, "status": "deployed"}
 
     def get_meta(self, model: str, llm_config: Dict[str, Any] = {}):
@@ -68,13 +101,27 @@ class SimpleByzerLLM:
         We don't have direct metadata from OpenAI in real usage
         (some data can be gleaned from Model endpoint).
         """
+        deploy_info = self.deployments.get(model, {})
+        
+        # For SaaS models, get model name from deployment info
+        model_name = deploy_info.get("model", model)
+        
         meta_result = {
-            "model_name": model,
+            "model_name": model_name,
             "backend": "openai",
             "max_model_len": 4097,  # typical for GPT-3.5
             "support_stream": True,
-            "deploy_info": self.deployments.get(model, {}),
+            "deploy_info": deploy_info,
         }
+        
+        # Add SaaS specific metadata if available
+        if deploy_info.get("pretrained_model_type", "").startswith("saas/"):
+            meta_result.update({
+                "model_deploy_type": "saas",
+                "message_format": True,
+                "support_chat_template": True,
+            })
+            
         return meta_result
 
     def abort(self, request_id: str, model: Optional[str] = None):
