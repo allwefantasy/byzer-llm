@@ -300,9 +300,7 @@ class SimpleByzerLLM:
 
         deploy_info = self.deployments.get(model, {})
         client = deploy_info["sync_client"]
-        
         messages, extra_params = self.process_messages(conversations, **llm_config)
-
         start_time = time.monotonic()
         
         history = messages[:-1]
@@ -321,7 +319,7 @@ class SimpleByzerLLM:
             model=deploy_info["model"],
             temperature=llm_config.get("temperature", 0.7),
             max_tokens=llm_config.get("max_tokens", 4096),
-            top_p=llm_config.get("top_p", 1.0),
+            top_p=llm_config.get("top_p", 0.9),
             **extra_params,
         )
         generated_text = response.choices[0].message.content
@@ -359,33 +357,37 @@ class SimpleByzerLLM:
             model = self.default_model_name
 
         deploy_info = self.deployments.get(model, {})
+    
         client = deploy_info["sync_client"]
-        is_reasoning = deploy_info["is_reasoning"]
-
-        messages, extra_params = self.process_messages(conversations, **llm_config)
-
+        is_reasoning = deploy_info["is_reasoning"]        
+     
+        messages, extra_params = self.process_messages(conversations, **llm_config)        
+        
         if is_reasoning:
             response = client.chat.completions.create(
                 messages=messages,
                 model=deploy_info["model"],
                 stream=True,
                 **extra_params,
-            )
-        else:
+            ) 
+ 
+        else:            
             response = client.chat.completions.create(
                 messages=messages,
                 model=deploy_info["model"],
                 temperature=llm_config.get("temperature", 0.7),
                 max_tokens=llm_config.get("max_tokens", 4096),
-                top_p=llm_config.get("top_p", 1.0),
+                top_p=llm_config.get("top_p", 0.9),
                 stream=True,
                 **extra_params,
             )
+   
+            
         input_tokens_count = 0
         generated_tokens_count = 0
         if delta_mode:
-            for chunk in response:
-                content = chunk.choices[0].delta.content or ""
+            for chunk in response:                
+                content = chunk.choices[0].delta.content or ""                
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
                     generated_tokens_count = chunk.usage.completion_tokens
@@ -436,7 +438,7 @@ class SimpleByzerLLM:
                 model=deploy_info["model"],
                 temperature=llm_config.get("temperature", 0.7),
                 max_tokens=llm_config.get("max_tokens", 4096),
-                top_p=llm_config.get("top_p", 1.0),
+                top_p=llm_config.get("top_p", 0.9),
                 stream=True,
                 **extra_params,
             )

@@ -180,7 +180,7 @@ class _PromptWraper:
                     render=render, check_result=check_result, options=self._options
                 )(func)(instance, **input_dict)
 
-        if isinstance(llm, ByzerLLM):
+        if isinstance(llm, ByzerLLM) or isinstance(llm, SimpleByzerLLM):
             if "self" in input_dict:
                 instance = input_dict.pop("self")
                 return llm.prompt(
@@ -516,7 +516,7 @@ class _PrompRunner:
                 return self.to_model(f"{prefix}{v}")
             return v
 
-        if isinstance(llm, ByzerLLM):
+        if isinstance(llm, ByzerLLM) or isinstance(llm, SimpleByzerLLM):
             return_origin_response = True if self.response_markers else False
             marker = None
             if self.response_markers:
