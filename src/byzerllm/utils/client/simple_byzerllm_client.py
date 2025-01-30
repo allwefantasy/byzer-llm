@@ -97,7 +97,7 @@ class SimpleByzerLLM:
             api_key = infer_params["saas.api_key"]
             model = infer_params.get("saas.model", "deepseek-chat")
 
-            is_reasoning = infer_params.get("is_reasoning", False)
+            is_reasoning = infer_params.get("is_reasoning", infer_params.get("saas.is_reasoning", False))
 
             # Create both sync and async clients
             sync_client = OpenAI(
@@ -312,7 +312,15 @@ class SimpleByzerLLM:
         )
         
         if event_result is not None:
-            return event_result
+            responses = [
+            LLMResponse(
+                output=item["predict"],
+                metadata=item.get("metadata", {}),
+                input=item["input"],
+                )
+                for item in event_result
+            ]
+            return responses
         
         response = client.chat.completions.create(
             messages=messages,
