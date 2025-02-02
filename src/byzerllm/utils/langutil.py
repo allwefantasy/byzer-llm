@@ -184,19 +184,31 @@ def run_in_thread(timeout: Optional[float] = None):
         def wrapper(*args, **kwargs):
             with ThreadPoolExecutor(max_workers=1) as executor:
                 future = executor.submit(func, *args, **kwargs)
-                try:
-                    return future.result(timeout=timeout)
-                except TimeoutError:
-                    logging.warning(f"Timeout after {timeout}s in {func.__name__}")
-                    future.cancel()
-                    raise
-                except KeyboardInterrupt:
-                    logging.warning("KeyboardInterrupt received, attempting to cancel task...")
-                    future.cancel()                    
-                    raise
-                except Exception as e:
-                    logging.error(f"Error occurred in thread: {str(e)}")
-                    raise
+                start_time = time.time()
+                
+                while True:
+                    try:
+                        # 使用较短的超时时间进行轮询，确保能够响应中断信号
+                        poll_timeout = 0.1
+                        if timeout is not None:
+                            remaining = timeout - (time.time() - start_time)
+                            if remaining <= 0:
+                                future.cancel()
+                                raise TimeoutError(f"Timeout after {timeout}s in {func.__name__}")
+                            poll_timeout = min(poll_timeout, remaining)
+                            
+                        try:
+                            return future.result(timeout=poll_timeout)
+                        except TimeoutError:
+                            continue  # 继续轮询
+                            
+                    except KeyboardInterrupt:
+                        logging.warning("KeyboardInterrupt received, attempting to cancel task...")
+                        future.cancel()
+                        raise
+                    except Exception as e:
+                        logging.error(f"Error occurred in thread: {str(e)}")
+                        raise
         return wrapper
     return decorator
 
