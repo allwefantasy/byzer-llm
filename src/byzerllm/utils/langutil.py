@@ -167,6 +167,7 @@ class CancellationRequested(Exception):
     """Raised when a task is requested to be cancelled."""
     pass
 
+
 def run_in_thread(timeout: Optional[float] = None):
     """Decorator that runs a function in a thread with signal handling.
     
@@ -278,6 +279,49 @@ def run_in_thread_with_cancel(timeout: Optional[float] = None):
                     raise
         return wrapper
     return decorator
+
+
+def run_in_raw_thread(func):
+    """A decorator that runs a function in a separate thread and handles exceptions.
+    
+    Args:
+        func: The function to run in a thread
+        
+    Returns:
+        A wrapper function that executes the decorated function in a thread
+        
+    The decorator will:
+    1. Run the function in a separate thread
+    2. Handle KeyboardInterrupt properly
+    3. Propagate exceptions from the thread
+    4. Support function arguments
+    5. Preserve function metadata
+    """
+    
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        # Store thread results
+        result = []
+        exception = []
+        
+        def worker():            
+            ret = func(*args, **kwargs)
+            result.append(ret)
+        
+        # Create and start thread with a meaningful name
+        thread = threading.Thread(target=worker, name=f"{func.__name__}_thread")
+        thread.daemon = True  # Make thread daemon so it doesn't prevent program exit
+        
+        try:
+            thread.start()
+            while thread.is_alive():
+                thread.join(0.1)
+
+            return result[0] if result else None            
+        except KeyboardInterrupt:                                
+            raise KeyboardInterrupt("Task was cancelled by user")
+            
+    return wrapper
 
 
 
