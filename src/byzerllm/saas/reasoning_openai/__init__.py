@@ -520,7 +520,9 @@ class CustomSaasAPI:
 
                 for chunk in response:
                     content = chunk.choices[0].delta.content or ""
-                    reasoning_content =  chunk.choices[0].delta.reasoning_content or ""
+                    reasoning_content = ""
+                    if hasattr(chunk.choices[0].delta, "reasoning_content"):
+                        reasoning_content = chunk.choices[0].delta.reasoning_content or ""
                     r += content
                     reasoning_r += reasoning_content
                     if hasattr(chunk, "usage") and chunk.usage:
@@ -597,6 +599,9 @@ class CustomSaasAPI:
 
                 generated_text = response.choices[0].message.content
                 generated_tokens_count = response.usage.completion_tokens
+                reasoning_content = ""
+                if hasattr(response.choices[0].message, "reasoning_content"):
+                    reasoning_content = response.choices[0].message.reasoning_content or ""
                 input_tokens_count = response.usage.prompt_tokens
                 time_cost = time.monotonic() - start_time
                 gen_meta = {
@@ -607,7 +612,7 @@ class CustomSaasAPI:
                         "time_cost": time_cost,
                         "first_token_time": 0,
                         "speed": float(generated_tokens_count) / time_cost,
-                        "reasoning_content": response.choices[0].message.reasoning_content,
+                        "reasoning_content": reasoning_content,
                         "finish_reason": response.choices[0].finish_reason,
                     }
                 }

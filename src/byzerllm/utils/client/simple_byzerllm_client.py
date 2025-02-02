@@ -331,6 +331,11 @@ class SimpleByzerLLM:
             **extra_params,
         )
         generated_text = response.choices[0].message.content
+        
+        reasoning_text = ""
+        if hasattr(response.choices[0].message, "reasoning_content"):
+            reasoning_text = response.choices[0].message.reasoning_content or ""
+
         generated_tokens_count = response.usage.completion_tokens
         input_tokens_count = response.usage.prompt_tokens
         time_cost = time.monotonic() - start_time
@@ -344,6 +349,7 @@ class SimpleByzerLLM:
                 "speed": float(generated_tokens_count) / time_cost,
                 # Available options: stop, eos, length, tool_calls
                 "finish_reason": response.choices[0].finish_reason,
+                "reasoning_content": reasoning_text,
                 **extra_params,
             }
         }
@@ -396,7 +402,11 @@ class SimpleByzerLLM:
         if delta_mode:
             for chunk in response:
                 content = chunk.choices[0].delta.content or ""
-                reasoning_text = chunk.choices[0].delta.reasoning_content or ""
+                
+                reasoning_text = ""
+                if hasattr(chunk.choices[0].delta, "reasoning_content"):
+                    reasoning_text = chunk.choices[0].delta.reasoning_content or ""
+
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
                     generated_tokens_count = chunk.usage.completion_tokens
@@ -413,7 +423,10 @@ class SimpleByzerLLM:
             all_reasoning_text = ""
             for chunk in response:
                 content = chunk.choices[0].delta.content or ""
-                reasoning_text = chunk.choices[0].delta.reasoning_content or ""
+                reasoning_text = ""
+                if hasattr(chunk.choices[0].delta, "reasoning_content"):
+                    reasoning_text = chunk.choices[0].delta.reasoning_content or ""
+
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
                     generated_tokens_count = chunk.usage.completion_tokens
@@ -466,7 +479,10 @@ class SimpleByzerLLM:
         if delta_mode:
             async for chunk in response:
                 content = chunk.choices[0].delta.content or ""
-                reasoning_text = chunk.choices[0].delta.reasoning_content or ""
+                reasoning_text = ""
+                if hasattr(chunk.choices[0].delta, "reasoning_content"):
+                    reasoning_text = chunk.choices[0].delta.reasoning_content or ""
+
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
                     generated_tokens_count = chunk.usage.completion_tokens
@@ -483,7 +499,10 @@ class SimpleByzerLLM:
             all_reasoning_text = ""
             async for chunk in response:
                 content = chunk.choices[0].delta.content or ""
-                reasoning_text = chunk.choices[0].delta.reasoning_content or ""
+                reasoning_text = ""
+                if hasattr(chunk.choices[0].delta, "reasoning_content"):
+                    reasoning_text = chunk.choices[0].delta.reasoning_content or ""
+
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
                     generated_tokens_count = chunk.usage.completion_tokens
