@@ -1,4 +1,7 @@
 import anyio
+from concurrent.futures import ThreadPoolExecutor, TimeoutError, CancelledError
+from threading import Event
+from inspect import signature
 from contextlib import contextmanager, closing
 from contextlib2 import nullcontext
 from functools import wraps, partial
@@ -9,6 +12,9 @@ from typing import Any, Optional
 import re
 from urllib.parse import urlparse
 import warnings
+import threading
+import logging
+import time
 
 import json
 from typing import Any, Dict, List, Union
@@ -156,6 +162,122 @@ def to_bool(s: str) -> bool:
             f"Invalid boolean value: {s}. Valid true values: {true_values}. Valid false"
             f" values: {false_values}."
         )    
+
+class CancellationRequested(Exception):
+    """Raised when a task is requested to be cancelled."""
+    pass
+
+def run_in_thread(timeout: Optional[float] = None):
+    """Decorator that runs a function in a thread with signal handling.
+    
+    Args:
+        timeout (float, optional): Maximum time to wait for thread completion in seconds.
+            If None, will wait indefinitely.
+            
+    The decorated function will run in a separate thread and can be interrupted by
+    signals like Ctrl+C (KeyboardInterrupt). When interrupted, it will log the event
+    and clean up gracefully.
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(func, *args, **kwargs)
+                try:
+                    return future.result(timeout=timeout)
+                except TimeoutError:
+                    logging.warning(f"Timeout after {timeout}s in {func.__name__}")
+                    future.cancel()
+                    raise
+                except KeyboardInterrupt:
+                    logging.warning("KeyboardInterrupt received, attempting to cancel task...")
+                    future.cancel()                    
+                    raise
+                except Exception as e:
+                    logging.error(f"Error occurred in thread: {str(e)}")
+                    raise
+        return wrapper
+    return decorator
+
+def run_in_thread_with_cancel(timeout: Optional[float] = None):
+    """Decorator that runs a function in a thread with explicit cancellation support.
+    
+    Args:
+        timeout (float, optional): Maximum time to wait for thread completion in seconds.
+            If None, will wait indefinitely.
+            
+    The decorated function MUST accept 'cancel_event' as its first parameter.
+    This cancel_event is a threading.Event object that can be used to check if
+    cancellation has been requested.
+    
+    The decorated function can be called with an external cancel_event passed as a keyword argument.
+    If not provided, a new Event will be created.
+    
+    Example:
+        @run_in_thread_with_cancel(timeout=10)
+        def long_task(cancel_event, arg1, arg2):
+            while not cancel_event.is_set():
+                # do work
+                if cancel_event.is_set():
+                    raise CancellationRequested()
+                    
+        # 使用外部传入的cancel_event
+        external_cancel = Event()
+        try:
+            result = long_task(arg1, arg2, cancel_event=external_cancel)
+        except CancelledError:
+            print("Task was cancelled")
+            
+        # 在其他地方取消任务
+        external_cancel.set()
+    """
+    def decorator(func):
+        # 检查函数签名
+        sig = signature(func)
+        params = list(sig.parameters.keys())
+        if not params or params[0] != 'cancel_event':
+            raise ValueError(
+                f"Function {func.__name__} must have 'cancel_event' as its first parameter. "
+                f"Current parameters: {params}"
+            )
+        
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # 从kwargs中提取或创建cancel_event
+            cancel_event = kwargs.pop('cancel_event', None) or Event()
+            
+            def cancellable_task():
+                try:
+                    return func(cancel_event, *args, **kwargs)
+                except CancellationRequested:
+                    logging.info(f"Task {func.__name__} was cancelled")
+                    raise
+                except Exception as e:
+                    logging.error(f"Error in {func.__name__}: {str(e)}")
+                    raise
+            
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(cancellable_task)
+                try:
+                    return future.result(timeout=timeout)
+                except TimeoutError:
+                    logging.warning(f"Timeout after {timeout}s in {func.__name__}")
+                    cancel_event.set()
+                    future.cancel()
+                    raise
+                except KeyboardInterrupt:
+                    logging.warning(f"KeyboardInterrupt received, cancelling {func.__name__}...")
+                    cancel_event.set()
+                    future.cancel()
+                    raise CancelledError("Task cancelled by user")
+                except CancellationRequested:
+                    logging.info(f"Task {func.__name__} was cancelled")
+                    raise CancelledError("Task cancelled by request")
+                except Exception as e:
+                    logging.error(f"Error occurred in thread: {str(e)}")
+                    raise
+        return wrapper
+    return decorator
 
 
 
