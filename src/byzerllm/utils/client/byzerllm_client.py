@@ -1328,13 +1328,11 @@ class ByzerLLM:
                 text_outputs = final_output.outputs
                 clean_func = self.mapping_clean_func.get(model, lambda s: s)
                 generated_text = text_outputs[0].text
-            # 只有当 generated_text 与 pre_generated_text 相同且不为空时才跳过
-            if (
-                pre_generated_text is not None
-                and generated_text 
-                and generated_text == pre_generated_text
-            ):
-                continue
+                if (
+                    pre_generated_text is not None
+                    and generated_text == pre_generated_text
+                ):
+                    continue
 
                 if delta_mode and pre_generated_text is not None:
                     s = generated_text[len(pre_generated_text) :]
