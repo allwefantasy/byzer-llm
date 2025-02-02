@@ -1311,7 +1311,9 @@ class ByzerLLM:
         stream_server_type = v[0].metadata.get("stream_server", "VLLM_STREAM_SERVER")
         server = ray.get_actor(stream_server_type)
 
+        pre_reasoning_text = None
         pre_generated_text = None
+
         while True:
             final_output = ray.get(server.get_item.remote(request_id))
             if isinstance(final_output, str):
@@ -1328,18 +1330,24 @@ class ByzerLLM:
                 text_outputs = final_output.outputs
                 clean_func = self.mapping_clean_func.get(model, lambda s: s)
                 generated_text = text_outputs[0].text
+                metadata = text_outputs[0].metadata
+                reasoning_text = metadata.get("reasoning_content", None)
                 if (
                     pre_generated_text is not None
                     and generated_text == pre_generated_text
+                    and pre_reasoning_text is not None
+                    and reasoning_text == pre_reasoning_text
                 ):
                     continue
 
                 if delta_mode and pre_generated_text is not None:
                     s = generated_text[len(pre_generated_text) :]
+                    metadata.reasoning_content = reasoning_text[len(pre_reasoning_text) :]
                 else:
-                    s = generated_text
+                    s = generated_text                    
                 pre_generated_text = generated_text
-                yield (clean_func(s), text_outputs[0].metadata)
+                pre_reasoning_text = reasoning_text
+                yield (clean_func(s), metadata)
 
     async def async_stream_chat_oai(
         self,
@@ -1368,6 +1376,7 @@ class ByzerLLM:
         server = ray.get_actor(stream_server_type)
 
         pre_generated_text = None
+        pre_reasoning_text = None
         while True:
             final_output = await server.get_item.remote(request_id)
             if isinstance(final_output, str):
@@ -1384,18 +1393,24 @@ class ByzerLLM:
                 text_outputs = final_output.outputs
                 clean_func = self.mapping_clean_func.get(model, lambda s: s)
                 generated_text = text_outputs[0].text
+                metadata = text_outputs[0].metadata
+                reasoning_text = metadata.get("reasoning_content", None)
                 if (
                     pre_generated_text is not None
                     and generated_text == pre_generated_text
+                    and pre_reasoning_text is not None
+                    and reasoning_text == pre_reasoning_text
                 ):
                     continue
 
                 if delta_mode and pre_generated_text is not None:
                     s = generated_text[len(pre_generated_text) :]
+                    metadata.reasoning_content = reasoning_text[len(pre_reasoning_text) :]
                 else:
                     s = generated_text
                 pre_generated_text = generated_text
-                yield (clean_func(s), text_outputs[0].metadata)
+                pre_reasoning_text = reasoning_text
+                yield (clean_func(s), metadata)
 
     def clear_impl_cache(
         self,
