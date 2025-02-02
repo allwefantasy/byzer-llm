@@ -11,7 +11,7 @@ def to_model(result: str,model_class: Type[Any]):
         if result.startswith("```json") and result.endswith("```"):
             json_str = result[len("```json"):-len("```")]
         else:
-            json_str = code_utils.extract_code(result)[0][1]
+            json_str = code_utils.extract_code(result)[-1][1]
         json_data = json.loads(json_str)            
     except json.JSONDecodeError as e:
         print(f"The returned string is not a valid JSON, e: {str(e)} string: {result}")            
