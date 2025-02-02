@@ -37,7 +37,7 @@ from byzerllm.utils.client.types import (
     LLMMetadata,
 )
 
-from byzerllm.utils import (    
+from byzerllm.utils import (
     format_prompt_jinja2,
     format_str_jinja2
 )
@@ -93,11 +93,12 @@ class SimpleByzerLLM:
                 "saas.base_url", "https://api.deepseek.com/v1")
             if not "saas.api_key" in infer_params:
                 raise ValueError("saas.api_key is required for SaaS models")
-            
+
             api_key = infer_params["saas.api_key"]
             model = infer_params.get("saas.model", "deepseek-chat")
 
-            is_reasoning = infer_params.get("is_reasoning", infer_params.get("saas.is_reasoning", False))
+            is_reasoning = infer_params.get(
+                "is_reasoning", infer_params.get("saas.is_reasoning", False))
 
             # Create both sync and async clients
             sync_client = OpenAI(
@@ -124,7 +125,6 @@ class SimpleByzerLLM:
                 f"Unsupported pretrained_model_type: {pretrained_model_type}")
 
         return {"model": udf_name, "status": "deployed"}
-    
 
     @property
     def metadata(self) -> LLMMetadata:
@@ -136,12 +136,12 @@ class SimpleByzerLLM:
             is_function_calling_model=True,
             model_name=meta.get("model_name", self.default_model_name),
         )
-    
+
     def setup_default_model_name(self, model: str):
         self.default_model_name = model
 
     @staticmethod
-    def from_default_model(model: str, auto_connect_cluster: bool = True) -> "SimpleByzerLLM":        
+    def from_default_model(model: str, auto_connect_cluster: bool = True) -> "SimpleByzerLLM":
         llm = SimpleByzerLLM()
         llm.setup_default_model_name(model)
         return llm
@@ -157,13 +157,12 @@ class SimpleByzerLLM:
 
     def get_sub_client(self, client_name: str) -> Union[List["SimpleByzerLLM"], Optional["SimpleByzerLLM"]]:
         return self.sub_clients.get(client_name, None)
-    
 
     def remove_sub_client(self, client_name: str) -> "SimpleByzerLLM":
         if client_name in self.sub_clients:
             del self.sub_clients[client_name]
         return self
-    
+
     def add_event_callback(
         self, event_name: EventName, callback: EventCallback
     ) -> None:
@@ -176,10 +175,10 @@ class SimpleByzerLLM:
                 if not continue_flag:
                     return value
         return None
-    
+
     def process_messages(self, messages: List[Dict[str, Any]], **kwargs):
         extra_params = {}
-        extra_body = {}        
+        extra_body = {}
         if (
             len(messages) > 1
             and messages[-1]["role"] == "user"
@@ -217,7 +216,7 @@ class SimpleByzerLLM:
         if is_siliconflow_chat_prefix():
             extra_body["prefix"] = messages[-1]["content"]
             extra_params["extra_body"] = extra_body
-            messages = messages[:-1]        
+            messages = messages[:-1]
 
         if "stop" in kwargs:
             extra_params["stop"] = (
@@ -300,28 +299,29 @@ class SimpleByzerLLM:
 
         deploy_info = self.deployments.get(model, {})
         client = deploy_info["sync_client"]
-        messages, extra_params = self.process_messages(conversations, **llm_config)
+        messages, extra_params = self.process_messages(
+            conversations, **llm_config)
         start_time = time.monotonic()
-        
+
         history = messages[:-1]
         instruction = messages[-1]["content"]
-        v = [{"instruction": instruction,"history": history, **llm_config}]
+        v = [{"instruction": instruction, "history": history, **llm_config}]
 
         event_result = self._trigger_event(
             EventName.BEFORE_CALL_MODEL, self, model, v
         )
-        
+
         if event_result is not None:
             responses = [
-            LLMResponse(
-                output=item["predict"],
-                metadata=item.get("metadata", {}),
-                input=item["input"],
+                LLMResponse(
+                    output=item["predict"],
+                    metadata=item.get("metadata", {}),
+                    input=item["input"],
                 )
                 for item in event_result
             ]
             return responses
-        
+
         response = client.chat.completions.create(
             messages=messages,
             model=deploy_info["model"],
@@ -365,21 +365,22 @@ class SimpleByzerLLM:
             model = self.default_model_name
 
         deploy_info = self.deployments.get(model, {})
-    
+
         client = deploy_info["sync_client"]
-        is_reasoning = deploy_info["is_reasoning"]        
-     
-        messages, extra_params = self.process_messages(conversations, **llm_config)        
-        
+        is_reasoning = deploy_info["is_reasoning"]
+
+        messages, extra_params = self.process_messages(
+            conversations, **llm_config)
+
         if is_reasoning:
             response = client.chat.completions.create(
                 messages=messages,
                 model=deploy_info["model"],
                 stream=True,
                 **extra_params,
-            ) 
- 
-        else:            
+            )
+
+        else:
             response = client.chat.completions.create(
                 messages=messages,
                 model=deploy_info["model"],
@@ -389,13 +390,13 @@ class SimpleByzerLLM:
                 stream=True,
                 **extra_params,
             )
-   
-            
+
         input_tokens_count = 0
         generated_tokens_count = 0
         if delta_mode:
-            for chunk in response:                
-                content = chunk.choices[0].delta.content or ""                
+            for chunk in response:
+                content = chunk.choices[0].delta.content or ""
+                reasoning_text = chunk.choices[0].delta.reasoning_content or ""
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
                     generated_tokens_count = chunk.usage.completion_tokens
@@ -403,11 +404,16 @@ class SimpleByzerLLM:
                     input_tokens_count = 0
                     generated_tokens_count = 0
 
-                yield (content, SingleOutputMeta(input_tokens_count=input_tokens_count, generated_tokens_count=generated_tokens_count, finish_reason=chunk.choices[0].finish_reason))
+                yield (content, SingleOutputMeta(input_tokens_count=input_tokens_count, 
+                                                 generated_tokens_count=generated_tokens_count, 
+                                                 reasoning_content=reasoning_text,
+                                                 finish_reason=chunk.choices[0].finish_reason))
         else:
             s = ""
+            all_reasoning_text = ""
             for chunk in response:
                 content = chunk.choices[0].delta.content or ""
+                reasoning_text = chunk.choices[0].delta.reasoning_content or ""
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
                     generated_tokens_count = chunk.usage.completion_tokens
@@ -415,7 +421,11 @@ class SimpleByzerLLM:
                     input_tokens_count = 0
                     generated_tokens_count = 0
                 s += content
-                yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count, generated_tokens_count=generated_tokens_count, finish_reason=chunk.choices[0].finish_reason))
+                all_reasoning_text += reasoning_text
+                yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count, 
+                                           generated_tokens_count=generated_tokens_count, 
+                                           reasoning_content=all_reasoning_text,
+                                           finish_reason=chunk.choices[0].finish_reason))
 
     async def async_stream_chat_oai(
         self,
@@ -431,7 +441,8 @@ class SimpleByzerLLM:
         deploy_info = self.deployments.get(model, {})
         client = deploy_info["async_client"]
         is_reasoning = deploy_info["is_reasoning"]
-        messages, extra_params = self.process_messages(conversations, **llm_config)
+        messages, extra_params = self.process_messages(
+            conversations, **llm_config)
 
         if is_reasoning:
             response = await client.chat.completions.create(
@@ -455,6 +466,7 @@ class SimpleByzerLLM:
         if delta_mode:
             async for chunk in response:
                 content = chunk.choices[0].delta.content or ""
+                reasoning_text = chunk.choices[0].delta.reasoning_content or ""
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
                     generated_tokens_count = chunk.usage.completion_tokens
@@ -462,11 +474,16 @@ class SimpleByzerLLM:
                     input_tokens_count = 0
                     generated_tokens_count = 0
 
-                yield (content, SingleOutputMeta(input_tokens_count=input_tokens_count, generated_tokens_count=generated_tokens_count, finish_reason=chunk.choices[0].finish_reason))
+                yield (content, SingleOutputMeta(input_tokens_count=input_tokens_count, 
+                                                 generated_tokens_count=generated_tokens_count, 
+                                                 reasoning_content=reasoning_text,
+                                                 finish_reason=chunk.choices[0].finish_reason))
         else:
             s = ""
+            all_reasoning_text = ""
             async for chunk in response:
                 content = chunk.choices[0].delta.content or ""
+                reasoning_text = chunk.choices[0].delta.reasoning_content or ""
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
                     generated_tokens_count = chunk.usage.completion_tokens
@@ -474,8 +491,11 @@ class SimpleByzerLLM:
                     input_tokens_count = 0
                     generated_tokens_count = 0
                 s += content
-                yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count, generated_tokens_count=generated_tokens_count, finish_reason=chunk.choices[0].finish_reason))
-
+                all_reasoning_text += reasoning_text
+                yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count, 
+                                           generated_tokens_count=generated_tokens_count, 
+                                           reasoning_content=all_reasoning_text,
+                                           finish_reason=chunk.choices[0].finish_reason))
 
     def prompt(
         self,
@@ -540,7 +560,8 @@ class SimpleByzerLLM:
                     temp_options = {**{"delta_mode": True}, **options}
                     conversations = [{"role": "user", "content": prompt_str}]
                     if assistant_prefix:
-                        conversations = conversations + [{"role": "assistant", "content": assistant_prefix}]
+                        conversations = conversations + \
+                            [{"role": "assistant", "content": assistant_prefix}]
 
                     t = self.stream_chat_oai(
                         conversations=conversations,
@@ -555,7 +576,8 @@ class SimpleByzerLLM:
                     response_class = signature.return_annotation
                     conversations = [{"role": "user", "content": prompt_str}]
                     if assistant_prefix:
-                        conversations = conversations + [{"role": "assistant", "content": assistant_prefix}]
+                        conversations = conversations + \
+                            [{"role": "assistant", "content": assistant_prefix}]
                     t = self.chat_oai(
                         model=model,
                         conversations=conversations,
@@ -580,7 +602,8 @@ class SimpleByzerLLM:
                 elif issubclass(signature.return_annotation, str):
                     conversations = [{"role": "user", "content": prompt_str}]
                     if assistant_prefix:
-                        conversations = conversations + [{"role": "assistant", "content": assistant_prefix}]                        
+                        conversations = conversations + \
+                            [{"role": "assistant", "content": assistant_prefix}]
                     t = self.chat_oai(
                         model=model,
                         conversations=conversations,
@@ -596,4 +619,4 @@ class SimpleByzerLLM:
 
             return wrapper
 
-        return _impl             
+        return _impl
