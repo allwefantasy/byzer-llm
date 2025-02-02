@@ -259,24 +259,37 @@ def run_in_thread_with_cancel(timeout: Optional[float] = None):
             
             with ThreadPoolExecutor(max_workers=1) as executor:
                 future = executor.submit(cancellable_task)
-                try:
-                    return future.result(timeout=timeout)
-                except TimeoutError:
-                    logging.warning(f"Timeout after {timeout}s in {func.__name__}")
-                    cancel_event.set()
-                    future.cancel()
-                    raise
-                except KeyboardInterrupt:
-                    logging.warning(f"KeyboardInterrupt received, cancelling {func.__name__}...")
-                    cancel_event.set()
-                    future.cancel()
-                    raise CancelledError("Task cancelled by user")
-                except CancellationRequested:
-                    logging.info(f"Task {func.__name__} was cancelled")
-                    raise CancelledError("Task cancelled by request")
-                except Exception as e:
-                    logging.error(f"Error occurred in thread: {str(e)}")
-                    raise
+                start_time = time.time()
+                
+                while True:
+                    try:
+                        # 使用较短的超时时间进行轮询，确保能够响应中断信号
+                        poll_timeout = 0.1
+                        if timeout is not None:
+                            remaining = timeout - (time.time() - start_time)
+                            if remaining <= 0:
+                                cancel_event.set()
+                                future.cancel()
+                                raise TimeoutError(f"Timeout after {timeout}s in {func.__name__}")
+                            poll_timeout = min(poll_timeout, remaining)
+                            
+                        try:
+                            return future.result(timeout=poll_timeout)
+                        except TimeoutError:
+                            continue  # 继续轮询
+                            
+                    except KeyboardInterrupt:
+                        logging.warning(f"KeyboardInterrupt received, cancelling {func.__name__}...")
+                        cancel_event.set()
+                        future.cancel()
+                        raise CancelledError("Task cancelled by user")
+                    except CancellationRequested:
+                        logging.info(f"Task {func.__name__} was cancelled")
+                        raise CancelledError("Task cancelled by request")
+                    except Exception as e:
+                        logging.error(f"Error occurred in thread: {str(e)}")
+                        raise
+                        
         return wrapper
     return decorator
 
@@ -324,7 +337,3 @@ def run_in_raw_thread():
                 
         return wrapper
     return decorator    
-
-
-
-
