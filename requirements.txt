@@ -65,7 +65,7 @@ wudao
 
 # camelot-py
 # llama_index
-openai>=1.14.3
+openai>=1.59.8
 anthropic
 google-generativeai
 protobuf
