@@ -176,9 +176,10 @@ class SimpleByzerLLM:
                     return value
         return None
 
-    def process_messages(self, messages: List[Dict[str, Any]], **kwargs):
+    def process_messages(self, deploy_info: Dict[str, Any], messages: List[Dict[str, Any]], **kwargs):
         extra_params = {}
         extra_body = {}
+        base_url = deploy_info["infer_params"].get("saas.base_url", "https://api.deepseek.com/v1")
         if (
             len(messages) > 1
             and messages[-1]["role"] == "user"
@@ -192,13 +193,13 @@ class SimpleByzerLLM:
                 return True
 
             if messages[-1]["role"] == "assistant":
-                if "deepseek" in self.other_params.get("base_url", ""):
+                if "deepseek" in base_url:
                     return True
             return False
 
         def is_siliconflow_chat_prefix():
             if messages[-1]["role"] == "assistant":
-                if "siliconflow" in self.other_params.get("base_url", ""):
+                if "siliconflow" in base_url:
                     return True
             return False
 
@@ -299,7 +300,7 @@ class SimpleByzerLLM:
 
         deploy_info = self.deployments.get(model, {})
         client = deploy_info["sync_client"]
-        messages, extra_params = self.process_messages(
+        messages, extra_params = self.process_messages(deploy_info,
             conversations, **llm_config)
         start_time = time.monotonic()
 
@@ -375,7 +376,7 @@ class SimpleByzerLLM:
         client = deploy_info["sync_client"]
         is_reasoning = deploy_info["is_reasoning"]
 
-        messages, extra_params = self.process_messages(
+        messages, extra_params = self.process_messages(deploy_info,
             conversations, **llm_config)
 
         if is_reasoning:
@@ -454,7 +455,7 @@ class SimpleByzerLLM:
         deploy_info = self.deployments.get(model, {})
         client = deploy_info["async_client"]
         is_reasoning = deploy_info["is_reasoning"]
-        messages, extra_params = self.process_messages(
+        messages, extra_params = self.process_messages(deploy_info,
             conversations, **llm_config)
 
         if is_reasoning:
