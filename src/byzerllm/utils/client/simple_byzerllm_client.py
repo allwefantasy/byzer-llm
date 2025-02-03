@@ -302,6 +302,8 @@ class SimpleByzerLLM:
         client = deploy_info["sync_client"]
         messages, extra_params = self.process_messages(deploy_info,
             conversations, **llm_config)
+        
+        is_reasoning = deploy_info["is_reasoning"]
         start_time = time.monotonic()
 
         history = messages[:-1]
@@ -322,15 +324,28 @@ class SimpleByzerLLM:
                 for item in event_result
             ]
             return responses
+        
+        if is_reasoning:
+            response = client.chat.completions.create(
+                messages=messages,
+                model=deploy_info["model"],
+                stream=False,
+                **extra_params,
+            )
+        else:
+            response = client.chat.completions.create(
+                messages=messages,
+                model=deploy_info["model"],
+                temperature=llm_config.get("temperature", 0.7),
+                max_tokens=llm_config.get("max_tokens", 4096),
+                top_p=llm_config.get("top_p", 0.9),
+                stream=False,
+                **extra_params,
+            )
 
-        response = client.chat.completions.create(
-            messages=messages,
-            model=deploy_info["model"],
-            temperature=llm_config.get("temperature", 0.7),
-            max_tokens=llm_config.get("max_tokens", 4096),
-            top_p=llm_config.get("top_p", 0.9),
-            **extra_params,
-        )
+        if response.error:
+            raise Exception(response.error)
+        
         generated_text = response.choices[0].message.content
         
         reasoning_text = ""
@@ -397,6 +412,9 @@ class SimpleByzerLLM:
                 stream=True,
                 **extra_params,
             )
+
+        if response.error:
+            raise Exception(response.error)
 
         input_tokens_count = 0
         generated_tokens_count = 0
@@ -475,6 +493,10 @@ class SimpleByzerLLM:
                 stream=True,
                 **extra_params,
             )
+
+        if response.error:
+            raise Exception(response.error)
+            
         input_tokens_count = 0
         generated_tokens_count = 0
         if delta_mode:
