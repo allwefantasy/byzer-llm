@@ -522,7 +522,7 @@ class CustomSaasAPI:
 
                 request_id[0] = str(uuid.uuid4())
                 
-                if response.error:
+                if hasattr(response, "error"):
                     raise Exception(response.error)
 
                 for chunk in response:
@@ -601,7 +601,7 @@ class CustomSaasAPI:
                     )
                 )()
 
-                if response.error:
+                if hasattr(response, "error"):
                     raise Exception(response.error)
 
                 generated_text = response.choices[0].message.content

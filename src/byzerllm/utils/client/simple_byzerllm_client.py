@@ -343,7 +343,7 @@ class SimpleByzerLLM:
                 **extra_params,
             )
 
-        if response.error:
+        if hasattr(response, "error"):
             raise Exception(response.error)
         
         generated_text = response.choices[0].message.content
@@ -413,7 +413,7 @@ class SimpleByzerLLM:
                 **extra_params,
             )
 
-        if response.error:
+        if hasattr(response, "error"):
             raise Exception(response.error)
 
         input_tokens_count = 0
@@ -494,7 +494,7 @@ class SimpleByzerLLM:
                 **extra_params,
             )
 
-        if response.error:
+        if hasattr(response, "error"):
             raise Exception(response.error)
             
         input_tokens_count = 0

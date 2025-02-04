@@ -518,6 +518,9 @@ class CustomSaasAPI:
 
                 request_id[0] = str(uuid.uuid4())
 
+                if hasattr(response, "error"):
+                    raise Exception(response.error)
+
                 for chunk in response:
                     content = chunk.choices[0].delta.content or ""
                     reasoning_content = ""
@@ -596,6 +599,9 @@ class CustomSaasAPI:
                         **extra_params,
                     )
                 )()
+
+                if hasattr(response, "error"):
+                    raise Exception(response.error)
 
                 generated_text = response.choices[0].message.content
                 generated_tokens_count = response.usage.completion_tokens
