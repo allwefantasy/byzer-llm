@@ -428,9 +428,7 @@ class SimpleByzerLLM:
         generated_tokens_count = 0
         if delta_mode:
             for chunk in response:
-                if hasattr(chunk.choices[0].delta, "reasoning_content"):
-                    reasoning_text = chunk.choices[0].delta.reasoning_content or ""
-
+                
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
                     generated_tokens_count = chunk.usage.completion_tokens
@@ -444,6 +442,8 @@ class SimpleByzerLLM:
                 content = chunk.choices[0].delta.content or ""
                 
                 reasoning_text = ""
+                if hasattr(chunk.choices[0].delta, "reasoning_content"):
+                    reasoning_text = chunk.choices[0].delta.reasoning_content or ""
                 
 
                 yield (content, SingleOutputMeta(input_tokens_count=input_tokens_count, 
