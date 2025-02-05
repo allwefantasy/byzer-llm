@@ -179,7 +179,8 @@ class SimpleByzerLLM:
     def process_messages(self, deploy_info: Dict[str, Any], messages: List[Dict[str, Any]], **kwargs):
         extra_params = {}
         extra_body = {}
-        base_url = deploy_info["infer_params"].get("saas.base_url", "https://api.deepseek.com/v1")
+        base_url = deploy_info["infer_params"].get(
+            "saas.base_url", "https://api.deepseek.com/v1")
         if (
             len(messages) > 1
             and messages[-1]["role"] == "user"
@@ -301,8 +302,8 @@ class SimpleByzerLLM:
         deploy_info = self.deployments.get(model, {})
         client = deploy_info["sync_client"]
         messages, extra_params = self.process_messages(deploy_info,
-            conversations, **llm_config)
-        
+                                                       conversations, **llm_config)
+
         is_reasoning = deploy_info["is_reasoning"]
         start_time = time.monotonic()
 
@@ -324,12 +325,12 @@ class SimpleByzerLLM:
                 for item in event_result
             ]
             return responses
-        
+
         if is_reasoning:
             response = client.chat.completions.create(
                 messages=messages,
                 model=deploy_info["model"],
-                stream=False,                
+                stream=False,
                 **extra_params,
             )
         else:
@@ -344,13 +345,14 @@ class SimpleByzerLLM:
             )
 
         if hasattr(response, "error"):
-            base_url = deploy_info["infer_params"].get("saas.base_url","")
+            base_url = deploy_info["infer_params"].get("saas.base_url", "")
             model_name = deploy_info["model"]
             name = model
-            raise Exception(f"name:{name} base_url:{base_url} model_name:{model_name} extra_params:{extra_params}  error:{response.error}")
-        
+            raise Exception(
+                f"name:{name} base_url:{base_url} model_name:{model_name} extra_params:{extra_params}  error:{response.error}")
+
         generated_text = response.choices[0].message.content
-        
+
         reasoning_text = ""
         if hasattr(response.choices[0].message, "reasoning_content"):
             reasoning_text = response.choices[0].message.reasoning_content or ""
@@ -395,7 +397,7 @@ class SimpleByzerLLM:
         is_reasoning = deploy_info["is_reasoning"]
 
         messages, extra_params = self.process_messages(deploy_info,
-            conversations, **llm_config)
+                                                       conversations, **llm_config)
 
         if is_reasoning:
             response = client.chat.completions.create(
@@ -419,37 +421,44 @@ class SimpleByzerLLM:
             )
 
         if hasattr(response, "error"):
-            base_url = deploy_info["infer_params"].get("saas.base_url","")
+            base_url = deploy_info["infer_params"].get("saas.base_url", "")
             model_name = deploy_info["model"]
             name = model
-            raise Exception(f"name:{name} base_url:{base_url} model_name:{model_name} extra_params:{extra_params}  error:{response.error}")
+            raise Exception(
+                f"name:{name} base_url:{base_url} model_name:{model_name} extra_params:{extra_params}  error:{response.error}")
 
         input_tokens_count = 0
         generated_tokens_count = 0
+        last_meta = None
         if delta_mode:
             for chunk in response:
-                
+
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
                     generated_tokens_count = chunk.usage.completion_tokens
                 else:
                     input_tokens_count = 0
                     generated_tokens_count = 0
-                
+
                 if not chunk.choices:
+                    if last_meta:
+                        yield ("", SingleOutputMeta(input_tokens_count=input_tokens_count,
+                                                    generated_tokens_count=generated_tokens_count,
+                                                    reasoning_content="",
+                                                    finish_reason=last_meta.finish_reason))
                     continue
 
                 content = chunk.choices[0].delta.content or ""
-                
+
                 reasoning_text = ""
                 if hasattr(chunk.choices[0].delta, "reasoning_content"):
                     reasoning_text = chunk.choices[0].delta.reasoning_content or ""
-                
 
-                yield (content, SingleOutputMeta(input_tokens_count=input_tokens_count, 
-                                                 generated_tokens_count=generated_tokens_count, 
-                                                 reasoning_content=reasoning_text,
-                                                 finish_reason=chunk.choices[0].finish_reason))
+                last_meta = SingleOutputMeta(input_tokens_count=input_tokens_count,
+                                             generated_tokens_count=generated_tokens_count,
+                                             reasoning_content=reasoning_text,
+                                             finish_reason=chunk.choices[0].finish_reason)
+                yield (content, last_meta)
         else:
             s = ""
             all_reasoning_text = ""
@@ -463,6 +472,11 @@ class SimpleByzerLLM:
                     generated_tokens_count = 0
 
                 if not chunk.choices:
+                    if last_meta:
+                        yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count,
+                                                   generated_tokens_count=generated_tokens_count,
+                                                   reasoning_content=all_reasoning_text,
+                                                   finish_reason=last_meta.finish_reason))
                     continue
 
                 content = chunk.choices[0].delta.content or ""
@@ -470,11 +484,10 @@ class SimpleByzerLLM:
                 if hasattr(chunk.choices[0].delta, "reasoning_content"):
                     reasoning_text = chunk.choices[0].delta.reasoning_content or ""
 
-               
                 s += content
                 all_reasoning_text += reasoning_text
-                yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count, 
-                                           generated_tokens_count=generated_tokens_count, 
+                yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count,
+                                           generated_tokens_count=generated_tokens_count,
                                            reasoning_content=all_reasoning_text,
                                            finish_reason=chunk.choices[0].finish_reason))
 
@@ -493,7 +506,7 @@ class SimpleByzerLLM:
         client = deploy_info["async_client"]
         is_reasoning = deploy_info["is_reasoning"]
         messages, extra_params = self.process_messages(deploy_info,
-            conversations, **llm_config)
+                                                       conversations, **llm_config)
 
         if is_reasoning:
             response = await client.chat.completions.create(
@@ -516,13 +529,15 @@ class SimpleByzerLLM:
             )
 
         if hasattr(response, "error"):
-            base_url = deploy_info["infer_params"].get("saas.base_url","")
+            base_url = deploy_info["infer_params"].get("saas.base_url", "")
             model_name = deploy_info["model"]
             name = model
-            raise Exception(f"name:{name} base_url:{base_url} model_name:{model_name} extra_params:{extra_params}  error:{response.error}")
-            
+            raise Exception(
+                f"name:{name} base_url:{base_url} model_name:{model_name} extra_params:{extra_params}  error:{response.error}")
+
         input_tokens_count = 0
         generated_tokens_count = 0
+        last_meta = None
         if delta_mode:
             async for chunk in response:
                 if hasattr(chunk, "usage") and chunk.usage:
@@ -533,24 +548,28 @@ class SimpleByzerLLM:
                     generated_tokens_count = 0
 
                 if not chunk.choices:
+                    if last_meta:
+                        yield ("", SingleOutputMeta(input_tokens_count=input_tokens_count,
+                                                    generated_tokens_count=generated_tokens_count,
+                                                    reasoning_content="",
+                                                    finish_reason=last_meta.finish_reason))
                     continue
 
                 content = chunk.choices[0].delta.content or ""
                 reasoning_text = ""
                 if hasattr(chunk.choices[0].delta, "reasoning_content"):
                     reasoning_text = chunk.choices[0].delta.reasoning_content or ""
-
                 
-
-                yield (content, SingleOutputMeta(input_tokens_count=input_tokens_count, 
-                                                 generated_tokens_count=generated_tokens_count, 
+                last_meta = SingleOutputMeta(input_tokens_count=input_tokens_count,
+                                                 generated_tokens_count=generated_tokens_count,
                                                  reasoning_content=reasoning_text,
-                                                 finish_reason=chunk.choices[0].finish_reason))
+                                                 finish_reason=chunk.choices[0].finish_reason)
+                yield (content, last_meta)
         else:
             s = ""
             all_reasoning_text = ""
             async for chunk in response:
-                
+
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
                     generated_tokens_count = chunk.usage.completion_tokens
@@ -559,6 +578,11 @@ class SimpleByzerLLM:
                     generated_tokens_count = 0
 
                 if not chunk.choices:
+                    if last_meta:
+                        yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count,
+                                                   generated_tokens_count=generated_tokens_count,
+                                                   reasoning_content=all_reasoning_text,
+                                                   finish_reason=last_meta.finish_reason))
                     continue
 
                 content = chunk.choices[0].delta.content or ""
@@ -568,10 +592,11 @@ class SimpleByzerLLM:
 
                 s += content
                 all_reasoning_text += reasoning_text
-                yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count, 
-                                           generated_tokens_count=generated_tokens_count, 
+                last_meta = SingleOutputMeta(input_tokens_count=input_tokens_count,
+                                           generated_tokens_count=generated_tokens_count,
                                            reasoning_content=all_reasoning_text,
-                                           finish_reason=chunk.choices[0].finish_reason))
+                                           finish_reason=chunk.choices[0].finish_reason)
+                yield (s, last_meta)
 
     def prompt(
         self,

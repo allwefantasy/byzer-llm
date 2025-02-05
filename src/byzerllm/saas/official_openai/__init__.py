@@ -522,6 +522,7 @@ class CustomSaasAPI:
                 # generated_tokens_count = 0
 
                 request_id[0] = str(uuid.uuid4())
+                last_meta = None
                 
                 if hasattr(response, "error"):
                     raise Exception(response.error)
@@ -535,17 +536,27 @@ class CustomSaasAPI:
                         generated_tokens_count = 0
 
                     if not chunk.choices:
+                        if last_meta:
+                            last_meta = SingleOutput(
+                                        text=r,
+                                        metadata=SingleOutputMeta(
+                                            input_tokens_count=input_tokens_count,
+                                            generated_tokens_count=generated_tokens_count,
+                                            finish_reason=last_meta.finish_reason,
+                                        ),
+                                    )
+                            ray.get(
+                                server.add_item.remote(
+                                    request_id[0],
+                                    StreamOutputs(outputs=[last_meta])
+                                )
+                            )
                         continue
-                    
+
                     content = chunk.choices[0].delta.content or ""
                     r += content
-                    
-                    ray.get(
-                        server.add_item.remote(
-                            request_id[0],
-                            StreamOutputs(
-                                outputs=[
-                                    SingleOutput(
+
+                    last_meta = SingleOutput(
                                         text=r,
                                         metadata=SingleOutputMeta(
                                             input_tokens_count=input_tokens_count,
@@ -553,6 +564,13 @@ class CustomSaasAPI:
                                             finish_reason=chunk.choices[0].finish_reason,
                                         ),
                                     )
+                    
+                    ray.get(
+                        server.add_item.remote(
+                            request_id[0],
+                            StreamOutputs(
+                                outputs=[
+                                    last_meta
                                 ]
                             ),
                         )
