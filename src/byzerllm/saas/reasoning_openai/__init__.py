@@ -510,6 +510,7 @@ class CustomSaasAPI:
                     messages=messages,
                     model=model,
                     stream=True,
+                    stream_options={"include_usage": True},
                     max_tokens=max_length,                    
                     **extra_params,
                 )

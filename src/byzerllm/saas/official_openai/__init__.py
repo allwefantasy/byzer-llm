@@ -512,6 +512,7 @@ class CustomSaasAPI:
                     messages=messages,
                     model=model,
                     stream=True,
+                    stream_options={"include_usage": True},
                     max_tokens=max_length,
                     temperature=temperature,
                     top_p=top_p,

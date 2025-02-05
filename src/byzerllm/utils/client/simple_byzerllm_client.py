@@ -329,7 +329,7 @@ class SimpleByzerLLM:
             response = client.chat.completions.create(
                 messages=messages,
                 model=deploy_info["model"],
-                stream=False,
+                stream=False,                
                 **extra_params,
             )
         else:
@@ -344,7 +344,10 @@ class SimpleByzerLLM:
             )
 
         if hasattr(response, "error"):
-            raise Exception(response.error)
+            base_url = deploy_info["infer_params"].get("saas.base_url","")
+            model_name = deploy_info["model"]
+            name = model
+            raise Exception(f"name:{name} base_url:{base_url} model_name:{model_name} extra_params:{extra_params}  error:{response.error}")
         
         generated_text = response.choices[0].message.content
         
@@ -399,6 +402,7 @@ class SimpleByzerLLM:
                 messages=messages,
                 model=deploy_info["model"],
                 stream=True,
+                stream_options={"include_usage": True}
                 **extra_params,
             )
 
@@ -410,11 +414,15 @@ class SimpleByzerLLM:
                 max_tokens=llm_config.get("max_tokens", 4096),
                 top_p=llm_config.get("top_p", 0.9),
                 stream=True,
+                stream_options={"include_usage": True}
                 **extra_params,
             )
 
         if hasattr(response, "error"):
-            raise Exception(response.error)
+            base_url = deploy_info["infer_params"].get("saas.base_url","")
+            model_name = deploy_info["model"]
+            name = model
+            raise Exception(f"name:{name} base_url:{base_url} model_name:{model_name} extra_params:{extra_params}  error:{response.error}")
 
         input_tokens_count = 0
         generated_tokens_count = 0
@@ -481,6 +489,7 @@ class SimpleByzerLLM:
                 messages=messages,
                 model=deploy_info["model"],
                 stream=True,
+                stream_options={"include_usage": True}
                 **extra_params,
             )
         else:
@@ -491,11 +500,15 @@ class SimpleByzerLLM:
                 max_tokens=llm_config.get("max_tokens", 4096),
                 top_p=llm_config.get("top_p", 0.9),
                 stream=True,
+                stream_options={"include_usage": True}
                 **extra_params,
             )
 
         if hasattr(response, "error"):
-            raise Exception(response.error)
+            base_url = deploy_info["infer_params"].get("saas.base_url","")
+            model_name = deploy_info["model"]
+            name = model
+            raise Exception(f"name:{name} base_url:{base_url} model_name:{model_name} extra_params:{extra_params}  error:{response.error}")
             
         input_tokens_count = 0
         generated_tokens_count = 0
