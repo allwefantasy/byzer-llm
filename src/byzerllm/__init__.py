@@ -180,7 +180,7 @@ class _PromptWraper:
                     render=render, check_result=check_result, options=self._options
                 )(func)(instance, **input_dict)
 
-        if isinstance(llm, ByzerLLM):
+        if isinstance(llm, ByzerLLM) or isinstance(llm, SimpleByzerLLM):
             if "self" in input_dict:
                 instance = input_dict.pop("self")
                 return llm.prompt(
@@ -440,7 +440,7 @@ class _PrompRunner:
             if result.startswith("```json") and result.endswith("```"):
                 json_str = result[len("```json"):-len("```")]
             else:
-                json_str = code_utils.extract_code(result)[0][1]
+                json_str = code_utils.extract_code(result)[-1][1]
             json_data = json.loads(json_str)            
         except json.JSONDecodeError as e:
             print(f"The returned string is not a valid JSON, e: {str(e)} string: {result}")            
@@ -516,7 +516,7 @@ class _PrompRunner:
                 return self.to_model(f"{prefix}{v}")
             return v
 
-        if isinstance(llm, ByzerLLM):
+        if isinstance(llm, ByzerLLM) or isinstance(llm, SimpleByzerLLM):
             return_origin_response = True if self.response_markers else False
             marker = None
             if self.response_markers:
@@ -740,7 +740,7 @@ class prompt:
         )
 
 
-from byzerllm.utils.client import ByzerLLM
+from byzerllm.utils.client import ByzerLLM,SimpleByzerLLM
 from byzerllm.utils.retrieval import ByzerRetrieval
 from byzerllm.utils.connect_ray import connect_cluster
 from byzerllm.apps.agent.registry import reply as agent_reply
@@ -748,6 +748,7 @@ from byzerllm.utils.nontext import Image
 
 __all__ = [
     "ByzerLLM",
+    "SimpleByzerLLM",
     "ByzerRetrieval",
     "connect_cluster",
     "prompt",

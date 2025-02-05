@@ -102,7 +102,7 @@ class OpenAIServingChat(OpenAIServing):
 
         for i in range(body.n):
             choice_data = ChatCompletionResponseStreamChoice(
-                index=i, delta=DeltaMessage(role=role), finish_reason=None
+                index=i, delta=DeltaMessage(role=role, content="",reasoning_content=""), finish_reason=None
             )
             chunk = ChatCompletionStreamResponse(
                 id=request_id,
@@ -150,8 +150,9 @@ class OpenAIServingChat(OpenAIServing):
                     completion_tokens=meta.generated_tokens_count,
                     total_tokens=prompt_tokens + meta.generated_tokens_count,
                 )
+                reasoning_content = meta.reasoning_content or ""
                 choice_data = ChatCompletionResponseStreamChoice(
-                    index=i, delta=DeltaMessage(content=s), finish_reason=None
+                    index=i, delta=DeltaMessage(role=role,content=s, reasoning_content=reasoning_content), finish_reason=None
                 )
                 chunk = ChatCompletionStreamResponse(
                     id=request_id,
@@ -210,7 +211,7 @@ class OpenAIServingChat(OpenAIServing):
             res: LLMResponse
             choice_data = ChatCompletionResponseChoice(
                 index=0,
-                message=ChatMessage(role=role, content=res.output),
+                message=ChatMessage(role=role, content=res.output, reasoning_content=res.metadata.get("reasoning_content", "")),
                 finish_reason=None,
             )
             choices.append(choice_data)
