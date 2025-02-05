@@ -428,9 +428,6 @@ class SimpleByzerLLM:
         generated_tokens_count = 0
         if delta_mode:
             for chunk in response:
-                content = chunk.choices[0].delta.content or ""
-                
-                reasoning_text = ""
                 if hasattr(chunk.choices[0].delta, "reasoning_content"):
                     reasoning_text = chunk.choices[0].delta.reasoning_content or ""
 
@@ -440,6 +437,14 @@ class SimpleByzerLLM:
                 else:
                     input_tokens_count = 0
                     generated_tokens_count = 0
+                
+                if not chunk.choices:
+                    continue
+
+                content = chunk.choices[0].delta.content or ""
+                
+                reasoning_text = ""
+                
 
                 yield (content, SingleOutputMeta(input_tokens_count=input_tokens_count, 
                                                  generated_tokens_count=generated_tokens_count, 
@@ -449,10 +454,6 @@ class SimpleByzerLLM:
             s = ""
             all_reasoning_text = ""
             for chunk in response:
-                content = chunk.choices[0].delta.content or ""
-                reasoning_text = ""
-                if hasattr(chunk.choices[0].delta, "reasoning_content"):
-                    reasoning_text = chunk.choices[0].delta.reasoning_content or ""
 
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
@@ -460,6 +461,16 @@ class SimpleByzerLLM:
                 else:
                     input_tokens_count = 0
                     generated_tokens_count = 0
+
+                if not chunk.choices:
+                    continue
+
+                content = chunk.choices[0].delta.content or ""
+                reasoning_text = ""
+                if hasattr(chunk.choices[0].delta, "reasoning_content"):
+                    reasoning_text = chunk.choices[0].delta.reasoning_content or ""
+
+               
                 s += content
                 all_reasoning_text += reasoning_text
                 yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count, 
@@ -514,17 +525,22 @@ class SimpleByzerLLM:
         generated_tokens_count = 0
         if delta_mode:
             async for chunk in response:
-                content = chunk.choices[0].delta.content or ""
-                reasoning_text = ""
-                if hasattr(chunk.choices[0].delta, "reasoning_content"):
-                    reasoning_text = chunk.choices[0].delta.reasoning_content or ""
-
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
                     generated_tokens_count = chunk.usage.completion_tokens
                 else:
                     input_tokens_count = 0
                     generated_tokens_count = 0
+
+                if not chunk.choices:
+                    continue
+
+                content = chunk.choices[0].delta.content or ""
+                reasoning_text = ""
+                if hasattr(chunk.choices[0].delta, "reasoning_content"):
+                    reasoning_text = chunk.choices[0].delta.reasoning_content or ""
+
+                
 
                 yield (content, SingleOutputMeta(input_tokens_count=input_tokens_count, 
                                                  generated_tokens_count=generated_tokens_count, 
@@ -534,17 +550,22 @@ class SimpleByzerLLM:
             s = ""
             all_reasoning_text = ""
             async for chunk in response:
-                content = chunk.choices[0].delta.content or ""
-                reasoning_text = ""
-                if hasattr(chunk.choices[0].delta, "reasoning_content"):
-                    reasoning_text = chunk.choices[0].delta.reasoning_content or ""
-
+                
                 if hasattr(chunk, "usage") and chunk.usage:
                     input_tokens_count = chunk.usage.prompt_tokens
                     generated_tokens_count = chunk.usage.completion_tokens
                 else:
                     input_tokens_count = 0
                     generated_tokens_count = 0
+
+                if not chunk.choices:
+                    continue
+
+                content = chunk.choices[0].delta.content or ""
+                reasoning_text = ""
+                if hasattr(chunk.choices[0].delta, "reasoning_content"):
+                    reasoning_text = chunk.choices[0].delta.reasoning_content or ""
+
                 s += content
                 all_reasoning_text += reasoning_text
                 yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count, 

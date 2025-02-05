@@ -527,14 +527,19 @@ class CustomSaasAPI:
                     raise Exception(response.error)
 
                 for chunk in response:
-                    content = chunk.choices[0].delta.content or ""
-                    r += content
                     if hasattr(chunk, "usage") and chunk.usage:
                         input_tokens_count = chunk.usage.prompt_tokens
                         generated_tokens_count = chunk.usage.completion_tokens
                     else:
                         input_tokens_count = 0
                         generated_tokens_count = 0
+
+                    if not chunk.choices:
+                        continue
+                    
+                    content = chunk.choices[0].delta.content or ""
+                    r += content
+                    
                     ray.get(
                         server.add_item.remote(
                             request_id[0],
