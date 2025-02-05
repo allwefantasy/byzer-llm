@@ -402,7 +402,7 @@ class SimpleByzerLLM:
                 messages=messages,
                 model=deploy_info["model"],
                 stream=True,
-                stream_options={"include_usage": True}
+                stream_options={"include_usage": True},
                 **extra_params,
             )
 
@@ -414,7 +414,7 @@ class SimpleByzerLLM:
                 max_tokens=llm_config.get("max_tokens", 4096),
                 top_p=llm_config.get("top_p", 0.9),
                 stream=True,
-                stream_options={"include_usage": True}
+                stream_options={"include_usage": True},
                 **extra_params,
             )
 
@@ -489,7 +489,7 @@ class SimpleByzerLLM:
                 messages=messages,
                 model=deploy_info["model"],
                 stream=True,
-                stream_options={"include_usage": True}
+                stream_options={"include_usage": True},
                 **extra_params,
             )
         else:
@@ -500,7 +500,7 @@ class SimpleByzerLLM:
                 max_tokens=llm_config.get("max_tokens", 4096),
                 top_p=llm_config.get("top_p", 0.9),
                 stream=True,
-                stream_options={"include_usage": True}
+                stream_options={"include_usage": True},
                 **extra_params,
             )
 
