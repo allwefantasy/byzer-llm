@@ -145,6 +145,10 @@ class SimpleByzerLLM:
         llm = SimpleByzerLLM()
         llm.setup_default_model_name(model)
         return llm
+    
+
+    def is_model_exist(self, udf_name: str) -> bool:
+        return udf_name in self.deployments
 
     def setup_sub_client(
         self, client_name: str, client: Union[List["SimpleByzerLLM"], "SimpleByzerLLM"] = None
