@@ -622,7 +622,6 @@ class CustomSaasAPI:
                         "finish_reason": response.choices[0].finish_reason,
                     }
                 }
-                logger.info(gen_meta)
                 return [
                     (
                         generated_text,

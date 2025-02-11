@@ -1,7 +1,7 @@
 import torch, io, time, base64
 from typing import Dict, List
 
-
+## transformers版本建议使用：4.40.2
 def get_meta(self):
     config = self.config
     return [{
