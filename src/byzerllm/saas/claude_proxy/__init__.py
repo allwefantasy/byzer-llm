@@ -134,7 +134,7 @@ class CustomSaasAPI:
         system_message = ""
         for message in his:
             if message["role"] == "system":
-                system_message = message["content"]
+                system_message = f"{system_message}\n\n{message['content']}"
             else:
                 messages.append(
                     {
@@ -142,11 +142,13 @@ class CustomSaasAPI:
                         "content": self.process_input(message["content"]),
                     }
                 )
-
-        messages.append({"role": "user", "content": self.process_input(ins)})
-
-        if len(messages) > 1 and messages[-1]["role"] == "user" and messages[-2]["role"] == "user":
-            messages[-1]["role"] = "assistant"
+        process_message = self.process_input(ins)
+        if isinstance(process_message, List):
+            messages.extend(process_message)
+        elif isinstance(ins, dict):
+            messages.append(process_message)
+        else:
+            messages.append({"role": "user", "content": process_message})
 
         start_time = time.monotonic()
 
@@ -170,7 +172,7 @@ class CustomSaasAPI:
 
         if system_message:
             payload["system"] = system_message
-        print("payload", payload)
+        print(payload)
         try:
             res_data = requests.post(self.base_url + "/v1/messages", json=payload, headers=headers, stream=stream)
             res_data.raise_for_status()
