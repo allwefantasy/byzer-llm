@@ -230,6 +230,9 @@ def prompt_lazy(
     return _impl
 
 
+class MetaHolder:
+    def __init__(self, meta: Optional[Any]) -> None:
+        self.meta = meta            
 class _PrompRunner:
     def __init__(
         self,
@@ -255,6 +258,10 @@ class _PrompRunner:
         self.model_class = None
         self.return_prefix = None
         self.stop_suffix_list = None
+        self.meta_holder = MetaHolder(None)
+
+    def with_meta(self, meta_holder):
+        self.meta_holder = meta_holder
 
     def with_return_type(self, model_class: Type[Any]):
         self.model_class = model_class
@@ -495,6 +502,7 @@ class _PrompRunner:
                 return_origin_response=return_origin_response,
                 marker=marker,
                 assistant_prefix=self.return_prefix,
+                meta_holder=self.meta_holder
             )(func)(**input_dict)
             prefix = self.return_prefix if self.return_prefix else ""
             if not return_origin_response:                
@@ -536,7 +544,8 @@ class _PrompRunner:
                 options=self._options,
                 return_origin_response=return_origin_response,
                 marker=marker,
-                assistant_prefix=self.return_prefix
+                assistant_prefix=self.return_prefix,
+                meta_holder=self.meta_holder
             )(func)(**input_dict)
             prefix = self.return_prefix if self.return_prefix else ""
             if not return_origin_response:                
@@ -579,6 +588,7 @@ class _PrompRunner:
                 return_origin_response=return_origin_response,
                 marker=marker,
                 assistant_prefix=self.return_prefix,
+                meta_holder=self.meta_holder,
             )(func)(**input_dict)
             prefix = self.return_prefix if self.return_prefix else ""
             if not return_origin_response:
@@ -686,6 +696,10 @@ class _DescriptorPrompt:
     
     def with_return_prefix(self, prefix: str):
         self.prompt_runner.with_return_prefix(prefix)
+        return self
+    
+    def with_meta(self, meta_holder):
+        self.prompt_runner.with_meta(meta_holder)
         return self
 
     def __call__(self, *args, **kwargs):

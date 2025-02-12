@@ -1452,6 +1452,7 @@ class ByzerLLM:
         return_origin_response: bool = False,
         marker: Optional[str] = None,
         assistant_prefix: Optional[str] = None,
+        meta_holder: Optional[Any] = None
     ):
         if model is None:
             if "model" in options:
@@ -1515,7 +1516,13 @@ class ByzerLLM:
                     )
                     if return_origin_response:
                         return t
-                    return (item[0] for item in t)
+                    
+                    def generator():
+                        for item in t:
+                            if meta_holder and item[1]:
+                                meta_holder.meta = item[1]
+                            yield item[0]
+                    return generator()
 
                 if issubclass(signature.return_annotation, pydantic.BaseModel):
                     response_class = signature.return_annotation
@@ -1529,9 +1536,15 @@ class ByzerLLM:
                         impl_func_params=input_dict,
                         **options,
                     )
+                    
+                    
+                    if meta_holder and t[0].metadata:
+                        meta_holder.meta = t[0].metadata
+
                     if return_origin_response:
                         return t
                     r: LLMClassResponse = t[0]
+                    
                     if r.value is None and check_result:
                         logger.warning(
                             f"""
@@ -1547,11 +1560,16 @@ class ByzerLLM:
                     conversations = [{"role": "user", "content": prompt_str}]
                     if assistant_prefix:
                         conversations = conversations + [{"role": "assistant", "content": assistant_prefix}]                        
+                    
                     t = self.chat_oai(
                         model=model,
                         conversations=conversations,
                         **options,
                     )
+
+                    if meta_holder and t[0].metadata:
+                        meta_holder.meta = t[0].metadata 
+
                     if return_origin_response:
                         return t
                     return t[0].output

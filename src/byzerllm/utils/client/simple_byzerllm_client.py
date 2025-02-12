@@ -611,6 +611,7 @@ class SimpleByzerLLM:
         return_origin_response: bool = False,
         marker: Optional[str] = None,
         assistant_prefix: Optional[str] = None,
+        meta_holder: Optional[Any] = None,
     ):
         if model is None:
             if "model" in options:
