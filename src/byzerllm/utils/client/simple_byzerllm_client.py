@@ -668,15 +668,23 @@ class SimpleByzerLLM:
                     if assistant_prefix:
                         conversations = conversations + \
                             [{"role": "assistant", "content": assistant_prefix}]
-
+                    
                     t = self.stream_chat_oai(
                         conversations=conversations,
                         model=model,
                         **temp_options,
                     )
+
+                    def generator():
+                        for item,meta in t:
+                            if meta_holder and meta:
+                                meta_holder.meta = meta
+                            yield item
+
                     if return_origin_response:
                         return t
-                    return (item[0] for item in t)
+                    
+                    return generator()
 
                 if issubclass(signature.return_annotation, pydantic.BaseModel):
                     response_class = signature.return_annotation
@@ -691,6 +699,10 @@ class SimpleByzerLLM:
                         impl_func_params=input_dict,
                         **options,
                     )
+
+                    if meta_holder and t[0].metadata:
+                        meta_holder.meta = t[0].metadata
+
                     if return_origin_response:
                         return t
                     r: LLMClassResponse = t[0]
@@ -715,6 +727,10 @@ class SimpleByzerLLM:
                         conversations=conversations,
                         **options,
                     )
+                    
+                    if meta_holder and t[0].metadata:
+                        meta_holder.meta = t[0].metadata
+                        
                     if return_origin_response:
                         return t
                     return t[0].output

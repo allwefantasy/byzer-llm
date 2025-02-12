@@ -1514,14 +1514,15 @@ class ByzerLLM:
                         model=model,
                         **temp_options,
                     )
+                    
                     if return_origin_response:
                         return t
                     
                     def generator():
-                        for item in t:
-                            if meta_holder and item[1]:
-                                meta_holder.meta = item[1]
-                            yield item[0]
+                        for item,meta in t:
+                            if meta_holder and meta:
+                                meta_holder.meta = meta
+                            yield item                    
                     return generator()
 
                 if issubclass(signature.return_annotation, pydantic.BaseModel):
