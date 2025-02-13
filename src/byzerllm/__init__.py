@@ -16,6 +16,8 @@ from byzerllm.utils import (
     format_str_jinja2,
 )
 from .store import transfer_from_ob
+from byzerllm.utils.types import SingleOutputMeta
+from pydantic import BaseModel
 
 
 @dataclass
@@ -230,9 +232,39 @@ def prompt_lazy(
     return _impl
 
 
+class MetaOutput(BaseModel):
+    input_tokens_count: int
+    generated_tokens_count: int
+    reasoning_content: str
+    finish_reason: str
+    first_token_time: float
 class MetaHolder:
     def __init__(self, meta: Optional[Any] = None) -> None:
-        self.meta = meta            
+        self.meta = meta  
+
+    def get_meta(self):
+        if isinstance(self.meta, dict):
+            return self.meta
+        if isinstance(self.meta, SingleOutputMeta):
+            return {
+                "input_tokens_count": self.meta.input_tokens_count,
+                "generated_tokens_count": self.meta.generated_tokens_count,
+                "reasoning_content": self.meta.reasoning_content,
+                "finish_reason": self.meta.finish_reason,
+                "first_token_time": self.meta.first_token_time
+            }
+        return self.meta
+    
+    def get_meta_model(self):
+        v = self.get_meta()
+        return MetaOutput(
+            input_tokens_count=v.get("input_tokens_count", 0),
+            generated_tokens_count=v.get("generated_tokens_count", 0),
+            reasoning_content=v.get("reasoning_content", ""),
+            finish_reason=v.get("finish_reason", ""),
+            first_token_time=v.get("first_token_time", 0.0)            
+        )
+
 class _PrompRunner:
     def __init__(
         self,
@@ -262,6 +294,7 @@ class _PrompRunner:
 
     def with_meta(self, meta_holder):
         self.meta_holder = meta_holder
+        return self
 
     def with_return_type(self, model_class: Type[Any]):
         self.model_class = model_class
