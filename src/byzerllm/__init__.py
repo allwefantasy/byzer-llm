@@ -231,7 +231,7 @@ def prompt_lazy(
 
 
 class MetaHolder:
-    def __init__(self, meta: Optional[Any]) -> None:
+    def __init__(self, meta: Optional[Any] = None) -> None:
         self.meta = meta            
 class _PrompRunner:
     def __init__(
