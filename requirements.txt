@@ -40,6 +40,7 @@ prompt-toolkit
 websocket-client
 sqlmodel
 jieba
+json5
 modelscope
 huggingface_hub
 
