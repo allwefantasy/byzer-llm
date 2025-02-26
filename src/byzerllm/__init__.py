@@ -257,6 +257,10 @@ class MetaHolder:
     
     def get_meta_model(self):
         v = self.get_meta()
+        
+        if v is None:
+            return None
+        
         return MetaOutput(
             input_tokens_count=v.get("input_tokens_count", 0),
             generated_tokens_count=v.get("generated_tokens_count", 0),
