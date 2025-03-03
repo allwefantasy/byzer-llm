@@ -527,6 +527,7 @@ class SimpleByzerLLM:
         messages, extra_params = self.process_messages(deploy_info,
                                                        conversations, **llm_config)
         
+        logger.info(f"extra_params: {extra_params}")
         if extra_request_params:
             if "extra_body" in extra_params:
                 extra_params["extra_body"] = {**extra_params["extra_body"], **extra_request_params}

@@ -91,7 +91,7 @@ class OpenAIServingChat(OpenAIServing):
         extra_params = {}
         if body.extra_body:
             extra_params = {"extra_request_params": body.extra_body}
-
+            
         result_generator = self.llm_client.async_stream_chat_oai(
             model=model_name,
             conversations=body.messages,

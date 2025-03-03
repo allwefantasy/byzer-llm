@@ -37,12 +37,16 @@ except ImportError:
 class SingleOutputMeta:
     def __init__(self, input_tokens_count:int=0, 
                  generated_tokens_count:int=0,
-                 reasoning_content:str="",finish_reason:str="",first_token_time:float=0.0):        
+                 reasoning_content:str="",
+                 finish_reason:str="",
+                 first_token_time:float=0.0,
+                 extra_info:Dict[str,Any]={}):        
         self.input_tokens_count = input_tokens_count
         self.generated_tokens_count = generated_tokens_count  
         self.reasoning_content = reasoning_content  
         self.finish_reason = finish_reason
         self.first_token_time = first_token_time
+        self.extra_info = extra_info
 class SingleOutput:
     def __init__(self, text:str,metadata:SingleOutputMeta=SingleOutputMeta()):
         self.text = text

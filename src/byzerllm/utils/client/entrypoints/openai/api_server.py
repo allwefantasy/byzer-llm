@@ -106,8 +106,7 @@ async def create_chat_completion(
         - function_call (Users should implement this by themselves)
         - logit_bias (to be supported by vLLM engine)
     """
-    # async with async_timeout.timeout(TIMEOUT):
-
+    # async with async_timeout.timeout(TIMEOUT):    
     generator = await openai_serving_chat.create_chat_completion(body, request)
     if isinstance(generator, ErrorResponse):
         return JSONResponse(
