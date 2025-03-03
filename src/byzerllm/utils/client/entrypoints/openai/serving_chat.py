@@ -88,6 +88,10 @@ class OpenAIServingChat(OpenAIServing):
         created_time = int(time.time())
         chunk_object_type = "chat.completion.chunk"
 
+        extra_params = {}
+        if body.extra_body:
+            extra_params = {"extra_request_params": body.extra_body}
+
         result_generator = self.llm_client.async_stream_chat_oai(
             model=model_name,
             conversations=body.messages,
@@ -96,7 +100,7 @@ class OpenAIServingChat(OpenAIServing):
                 "gen.request_id": request_id,
                 **body.to_llm_config()
             },
-            extra_request_params=body.extra_body
+            **extra_params
         )
 
         role = self.get_chat_request_role(body)
@@ -180,7 +184,11 @@ class OpenAIServingChat(OpenAIServing):
             request_id: str
     ) -> Union[ErrorResponse, ChatCompletionResponse]:
                 
-        model_name = self.server_model_name or body.model                
+        model_name = self.server_model_name or body.model 
+
+        extra_params = {}
+        if body.extra_body:
+            extra_params = {"extra_request_params": body.extra_body}               
 
         async def wrapper_chat_generator():
             r = await asyncfy_with_semaphore(lambda: self.llm_client.chat_oai(
@@ -190,7 +198,7 @@ class OpenAIServingChat(OpenAIServing):
                     "gen.request_id": request_id,
                     **body.to_llm_config()
                 },
-                extra_request_params=body.extra_body
+                **extra_params
             ))()
             for _ in r:
                 yield _
