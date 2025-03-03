@@ -78,6 +78,7 @@ class ChatCompletionRequest(BaseModel):
     temperature: Optional[float] = 1.0
     top_p: Optional[float] = 1.0
     user: Optional[str] = None
+    extra_body: Optional[Dict[str,Any]] = None
 
     # doc: begin-completion-sampling-params
     prompt_template: Optional[str] = None

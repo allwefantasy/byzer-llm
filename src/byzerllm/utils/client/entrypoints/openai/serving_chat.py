@@ -95,7 +95,8 @@ class OpenAIServingChat(OpenAIServing):
             llm_config={
                 "gen.request_id": request_id,
                 **body.to_llm_config()
-            }
+            },
+            extra_request_params=body.extra_body
         )
 
         role = self.get_chat_request_role(body)
@@ -188,7 +189,8 @@ class OpenAIServingChat(OpenAIServing):
                 llm_config={
                     "gen.request_id": request_id,
                     **body.to_llm_config()
-                }
+                },
+                extra_request_params=body.extra_body
             ))()
             for _ in r:
                 yield _
