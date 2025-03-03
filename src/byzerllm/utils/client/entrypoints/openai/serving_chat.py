@@ -88,7 +88,7 @@ class OpenAIServingChat(OpenAIServing):
         created_time = int(time.time())
         chunk_object_type = "chat.completion.chunk"
 
-        result_generator =  self.llm_client.async_stream_chat_oai(
+        result_generator = self.llm_client.async_stream_chat_oai(
             model=model_name,
             conversations=body.messages,
             delta_mode=True,
