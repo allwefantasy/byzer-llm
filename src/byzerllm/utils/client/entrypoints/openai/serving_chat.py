@@ -178,8 +178,8 @@ class OpenAIServingChat(OpenAIServing):
             request: Request,
             request_id: str
     ) -> Union[ErrorResponse, ChatCompletionResponse]:
-        
-        model_name = self.server_model_name or body.model        
+                
+        model_name = self.server_model_name or body.model                
 
         async def wrapper_chat_generator():
             r = await asyncfy_with_semaphore(lambda: self.llm_client.chat_oai(

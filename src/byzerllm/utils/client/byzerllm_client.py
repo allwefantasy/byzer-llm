@@ -1064,6 +1064,7 @@ class ByzerLLM:
         role_mapping=None,
         llm_config: Dict[str, Any] = {},
         only_return_prompt: bool = False,
+        extra_request_params:Dict[str,Any] = {}
     ) -> Union[
         List[LLMResponse], List[LLMFunctionCallResponse], List[LLMClassResponse]
     ]:
@@ -1190,8 +1191,9 @@ class ByzerLLM:
             {
                 "instruction": final_ins,
                 "history": history,
+                "extra_request_params": extra_request_params,
                 **default_config,
-                **llm_config,
+                **llm_config,                    
             }
         ]
 
@@ -1292,6 +1294,7 @@ class ByzerLLM:
         role_mapping=None,
         delta_mode: bool = False,
         llm_config: Dict[str, Any] = {},
+        extra_request_params:Dict[str,Any] = {}
     ):
 
         if not model:
@@ -1306,6 +1309,7 @@ class ByzerLLM:
             model=model,
             role_mapping=role_mapping,
             llm_config={**llm_config, **{"generation.stream": True}},
+            extra_request_params=extra_request_params
         )
         request_id = v[0].metadata["request_id"]
         stream_server_type = v[0].metadata.get("stream_server", "VLLM_STREAM_SERVER")
@@ -1356,6 +1360,7 @@ class ByzerLLM:
         model: Optional[str] = None,
         delta_mode: bool = False,
         llm_config: Dict[str, Any] = {},
+        extra_request_params:Dict[str,Any] = {}
     ):
 
         if not model:
@@ -1370,6 +1375,7 @@ class ByzerLLM:
             model=model,
             role_mapping=role_mapping,
             llm_config={**llm_config, **{"generation.stream": True}},
+            extra_request_params=extra_request_params
         )
         request_id = v[0].metadata["request_id"]
         stream_server_type = v[0].metadata.get("stream_server", "VLLM_STREAM_SERVER")

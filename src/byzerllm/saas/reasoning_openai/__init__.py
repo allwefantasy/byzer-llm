@@ -505,6 +505,12 @@ class CustomSaasAPI:
         server = ray.get_actor("BLOCK_VLLM_STREAM_SERVER")
         request_id = [None]
 
+        if "extra_request_params" in extra_params:
+            if "extra_body" in extra_params:
+                extra_params["extra_body"] = {**extra_params["extra_request_params"],**extra_params["extra_body"]}
+            else:
+                extra_params["extra_body"] = extra_params["extra_request_params"]
+
         def writer():
             try:
                 r = ""

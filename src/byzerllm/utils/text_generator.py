@@ -72,7 +72,7 @@ class ByzerLLMGenerator:
         if "image" in query:
             new_params["image"] = query["image"] 
         
-        for p in ["inference_mode","stopping_sequences","timeout_s","stopping_sequences_skip_check_min_length"]:
+        for p in ["extra_request_params","inference_mode","stopping_sequences","timeout_s","stopping_sequences_skip_check_min_length"]:
             if p in query:
                 new_params[p] = query[p]
 
@@ -147,7 +147,7 @@ class ByzerLLMGenerator:
             if "image" in query:
                 new_params["image"] = query["image"] 
             
-            for p in ["inference_mode","stopping_sequences","timeout_s","stopping_sequences_skip_check_min_length"]:
+            for p in ["extra_request_params","inference_mode","stopping_sequences","timeout_s","stopping_sequences_skip_check_min_length"]:
                 if p in query:
                     new_params[p] = query[p]
 

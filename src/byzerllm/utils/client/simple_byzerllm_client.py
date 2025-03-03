@@ -290,6 +290,7 @@ class SimpleByzerLLM:
         role_mapping=None,
         llm_config: Dict[str, Any] = {},
         only_return_prompt: bool = False,
+        extra_request_params:Dict[str,Any] = {}
     ) -> List[LLMResponse]:
         """
         This method mirrors ByzerLLM's chat_oai signature, but we implement
@@ -329,6 +330,12 @@ class SimpleByzerLLM:
                 for item in event_result
             ]
             return responses
+        
+        if extra_request_params:
+            if "extra_body" in extra_params:
+                extra_params["extra_body"] = {**extra_params["extra_body"], **extra_request_params}
+            else:
+                extra_params["extra_body"] = extra_request_params
 
         if is_reasoning:
             response = client.chat.completions.create(
@@ -387,6 +394,7 @@ class SimpleByzerLLM:
         role_mapping=None,
         delta_mode: bool = False,
         llm_config: Dict[str, Any] = {},
+        extra_request_params:Dict[str,Any] = {}
     ):
         """
         Provide a streaming interface. Yields chunk by chunk from the OpenAI
@@ -402,6 +410,12 @@ class SimpleByzerLLM:
 
         messages, extra_params = self.process_messages(deploy_info,
                                                        conversations, **llm_config)
+
+        if extra_request_params:
+            if "extra_body" in extra_params:
+                extra_params["extra_body"] = {**extra_params["extra_body"], **extra_request_params}
+            else:
+                extra_params["extra_body"] = extra_request_params
 
         if is_reasoning:
             response = client.chat.completions.create(
@@ -502,6 +516,7 @@ class SimpleByzerLLM:
         model: Optional[str] = None,
         delta_mode: bool = False,
         llm_config: Dict[str, Any] = {},
+        extra_request_params:Dict[str,Any] = {}
     ):
         if not model:
             model = self.default_model_name
@@ -511,13 +526,19 @@ class SimpleByzerLLM:
         is_reasoning = deploy_info["is_reasoning"]
         messages, extra_params = self.process_messages(deploy_info,
                                                        conversations, **llm_config)
+        
+        if extra_request_params:
+            if "extra_body" in extra_params:
+                extra_params["extra_body"] = {**extra_params["extra_body"], **extra_request_params}
+            else:
+                extra_params["extra_body"] = extra_request_params
 
         if is_reasoning:
             response = await client.chat.completions.create(
                 messages=messages,
                 model=deploy_info["model"],
                 stream=True,
-                stream_options={"include_usage": True},
+                stream_options={"include_usage": True},                
                 **extra_params,
             )
         else:
