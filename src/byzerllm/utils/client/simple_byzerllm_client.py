@@ -45,6 +45,7 @@ from byzerllm.utils import (
 import pydantic
 from pydantic import BaseModel
 from loguru import logger
+from byzerllm.utils.langutil import asyncfy_with_semaphore
 
 
 class SimpleByzerLLM:
@@ -149,6 +150,26 @@ class SimpleByzerLLM:
 
     def is_model_exist(self, udf_name: str) -> bool:
         return udf_name in self.deployments
+    
+    def emb(self, model, request: LLMRequest, extract_params: Dict[str, Any] = {}):
+        deploy_info = self.deployments[model or self.default_model_name]        
+        model_name = deploy_info["model"]
+        client = deploy_info["sync_client"]
+        resp = client.embeddings.create(input=[request.instruction], model=model_name)
+        embedding = resp.data[0].embedding
+        usage = resp.usage
+        return (
+            embedding,
+            {
+                "metadata": {
+                    "input_tokens_count": usage.prompt_tokens,
+                    "generated_tokens_count": 0,
+                }
+            },
+        )          
+
+    def embed_query(self, ins: str, **kwargs):
+        return self.emb(self.default_model_name, LLMRequest(instruction=ins))
 
     def setup_sub_client(
         self, client_name: str, client: Union[List["SimpleByzerLLM"], "SimpleByzerLLM"] = None
