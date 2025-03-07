@@ -165,7 +165,8 @@ class TagExtractor:
     def extract_content_not_in_tag(self) -> str:
         content = ""
         while self.peek() and not self.is_start_tag() and not self.is_end_tag():
-            content += self.next()
+            v = self.next()            
+            content += v
         return content
 
     def extract(self) -> Union[Tag]:
@@ -305,7 +306,7 @@ class Image(TagExtractor):
 
         if current_item:
             result.append(current_item)
-
+            
         new_text = self.text
         for res in result:
             new_text = new_text.replace(f"<_image_>{res['image']}</_image_>", "")

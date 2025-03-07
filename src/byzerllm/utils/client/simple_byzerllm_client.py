@@ -62,6 +62,7 @@ class SimpleByzerLLM:
         self.deployments = {}
         self.sub_clients = {}
         self.event_callbacks: Dict[EventName, List[EventCallback]] = {}
+        self.skip_nontext_check = False
 
     def undeploy(self, udf_name: str, force: bool = False):
         """
@@ -296,6 +297,67 @@ class SimpleByzerLLM:
         # No actual abort logic in openai
         pass
 
+    def process_audio(self, messages: Dict[str, Any]):
+        return messages,False
+        # if self.skip_nontext_check:
+        #     return messages,False
+        # try:
+        #     from byzerllm.utils.nontext import Audio
+        #     for message in messages:
+        #         if message["role"] == "user":
+        #             audio = Audio(message["content"])
+        #             if audio.has_audio():
+        #                 temp_content = audio.to_content()
+        #                 final_content = []
+        #                 for item in temp_content:
+        #                     if "text" in item:
+        #                         final_content.append({
+        #                             "type":"text",
+        #                             "text": item["text"]
+        #                         })
+        #                     if "audio" in item:
+        #                         final_content.append({
+        #                             "type":"audio",
+        #                             "audio": item["audio"]
+        #                         })
+        #                 message["content"] = final_content
+        # except Exception as inst:
+        #     traceback.print_exc()
+        #     logger.error(f"process_audio error: {inst}")
+        #     return messages,False
+        # return messages,True
+    
+    def process_image(self, messages: Dict[str, Any]):
+        if self.skip_nontext_check:
+            return messages,False                   
+        try:
+            from byzerllm.utils.nontext import Image
+            for message in messages:
+                if message["role"] == "user":
+                    image = Image(message["content"])
+                    if image.has_image():
+                        temp_content = image.to_content()
+                        final_content = []
+                        for item in temp_content:
+                            if "text" in item:
+                                final_content.append({
+                                    "type":"text",
+                                    "text": item["text"]
+                                })
+                            if "image" in item:
+                                final_content.append({
+                                    "type":"image_url",
+                                    "image_url": {
+                                        "url": item["image"],
+                                    }
+                                })
+                        message["content"] = final_content
+        except Exception as inst:
+            traceback.print_exc()
+            logger.error(f"process_image error: {inst}")
+            return messages,False
+        return messages,True
+
     def chat_oai(
         self,
         conversations,
@@ -359,6 +421,10 @@ class SimpleByzerLLM:
                 extra_params["extra_body"] = {**extra_params["extra_body"], **extra_request_params}
             else:
                 extra_params["extra_body"] = extra_request_params
+                
+        messages,is_processed = self.process_image(messages=messages)
+        if not is_processed:
+            messages,is_processed = self.process_audio(messages=messages)
 
         if is_reasoning:
             response = client.chat.completions.create(
@@ -439,6 +505,9 @@ class SimpleByzerLLM:
                 extra_params["extra_body"] = {**extra_params["extra_body"], **extra_request_params}
             else:
                 extra_params["extra_body"] = extra_request_params
+
+        messages = self.process_image(messages=messages)
+        messages = self.process_audio(messages=messages)
 
         if is_reasoning:
             response = client.chat.completions.create(
@@ -556,6 +625,9 @@ class SimpleByzerLLM:
                 extra_params["extra_body"] = {**extra_params["extra_body"], **extra_request_params}
             else:
                 extra_params["extra_body"] = extra_request_params
+        
+        messages = self.process_image(messages=messages)
+        messages = self.process_audio(messages=messages)
 
         if is_reasoning:
             response = await client.chat.completions.create(
