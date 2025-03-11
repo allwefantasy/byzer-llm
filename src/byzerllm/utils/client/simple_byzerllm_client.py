@@ -159,12 +159,19 @@ class SimpleByzerLLM:
         resp = client.embeddings.create(input=[request.instruction], model=model_name)
         usage = resp.usage
 
+        prompt_tokens = 0
+        completion_tokens = 0
+        if hasattr(usage, "prompt_tokens"):
+            prompt_tokens = usage.prompt_tokens
+        if hasattr(usage, "completion_tokens"):
+            completion_tokens = usage.completion_tokens
+
         return [
             LLMResponse(
                 output=resp.data[0].embedding,
                 metadata={
-                    "input_tokens_count": usage.prompt_tokens,
-                    "generated_tokens_count": usage.completion_tokens,
+                    "input_tokens_count": prompt_tokens,
+                    "generated_tokens_count": completion_tokens,
                 },
                 input=request.instruction,
             )
@@ -422,10 +429,10 @@ class SimpleByzerLLM:
             else:
                 extra_params["extra_body"] = extra_request_params
                 
-        messages,is_processed = self.process_image(messages=messages)
+        messages,is_processed = self.process_image(messages=messages)        
         if not is_processed:
             messages,is_processed = self.process_audio(messages=messages)
-
+        
         if is_reasoning:
             response = client.chat.completions.create(
                 messages=messages,
@@ -506,8 +513,9 @@ class SimpleByzerLLM:
             else:
                 extra_params["extra_body"] = extra_request_params
 
-        messages = self.process_image(messages=messages)
-        messages = self.process_audio(messages=messages)
+        messages,is_processed = self.process_image(messages=messages)        
+        if not is_processed:
+            messages,is_processed = self.process_audio(messages=messages)
 
         if is_reasoning:
             response = client.chat.completions.create(
@@ -626,8 +634,9 @@ class SimpleByzerLLM:
             else:
                 extra_params["extra_body"] = extra_request_params
         
-        messages = self.process_image(messages=messages)
-        messages = self.process_audio(messages=messages)
+        messages,is_processed = self.process_image(messages=messages)
+        if not is_processed:
+            messages,is_processed = self.process_audio(messages=messages)
 
         if is_reasoning:
             response = await client.chat.completions.create(
