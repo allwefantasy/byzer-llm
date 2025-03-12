@@ -75,17 +75,22 @@ class CustomSaasAPI:
                 format_end = image_data.index(base64_prefix)
                 image_format = image_data[len(data_prefix): format_end]
                 base64_data = image_data[format_end + len(base64_prefix):]
-
                 content.append(
                     {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": f"image/{image_format}",
-                            "data": base64_data,
-                        },
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{base64_data}"},
                     }
                 )
+                # content.append(
+                #     {
+                #         "type": "image",
+                #         "source": {
+                #             "type": "base64",
+                #             "media_type": f"image/{image_format}",
+                #             "data": base64_data,
+                #         },
+                #     }
+                # )
 
             if "text" in item and "type" not in item:
                 text_data = item["text"]
@@ -106,14 +111,20 @@ class CustomSaasAPI:
                 base64_data = image_data[format_end + len(base64_prefix):]
                 content.append(
                     {
-                        "type": "image",
-                        "source": {
-                            "type": "base64",
-                            "media_type": f"image/{image_format}",
-                            "data": base64_data,
-                        },
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{base64_data}"},
                     }
                 )
+                # content.append(
+                #     {
+                #         "type": "image",
+                #         "source": {
+                #             "type": "base64",
+                #             "media_type": f"image/{image_format}",
+                #             "data": base64_data,
+                #         },
+                #     }
+                # )
 
         if not content:
             return ins
@@ -142,13 +153,12 @@ class CustomSaasAPI:
                         "content": self.process_input(message["content"]),
                     }
                 )
-        process_message = self.process_input(ins)
-        if isinstance(process_message, List):
-            messages.extend(process_message)
+        if isinstance(ins, List):
+            messages.extend(ins)
         elif isinstance(ins, dict):
-            messages.append(process_message)
+            messages.append(ins)
         else:
-            messages.append({"role": "user", "content": process_message})
+            messages.append({"role": "user", "content": self.process_input(ins)})
 
         start_time = time.monotonic()
 
