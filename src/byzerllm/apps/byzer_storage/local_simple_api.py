@@ -2,8 +2,7 @@ import json
 import os
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
-import pyarrow as pa
-import pyarrow.flight as flight
+
 from pydantic import BaseModel
 from byzerllm import SimpleByzerLLM, ByzerLLM
 from byzerllm.records import (
@@ -15,6 +14,20 @@ from byzerllm.records import (
     ResourceRequirementSettings,
     ResourceRequirement,
 )
+from loguru import logger
+try:
+    import pyarrow as pa
+except ImportError:
+    pa = None
+    logger.error("pyarrow is not installed, please install it by `pip install pyarrow`")
+
+try:
+    import pyarrow.flight as flight
+except ImportError:
+    flight = None
+    logger.error("pyarrow.flight is not included in pyarrow, please install it by `pip install pyarrow[flight]`")    
+
+
 import jieba
 class SearchQuery(BaseModel):
     database: str
