@@ -591,9 +591,22 @@ class ByzerStorage:
         return " ".join(seg_list)
 
     def emb(self, s: str):
-        return self.llm.emb(self.llm.default_emb_model_name, LLMRequest(instruction=s))[
-            0
-        ].output
+        max_retries = 3
+        retry_count = 0
+        
+        while retry_count < max_retries:
+            try:
+                return self.llm.emb(self.llm.default_emb_model_name, LLMRequest(instruction=s))[0].output
+            except Exception as e:
+                retry_count += 1
+                if retry_count >= max_retries:
+                    logger.error(f"Failed to get embedding after {max_retries} attempts: {str(e)}")
+                    raise
+                
+                # Sleep between 1-5 seconds before retrying
+                sleep_time = 1 + (retry_count * 1.5)
+                logger.warning(f"Embedding API call failed (attempt {retry_count}/{max_retries}). Error: {str(e)}. Retrying in {sleep_time:.1f} seconds...")
+                time.sleep(sleep_time)
 
     def commit(self) -> bool:
         """

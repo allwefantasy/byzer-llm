@@ -2,6 +2,7 @@ import json
 import os
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
+import time
 
 from pydantic import BaseModel
 from byzerllm import SimpleByzerLLM, ByzerLLM
@@ -685,11 +686,24 @@ class LocalByzerStorage:
         Embed a string using an embedding model.
         This is a mock implementation - in a real scenario, you'd use
         an actual embedding model or service.
-        """        
-        return self.llm.emb_query(s)[
-            0
-        ].output
-      
+        """
+        max_retries = 3
+        retry_count = 0
+        
+        while retry_count < max_retries:
+            try:
+                return self.llm.emb_query(s)[0].output
+            except Exception as e:
+                retry_count += 1
+                if retry_count >= max_retries:
+                    logger.error(f"Failed to get embedding after {max_retries} attempts: {str(e)}")
+                    raise
+                
+                # Sleep between 1-5 seconds before retrying
+                sleep_time = 1 + (retry_count * 1.5)
+                logger.warning(f"Embedding API call failed (attempt {retry_count}/{max_retries}). Error: {str(e)}. Retrying in {sleep_time:.1f} seconds...")
+                time.sleep(sleep_time)
+
     def tokenize(self, s: str):
         seg_list = jieba.cut(s, cut_all=False)
         # return self.llm.apply_sql_func("select mkString(' ',parse(value)) as value",[
