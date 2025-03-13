@@ -220,7 +220,7 @@ def embeddings_example(client: OpenAI) -> None:
         text3 = "The weather is quite cold today."
         
         response = client.embeddings.create(
-            model="emb",
+            model="emb_chat",
             input=[text1, text2, text3]
         )
         

@@ -144,10 +144,10 @@ class LlamaCppBackend:
     
     def embed_query(self, ins: str, **kwargs):                     
         resp = self.model.create_embedding(input = [ins])
-        embedding = resp.data[0].embedding
-        usage = resp.usage
+        embedding = resp["data"][0]["embedding"]
+        usage = resp["usage"]
         return (embedding,{"metadata":{
-                "input_tokens_count":usage.prompt_tokens,
+                "input_tokens_count":usage["prompt_tokens"],
                 "generated_tokens_count":0}})            
    
     async def generate(self, tokenizer, ins: str, his: List[Dict[str, str]] = [],
