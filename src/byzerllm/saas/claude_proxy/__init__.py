@@ -142,17 +142,13 @@ class CustomSaasAPI:
             **kwargs,
     ):
         messages = []
-        system_message = ""
         for message in his:
-            if message["role"] == "system":
-                system_message = f"{system_message}\n\n{message['content']}"
-            else:
-                messages.append(
-                    {
-                        "role": message["role"],
-                        "content": self.process_input(message["content"]),
-                    }
-                )
+            messages.append(
+                {
+                    "role": message["role"],
+                    "content": self.process_input(message["content"]),
+                }
+            )
         if isinstance(ins, List):
             messages.extend(ins)
         elif isinstance(ins, dict):
@@ -180,8 +176,6 @@ class CustomSaasAPI:
         if max_length > 0:
             payload["max_tokens"] = max_length
 
-        if system_message:
-            payload["system"] = system_message
         print(payload)
         try:
             res_data = requests.post(self.base_url + "/v1/messages", json=payload, headers=headers, stream=stream)
