@@ -16,6 +16,7 @@ import time
 import traceback
 from byzerllm.utils.types import SingleOutputMeta, SingleOutput, StreamOutputs
 from openai import OpenAI, AsyncOpenAI
+from byzerllm.utils.client.mgenerai import MGeminiAI, MAsyncGeminiAI
 import inspect
 import functools
 from byzerllm.utils.client.types import (
@@ -37,10 +38,7 @@ from byzerllm.utils.client.types import (
     LLMMetadata,
 )
 
-from byzerllm.utils import (
-    format_prompt_jinja2,
-    format_str_jinja2
-)
+from byzerllm.utils import format_prompt_jinja2, format_str_jinja2
 
 import pydantic
 from pydantic import BaseModel
@@ -91,8 +89,7 @@ class SimpleByzerLLM:
         """
         # Initialize OpenAI clients if this is a SaaS model
         if pretrained_model_type.startswith("saas/"):
-            base_url = infer_params.get(
-                "saas.base_url", "https://api.deepseek.com/v1")
+            base_url = infer_params.get("saas.base_url", "https://api.deepseek.com/v1")
             if not "saas.api_key" in infer_params:
                 raise ValueError("saas.api_key is required for SaaS models")
 
@@ -100,18 +97,22 @@ class SimpleByzerLLM:
             model = infer_params.get("saas.model", "deepseek-chat")
 
             is_reasoning = infer_params.get(
-                "is_reasoning", infer_params.get("saas.is_reasoning", False))
+                "is_reasoning", infer_params.get("saas.is_reasoning", False)
+            )            
+                
+            if pretrained_model_type == "saas/gemini":
+                sync_client = MGeminiAI(api_key=api_key, base_url=base_url)
+                async_client = MAsyncGeminiAI(api_key=api_key, base_url=base_url)
+            else:
+                sync_client = OpenAI(
+                    base_url=base_url,
+                    api_key=api_key,
+                )
 
-            # Create both sync and async clients
-            sync_client = OpenAI(
-                base_url=base_url,
-                api_key=api_key,
-            )
-
-            async_client = AsyncOpenAI(
-                base_url=base_url,
-                api_key=api_key,
-            )
+                async_client = AsyncOpenAI(
+                    base_url=base_url,
+                    api_key=api_key,
+                )    
 
             self.deployments[udf_name] = {
                 "model_path": model_path,
@@ -124,7 +125,8 @@ class SimpleByzerLLM:
             }
         else:
             raise ValueError(
-                f"Unsupported pretrained_model_type: {pretrained_model_type}")
+                f"Unsupported pretrained_model_type: {pretrained_model_type}"
+            )
 
         return {"model": udf_name, "status": "deployed"}
 
@@ -143,17 +145,18 @@ class SimpleByzerLLM:
         self.default_model_name = model
 
     @staticmethod
-    def from_default_model(model: str, auto_connect_cluster: bool = True) -> "SimpleByzerLLM":
+    def from_default_model(
+        model: str, auto_connect_cluster: bool = True
+    ) -> "SimpleByzerLLM":
         llm = SimpleByzerLLM()
         llm.setup_default_model_name(model)
         return llm
-    
 
     def is_model_exist(self, udf_name: str) -> bool:
         return udf_name in self.deployments
-    
+
     def emb(self, model, request: LLMRequest, extract_params: Dict[str, Any] = {}):
-        deploy_info = self.deployments[model or self.default_model_name]        
+        deploy_info = self.deployments[model or self.default_model_name]
         model_name = deploy_info["model"]
         client = deploy_info["sync_client"]
         resp = client.embeddings.create(input=[request.instruction], model=model_name)
@@ -175,14 +178,15 @@ class SimpleByzerLLM:
                 },
                 input=request.instruction,
             )
-        ]                  
-    
+        ]
+
     def emb_query(self, v: str, model: str = None):
         return self.emb(model=model, request=LLMRequest(instruction=v))
-        
 
     def setup_sub_client(
-        self, client_name: str, client: Union[List["SimpleByzerLLM"], "SimpleByzerLLM"] = None
+        self,
+        client_name: str,
+        client: Union[List["SimpleByzerLLM"], "SimpleByzerLLM"] = None,
     ) -> "SimpleByzerLLM":
         if isinstance(client, list):
             self.sub_clients[client_name] = client
@@ -190,7 +194,9 @@ class SimpleByzerLLM:
             self.sub_clients[client_name] = client
         return self
 
-    def get_sub_client(self, client_name: str) -> Union[List["SimpleByzerLLM"], Optional["SimpleByzerLLM"]]:
+    def get_sub_client(
+        self, client_name: str
+    ) -> Union[List["SimpleByzerLLM"], Optional["SimpleByzerLLM"]]:
         return self.sub_clients.get(client_name, None)
 
     def remove_sub_client(self, client_name: str) -> "SimpleByzerLLM":
@@ -211,11 +217,14 @@ class SimpleByzerLLM:
                     return value
         return None
 
-    def process_messages(self, deploy_info: Dict[str, Any], messages: List[Dict[str, Any]], **kwargs):
+    def process_messages(
+        self, deploy_info: Dict[str, Any], messages: List[Dict[str, Any]], **kwargs
+    ):
         extra_params = {}
         extra_body = {}
         base_url = deploy_info["infer_params"].get(
-            "saas.base_url", "https://api.deepseek.com/v1")
+            "saas.base_url", "https://api.deepseek.com/v1"
+        )
         if (
             len(messages) > 1
             and messages[-1]["role"] == "user"
@@ -287,11 +296,13 @@ class SimpleByzerLLM:
             "deploy_info": deploy_info,
         }
 
-        meta_result.update({
-            "model_deploy_type": "saas",
-            "message_format": True,
-            "support_chat_template": True,
-        })
+        meta_result.update(
+            {
+                "model_deploy_type": "saas",
+                "message_format": True,
+                "support_chat_template": True,
+            }
+        )
 
         return meta_result
 
@@ -305,7 +316,7 @@ class SimpleByzerLLM:
         pass
 
     def process_audio(self, messages: Dict[str, Any]):
-        return messages,False
+        return messages, False
         # if self.skip_nontext_check:
         #     return messages,False
         # try:
@@ -333,12 +344,13 @@ class SimpleByzerLLM:
         #     logger.error(f"process_audio error: {inst}")
         #     return messages,False
         # return messages,True
-    
+
     def process_image(self, messages: Dict[str, Any]):
         if self.skip_nontext_check:
-            return messages,False                   
+            return messages, False
         try:
             from byzerllm.utils.nontext import Image
+
             for message in messages:
                 if message["role"] == "user":
                     image = Image(message["content"])
@@ -347,23 +359,24 @@ class SimpleByzerLLM:
                         final_content = []
                         for item in temp_content:
                             if "text" in item:
-                                final_content.append({
-                                    "type":"text",
-                                    "text": item["text"]
-                                })
+                                final_content.append(
+                                    {"type": "text", "text": item["text"]}
+                                )
                             if "image" in item:
-                                final_content.append({
-                                    "type":"image_url",
-                                    "image_url": {
-                                        "url": item["image"],
+                                final_content.append(
+                                    {
+                                        "type": "image_url",
+                                        "image_url": {
+                                            "url": item["image"],
+                                        },
                                     }
-                                })
+                                )
                         message["content"] = final_content
         except Exception as inst:
             traceback.print_exc()
             logger.error(f"process_image error: {inst}")
-            return messages,False
-        return messages,True
+            return messages, False
+        return messages, True
 
     def chat_oai(
         self,
@@ -382,7 +395,7 @@ class SimpleByzerLLM:
         role_mapping=None,
         llm_config: Dict[str, Any] = {},
         only_return_prompt: bool = False,
-        extra_request_params:Dict[str,Any] = {}
+        extra_request_params: Dict[str, Any] = {},
     ) -> List[LLMResponse]:
         """
         This method mirrors ByzerLLM's chat_oai signature, but we implement
@@ -394,12 +407,15 @@ class SimpleByzerLLM:
 
         # If only_return_prompt is True, we won't call openai, just return the prompt
         if only_return_prompt:
-            return [LLMResponse(output="", metadata={}, input=conversations[-1]["content"])]
+            return [
+                LLMResponse(output="", metadata={}, input=conversations[-1]["content"])
+            ]
 
         deploy_info = self.deployments.get(model, {})
         client = deploy_info["sync_client"]
-        messages, extra_params = self.process_messages(deploy_info,
-                                                       conversations, **llm_config)
+        messages, extra_params = self.process_messages(
+            deploy_info, conversations, **llm_config
+        )
 
         is_reasoning = deploy_info["is_reasoning"]
         start_time = time.monotonic()
@@ -408,9 +424,7 @@ class SimpleByzerLLM:
         instruction = messages[-1]["content"]
         v = [{"instruction": instruction, "history": history, **llm_config}]
 
-        event_result = self._trigger_event(
-            EventName.BEFORE_CALL_MODEL, self, model, v
-        )
+        event_result = self._trigger_event(EventName.BEFORE_CALL_MODEL, self, model, v)
 
         if event_result is not None:
             responses = [
@@ -422,17 +436,20 @@ class SimpleByzerLLM:
                 for item in event_result
             ]
             return responses
-        
+
         if extra_request_params:
             if "extra_body" in extra_params:
-                extra_params["extra_body"] = {**extra_params["extra_body"], **extra_request_params}
+                extra_params["extra_body"] = {
+                    **extra_params["extra_body"],
+                    **extra_request_params,
+                }
             else:
                 extra_params["extra_body"] = extra_request_params
-                
-        messages,is_processed = self.process_image(messages=messages)        
+
+        messages, is_processed = self.process_image(messages=messages)
         if not is_processed:
-            messages,is_processed = self.process_audio(messages=messages)
-        
+            messages, is_processed = self.process_audio(messages=messages)
+
         if is_reasoning:
             response = client.chat.completions.create(
                 messages=messages,
@@ -456,7 +473,8 @@ class SimpleByzerLLM:
             model_name = deploy_info["model"]
             name = model
             raise Exception(
-                f"name:{name} base_url:{base_url} model_name:{model_name} extra_params:{extra_params}  error:{response.error}")
+                f"name:{name} base_url:{base_url} model_name:{model_name} extra_params:{extra_params}  error:{response.error}"
+            )
 
         generated_text = response.choices[0].message.content
 
@@ -481,7 +499,9 @@ class SimpleByzerLLM:
                 **extra_params,
             }
         }
-        return [LLMResponse(output=generated_text, metadata=gen_meta["metadata"], input="")]
+        return [
+            LLMResponse(output=generated_text, metadata=gen_meta["metadata"], input="")
+        ]
 
     def stream_chat_oai(
         self,
@@ -490,7 +510,7 @@ class SimpleByzerLLM:
         role_mapping=None,
         delta_mode: bool = False,
         llm_config: Dict[str, Any] = {},
-        extra_request_params:Dict[str,Any] = {}
+        extra_request_params: Dict[str, Any] = {},
     ):
         """
         Provide a streaming interface. Yields chunk by chunk from the OpenAI
@@ -504,18 +524,22 @@ class SimpleByzerLLM:
         client = deploy_info["sync_client"]
         is_reasoning = deploy_info["is_reasoning"]
 
-        messages, extra_params = self.process_messages(deploy_info,
-                                                       conversations, **llm_config)
+        messages, extra_params = self.process_messages(
+            deploy_info, conversations, **llm_config
+        )
 
         if extra_request_params:
             if "extra_body" in extra_params:
-                extra_params["extra_body"] = {**extra_params["extra_body"], **extra_request_params}
+                extra_params["extra_body"] = {
+                    **extra_params["extra_body"],
+                    **extra_request_params,
+                }
             else:
                 extra_params["extra_body"] = extra_request_params
 
-        messages,is_processed = self.process_image(messages=messages)        
+        messages, is_processed = self.process_image(messages=messages)
         if not is_processed:
-            messages,is_processed = self.process_audio(messages=messages)
+            messages, is_processed = self.process_audio(messages=messages)
 
         if is_reasoning:
             response = client.chat.completions.create(
@@ -543,7 +567,8 @@ class SimpleByzerLLM:
             model_name = deploy_info["model"]
             name = model
             raise Exception(
-                f"name:{name} base_url:{base_url} model_name:{model_name} extra_params:{extra_params}  error:{response.error}")
+                f"name:{name} base_url:{base_url} model_name:{model_name} extra_params:{extra_params}  error:{response.error}"
+            )
 
         input_tokens_count = 0
         generated_tokens_count = 0
@@ -560,10 +585,15 @@ class SimpleByzerLLM:
 
                 if not chunk.choices:
                     if last_meta:
-                        yield ("", SingleOutputMeta(input_tokens_count=input_tokens_count,
-                                                    generated_tokens_count=generated_tokens_count,
-                                                    reasoning_content="",
-                                                    finish_reason=last_meta.finish_reason))
+                        yield (
+                            "",
+                            SingleOutputMeta(
+                                input_tokens_count=input_tokens_count,
+                                generated_tokens_count=generated_tokens_count,
+                                reasoning_content="",
+                                finish_reason=last_meta.finish_reason,
+                            ),
+                        )
                     continue
 
                 content = chunk.choices[0].delta.content or ""
@@ -572,10 +602,12 @@ class SimpleByzerLLM:
                 if hasattr(chunk.choices[0].delta, "reasoning_content"):
                     reasoning_text = chunk.choices[0].delta.reasoning_content or ""
 
-                last_meta = SingleOutputMeta(input_tokens_count=input_tokens_count,
-                                             generated_tokens_count=generated_tokens_count,
-                                             reasoning_content=reasoning_text,
-                                             finish_reason=chunk.choices[0].finish_reason)
+                last_meta = SingleOutputMeta(
+                    input_tokens_count=input_tokens_count,
+                    generated_tokens_count=generated_tokens_count,
+                    reasoning_content=reasoning_text,
+                    finish_reason=chunk.choices[0].finish_reason,
+                )
                 yield (content, last_meta)
         else:
             s = ""
@@ -591,10 +623,15 @@ class SimpleByzerLLM:
 
                 if not chunk.choices:
                     if last_meta:
-                        yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count,
-                                                   generated_tokens_count=generated_tokens_count,
-                                                   reasoning_content=all_reasoning_text,
-                                                   finish_reason=last_meta.finish_reason))
+                        yield (
+                            s,
+                            SingleOutputMeta(
+                                input_tokens_count=input_tokens_count,
+                                generated_tokens_count=generated_tokens_count,
+                                reasoning_content=all_reasoning_text,
+                                finish_reason=last_meta.finish_reason,
+                            ),
+                        )
                     continue
 
                 content = chunk.choices[0].delta.content or ""
@@ -604,10 +641,15 @@ class SimpleByzerLLM:
 
                 s += content
                 all_reasoning_text += reasoning_text
-                yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count,
-                                           generated_tokens_count=generated_tokens_count,
-                                           reasoning_content=all_reasoning_text,
-                                           finish_reason=chunk.choices[0].finish_reason))
+                yield (
+                    s,
+                    SingleOutputMeta(
+                        input_tokens_count=input_tokens_count,
+                        generated_tokens_count=generated_tokens_count,
+                        reasoning_content=all_reasoning_text,
+                        finish_reason=chunk.choices[0].finish_reason,
+                    ),
+                )
 
     async def async_stream_chat_oai(
         self,
@@ -616,7 +658,7 @@ class SimpleByzerLLM:
         model: Optional[str] = None,
         delta_mode: bool = False,
         llm_config: Dict[str, Any] = {},
-        extra_request_params:Dict[str,Any] = {}
+        extra_request_params: Dict[str, Any] = {},
     ):
         if not model:
             model = self.default_model_name
@@ -624,26 +666,30 @@ class SimpleByzerLLM:
         deploy_info = self.deployments.get(model, {})
         client = deploy_info["async_client"]
         is_reasoning = deploy_info["is_reasoning"]
-        messages, extra_params = self.process_messages(deploy_info,
-                                                       conversations, **llm_config)
-        
+        messages, extra_params = self.process_messages(
+            deploy_info, conversations, **llm_config
+        )
+
         logger.info(f"extra_params: {extra_params}")
         if extra_request_params:
             if "extra_body" in extra_params:
-                extra_params["extra_body"] = {**extra_params["extra_body"], **extra_request_params}
+                extra_params["extra_body"] = {
+                    **extra_params["extra_body"],
+                    **extra_request_params,
+                }
             else:
                 extra_params["extra_body"] = extra_request_params
-        
-        messages,is_processed = self.process_image(messages=messages)
+
+        messages, is_processed = self.process_image(messages=messages)
         if not is_processed:
-            messages,is_processed = self.process_audio(messages=messages)
+            messages, is_processed = self.process_audio(messages=messages)
 
         if is_reasoning:
             response = await client.chat.completions.create(
                 messages=messages,
                 model=deploy_info["model"],
                 stream=True,
-                stream_options={"include_usage": True},                
+                stream_options={"include_usage": True},
                 **extra_params,
             )
         else:
@@ -663,7 +709,8 @@ class SimpleByzerLLM:
             model_name = deploy_info["model"]
             name = model
             raise Exception(
-                f"name:{name} base_url:{base_url} model_name:{model_name} extra_params:{extra_params}  error:{response.error}")
+                f"name:{name} base_url:{base_url} model_name:{model_name} extra_params:{extra_params}  error:{response.error}"
+            )
 
         input_tokens_count = 0
         generated_tokens_count = 0
@@ -679,21 +726,28 @@ class SimpleByzerLLM:
 
                 if not chunk.choices:
                     if last_meta:
-                        yield ("", SingleOutputMeta(input_tokens_count=input_tokens_count,
-                                                    generated_tokens_count=generated_tokens_count,
-                                                    reasoning_content="",
-                                                    finish_reason=last_meta.finish_reason))
+                        yield (
+                            "",
+                            SingleOutputMeta(
+                                input_tokens_count=input_tokens_count,
+                                generated_tokens_count=generated_tokens_count,
+                                reasoning_content="",
+                                finish_reason=last_meta.finish_reason,
+                            ),
+                        )
                     continue
 
                 content = chunk.choices[0].delta.content or ""
                 reasoning_text = ""
                 if hasattr(chunk.choices[0].delta, "reasoning_content"):
                     reasoning_text = chunk.choices[0].delta.reasoning_content or ""
-                
-                last_meta = SingleOutputMeta(input_tokens_count=input_tokens_count,
-                                                 generated_tokens_count=generated_tokens_count,
-                                                 reasoning_content=reasoning_text,
-                                                 finish_reason=chunk.choices[0].finish_reason)
+
+                last_meta = SingleOutputMeta(
+                    input_tokens_count=input_tokens_count,
+                    generated_tokens_count=generated_tokens_count,
+                    reasoning_content=reasoning_text,
+                    finish_reason=chunk.choices[0].finish_reason,
+                )
                 yield (content, last_meta)
         else:
             s = ""
@@ -709,10 +763,15 @@ class SimpleByzerLLM:
 
                 if not chunk.choices:
                     if last_meta:
-                        yield (s, SingleOutputMeta(input_tokens_count=input_tokens_count,
-                                                   generated_tokens_count=generated_tokens_count,
-                                                   reasoning_content=all_reasoning_text,
-                                                   finish_reason=last_meta.finish_reason))
+                        yield (
+                            s,
+                            SingleOutputMeta(
+                                input_tokens_count=input_tokens_count,
+                                generated_tokens_count=generated_tokens_count,
+                                reasoning_content=all_reasoning_text,
+                                finish_reason=last_meta.finish_reason,
+                            ),
+                        )
                     continue
 
                 content = chunk.choices[0].delta.content or ""
@@ -722,10 +781,12 @@ class SimpleByzerLLM:
 
                 s += content
                 all_reasoning_text += reasoning_text
-                last_meta = SingleOutputMeta(input_tokens_count=input_tokens_count,
-                                           generated_tokens_count=generated_tokens_count,
-                                           reasoning_content=all_reasoning_text,
-                                           finish_reason=chunk.choices[0].finish_reason)
+                last_meta = SingleOutputMeta(
+                    input_tokens_count=input_tokens_count,
+                    generated_tokens_count=generated_tokens_count,
+                    reasoning_content=all_reasoning_text,
+                    finish_reason=chunk.choices[0].finish_reason,
+                )
                 yield (s, last_meta)
 
     def prompt(
@@ -792,9 +853,10 @@ class SimpleByzerLLM:
                     temp_options = {**{"delta_mode": True}, **options}
                     conversations = [{"role": "user", "content": prompt_str}]
                     if assistant_prefix:
-                        conversations = conversations + \
-                            [{"role": "assistant", "content": assistant_prefix}]
-                    
+                        conversations = conversations + [
+                            {"role": "assistant", "content": assistant_prefix}
+                        ]
+
                     t = self.stream_chat_oai(
                         conversations=conversations,
                         model=model,
@@ -802,22 +864,23 @@ class SimpleByzerLLM:
                     )
 
                     def generator():
-                        for item,meta in t:
+                        for item, meta in t:
                             if meta_holder and meta:
                                 meta_holder.meta = meta
                             yield item
 
                     if return_origin_response:
                         return t
-                    
+
                     return generator()
 
                 if issubclass(signature.return_annotation, pydantic.BaseModel):
                     response_class = signature.return_annotation
                     conversations = [{"role": "user", "content": prompt_str}]
                     if assistant_prefix:
-                        conversations = conversations + \
-                            [{"role": "assistant", "content": assistant_prefix}]
+                        conversations = conversations + [
+                            {"role": "assistant", "content": assistant_prefix}
+                        ]
                     t = self.chat_oai(
                         model=model,
                         conversations=conversations,
@@ -846,17 +909,18 @@ class SimpleByzerLLM:
                 elif issubclass(signature.return_annotation, str):
                     conversations = [{"role": "user", "content": prompt_str}]
                     if assistant_prefix:
-                        conversations = conversations + \
-                            [{"role": "assistant", "content": assistant_prefix}]
+                        conversations = conversations + [
+                            {"role": "assistant", "content": assistant_prefix}
+                        ]
                     t = self.chat_oai(
                         model=model,
                         conversations=conversations,
                         **options,
                     )
-                    
+
                     if meta_holder and t[0].metadata:
                         meta_holder.meta = t[0].metadata
-                        
+
                     if return_origin_response:
                         return t
                     return t[0].output
