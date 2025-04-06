@@ -95,6 +95,7 @@ class SimpleByzerLLM:
 
             api_key = infer_params["saas.api_key"]
             model = infer_params.get("saas.model", "deepseek-chat")
+            max_ouput_tokens = infer_params.get("saas.max_ouput_tokens", 8096)
 
             is_reasoning = infer_params.get(
                 "is_reasoning", infer_params.get("saas.is_reasoning", False)
@@ -122,6 +123,7 @@ class SimpleByzerLLM:
                 "async_client": async_client,
                 "model": model,
                 "is_reasoning": is_reasoning,
+                "max_ouput_tokens": max_ouput_tokens,
             }
         else:
             raise ValueError(
