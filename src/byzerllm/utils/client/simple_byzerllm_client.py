@@ -95,7 +95,7 @@ class SimpleByzerLLM:
 
             api_key = infer_params["saas.api_key"]
             model = infer_params.get("saas.model", "deepseek-chat")
-            max_ouput_tokens = infer_params.get("saas.max_ouput_tokens", 8096)
+            max_output_tokens = infer_params.get("saas.max_output_tokens", 8096)
 
             is_reasoning = infer_params.get(
                 "is_reasoning", infer_params.get("saas.is_reasoning", False)
@@ -123,7 +123,7 @@ class SimpleByzerLLM:
                 "async_client": async_client,
                 "model": model,
                 "is_reasoning": is_reasoning,
-                "max_ouput_tokens": max_ouput_tokens,
+                "max_output_tokens": max_output_tokens,
             }
         else:
             raise ValueError(
@@ -414,6 +414,7 @@ class SimpleByzerLLM:
             ]
 
         deploy_info = self.deployments.get(model, {})
+        logger.info(f"deploy_info: {deploy_info}")
         client = deploy_info["sync_client"]
         messages, extra_params = self.process_messages(
             deploy_info, conversations, **llm_config
@@ -464,7 +465,7 @@ class SimpleByzerLLM:
                 messages=messages,
                 model=deploy_info["model"],
                 temperature=llm_config.get("temperature", 0.7),
-                max_tokens=llm_config.get("max_tokens", deploy_info.get("max_ouput_tokens", 8096)),
+                max_tokens=llm_config.get("max_tokens", deploy_info["max_output_tokens"]),
                 top_p=llm_config.get("top_p", 0.9),
                 stream=False,
                 **extra_params,
@@ -522,6 +523,7 @@ class SimpleByzerLLM:
             model = self.default_model_name
 
         deploy_info = self.deployments.get(model, {})
+        logger.info(f"deploy_info: {deploy_info}")
 
         client = deploy_info["sync_client"]
         is_reasoning = deploy_info["is_reasoning"]
@@ -557,7 +559,7 @@ class SimpleByzerLLM:
                 messages=messages,
                 model=deploy_info["model"],
                 temperature=llm_config.get("temperature", 0.7),
-                max_tokens=llm_config.get("max_tokens", deploy_info.get("max_ouput_tokens", 8096)),
+                max_tokens=llm_config.get("max_tokens", deploy_info["max_output_tokens"]),
                 top_p=llm_config.get("top_p", 0.9),
                 stream=True,
                 stream_options={"include_usage": True},
@@ -666,6 +668,7 @@ class SimpleByzerLLM:
             model = self.default_model_name
 
         deploy_info = self.deployments.get(model, {})
+        logger.info(f"deploy_info: {deploy_info}")
         client = deploy_info["async_client"]
         is_reasoning = deploy_info["is_reasoning"]
         messages, extra_params = self.process_messages(
@@ -699,7 +702,7 @@ class SimpleByzerLLM:
                 messages=messages,
                 model=deploy_info["model"],
                 temperature=llm_config.get("temperature", 0.7),
-                max_tokens=llm_config.get("max_tokens", deploy_info.get("max_ouput_tokens", 8096)),
+                max_tokens=llm_config.get("max_tokens", deploy_info["max_output_tokens"]),
                 top_p=llm_config.get("top_p", 0.9),
                 stream=True,
                 stream_options={"include_usage": True},
