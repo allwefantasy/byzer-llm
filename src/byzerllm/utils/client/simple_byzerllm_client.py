@@ -544,7 +544,8 @@ class SimpleByzerLLM:
         messages, is_processed = self.process_image(messages=messages)
         if not is_processed:
             messages, is_processed = self.process_audio(messages=messages)
-
+        
+        logger.info(f"messages: {json.dumps(messages, indent=4,ensure_ascii=False)}")
         if is_reasoning:
             response = client.chat.completions.create(
                 messages=messages,
@@ -689,6 +690,7 @@ class SimpleByzerLLM:
         if not is_processed:
             messages, is_processed = self.process_audio(messages=messages)
 
+        logger.info(f"messages: {json.dumps(messages, indent=4,ensure_ascii=False)}") 
         if is_reasoning:
             response = await client.chat.completions.create(
                 messages=messages,
@@ -861,7 +863,8 @@ class SimpleByzerLLM:
                         conversations = conversations + [
                             {"role": "assistant", "content": assistant_prefix}
                         ]
-
+                    
+                    
                     t = self.stream_chat_oai(
                         conversations=conversations,
                         model=model,
