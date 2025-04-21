@@ -414,7 +414,7 @@ class SimpleByzerLLM:
             ]
 
         deploy_info = self.deployments.get(model, {})
-        logger.info(f"deploy_info: {deploy_info}")
+        # logger.info(f"deploy_info: {deploy_info}")
         client = deploy_info["sync_client"]
         messages, extra_params = self.process_messages(
             deploy_info, conversations, **llm_config
@@ -523,7 +523,7 @@ class SimpleByzerLLM:
             model = self.default_model_name
 
         deploy_info = self.deployments.get(model, {})
-        logger.info(f"deploy_info: {deploy_info}")
+        # logger.info(f"deploy_info: {deploy_info}")
 
         client = deploy_info["sync_client"]
         is_reasoning = deploy_info["is_reasoning"]
@@ -545,7 +545,7 @@ class SimpleByzerLLM:
         if not is_processed:
             messages, is_processed = self.process_audio(messages=messages)
         
-        logger.info(f"messages: {json.dumps(messages, indent=4,ensure_ascii=False)}")
+        # logger.info(f"messages: {json.dumps(messages, indent=4,ensure_ascii=False)}")
         if is_reasoning:
             response = client.chat.completions.create(
                 messages=messages,
@@ -669,7 +669,7 @@ class SimpleByzerLLM:
             model = self.default_model_name
 
         deploy_info = self.deployments.get(model, {})
-        logger.info(f"deploy_info: {deploy_info}")
+        # logger.info(f"deploy_info: {deploy_info}")
         client = deploy_info["async_client"]
         is_reasoning = deploy_info["is_reasoning"]
         messages, extra_params = self.process_messages(
@@ -690,7 +690,7 @@ class SimpleByzerLLM:
         if not is_processed:
             messages, is_processed = self.process_audio(messages=messages)
 
-        logger.info(f"messages: {json.dumps(messages, indent=4,ensure_ascii=False)}") 
+        # logger.info(f"messages: {json.dumps(messages, indent=4,ensure_ascii=False)}") 
         if is_reasoning:
             response = await client.chat.completions.create(
                 messages=messages,
