@@ -806,6 +806,7 @@ class SimpleByzerLLM:
         marker: Optional[str] = None,
         assistant_prefix: Optional[str] = None,
         meta_holder: Optional[Any] = None,
+        conversation: List[Dict[str,Any]] = []
     ):
         if model is None:
             if "model" in options:

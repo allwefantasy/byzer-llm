@@ -295,10 +295,15 @@ class _PrompRunner:
         self.return_prefix = None
         self.stop_suffix_list = None
         self.meta_holder = MetaHolder(None)
+        self.conversation = []
 
     def with_meta(self, meta_holder):
         self.meta_holder = meta_holder
         return self
+
+    def with_conversation(self, conversation: List[Dict[str,Any]]):
+        self.conversation = conversation
+        return self    
 
     def with_return_type(self, model_class: Type[Any]):
         self.model_class = model_class
@@ -517,7 +522,8 @@ class _PrompRunner:
                 return_origin_response=return_origin_response,
                 marker=marker,
                 assistant_prefix=self.return_prefix,
-                meta_holder=self.meta_holder
+                meta_holder=self.meta_holder,
+                conversation=self.conversation,
             )(func)(**input_dict)
             prefix = self.return_prefix if self.return_prefix else ""
             if not return_origin_response:                
@@ -560,7 +566,8 @@ class _PrompRunner:
                 return_origin_response=return_origin_response,
                 marker=marker,
                 assistant_prefix=self.return_prefix,
-                meta_holder=self.meta_holder
+                meta_holder=self.meta_holder,
+                conversation=self.conversation,
             )(func)(**input_dict)
             prefix = self.return_prefix if self.return_prefix else ""
             if not return_origin_response:                
@@ -604,6 +611,7 @@ class _PrompRunner:
                 marker=marker,
                 assistant_prefix=self.return_prefix,
                 meta_holder=self.meta_holder,
+                conversation=self.conversation,
             )(func)(**input_dict)
             prefix = self.return_prefix if self.return_prefix else ""
             if not return_origin_response:
@@ -716,6 +724,10 @@ class _DescriptorPrompt:
     def with_meta(self, meta_holder):
         self.prompt_runner.with_meta(meta_holder)
         return self
+
+    def with_conversation(self, conversation: List[Dict[str,Any]]):
+        self.prompt_runner.with_conversation(conversation)
+        return self    
 
     def __call__(self, *args, **kwargs):
         return self.prompt_runner(*args, **kwargs)
