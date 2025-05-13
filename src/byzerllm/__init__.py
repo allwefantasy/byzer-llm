@@ -786,6 +786,7 @@ from byzerllm.utils.retrieval import ByzerRetrieval
 from byzerllm.utils.connect_ray import connect_cluster
 from byzerllm.apps.agent.registry import reply as agent_reply
 from byzerllm.utils.nontext import Image
+from .utils.llms import get_model_info, get_single_llm, get_llm_names
 
 __all__ = [
     "ByzerLLM",
@@ -795,4 +796,7 @@ __all__ = [
     "prompt",
     "agent_reply",
     "Image",
+    "get_model_info",
+    "get_single_llm",
+    "get_llm_names",
 ]
