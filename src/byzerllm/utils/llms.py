@@ -1,5 +1,6 @@
 
 import byzerllm
+import byzerllm.utils.modelinfo as models_module
 from typing import Union,Optional
 
 def get_llm_names(llm: Union[byzerllm.ByzerLLM, byzerllm.SimpleByzerLLM,str],target_model_type:Optional[str]=None):
@@ -21,8 +22,7 @@ def get_llm_names(llm: Union[byzerllm.ByzerLLM, byzerllm.SimpleByzerLLM,str],tar
    else:
       return [llm.default_model_name for llm in [llms] if llm.default_model_name]
 
-def get_model_info(model_names: str, product_mode: str):    
-    from autocoder import models as models_module
+def get_model_info(model_names: str, product_mode: str):        
     def get_model_by_name(model_name: str):
         try:
             return models_module.get_model_by_name(model_name)
@@ -42,8 +42,7 @@ def get_model_info(model_names: str, product_mode: str):
             # Single code model
             return get_model_by_name(model_names)
 
-def get_single_llm(model_names: str, product_mode: str):
-    from autocoder import models as models_module
+def get_single_llm(model_names: str, product_mode: str):    
     if product_mode == "pro":
         if "," in model_names:
             # Multiple code models specified
