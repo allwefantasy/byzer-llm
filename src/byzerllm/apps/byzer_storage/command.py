@@ -337,33 +337,7 @@ class StorageSubCommand:
 
     @staticmethod
     def collection(args):
-        error_summary = []
-        try:
-            from byzerllm.apps.llama_index.collection_manager import (
-                CollectionManager,
-                CollectionItem,
-            )
-
-            home = expanduser("~")
-            base_dir = args.base_dir or os.path.join(home, ".auto-coder")
-            collection_manager = CollectionManager(base_dir)
-            if args.name:
-                collection = CollectionItem(
-                    name=args.name, description=args.description
-                )
-                collection_manager.add_collection(collection)
-                console.print(
-                    f"[green]✓[/green] Collection {args.name} added successfully."
-                )
-            else:
-                error_msg = "Please provide collection name."
-                console.print(f"[red]✗[/red] {error_msg}")
-                error_summary.append(error_msg)
-        except Exception as e:
-            error_msg = f"Failed to add collection: {str(e)}"
-            console.print(f"[red]✗[/red] {error_msg}")
-            error_summary.append(error_msg)
-
+        error_summary = []        
         return error_summary
 
     @staticmethod

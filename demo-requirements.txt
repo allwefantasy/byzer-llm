@@ -28,7 +28,6 @@ tiktoken
 tabulate
 jupyter_client
 prompt-toolkit
-llama_index
 # selenium
 # dependencies only for sparkdesk
 # websockets

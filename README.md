@@ -88,8 +88,6 @@ The unique features of Byzer-LLM are:
 * [Finetune](#Finetune)
 * [Stream Chat](#Stream-Chat)
 * [Articles](#Articles)
-* [Third-party Libraries](#Third-party-Libraries)
-    * [Llama_index](#Llama_index)
 * [Contributing](#Contributing)
 
 ---
@@ -2795,46 +2793,6 @@ and checkpoint_dir="/home/byzerllm/models/sft/jobs/sft-william-20230912-21-50-10
 and savePath="/home/byzerllm/models/sft/jobs/sft-william-20230912-21-50-10-2529bf9f-493e-40a3-b20f-0369bd01d75d/finetune_model/merge";
 
 ```
-
-## Third-party Libraries
-
-### Llama_index
-
-Llama_index can use byzer-llm to access the LLM model, use Byzer-retrieval as the RAG storage.
-Try to use the following code to get service_context and storage_context.
-
-```python
-## init the ByzerLLM and ByzerRetrieval
-code_search_path=["/home/winubuntu/softwares/byzer-retrieval-lib/"]
-env_vars = {"JAVA_HOME": "/home/winubuntu/softwares/jdk-21",
-            "PATH":"/home/winubuntu/softwares/jdk-21/bin:/home/winubuntu/.cargo/bin:/usr/local/cuda/bin:/home/winubuntu/softwares/byzer-lang-all-in-one-linux-amd64-3.1.1-2.3.2/jdk8/bin:/home/winubuntu/miniconda3/envs/byzerllm-dev/bin:/home/winubuntu/miniconda3/condabin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"}
-import os
-import ray
-from byzerllm.apps.llama_index import get_service_context,get_storage_context
-from byzerllm.utils.retrieval import ByzerRetrieval
-from byzerllm.utils.client import ByzerLLM,Templates
-
-ray.init(address="auto",namespace="default",ignore_reinit_error=True,
-                 job_config=ray.job_config.JobConfig(code_search_path=code_search_path,
-                                                      runtime_env={"env_vars": env_vars})
-                 )  
-model_name = "qianwen_chat"
-llm = ByzerLLM()
-llm.setup_template(model=model_name,template="auto")
-llm.setup_default_emb_model_name("emb")
-llm.setup_default_model_name(model_name)
-llm.setup_extra_generation_params(model_name,extra_generation_params={
-    "temperature":0.01,
-    "top_p":0.99
-})
-retrieval = ByzerRetrieval()
-retrieval.launch_gateway() 
-
-## get the service_context and storage_context for Llama_index
-service_context = get_service_context(llm)
-storage_context = get_storage_context(llm,retrieval,chunk_collection="default",namespace="default")
-```
-
 
 ## Articles
 

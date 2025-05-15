@@ -13,8 +13,6 @@ rich
 # optimum
 # sentencepiece
 
-llama_index==0.10.52
-
 ray[default]>=2.9.1
 pyarrow
 datasets
@@ -65,7 +63,6 @@ wudao
 # tokenizers==0.13.3
 
 # camelot-py
-# llama_index
 openai>=1.59.8
 anthropic
 google-generativeai
