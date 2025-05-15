@@ -22,7 +22,7 @@ import threading
 import asyncio
 import traceback
 import uuid
-import tempfile 
+import tempfile
 
 logger = init_logger(__name__)
 
@@ -173,7 +173,7 @@ class CustomSaasAPI:
         )
 
     async def async_text_to_speech(
-        self, stream: bool, ins: str, voice: str, chunk_size: int = None, **kwargs
+            self, stream: bool, ins: str, voice: str, chunk_size: int = None, **kwargs
     ):
         if stream:
             server = ray.get_actor("BlockBinaryStreamServer")
@@ -183,7 +183,7 @@ class CustomSaasAPI:
                 try:
                     request_id[0] = str(uuid.uuid4())
                     with self.client.with_streaming_response.audio.speech.create(
-                        model=self.model, voice=voice, input=ins, **kwargs
+                            model=self.model, voice=voice, input=ins, **kwargs
                     ) as response:
                         for chunk in response.iter_bytes(chunk_size):
                             input_tokens_count = 0
@@ -237,9 +237,9 @@ class CustomSaasAPI:
         start_time = time.monotonic()
         with io.BytesIO() as output:
             async with asyncfy_with_semaphore(
-                lambda: self.client.with_streaming_response.audio.speech.create(
-                    model=self.model, voice=voice, input=ins, **kwargs
-                )
+                    lambda: self.client.with_streaming_response.audio.speech.create(
+                        model=self.model, voice=voice, input=ins, **kwargs
+                    )
             )() as response:
                 for chunk in response.iter_bytes():
                     output.write(chunk)
@@ -263,10 +263,10 @@ class CustomSaasAPI:
             ]
 
     async def async_speech_to_text(
-        self,
-        audio: str,
-        response_format: str = "verbose_json",
-        timestamp_granularities: List[str] = ["word", "segment"],
+            self,
+            audio: str,
+            response_format: str = "verbose_json",
+            timestamp_granularities: List[str] = ["word", "segment"],
     ):
         # Extract audio format and base64 data
         data_prefix = "data:audio/"
@@ -275,15 +275,15 @@ class CustomSaasAPI:
             raise ValueError("Invalid audio data format")
 
         format_end = audio.index(base64_prefix)
-        audio_format = audio[len(data_prefix) : format_end]
-        base64_data = audio[format_end + len(base64_prefix) :]
+        audio_format = audio[len(data_prefix): format_end]
+        base64_data = audio[format_end + len(base64_prefix):]
 
         # Decode the base64 audio data
         audio_data = base64.b64decode(base64_data)
 
         # Create a temporary file with the correct extension
         with tempfile.NamedTemporaryFile(
-            delete=False, suffix=f".{audio_format}"
+                delete=False, suffix=f".{audio_format}"
         ) as temp_audio_file:
             temp_audio_file.write(audio_data)
             temp_audio_file_path = temp_audio_file.name
@@ -325,7 +325,7 @@ class CustomSaasAPI:
         pass
 
     async def async_text_to_image(
-        self, stream: bool, input: str, size: str, quality: str, n: int, **kwargs
+            self, stream: bool, input: str, size: str, quality: str, n: int, **kwargs
     ):
         if stream:
             raise Exception("Stream not supported for text to image")
@@ -363,14 +363,14 @@ class CustomSaasAPI:
         pass
 
     async def async_stream_chat(
-        self,
-        tokenizer,
-        ins: str,
-        his: List[Dict[str, Any]] = [],
-        max_length: int = 4096,
-        top_p: float = 0.7,
-        temperature: float = 0.9,
-        **kwargs,
+            self,
+            tokenizer,
+            ins: str,
+            his: List[Dict[str, Any]] = [],
+            max_length: int = 4096,
+            top_p: float = 0.7,
+            temperature: float = 0.9,
+            **kwargs,
     ):
 
         model = self.model
@@ -379,9 +379,9 @@ class CustomSaasAPI:
             model = kwargs["model"]
 
         messages = [
-            {"role": message["role"], "content": self.process_input(message["content"])}
-            for message in his
-        ] + [{"role": "user", "content": self.process_input(ins)}]
+                       {"role": message["role"], "content": self.process_input(message["content"])}
+                       for message in his
+                   ] + [{"role": "user", "content": self.process_input(ins)}]
 
         stream = kwargs.get("stream", False)
 
@@ -438,6 +438,8 @@ class CustomSaasAPI:
                 request_id[0] = str(uuid.uuid4())
 
                 for chunk in response:
+                    if len(chunk.choices) == 0:
+                        continue
                     content = chunk.choices[0].delta.content or ""
                     r += content
                     if hasattr(chunk, "usage") and chunk.usage:
