@@ -522,6 +522,10 @@ class CustomSaasAPI:
                     max_tokens=max_length,
                     temperature=temperature,
                     top_p=top_p,
+                    extra_headers={
+                        "HTTP-Referer": "https://auto-coder.chat", 
+                        "X-Title": "auto-coder"
+                    },
                     **extra_params,
                 )
                 # input_tokens_count = 0
