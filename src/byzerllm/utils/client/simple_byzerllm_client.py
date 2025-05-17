@@ -458,6 +458,10 @@ class SimpleByzerLLM:
                 messages=messages,
                 model=deploy_info["model"],
                 stream=False,
+                extra_headers={
+                    "HTTP-Referer": "https://auto-coder.chat", 
+                    "X-Title": "auto-coder"
+                },
                 **extra_params,
             )
         else:
@@ -468,6 +472,10 @@ class SimpleByzerLLM:
                 max_tokens=llm_config.get("max_tokens", deploy_info["max_output_tokens"]),
                 top_p=llm_config.get("top_p", 0.9),
                 stream=False,
+                extra_headers={
+                    "HTTP-Referer": "https://auto-coder.chat", 
+                    "X-Title": "auto-coder"
+                },
                 **extra_params,
             )
 
@@ -552,6 +560,10 @@ class SimpleByzerLLM:
                 model=deploy_info["model"],
                 stream=True,
                 stream_options={"include_usage": True},
+                extra_headers={
+                    "HTTP-Referer": "https://auto-coder.chat", 
+                    "X-Title": "auto-coder"
+                },
                 **extra_params,
             )
 
@@ -697,6 +709,10 @@ class SimpleByzerLLM:
                 model=deploy_info["model"],
                 stream=True,
                 stream_options={"include_usage": True},
+                extra_headers={
+                    "HTTP-Referer": "https://auto-coder.chat", 
+                    "X-Title": "auto-coder"
+                },
                 **extra_params,
             )
         else:
