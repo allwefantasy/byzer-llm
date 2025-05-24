@@ -56,7 +56,8 @@ class OpenAIServingChat(OpenAIServing):
             - function_call (Users should implement this by themselves)
         """
         if body.prompt_template:
-            self.llm_client.setup_template(body.model, self._detect_prompt_template(body.prompt_template))
+            self.llm_client.setup_template(
+                body.model, self._detect_prompt_template(body.prompt_template))
 
         request_id = body.request_id or f"cmpl-{random_uuid()}"
 
@@ -84,14 +85,14 @@ class OpenAIServingChat(OpenAIServing):
             body: ChatCompletionRequest,
             request_id: str
     ) -> Union[ErrorResponse, AsyncGenerator[str, None]]:
-        model_name = self.server_model_name or body.model        
+        model_name = self.server_model_name or body.model
         created_time = int(time.time())
         chunk_object_type = "chat.completion.chunk"
 
         extra_params = {}
         if body.extra_body:
             extra_params = {"extra_request_params": body.extra_body}
-            
+
         result_generator = self.llm_client.async_stream_chat_oai(
             model=model_name,
             conversations=body.messages,
@@ -107,7 +108,7 @@ class OpenAIServingChat(OpenAIServing):
 
         for i in range(body.n):
             choice_data = ChatCompletionResponseStreamChoice(
-                index=i, delta=DeltaMessage(role=role, content="",reasoning_content=""), finish_reason=None
+                index=i, delta=DeltaMessage(role=role, content="", reasoning_content=""), finish_reason=None
             )
             chunk = ChatCompletionStreamResponse(
                 id=request_id,
@@ -145,6 +146,8 @@ class OpenAIServingChat(OpenAIServing):
 
         # Send response for each token for each request.n (index)
         finish_reason_sent = [False] * body.n
+
+        last_usage = None
         async for (s, meta) in result_generator:
             meta: SingleOutputMeta
             for _ in [(s, meta)]:
@@ -157,7 +160,7 @@ class OpenAIServingChat(OpenAIServing):
                 )
                 reasoning_content = meta.reasoning_content or ""
                 choice_data = ChatCompletionResponseStreamChoice(
-                    index=i, delta=DeltaMessage(role=role,content=s, reasoning_content=reasoning_content), finish_reason=None
+                    index=i, delta=DeltaMessage(role=role, content=s, reasoning_content=reasoning_content), finish_reason=None
                 )
                 chunk = ChatCompletionStreamResponse(
                     id=request_id,
@@ -172,8 +175,29 @@ class OpenAIServingChat(OpenAIServing):
                     exclude_unset=True,
                     exclude_none=True,
                 )
+                last_usage = final_usage
                 yield f"data: {data}\n\n"
                 finish_reason_sent[i] = True
+
+        # 发送一个空的chunk，设置 finish_reason 为 stop
+        choice_data = ChatCompletionResponseStreamChoice(
+            index=0, delta=DeltaMessage(role=role, content="", reasoning_content=""), finish_reason="stop"
+        )
+        chunk = ChatCompletionStreamResponse(
+            id=request_id,
+            object=chunk_object_type,
+            created=created_time,
+            choices=[choice_data],
+            model=model_name
+        )
+        if last_usage is not None:
+            chunk.usage = last_usage
+        data = chunk.model_dump_json(
+            exclude_unset=True,
+            exclude_none=True,
+        )
+        yield f"data: {data}\n\n"
+
         # Send the final done message after all response.n are finished
         yield "data: [DONE]\n\n"
 
@@ -183,12 +207,12 @@ class OpenAIServingChat(OpenAIServing):
             request: Request,
             request_id: str
     ) -> Union[ErrorResponse, ChatCompletionResponse]:
-                
-        model_name = self.server_model_name or body.model 
+
+        model_name = self.server_model_name or body.model
 
         extra_params = {}
         if body.extra_body:
-            extra_params = {"extra_request_params": body.extra_body}               
+            extra_params = {"extra_request_params": body.extra_body}
 
         async def wrapper_chat_generator():
             r = await asyncfy_with_semaphore(lambda: self.llm_client.chat_oai(
@@ -221,7 +245,8 @@ class OpenAIServingChat(OpenAIServing):
             res: LLMResponse
             choice_data = ChatCompletionResponseChoice(
                 index=0,
-                message=ChatMessage(role=role, content=res.output, reasoning_content=res.metadata.get("reasoning_content", "")),
+                message=ChatMessage(role=role, content=res.output, reasoning_content=res.metadata.get(
+                    "reasoning_content", "")),
                 finish_reason=None,
             )
             choices.append(choice_data)
