@@ -85,6 +85,7 @@ class OpenAIServingChat(OpenAIServing):
             body: ChatCompletionRequest,
             request_id: str
     ) -> Union[ErrorResponse, AsyncGenerator[str, None]]:
+                
         model_name = self.server_model_name or body.model
         created_time = int(time.time())
         chunk_object_type = "chat.completion.chunk"
@@ -104,21 +105,7 @@ class OpenAIServingChat(OpenAIServing):
             **extra_params
         )
 
-        role = self.get_chat_request_role(body)
-
-        for i in range(body.n):
-            choice_data = ChatCompletionResponseStreamChoice(
-                index=i, delta=DeltaMessage(role=role, content="", reasoning_content=""), finish_reason=None
-            )
-            chunk = ChatCompletionStreamResponse(
-                id=request_id,
-                object=chunk_object_type,
-                created=created_time,
-                choices=[choice_data],
-                model=model_name
-            )
-            data = chunk.model_dump_json(exclude_unset=True)
-            yield f"data: {data}\n\n"
+        role = self.get_chat_request_role(body)        
 
         # Send response to echo the input portion of the last message
         if body.echo:
