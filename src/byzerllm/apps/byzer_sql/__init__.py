@@ -24,64 +24,10 @@ class Env:
 def prepare_env(globals_info:Dict[str,Any],context:PythonContext)->Env:
     
     conf:Dict[str,str] = context.conf
-
-    ray_address = conf.get("rayAddress","auto")
-    enable_storage = conf.get("enable_storage","false") in ["true","True"]
-    base_dir = conf.get("base_dir",None)
-    storage_version = conf.get("storage_version",None)
-    java_home = conf.get("java_home",None)
-
-    version = storage_version or "0.1.11"        
-    home = expanduser("~")        
-    base_dir = base_dir or os.path.join(home, ".auto-coder")    
-    code_search_path = None 
-    storage_enabled = False
-    
-    # if enable_storage:    
-        
-    #     if not os.path.exists(base_dir):
-    #         logger.info(f"Byzer Storage not found in {base_dir}")
-    #         base_dir = os.path.join(home, ".byzerllm")
-
-    #     if os.path.exists(base_dir):            
-    #         storage_enabled = True
-    #     else:
-    #         logger.info(f"Byzer Storage not found in {base_dir}")
-               
-    #     if storage_enabled:
-    #         logger.info(f"Byzer Storage found in {base_dir}")            
-    #         libs_dir = os.path.join(base_dir, "storage", "libs", f"byzer-retrieval-lib-{version}")        
-    #         code_search_path = [libs_dir]
-    #         logger.info(f"Connect and start Byzer Retrieval version {version}")     
-        
-    # job_config = None
-    # env_vars = {}
-    
-    # java_home=java_home if java_home else os.environ.get("JAVA_HOME")
-    
-    # v = env_detect.detect_env() 
-    # if v.java_home and v.java_version == "21": 
-    #     logger.info(f"JDK 21 will be used ({v.java_home})...")    
-    #     java_home = v.java_home        
-    
-    # if java_home:            
-    #     path = os.environ.get("PATH")    
-    #     env_vars = {"JAVA_HOME": java_home,
-    #                 "PATH":f'''{os.path.join(java_home,"bin")}:{path}'''}        
-    #     if code_search_path:
-    #         if java_home:
-    #             _check_java_version(java_home)
-    #         job_config = ray.job_config.JobConfig(code_search_path=code_search_path,
-    #                                                         runtime_env={"env_vars": env_vars})
-    # if not java_home and code_search_path:
-    #    logger.warning("code_search_path is ignored because JAVA_HOME is not set") 
-            
+    ray_address = conf.get("rayAddress","auto")                    
     ray_context = RayContext.connect(globals_info,ray_address)
         
-    retrieval = None
-    # if storage_enabled:
-    #     retrieval = ByzerRetrieval()
-    #     retrieval.launch_gateway()
+    retrieval = None    
         
     llm = byzerllm.ByzerLLM()    
     return Env(llm=llm,
