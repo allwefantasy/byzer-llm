@@ -166,7 +166,7 @@ def load_models() -> List[Dict]:
             api_key_file = os.path.join(api_key_dir, model["api_key_path"])
             if os.path.exists(api_key_file):
                 with open(api_key_file, "r",encoding="utf-8") as f:
-                    model["api_key"] = f.read()                   
+                    model["api_key"] = f.read().strip()                   
     return target_models
 
 def save_models(models: List[Dict]) -> None:
