@@ -40,14 +40,7 @@ def chat(ray_context):
     
     input_value = [json.loads(row["value"]) for row in ray_context.python_context.fetch_once_as_rows()]
     
-    llm = ByzerLLM()
-    llm.setup_template(model=udf_name,template="auto")
-    llm.setup_default_emb_model_name("emb")
-    llm.setup_default_model_name(udf_name)
-    llm.setup_extra_generation_params(udf_name,extra_generation_params={
-        "temperature":0.01,
-        "top_p":0.99
-    })
+    llm = byzerllm.get_single_llm(udf_name,product_mode="lite")
     
     result = []
     for value in input_value:
