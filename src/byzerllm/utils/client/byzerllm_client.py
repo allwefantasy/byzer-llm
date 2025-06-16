@@ -1512,7 +1512,7 @@ class ByzerLLM:
 
                 if is_instance_of_generator(signature.return_annotation):
                     temp_options = {**{"delta_mode": True}, **options}
-                    conversations = self.conversation + [{"role": "user", "content": prompt_str}]
+                    conversations = conversation + [{"role": "user", "content": prompt_str}]
                     if assistant_prefix:
                         conversations = conversations + [{"role": "assistant", "content": assistant_prefix}]
 
@@ -1534,7 +1534,7 @@ class ByzerLLM:
 
                 if issubclass(signature.return_annotation, pydantic.BaseModel):
                     response_class = signature.return_annotation
-                    conversations = self.conversation + [{"role": "user", "content": prompt_str}]
+                    conversations = conversation + [{"role": "user", "content": prompt_str}]
                     if assistant_prefix:
                         conversations = conversations + [{"role": "assistant", "content": assistant_prefix}]
                     t = self.chat_oai(
@@ -1565,7 +1565,7 @@ class ByzerLLM:
                         )
                     return r.value
                 elif issubclass(signature.return_annotation, str):
-                    conversations = self.conversation + [{"role": "user", "content": prompt_str}]
+                    conversations = conversation + [{"role": "user", "content": prompt_str}]
                     if assistant_prefix:
                         conversations = conversations + [{"role": "assistant", "content": assistant_prefix}]                        
                     

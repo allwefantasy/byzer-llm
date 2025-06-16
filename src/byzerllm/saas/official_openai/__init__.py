@@ -105,11 +105,13 @@ class CustomSaasAPI:
     def process_input(self, ins: Union[str, List[Dict[str, Any]], Dict[str, Any]]):
 
         if isinstance(ins, list) or isinstance(ins, dict):
-            return ins
-
+            return ins                
+                
         content = []
         try:
             ins_json = json.loads(ins)
+            if isinstance(ins_json, (int, float)):
+                return ins
         except:
             return ins
 
