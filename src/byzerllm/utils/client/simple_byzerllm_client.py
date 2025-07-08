@@ -1,6 +1,7 @@
 import os
 import json
 import asyncio
+import httpx
 import openai
 from typing import (
     Dict,
@@ -99,21 +100,32 @@ class SimpleByzerLLM:
 
             is_reasoning = infer_params.get(
                 "is_reasoning", infer_params.get("saas.is_reasoning", False)
-            )            
-                
+            )
+
+            https_verify = infer_params.get("https_verify", infer_params.get("saas.https_verify", True))
+
             if pretrained_model_type == "saas/gemini":
                 sync_client = MGeminiAI(api_key=api_key, base_url=base_url)
                 async_client = MAsyncGeminiAI(api_key=api_key, base_url=base_url)
             else:
+                if https_verify:
+                    http_client = None
+                    http_async_client = None
+                else:
+                    http_client = httpx.Client(verify=False)
+                    http_async_client = httpx.AsyncClient(verify=False)
+
                 sync_client = OpenAI(
                     base_url=base_url,
                     api_key=api_key,
+                    http_client=http_client
                 )
 
                 async_client = AsyncOpenAI(
                     base_url=base_url,
                     api_key=api_key,
-                )    
+                    http_client=http_async_client
+                )
 
             self.deployments[udf_name] = {
                 "model_path": model_path,
