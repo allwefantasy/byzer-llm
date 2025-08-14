@@ -42,6 +42,7 @@ easy-byzerllm deploy <model_name> --token <your_token>
 - `yi-vision`: Yi 的视觉语言模型, Token 申请： Yi（01万物） 官网
 - `sonnet3.5`: Claude 的 Sonnet 3.5 模型, Token 申请： Claude 官网
 - `gpt4o`: OpenAI 的 GPT-4 模型, Token 申请： OpenAI 官网
+- `gpt4o-mini`: OpenAI 的 gpt-4o-mini 模型, Token 申请： OpenAI 官网
 
 例如,要部署 `gpt-3.5-turbo-0125` 模型,可以运行:
 
