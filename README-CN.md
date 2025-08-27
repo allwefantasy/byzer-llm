@@ -224,7 +224,7 @@ ray.init(address="auto",namespace="default",ignore_reinit_error=True)
 llm = ByzerLLM()
 
 llm.setup_gpus_per_worker(0).setup_num_workers(10)
-llm.setup_infer_backend(InferBackend.transformers)
+llm.setup_infer_backend(InferBackend.Transformers)
 
 llm.deploy(pretrained_model_type="saas/azure_openai",
            udf_name="azure_openai",
@@ -386,7 +386,7 @@ print(t2[0].output)
 
 ## 量化
 
-当后端采用 `InferBackend.transformers` 时，这里展示的是一个关于“百川2”模型的实例应用。
+当后端采用 `InferBackend.Transformers` 时，这里展示的是一个关于“百川2”模型的实例应用。
 
 ```python
 llm.setup_gpus_per_worker(2).setup_num_workers(1).setup_infer_backend(InferBackend.Transformers)
