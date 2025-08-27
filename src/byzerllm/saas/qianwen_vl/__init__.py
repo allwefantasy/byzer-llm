@@ -44,9 +44,8 @@ class CustomSaasAPI:
             top_p: float = 0.9,
             temperature: float = 0.1,
             **kwargs
-    ):        
-        messages = [{"role":message["role"],"content":self.process_input(message["content"])} for message in his] + [{"role": "user", "content": self.process_input(ins)}]        
-        
+    ):
+        messages = [{"role":message["role"],"content":self.process_input(message["content"])} for message in his] + [{"role": "user", "content": self.process_input(ins)}]
         start_time = time.monotonic()
         
         other_params = {}
@@ -137,12 +136,13 @@ class CustomSaasAPI:
         if isinstance(ins, list):
             return ins
         
-        content = []
         try:
             ins_json = json.loads(ins)
         except:
-            return ins
-        
+            return [{
+                "text": ins
+            }]
+
         content = []
         for item in ins_json:
             if "image" in item:
